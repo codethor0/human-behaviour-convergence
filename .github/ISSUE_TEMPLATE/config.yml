@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Edit the diagram in Mermaid Live
+    url: https://mermaid.live
+    about: Preview updates quickly before opening a PR

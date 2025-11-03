@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest an enhancement to the diagram, style, or docs
+labels: [enhancement]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What's the improvement?
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Describe changes, nodes/edges, or styles you want.
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this useful? Who benefits?
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: Updates `diagram/behaviour-convergence.mmd` only (no generated files)
+        - label: Requires CI workflow changes
+        - label: README/docs update

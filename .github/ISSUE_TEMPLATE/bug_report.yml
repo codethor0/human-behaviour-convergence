@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a problem with the diagram, workflow, or docs
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the issue and what you expected to happen.
+      placeholder: Tell us what you see and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide steps, links, or a minimal reproduction.
+      placeholder: 1) ... 2) ... 3) ...
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Screenshots, logs, or links that help explain.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Diagram
+        - CI / Workflow
+        - README / Docs
+        - Other
