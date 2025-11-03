@@ -1,0 +1,32 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Human behaviour convergence social preview">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0f1724"/>
+      <stop offset="100%" stop-color="#0d47a1"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#g)" />
+  <g fill="#fff" font-family="Inter, Roboto, Helvetica, Arial, sans-serif">
+    <text x="80" y="140" font-size="44" font-weight="700">THE CONVERGENCE OF HUMAN BEHAVIOR PREDICTION</text>
+    <text x="80" y="190" font-size="20" fill="#cfe8ff">Population‑scale forecasting in a zero‑restriction ("No‑Guard‑Rails") data regime</text>
+
+    <rect x="72" y="220" width="1136" height="1" fill="#ffffff" opacity="0.08" />
+
+    <g font-size="18" opacity="0.95">
+      <text x="80" y="280" fill="#e6f2ff">• 5.6B online training population</text>
+      <text x="80" y="310" fill="#e6f2ff">• 2.8B offline targets (satellite & ground imagery)</text>
+      <text x="80" y="340" fill="#e6f2ff">• Large compute fabric → 8.4B inference</text>
+    </g>
+
+    <g transform="translate(80,420)" opacity="0.95">
+      <rect x="0" y="0" width="420" height="60" rx="6" fill="#ffffff11" stroke="#ffffff22" />
+      <text x="20" y="38" font-size="16" fill="#fff">codethor0 / human-behaviour-convergence</text>
+    </g>
+
+    <g transform="translate(820,420)" opacity="0.9">
+      <rect x="0" y="0" width="340" height="60" rx="6" fill="#ffffff11" stroke="#ffffff22" />
+      <text x="20" y="38" font-size="16" fill="#fff">v1.0.0 • MIT</text>
+    </g>
+
+  </g>
+</svg>
