@@ -22,9 +22,15 @@
 
 %% ---------- DIAGRAM ----------
 flowchart LR
+    %% ================================================================
+    %% 0. TITLE
+    %% ================================================================
     TITLE["THE CONVERGENCE OF HUMAN BEHAVIOR PREDICTION
 Population-scale forecasting in a No-Guard-Rails data regime"]
 
+    %% ================================================================
+    %% 1. TRAIN  (5.6 B ONLINE)
+    %% ================================================================
     subgraph TRAIN["1. TRAIN  –  5.6 B ONLINE"]
         direction TB
         A["5.6 B Population\nDigital Natives"]
@@ -37,6 +43,9 @@ Clickstreams · Geo-tags · Purchases · Telemetry")]
         A --> B --> C & D
     end
 
+    %% ================================================================
+    %% 2. ACQUIRE  (2.8 B OFFLINE)
+    %% ================================================================
     subgraph ACQUIRE["2. ACQUIRE  –  2.8 B OFFLINE"]
         direction TB
         E["2.8 B Population
@@ -49,6 +58,9 @@ China 700 M cameras · 99.8 % facial ID")]
         E -.-> G
     end
 
+    %% ================================================================
+    %% 3. PROCESS  (8.4 B TOTAL)
+    %% ================================================================
     subgraph PROCESS["3. PROCESS  –  8.4 B TOTAL"]
         direction TB
         H[("COMPUTE FABRIC
@@ -60,6 +72,9 @@ Real-time fusion · Cross-modal embeddings")]
         H --> I --> J
     end
 
+    %% ================================================================
+    %% 4. FEEDBACK
+    %% ================================================================
     subgraph FEEDBACK["4. FEEDBACK LOOP  –  Weaponization Surface"]
         direction LR
         K[["Policy Micro-targeting
@@ -70,15 +85,24 @@ Drone strikes · Zero-day timing"]]
 Market shocks · Supply chokepoints"]]
     end
 
+    %% ================================================================
+    %% 5. TAGLINE
+    %% ================================================================
     TAG[[8.4 B  ⇒  1 PREDICTABLE SYSTEM
 Offline 32 % are not safe — just inference targets]]
 
+    %% ================================================================
+    %% EDGES
+    %% ================================================================
     C & D -.->|model weights| H
     F & G -.->|imagery & biometrics| H
     J --> K & L & M
     K & L & M -.->|reinforcement data| B
     J --> TAG
 
+    %% ================================================================
+    %% STYLES
+    %% ================================================================
     classDef title     fill:#ffffff,stroke:#ffffff,stroke-width:0,color:#1a1a1a
     classDef population fill:#e3f2fd,stroke:#90caf9,stroke-width:2px,color:#0d47a1
     classDef data       fill:#fafafa,stroke:#bdbdbd,stroke-width:2px,color:#424242
@@ -91,3 +115,7 @@ Offline 32 % are not safe — just inference targets]]
     class B,F,G,H,I,J data
     class C,D,K,L,M model
     class TAG feedback
+
+                %% ci: trigger render — no-op comment to force GitHub Actions on diagram change
+
+

@@ -1,21 +1,38 @@
 name: render-diagram
+
 on:
   push:
-    paths: [ "diagram/*.mmd" ]
+    paths:
+      - 'diagram/*.mmd'
+
 permissions:
   contents: write
   pull-requests: write
+
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm i -g @mermaid-js/mermaid-cli
-      - run: npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
-      - run: npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -w 2400 -H 1350 -b transparent
-      - uses: peter-evans/create-pull-request@v6
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mermaid-cli
+        run: npm i -g @mermaid-js/mermaid-cli
+
+      - name: Render SVG & PNG
+        run: |
+          npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
+          npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -w 2400 -H 1350 -b transparent
+
+      - name: Create pull request with rendered assets
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: re-render diagrams"
