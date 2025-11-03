@@ -3,7 +3,7 @@
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/behaviour-convergence.svg)
+[![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
 
 ---
 
