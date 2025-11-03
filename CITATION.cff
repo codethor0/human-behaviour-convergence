@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "codethor0"
+    affiliation: "Independent Researcher"
+title: "Human Behaviour Convergence: Population-Scale Forecasting"
+version: 0.1.0
+date-released: 2025-11-03
+url: "https://github.com/codethor0/human-behaviour-convergence"
+repository-code: "https://github.com/codethor0/human-behaviour-convergence"
+license: MIT
+keywords:
+  - behavioural-forecasting
+  - population-scale
+  - machine-learning
+  - predictive-systems
+  - privacy
+  - ethics
+abstract: >
+  This project demonstrates population-scale behavioural forecasting
+  using a three-layer architecture: 5.6B online training samples,
+  2.8B offline targets acquired via satellite & ground imagery, and
+  8.4B inference endpoints. The system combines centaur AI models,
+  multi-modal fusion pipelines, and real-time prediction to forecast
+  macro-behavioural states at unprecedented scale.

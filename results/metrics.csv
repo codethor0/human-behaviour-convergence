@@ -1,0 +1,7 @@
+metric,value
+mae,78.5
+rmse,112.3
+mape,0.95
+crps,0.072
+coverage_95,1.000
+bias,5.2

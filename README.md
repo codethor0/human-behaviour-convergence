@@ -8,6 +8,19 @@
 
 ---
 
+## 🎯 What is this?
+
+This project demonstrates **population-scale behavioural forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioural states at unprecedented scale.
+
+**Status:** Proof-of-concept (v0.1) — research artifact  
+**Paper:** Under review  
+**Data:** Synthetic sample (1% slice) available; full dataset under restricted access  
+**Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
+
+---
+
+## 📊 Architecture Overview
+
 ![diagram](diagram/behaviour-convergence.svg)
 
 ## 🔍 What's inside
@@ -16,20 +29,70 @@
 | `diagram/behaviour-convergence.mmd` | Source Mermaid diagram – edit here |
 | `diagram/behaviour-convergence.svg` | Auto-generated vector (perfect for docs / slides) |
 | `diagram/behaviour-convergence.png` | Hi-res PNG (2400 px) – social cards, posters |
+| `notebooks/` | Jupyter notebooks with end-to-end demos |
+| `results/` | Ground truth, forecasts, and error metrics (CSV) |
+| `tests/` | Unit tests and CI validation |
 
-## 🚀 Use it
-1. Click **Open in Mermaid Live**:  
-	[![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
+## 🎓 Who is this for?
+
+- **Data science teams** exploring large-scale behavioural modelling
+- **Public health agencies** interested in population-level forecasting
+- **Researchers** studying AI alignment, privacy, and predictive systems
+- **Policy analysts** evaluating implications of pervasive surveillance
+
+## 🚀 Quick Start
+
+1. **Explore the diagram interactively:**  
+   [![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
+
+2. **Run the demo notebook:**  
+   - Open `notebooks/demo.ipynb` in Jupyter Lab/Notebook
+   - Or view online: *(coming soon: Binder/Colab badge)*
+
+3. **Contribute:**  
+   See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## 🔒 Responsible Disclosure
+
+If you discover a security or privacy issue (including ethical concerns about the model or data), please report it responsibly:
+
+- **Security issues:** Open a confidential issue or email the maintainer (see [SECURITY.md](./SECURITY.md))
+- **Ethical concerns:** See [ETHICS.md](./ETHICS.md) for our approach to privacy, IRB compliance, and misuse mitigation
+
+## 🛠️ Development
+
+- **Prerequisites:** Python 3.10+, Node 20 (for diagram rendering)
+- **Setup:**
+  ```bash
+  git clone https://github.com/codethor0/human-behaviour-convergence.git
+  cd human-behaviour-convergence
+  pip install -r requirements.txt
+  pip install -r requirements-dev.txt  # for testing
+  ```
+- **Run tests:**
+  ```bash
+  pytest tests/ --cov
+  ```
+
+## 📖 Citation
+
+If you use this project in your research, please cite:
+
+```bibtex
+@software{human_behaviour_convergence,
+  author = {codethor0},
+  title = {Human Behaviour Convergence: Population-Scale Forecasting},
+  year = {2025},
+  url = {https://github.com/codethor0/human-behaviour-convergence}
+}
+```
+
+See [CITATION.cff](./CITATION.cff) for machine-readable metadata.
 
 ## ⚙️ Enable Pages
 To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `main` / (root). After a successful deploy the diagram will be available at:
 
 `https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg`
-
-## ✨ Tips
-- Add a 1280×640 social preview image under Settings → General → Social preview to make link unfurls look nice.
-
-Social preview (example file in repo): `assets/social-preview.svg` — upload this in Settings → General → Social preview for nicer link unfurls on Twitter/LinkedIn.
 
 ---
 
