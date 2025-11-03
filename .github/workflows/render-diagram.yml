@@ -31,7 +31,25 @@ jobs:
           npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
           npx mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -w 2400 -H 1350 -b transparent
 
+      - name: Detect changes
+        id: diff
+        run: |
+          # Stage potential outputs without modifying index status
+          git add -N diagram/behaviour-convergence.svg diagram/behaviour-convergence.png || true
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure git user
+        if: steps.diff.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Create pull request with rendered assets
+        if: steps.diff.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -39,3 +57,7 @@ jobs:
           title: "Auto-render SVG & PNG from latest .mmd"
           body: "Automated update after push to `.mmd` source."
           branch: bot/render-diagram
+          add-paths: |
+            diagram/behaviour-convergence.svg
+            diagram/behaviour-convergence.png
+          delete-branch: true
