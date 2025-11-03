@@ -23,7 +23,7 @@
 ## ⚙️ Enable Pages
 To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `main` / (root). After a successful deploy the diagram will be available at:
 
-`https://codethor0.github.io/human-behaviour-convergence/behaviour-convergence.svg`
+`https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg`
 
 ## ✨ Tips
 - Add a 1280×640 social preview image under Settings → General → Social preview to make link unfurls look nice.
