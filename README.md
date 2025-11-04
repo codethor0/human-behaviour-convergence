@@ -1,29 +1,29 @@
-# The Convergence of Human-Behaviour Prediction  
+# The Convergence of Human-Behaviour Prediction
 > Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
 
 ---
 
-## 🎯 What is this?
+## What is this?
 
 This project demonstrates **population-scale behavioural forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioural states at unprecedented scale.
 
-**Status:** Proof-of-concept (v0.1) — research artifact  
-**Paper:** Under review  
-**Data:** Synthetic sample (1% slice) available; full dataset under restricted access  
+**Status:** Proof-of-concept (v0.1) — research artifact
+**Paper:** Under review
+**Data:** Synthetic sample (1% slice) available; full dataset under restricted access
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
 
 ---
 
-## 📊 Architecture Overview
+## Architecture Overview
 
 ![diagram](diagram/behaviour-convergence.svg)
 
-## 🔍 What's inside
+## What's inside
 | File | Purpose |
 |------|---------|
 | `diagram/behaviour-convergence.mmd` | Source Mermaid diagram – edit here |
@@ -33,33 +33,41 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 | `results/` | Ground truth, forecasts, and error metrics (CSV) |
 | `tests/` | Unit tests and CI validation |
 
-## 🎓 Who is this for?
+## Diagram quickstart
+
+- Edit the source: `diagram/behaviour-convergence.mmd` (don’t edit `.svg/.png`).
+- Preview/edit in your browser via Mermaid Live: https://mermaid.live
+- CI behavior:
+  - Pull requests: renders to a temporary location to validate Mermaid syntax (no commits).
+  - Pushes: renders `svg/png` and opens an automated PR only when outputs actually change.
+
+## Who is this for?
 
 - **Data science teams** exploring large-scale behavioural modelling
 - **Public health agencies** interested in population-level forecasting
 - **Researchers** studying AI alignment, privacy, and predictive systems
 - **Policy analysts** evaluating implications of pervasive surveillance
 
-## 🚀 Quick Start
+## Quick Start
 
-1. **Explore the diagram interactively:**  
+1. **Explore the diagram interactively:**
    [![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
 
-2. **Run the demo notebook:**  
+2. **Run the demo notebook:**
    - Open `notebooks/demo.ipynb` in Jupyter Lab/Notebook
    - Or view online: *(coming soon: Binder/Colab badge)*
 
-3. **Contribute:**  
+3. **Contribute:**
    See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
-## 🔒 Responsible Disclosure
+## Responsible Disclosure
 
 If you discover a security or privacy issue (including ethical concerns about the model or data), please report it responsibly:
 
 - **Security issues:** Open a confidential issue or email the maintainer (see [SECURITY.md](./SECURITY.md))
 - **Ethical concerns:** See [ETHICS.md](./ETHICS.md) for our approach to privacy, IRB compliance, and misuse mitigation
 
-## 🛠️ Development
+## Development
 
 - **Prerequisites:** Python 3.10+, Node 20 (for diagram rendering)
 - **Setup:**
@@ -74,18 +82,18 @@ If you discover a security or privacy issue (including ethical concerns about th
   pytest tests/ --cov
   ```
 
-## 🧭 Application Roadmap
+## Application Roadmap
 
 We are building **Behaviour Convergence Explorer**, an interactive web application that surfaces the forecasting pipeline, synthetic results, and ethical guardrails.
 
-- 📄 Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
-- 🎯 Current milestone: `app-v0.1` — scaffold Next.js + FastAPI workspace, CI, and interactive diagram
-- 🧩 Tech stack preview: Next.js (TypeScript), Tailwind, FastAPI, Pandas, Vercel/Render
-- 🛡️ Principles: synthetic data only, transparent ethics, extensible APIs
+- Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
+- Current milestone: `app-v0.1` — scaffold Next.js + FastAPI workspace, CI, and interactive diagram
+- Tech stack preview: Next.js (TypeScript), Tailwind, FastAPI, Pandas, Vercel/Render
+- Principles: synthetic data only, transparent ethics, extensible APIs
 
 Contributions welcome! Open an issue with the label `app` to collaborate on frontend, backend, or UX tasks.
 
-## 📖 Citation
+## Citation
 
 If you use this project in your research, please cite:
 
@@ -100,7 +108,7 @@ If you use this project in your research, please cite:
 
 See [CITATION.cff](./CITATION.cff) for machine-readable metadata.
 
-## ⚙️ Enable Pages
+## Enable Pages
 To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `main` / (root). After a successful deploy the diagram will be available at:
 
 `https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg`
@@ -109,4 +117,4 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 
 ## License
 
-MIT
+Apache-2.0
