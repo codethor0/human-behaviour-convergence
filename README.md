@@ -74,6 +74,17 @@ If you discover a security or privacy issue (including ethical concerns about th
   pytest tests/ --cov
   ```
 
+## 🧭 Application Roadmap
+
+We are building **Behaviour Convergence Explorer**, an interactive web application that surfaces the forecasting pipeline, synthetic results, and ethical guardrails.
+
+- 📄 Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
+- 🎯 Current milestone: `app-v0.1` — scaffold Next.js + FastAPI workspace, CI, and interactive diagram
+- 🧩 Tech stack preview: Next.js (TypeScript), Tailwind, FastAPI, Pandas, Vercel/Render
+- 🛡️ Principles: synthetic data only, transparent ethics, extensible APIs
+
+Contributions welcome! Open an issue with the label `app` to collaborate on frontend, backend, or UX tasks.
+
 ## 📖 Citation
 
 If you use this project in your research, please cite:
