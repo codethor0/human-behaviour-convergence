@@ -126,7 +126,7 @@ Or via GitHub UI:
 - [ ] Upload social preview image
 - [ ] Delete `master` branch (optional cleanup)
 
-### 🔄 Optional Enhancements
+### Optional Enhancements
 - [ ] Add CodeQL workflow for static analysis
 - [ ] Set up signed commits (GPG)
 - [ ] Enable 2FA on your GitHub account (if not already)

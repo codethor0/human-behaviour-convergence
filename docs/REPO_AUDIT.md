@@ -106,25 +106,25 @@
 ### Current Structure (Good)
 ```
 .
-├── .github/                 Comprehensive (workflows, templates, community)
-├── app/                     Clean separation (backend, frontend)
-│   ├── backend/            FastAPI with .gitignore, requirements
-│   └── frontend/           Next.js TypeScript with clean structure
-├── diagram/                Source .mmd and generated assets
-├── docs/                   App plan documented
-├── notebooks/              Demo notebook present
-├── results/                CSV data files
-├── tests/                  pytest structure
-├── CHANGELOG.md            Needs update
-├── CITATION.cff            Version bump needed
-├── CODE_OF_CONDUCT.md      present
-├── CONTRIBUTING.md         present
-├── ETHICS.md               present
-├── LICENSE                 present
-├── README.md               Comprehensive
-├── SECURITY.md             present
-├── SUPPORT.md              present
-└── requirements*.txt       present
+- .github/                 Comprehensive (workflows, templates, community)
+- app/                     Clean separation (backend, frontend)
+  - backend/              FastAPI with .gitignore, requirements
+  - frontend/             Next.js TypeScript with clean structure
+- diagram/                Source .mmd and generated assets
+- docs/                   App plan documented
+- notebooks/              Demo notebook present
+- results/                CSV data files
+- tests/                  pytest structure
+- CHANGELOG.md            Needs update
+- CITATION.cff            Version bump needed
+- CODE_OF_CONDUCT.md      present
+- CONTRIBUTING.md         present
+- ETHICS.md               present
+- LICENSE                 present
+- README.md               Comprehensive
+- SECURITY.md             present
+- SUPPORT.md              present
+- requirements*.txt       present
 ```
 
 ### Suggestions

@@ -49,8 +49,8 @@ npm run dev
 
 ```
 app/
-├── frontend/   # Next.js (React + TypeScript)
-└── backend/    # FastAPI (Python)
+  frontend/   (Next.js - React + TypeScript)
+  backend/    (FastAPI - Python)
 ```
 
 ## Setup
