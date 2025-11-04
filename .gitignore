@@ -1,0 +1,63 @@
+# Python# OS
+
+__pycache__/.DS_Store
+
+*.pycThumbs.db
+
+*.pyo
+
+*.pyd# Editors/IDE
+
+.venv/.idea/
+
+.env.vscode/
+
+
+
+# Test & coverage# Node
+
+.pytest_cache/node_modules/
+
+.coverage*.log
+
+htmlcov/.next/
+
+out/
+
+# Tools
+
+.ruff_cache/# Python
+
+.mypy_cache/__pycache__/
+
+*.pyc
+
+# Node*.pyo
+
+node_modules/.venv/
+
+venv/
+
+# macOSENV/
+
+.DS_Store.pytest_cache/
+
+.coverage
+
+# VS Codehtmlcov/
+
+.vscode/
+
+# Env and secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.pfx
+
+# Build artifacts
+dist/
+build/
+coverage/
+reports/

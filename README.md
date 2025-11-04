@@ -2,7 +2,7 @@
 > Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
 
@@ -109,7 +109,7 @@ If you use this project in your research, please cite:
 See [CITATION.cff](./CITATION.cff) for machine-readable metadata.
 
 ## Enable Pages
-To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `main` / (root). After a successful deploy the diagram will be available at:
+To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `master` / (root). After a successful deploy the diagram will be available at:
 
 `https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg`
 
@@ -117,4 +117,4 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 
 ## License
 
-Apache-2.0
+MIT
