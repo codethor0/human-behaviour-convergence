@@ -27,17 +27,35 @@ jobs:
           fetch-depth: 0
 
       - name: Render SVG and PNG (Docker mermaid-cli)
+        id: docker
+        continue-on-error: true
         run: |
           docker run --rm \
             -v "$PWD":/data \
             -w /data \
             ghcr.io/mermaid-js/mermaid-cli:10.9.1 \
-            -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
+            --input diagram/behaviour-convergence.mmd --output diagram/behaviour-convergence.svg
           docker run --rm \
             -v "$PWD":/data \
             -w /data \
             ghcr.io/mermaid-js/mermaid-cli:10.9.1 \
-            -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -b transparent -s 2
+            --input diagram/behaviour-convergence.mmd --output diagram/behaviour-convergence.png --pngFit --backgroundColor transparent --scale 2
+
+      - name: Setup Node.js (fallback)
+        if: steps.docker.outcome == 'failure'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install mermaid-cli (fallback)
+        if: steps.docker.outcome == 'failure'
+        run: npm install -g @mermaid-js/mermaid-cli@10.9.1
+
+      - name: Render SVG and PNG (fallback to npm mmdc)
+        if: steps.docker.outcome == 'failure'
+        run: |
+          mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg -p .github/puppeteer.config.cjs
+          mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -p .github/puppeteer.config.cjs -b transparent -s 2
 
       - name: Upload artifacts (PR only)
         if: ${{ github.event_name == 'pull_request' }}
