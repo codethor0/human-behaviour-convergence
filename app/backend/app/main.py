@@ -29,10 +29,32 @@ MAX_CACHE_SIZE = int(
 CACHE_TTL_MINUTES = int(os.getenv("CACHE_TTL_MINUTES", "5"))
 CACHE_DURATION = timedelta(minutes=CACHE_TTL_MINUTES)
 
-# Basic logger
+
+# Structured logging: enable JSON format if LOG_FORMAT=json
+LOG_FORMAT = os.getenv("LOG_FORMAT", "text")
 logger = logging.getLogger(__name__)
 if not logger.handlers:
-    logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+    if LOG_FORMAT == "json":
+        import json
+
+        class JsonFormatter(logging.Formatter):
+            def format(self, record):
+                log_record = {
+                    "level": record.levelname,
+                    "time": self.formatTime(record, self.datefmt),
+                    "name": record.name,
+                    "message": record.getMessage(),
+                }
+                if record.exc_info:
+                    log_record["exception"] = self.formatException(record.exc_info)
+                return json.dumps(log_record)
+
+        handler = logging.StreamHandler()
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)
+        logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
+    else:
+        logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
 
 
 def _find_results_dir(start: Path) -> Optional[Path]:
