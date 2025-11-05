@@ -55,6 +55,19 @@ This project demonstrates **population-scale behavioural forecasting** using a t
   - Pull requests: renders to a temporary location to validate Mermaid syntax (no commits).
   - Pushes: renders `svg/png` and opens an automated PR only when outputs actually change.
 
+### Optional: local render
+
+If you prefer a local preview without relying on CI or Mermaid Live, you can use the Mermaid CLI (optional):
+
+```bash
+# install once (global)
+npm install -g @mermaid-js/mermaid-cli
+
+# render SVG and PNG locally
+mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
+mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -b transparent -s 2
+```
+
 ## Who is this for?
 
 - **Data science teams** exploring large-scale behavioural modelling
