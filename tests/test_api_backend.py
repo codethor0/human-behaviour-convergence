@@ -193,3 +193,40 @@ def test_api_error_handling_bad_csv(temp_results_dir, monkeypatch):
 
     # Should handle gracefully (may return 500 or empty data depending on implementation)
     assert response.status_code in [200, 500]
+
+
+def test_csv_negative_limit_validation(temp_results_dir, monkeypatch):
+    """Test that negative limit values are rejected."""
+    from app.backend.app import main
+
+    monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
+
+    # Test negative limit raises ValueError
+    with pytest.raises(ValueError, match="limit must be non-negative"):
+        main._read_csv("forecasts.csv", limit=-1)
+
+
+def test_cache_eviction(temp_results_dir, monkeypatch):
+    """Test that cache eviction works when MAX_CACHE_SIZE is exceeded."""
+    from app.backend.app import main
+
+    monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
+    monkeypatch.setattr(main, "MAX_CACHE_SIZE", 3)  # Set small cache for testing
+
+    # Clear cache to start fresh
+    main._cache.clear()
+    main._cache_ttl.clear()
+
+    # Fill cache to max
+    main._read_csv("forecasts.csv", limit=10)
+    main._read_csv("forecasts.csv", limit=20)
+    main._read_csv("forecasts.csv", limit=30)
+    assert len(main._cache) == 3
+
+    # Add one more - should trigger eviction
+    main._read_csv("forecasts.csv", limit=40)
+    assert len(main._cache) == 3  # Still at max size
+
+    # First entry should be evicted
+    assert ("forecasts.csv", 10) not in main._cache
+    assert ("forecasts.csv", 40) in main._cache

@@ -9,9 +9,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # CSV caching structures and TTL configuration
-_cache: Dict[str, List[Dict]] = {}
-_cache_ttl: Dict[str, datetime] = {}
+# Cache key is a tuple of (filename, limit) to avoid string collision issues
+_cache: Dict[tuple, List[Dict]] = {}
+_cache_ttl: Dict[tuple, datetime] = {}
 CACHE_DURATION = timedelta(minutes=5)
+MAX_CACHE_SIZE = 100  # Prevent unbounded cache growth
 
 
 def _find_results_dir(start: Path) -> Optional[Path]:
@@ -50,18 +52,33 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
 
     Args:
         name: CSV filename to read (e.g., 'forecasts.csv').
-        limit: Maximum number of rows to return (default 1000).
+        limit: Maximum number of rows to return (default 1000). Must be >= 0.
 
     Returns:
         A list of dictionaries representing rows from the CSV (or a stub).
+
+    Raises:
+        ValueError: If limit is negative.
     """
-    cache_key = f"{name}:{limit}"
+    if limit < 0:
+        raise ValueError(f"limit must be non-negative, got {limit}")
+
+    # Use tuple for cache key to avoid string collision issues
+    cache_key = (name, limit)
     now = datetime.now()
     if cache_key in _cache and cache_key in _cache_ttl and now < _cache_ttl[cache_key]:
         return _cache[cache_key]
 
     # Cache miss/expired
     result = _read_csv_uncached(name, limit)
+
+    # Implement simple cache eviction: remove oldest entries if cache is full
+    if len(_cache) >= MAX_CACHE_SIZE:
+        # Remove the oldest entry (first inserted, as dict maintains insertion order in Python 3.7+)
+        oldest_key = next(iter(_cache))
+        _cache.pop(oldest_key, None)
+        _cache_ttl.pop(oldest_key, None)
+
     _cache[cache_key] = result
     _cache_ttl[cache_key] = now + CACHE_DURATION
     return result
