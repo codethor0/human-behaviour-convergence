@@ -12,6 +12,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from pydantic import BaseModel
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues
@@ -191,7 +192,37 @@ def _read_csv_uncached(name: str, limit: int = 1000) -> List[Dict]:
     return []
 
 
-@app.get("/api/forecasts")
+# ====== Response Models ======
+
+
+class ForecastItem(BaseModel):
+    timestamp: str
+    series: str
+    value: float
+
+
+class MetricItem(BaseModel):
+    metric: str
+    value: float
+
+
+class ForecastResponse(BaseModel):
+    data: List[ForecastItem]
+
+
+class MetricsResponse(BaseModel):
+    data: List[MetricItem]
+
+
+class CacheStatus(BaseModel):
+    hits: int
+    misses: int
+    size: int
+    max_size: int
+    ttl_minutes: int
+
+
+@app.get("/api/forecasts", response_model=ForecastResponse)
 async def get_forecasts(
     limit: int = Query(
         default=1000, ge=1, le=10000, description="Maximum rows to return"
@@ -199,7 +230,8 @@ async def get_forecasts(
 ) -> Dict[str, List[Dict]]:
     """Return forecast data read from CSV (or a stub if missing)."""
     try:
-        return {"data": await _read_csv_async("forecasts.csv", limit=limit)}
+        data = await _read_csv_async("forecasts.csv", limit=limit)
+        return {"data": data}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except FileNotFoundError as e:
@@ -210,7 +242,7 @@ async def get_forecasts(
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
-@app.get("/api/metrics")
+@app.get("/api/metrics", response_model=MetricsResponse)
 async def get_metrics(
     limit: int = Query(
         default=1000, ge=1, le=10000, description="Maximum rows to return"
@@ -218,7 +250,8 @@ async def get_metrics(
 ) -> Dict[str, List[Dict]]:
     """Return metrics data read from CSV (or a stub if missing)."""
     try:
-        return {"data": await _read_csv_async("metrics.csv", limit=limit)}
+        data = await _read_csv_async("metrics.csv", limit=limit)
+        return {"data": data}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except FileNotFoundError as e:
@@ -227,6 +260,22 @@ async def get_metrics(
         raise HTTPException(status_code=500, detail="Invalid CSV format") from e
     except Exception as e:  # pragma: no cover - safety net
         raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+@app.get("/api/status", response_model=CacheStatus)
+def get_status() -> CacheStatus:
+    """Return basic cache stats for observability."""
+    with _cache_lock:
+        hits = globals().get("_cache_hits", 0)
+        misses = globals().get("_cache_misses", 0)
+        size = len(_cache)
+    return CacheStatus(
+        hits=hits,
+        misses=misses,
+        size=size,
+        max_size=MAX_CACHE_SIZE,
+        ttl_minutes=CACHE_TTL_MINUTES,
+    )
 
 
 if __name__ == "__main__":
