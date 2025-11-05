@@ -4,64 +4,476 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Behaviour Convergence — Interactive Diagram</title>
+    <title>Behaviour Convergence — Interactive Architecture</title>
     <style>
-      body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 16px; background: #f7f9fc; }
-      header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-      .container { max-width: 1200px; margin: 0 auto; }
-      .toolbar { display:flex; gap:8px; align-items:center; }
-      .status { color: #555; font-size: 12px; }
-      #diagram { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; overflow: auto; }
-      button { background:#111827; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
-      button.secondary { background:#374151; }
-      a.btn { text-decoration:none; }
-      textarea { width: 100%; height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; border:1px solid #e5e7eb; border-radius:6px; padding:8px; }
+      :root {
+        --bg-primary: #0a0e14;
+        --bg-secondary: #131920;
+        --bg-card: #1a2028;
+        --text-primary: #e6edf3;
+        --text-secondary: #8b949e;
+        --accent-blue: #58a6ff;
+        --accent-green: #3fb950;
+        --accent-red: #f85149;
+        --accent-yellow: #d29922;
+        --border: #30363d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        overflow-x: hidden;
+      }
+      .hero {
+        padding: 48px 24px 24px;
+        text-align: center;
+        background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        border-bottom: 1px solid var(--border);
+      }
+      .hero h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+        font-weight: 600;
+        background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .hero p {
+        margin: 0 auto;
+        max-width: 600px;
+        color: var(--text-secondary);
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .controls {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: center;
+        padding: 16px 24px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn:hover {
+        background: var(--accent-blue);
+        border-color: var(--accent-blue);
+        transform: translateY(-1px);
+      }
+      .btn-primary {
+        background: var(--accent-blue);
+        border-color: var(--accent-blue);
+      }
+      .btn-primary:hover {
+        background: #1f6feb;
+        border-color: #1f6feb;
+      }
+      .status {
+        color: var(--text-secondary);
+        font-size: 13px;
+        padding: 4px 0;
+      }
+      .diagram-container {
+        position: relative;
+        max-width: 1400px;
+        margin: 24px auto;
+        padding: 0 24px;
+      }
+      #diagram-wrapper {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 32px;
+        min-height: 600px;
+        position: relative;
+        overflow: hidden;
+      }
+      #diagram {
+        width: 100%;
+        transition: transform 0.3s ease;
+        cursor: grab;
+      }
+      #diagram:active {
+        cursor: grabbing;
+      }
+      #diagram svg {
+        max-width: 100%;
+        height: auto;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+      }
+      .zoom-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+      }
+      .zoom-btn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .zoom-btn:hover {
+        background: var(--accent-blue);
+        border-color: var(--accent-blue);
+      }
+      .info-panel {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        max-width: 400px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.3s;
+        pointer-events: none;
+      }
+      .info-panel.visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .info-panel h3 {
+        margin: 0 0 8px;
+        font-size: 16px;
+        color: var(--accent-blue);
+      }
+      .info-panel p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+      .legend {
+        max-width: 1400px;
+        margin: 24px auto;
+        padding: 0 24px 48px;
+      }
+      .legend h3 {
+        font-size: 18px;
+        margin: 0 0 16px;
+        color: var(--text-primary);
+      }
+      .legend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+      }
+      .legend-item {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        transition: all 0.2s;
+      }
+      .legend-item:hover {
+        border-color: var(--accent-blue);
+        transform: translateY(-2px);
+      }
+      .legend-item h4 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .legend-item p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+      }
+      .editor-section {
+        max-width: 1400px;
+        margin: 0 auto 48px;
+        padding: 0 24px;
+        display: none;
+      }
+      .editor-section.visible {
+        display: block;
+      }
+      .editor-section h3 {
+        font-size: 18px;
+        margin: 0 0 12px;
+      }
+      textarea {
+        width: 100%;
+        height: 300px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 13px;
+        resize: vertical;
+      }
+      @media (max-width: 768px) {
+        .hero h1 { font-size: 24px; }
+        .controls { flex-direction: column; }
+        .info-panel { max-width: calc(100% - 40px); }
+      }
     </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>Population-Scale Behavioural Forecasting</h1>
+      <p>Interactive architecture diagram showing the convergence of 8.4B individuals into a unified predictive system combining online training, offline acquisition, and real-time inference at planetary scale.</p>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" onclick="resetView()">Reset View</button>
+      <button class="btn" onclick="toggleEditor()">Toggle Editor</button>
+      <a class="btn" href="https://mermaid.live" target="_blank" rel="noopener">Open in Mermaid Live</a>
+      <a class="btn" href="https://github.com/codethor0/human-behaviour-convergence" target="_blank" rel="noopener">View on GitHub</a>
+      <span class="status" id="status">Loading diagram...</span>
+    </div>
+
+    <div class="diagram-container">
+      <div id="diagram-wrapper">
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+          <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+          <button class="zoom-btn" onclick="resetView()" title="Reset">⟲</button>
+        </div>
+        <div id="diagram" role="img" aria-label="Interactive behaviour convergence architecture diagram"></div>
+        <div class="info-panel" id="info-panel">
+          <h3 id="info-title">Click a node to explore</h3>
+          <p id="info-content">Hover over different components to see details about data sources, processing stages, and feedback loops.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <h3>System Components</h3>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <h4>TRAIN (5.6B Online)</h4>
+          <p>Digital natives generating clickstream, geolocation, and telemetry data. Trained via Centaur AI and Stanford personality models.</p>
+        </div>
+        <div class="legend-item">
+          <h4>ACQUIRE (2.8B Offline)</h4>
+          <p>Limited-connectivity populations monitored via orbital imaging (10cm resolution) and ground-based facial recognition networks.</p>
+        </div>
+        <div class="legend-item">
+          <h4>PROCESS (8.4B Total)</h4>
+          <p>Fusion layer combining online and offline signals through exascale compute fabric. Produces real-time forecasts with confidence bands.</p>
+        </div>
+        <div class="legend-item">
+          <h4>FEEDBACK Loop</h4>
+          <p>Weaponization surface enabling policy micro-targeting, kinetic ops, and economic manipulation. Reinforcement data flows back to training.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-section" id="editor-section">
+      <h3>Edit Diagram Source</h3>
+      <textarea id="editor" aria-label="Mermaid diagram source code"></textarea>
+      <div style="margin-top: 12px;">
+        <button class="btn btn-primary" onclick="reRender()">Re-render</button>
+        <button class="btn" onclick="resetSource()">Reset to Original</button>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script>
-      mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'base' });
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'dark' });
+
+      let currentZoom = 1;
+      let originalSource = '';
+      let isDragging = false;
+      let startX, startY, scrollLeft, scrollTop;
+
       async function loadAndRender() {
         const status = document.getElementById('status');
-        status.textContent = 'Loading…';
+        status.textContent = 'Loading diagram...';
         try {
           const resp = await fetch('../diagram/behaviour-convergence.mmd');
           const mmd = await resp.text();
+          originalSource = mmd;
           document.getElementById('editor').value = mmd;
           const { svg } = await mermaid.render('bc-diagram', mmd);
           document.getElementById('diagram').innerHTML = svg;
-          status.textContent = 'Rendered from diagram/behaviour-convergence.mmd';
+          status.textContent = 'Interactive • Click nodes to explore';
+          addInteractivity();
         } catch (e) {
-          status.textContent = 'Failed to load diagram: ' + e.message;
+          status.textContent = 'Failed to load: ' + e.message;
+          document.getElementById('diagram').innerHTML = '<p style="color: #f85149; padding: 40px; text-align: center;">Could not load diagram. Please check the console for details.</p>';
         }
       }
+
       async function reRender() {
         const mmd = document.getElementById('editor').value;
-        const { svg } = await mermaid.render('bc-diagram', mmd);
-        document.getElementById('diagram').innerHTML = svg;
+        const status = document.getElementById('status');
+        try {
+          const { svg } = await mermaid.render('bc-diagram-' + Date.now(), mmd);
+          document.getElementById('diagram').innerHTML = svg;
+          status.textContent = 'Re-rendered successfully';
+          addInteractivity();
+        } catch (e) {
+          status.textContent = 'Syntax error in diagram';
+        }
       }
+
+      function resetSource() {
+        document.getElementById('editor').value = originalSource;
+        reRender();
+      }
+
+      function addInteractivity() {
+        const svg = document.querySelector('#diagram svg');
+        if (!svg) return;
+
+        const nodes = svg.querySelectorAll('.node, .cluster');
+        nodes.forEach(node => {
+          node.style.cursor = 'pointer';
+          node.style.transition = 'all 0.2s';
+
+          node.addEventListener('mouseenter', () => {
+            node.style.opacity = '0.8';
+            node.style.transform = 'scale(1.05)';
+            showInfo(node);
+          });
+
+          node.addEventListener('mouseleave', () => {
+            node.style.opacity = '1';
+            node.style.transform = 'scale(1)';
+          });
+
+          node.addEventListener('click', () => {
+            highlightNode(node);
+          });
+        });
+
+        enablePanZoom();
+      }
+
+      function showInfo(node) {
+        const infoPanel = document.getElementById('info-panel');
+        const title = document.getElementById('info-title');
+        const content = document.getElementById('info-content');
+
+        const textContent = node.textContent.trim();
+        const descriptions = {
+          'TRAIN': 'Training layer: 5.6B digital natives generating behavioral data through online interactions.',
+          'ACQUIRE': 'Acquisition layer: 2.8B offline individuals monitored via satellite and ground-based systems.',
+          'PROCESS': 'Processing layer: Real-time fusion and inference across 8.4B individuals using exascale compute.',
+          'FEEDBACK': 'Feedback loop: Predictive outputs enable targeted interventions that generate new training data.'
+        };
+
+        for (const [key, desc] of Object.entries(descriptions)) {
+          if (textContent.includes(key)) {
+            title.textContent = key;
+            content.textContent = desc;
+            infoPanel.classList.add('visible');
+            return;
+          }
+        }
+
+        title.textContent = 'Component';
+        content.textContent = textContent.substring(0, 150);
+        infoPanel.classList.add('visible');
+      }
+
+      function highlightNode(node) {
+        document.querySelectorAll('.node, .cluster').forEach(n => {
+          n.style.opacity = '0.3';
+        });
+        node.style.opacity = '1';
+        node.style.filter = 'drop-shadow(0 0 10px #58a6ff)';
+        setTimeout(() => {
+          document.querySelectorAll('.node, .cluster').forEach(n => {
+            n.style.opacity = '1';
+            n.style.filter = '';
+          });
+        }, 1500);
+      }
+
+      function enablePanZoom() {
+        const diagram = document.getElementById('diagram');
+
+        diagram.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.node, .cluster')) return;
+          isDragging = true;
+          startX = e.pageX - diagram.offsetLeft;
+          startY = e.pageY - diagram.offsetTop;
+          scrollLeft = diagram.scrollLeft;
+          scrollTop = diagram.scrollTop;
+        });
+
+        diagram.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          e.preventDefault();
+          const x = e.pageX - diagram.offsetLeft;
+          const y = e.pageY - diagram.offsetTop;
+          diagram.scrollLeft = scrollLeft - (x - startX);
+          diagram.scrollTop = scrollTop - (y - startY);
+        });
+
+        diagram.addEventListener('mouseup', () => isDragging = false);
+        diagram.addEventListener('mouseleave', () => isDragging = false);
+
+        diagram.addEventListener('wheel', (e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            currentZoom = Math.max(0.5, Math.min(3, currentZoom + delta));
+            diagram.style.transform = `scale(${currentZoom})`;
+          }
+        });
+      }
+
+      function zoomIn() {
+        currentZoom = Math.min(3, currentZoom + 0.2);
+        document.getElementById('diagram').style.transform = `scale(${currentZoom})`;
+      }
+
+      function zoomOut() {
+        currentZoom = Math.max(0.5, currentZoom - 0.2);
+        document.getElementById('diagram').style.transform = `scale(${currentZoom})`;
+      }
+
+      function resetView() {
+        currentZoom = 1;
+        document.getElementById('diagram').style.transform = 'scale(1)';
+        document.getElementById('diagram').scrollLeft = 0;
+        document.getElementById('diagram').scrollTop = 0;
+        document.getElementById('info-panel').classList.remove('visible');
+      }
+
+      function toggleEditor() {
+        document.getElementById('editor-section').classList.toggle('visible');
+      }
+
       window.addEventListener('DOMContentLoaded', loadAndRender);
     </script>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <h1>Behaviour Convergence — Interactive Diagram</h1>
-        <div class="toolbar">
-          <a class="btn" href="https://mermaid.live" target="_blank" rel="noreferrer">
-            <button class="secondary">Open in Mermaid Live</button>
-          </a>
-          <span class="status" id="status"></span>
-        </div>
-      </header>
-      <main>
-        <section>
-          <div id="diagram" aria-label="Interactive diagram" role="img"></div>
-        </section>
-        <section style="margin-top:16px;">
-          <h3>Edit Mermaid Source</h3>
-          <textarea id="editor" oninput="reRender()" aria-label="Mermaid source editor"></textarea>
-        </section>
-      </main>
-    </div>
   </body>
 </html>

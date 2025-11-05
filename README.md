@@ -7,7 +7,67 @@ Population-scale forecasting is hard, especially with open synthetic data. This 
 
 ![Demo Screenshot](assets/demo.gif)
 
-> **We’re building in the open!** Grab a Milestone-0 issue to appear in our all-contributors wall.
+
+# TL;DR
+Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
+
+**Problem:** Most population forecasting tools are closed, hard to extend, and lack reproducibility.
+**Solution:** This project is open, modular, and ships with synthetic data and a plug-in architecture for predictors.
+
+![Demo Screenshot](assets/demo.gif)
+
+> **We're building in the open!** Grab a Milestone-0 issue to appear in our all-contributors wall.
+
+# The Convergence of Human-Behaviour Prediction
+> Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
+
+[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
+[![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
+
+---
+
+## What is this?
+
+This project demonstrates **population-scale behavioural forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioural states at unprecedented scale.
+
+**Status:** Proof-of-concept (v0.1) — research artifact
+**Paper:** Under review
+**Data:** Synthetic sample (1% slice) available; full dataset under restricted access
+**Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
+
+---
+
+## Interactive Architecture
+
+**[Explore the Interactive Diagram →](https://codethor0.github.io/human-behaviour-convergence/docs/interactive-diagram.html)**
+
+Click, zoom, and explore the full system architecture with interactive tooltips and real-time rendering. The diagram shows how 8.4 billion individuals converge into a unified predictive system.
+
+### Features
+- **Interactive nodes** - Click to highlight components and data flows
+- **Zoom & Pan** - Navigate the complete architecture at any scale
+- **Live editing** - Modify the diagram source and see changes instantly
+- **Dark theme** - Optimized for readability and visual impact
+
+<details>
+<summary>View static diagram (fallback)</summary>
+
+![diagram](diagram/behaviour-convergence.svg)
+
+</details>
+
+### Architecture Components
+
+| Layer | Scale | Description |
+|-------|-------|-------------|
+| **TRAIN** | 5.6B online | Digital natives generating clickstream, geolocation, and telemetry data |
+| **ACQUIRE** | 2.8B offline | Limited-connectivity populations via orbital imaging and ground networks |
+| **PROCESS** | 8.4B total | Real-time fusion and inference across planetary scale compute fabric |
+| **FEEDBACK** | Continuous | Predictive outputs enable targeted interventions generating new training data |
+
+
 
 # The Convergence of Human-Behaviour Prediction
 > Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
