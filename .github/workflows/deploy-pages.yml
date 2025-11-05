@@ -2,11 +2,12 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [ master, feat/public-layer ]
+    branches: [ main, master ]
     paths:
       - 'docs/**'
       - 'diagram/**'
       - '.github/workflows/deploy-pages.yml'
+      - 'index.html'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +16,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -25,25 +26,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare static site
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site
         run: |
           mkdir -p out
+          # Copy interactive docs and diagram sources
           cp -R docs out/
           cp -R diagram out/
-          # simple index redirect to the interactive diagram
-          cat > out/index.html <<'HTML'
-          <!doctype html>
-          <html lang="en">
-          <head>
-            <meta charset="utf-8" />
-            <meta http-equiv="refresh" content="0; url=./docs/interactive-diagram.html">
-            <title>Human Behaviour Convergence</title>
-          </head>
-          <body>
-            <p>Redirecting to <a href="./docs/interactive-diagram.html">Interactive Diagram</a>…</p>
-          </body>
-          </html>
-          HTML
+          # Ensure root index exists (redirect to interactive page)
+          cp index.html out/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -1,3 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Behaviour Convergence — Interactive Diagram</title>
+    <meta name="description" content="Interactive Mermaid diagram for Human Behaviour Convergence" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b0f14;
+        --panel: #121821;
+        --text: #e6edf3;
+        --muted: #9fb0c3;
+        --accent: #66b3ff;
+        --border: #223042;
+      }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.5 -apple-system, BlinkMacSystemFont, Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      header h1 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
+      }
+      header .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 16px;
+        height: calc(100% - 74px);
+        padding: 16px;
+      }
+      #viewer {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: auto;
+        position: relative;
+      }
+      #controls {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        background: #1a2432;
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .btn:hover { border-color: #345178; }
+      aside {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+      }
+      textarea {
+        width: 100%;
+        min-height: 180px;
+        resize: vertical;
+        background: #0f141c;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+      }
+      .muted { color: var(--muted); font-size: 13px; }
+      .link { color: var(--accent); text-decoration: none; }
+      .link:hover { text-decoration: underline; }
+      .mermaid { margin: 24px; }
+      @media (max-width: 980px) {
+        main { grid-template-columns: 1fr; height: auto; }
+      }
+    </style>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'dark' });
+
+      const srcUrl = new URL('../diagram/behaviour-convergence.mmd', document.baseURI).toString();
+      const diagramEl = document.getElementById('diagram');
+      const editor = document.getElementById('editor');
+      const status = document.getElementById('status');
+      const btnRefresh = document.getElementById('btn-refresh');
+      const btnReset = document.getElementById('btn-reset');
+      let originalText = '';
+
+      async function fetchDiagram() {
+        status.textContent = 'Loading diagram…';
+        const res = await fetch(srcUrl, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to fetch diagram: ' + res.status);
+        const text = await res.text();
+        originalText = text;
+        editor.value = text;
+        status.textContent = 'Loaded';
+        return text;
+      }
+
+      async function render(text) {
+        try {
+          const { svg } = await mermaid.render('behaviour-convergence', text);
+          diagramEl.innerHTML = svg;
+          status.textContent = 'Rendered';
+        } catch (err) {
+          console.error(err);
+          status.textContent = 'Mermaid error: ' + err.message;
+        }
+      }
+
+      btnRefresh.addEventListener('click', () => render(editor.value));
+      btnReset.addEventListener('click', () => {
+        editor.value = originalText || editor.value;
+        render(editor.value);
+      });
+
+      // Initial load
+      fetchDiagram().then(render).catch(err => {
+        console.error(err);
+        status.textContent = 'Failed to load diagram source. Check that diagram/behaviour-convergence.mmd exists.';
+      });
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>Human Behaviour Convergence — Interactive Diagram</h1>
+      <p class="sub">Live Mermaid rendering from <code>diagram/behaviour-convergence.mmd</code></p>
+    </header>
+    <main>
+      <section id="viewer">
+        <div id="controls">
+          <button class="btn" id="btn-refresh">Render</button>
+          <button class="btn" id="btn-reset">Reset</button>
+        </div>
+        <div id="diagram" class="mermaid" aria-live="polite"></div>
+      </section>
+      <aside>
+        <div>
+          <strong>Source</strong>
+          <p class="muted">Edit the Mermaid source and click Render to preview changes locally (no files are saved).</p>
+          <textarea id="editor" spellcheck="false" aria-label="Mermaid source"></textarea>
+          <div class="muted" id="status">Idle</div>
+        </div>
+        <div>
+          <strong>Tips</strong>
+          <ul class="muted">
+            <li>For quick edits, open the .mmd file in Mermaid Live: <a class="link" href="https://mermaid.live" target="_blank" rel="noreferrer">mermaid.live</a></li>
+            <li>Static SVG/PNG assets should be generated by CI from the .mmd source.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+  </body>
+  </html>
 <!-- SPDX-License-Identifier: MIT-0 -->
 <!doctype html>
 <html lang="en">
