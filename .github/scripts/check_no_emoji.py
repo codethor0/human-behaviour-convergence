@@ -41,15 +41,16 @@ def check_file(file_path: Path) -> list[tuple[int, str]]:
 def main():
     root = Path(__file__).parent.parent.parent
     md_files = list(root.glob("**/*.md"))
-    
+
     # Exclude files in hidden directories or specific paths
     md_files = [
-        f for f in md_files
+        f
+        for f in md_files
         if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
     ]
-    
+
     found_emojis = False
-    
+
     for md_file in sorted(md_files):
         violations = check_file(md_file)
         if violations:
@@ -58,7 +59,7 @@ def main():
             print(f"\n❌ Emojis found in {rel_path}:")
             for line_num, line_content in violations:
                 print(f"  Line {line_num}: {line_content}")
-    
+
     if found_emojis:
         print("\n❌ CI FAILED: Emojis detected in Markdown files.")
         print("Please remove all emojis to maintain professional documentation.")

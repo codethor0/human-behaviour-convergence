@@ -1,7 +1,6 @@
 """
 Unit tests for forecasting pipeline.
 """
-import pytest
 
 
 def test_forecast_shape():
