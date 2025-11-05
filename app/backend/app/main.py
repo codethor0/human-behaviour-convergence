@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT-0
 from __future__ import annotations
 
 import asyncio
@@ -13,6 +14,11 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
+
+try:
+    from app.routers import public
+except ModuleNotFoundError:
+    from routers import public
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues
@@ -71,6 +77,9 @@ RESULTS_DIR = _find_results_dir(Path(__file__))
 
 app = FastAPI(title="Behaviour Convergence API", version="0.1.0")
 
+# Register routers
+app.include_router(public.router)
+
 # Configure CORS from environment (comma-separated)
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
@@ -125,8 +134,9 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
     global _cache_hits, _cache_misses
 
     # Defensively restrict allowed CSV names (unknown names return empty)
-    if name not in {"forecasts.csv", "metrics.csv"}:
-        return []
+    allowed_names = {"forecasts.csv", "metrics.csv"}
+    if name not in allowed_names:
+        raise ValueError(f"Invalid CSV name: {name}")
 
     # Use tuple for cache key to avoid string collision issues
     cache_key: Tuple[str, int] = (name, limit)
@@ -186,19 +196,15 @@ def _read_csv_uncached(name: str, limit: int = 1000) -> List[Dict]:
     """Read a CSV from results/ directory without caching, respecting limit."""
     if RESULTS_DIR is not None:
         csv_path = RESULTS_DIR / name
-        if csv_path.exists():
-            try:
+        try:
+            if csv_path.exists():
                 df = pd.read_csv(csv_path)
                 if limit:
                     df = df.head(limit)
                 return df.to_dict(orient="records")
-            except pd.errors.EmptyDataError:
-                # Empty CSV, return empty list
-                return []
-            except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as e:
-                # CSV parse/encoding errors: log and fall back to stubs
-                logger.warning("Failed to parse CSV %s: %s", name, e)
-                # Fall through to stubs below
+        except Exception as e:
+            logger.warning("Failed to read CSV %s: %s", name, e)
+    # mypy: strict
 
     # Fallback stubs
     if name == "forecasts.csv":

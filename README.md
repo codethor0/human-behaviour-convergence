@@ -1,3 +1,14 @@
+
+# TL;DR
+Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
+
+**Problem:** Most population forecasting tools are closed, hard to extend, and lack reproducibility.
+**Solution:** This project is open, modular, and ships with synthetic data and a plug-in architecture for predictors.
+
+![Demo Screenshot](assets/demo.gif)
+
+> **We’re building in the open!** Grab a Milestone-0 issue to appear in our all-contributors wall.
+
 # The Convergence of Human-Behaviour Prediction
 > Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
 
