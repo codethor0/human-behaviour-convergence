@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
@@ -17,6 +18,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 _cache: Dict[Tuple[str, int], List[Dict]] = {}
 _cache_ttl: Dict[Tuple[str, int], datetime] = {}
 _cache_lock: Lock = Lock()
+_cache_hits: int = 0
+_cache_misses: int = 0
 
 # Configuration from environment with sensible defaults
 MAX_CACHE_SIZE = int(
@@ -96,6 +99,11 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
     """
     if limit < 0:
         raise ValueError(f"limit must be non-negative, got {limit}")
+    global _cache_hits, _cache_misses
+
+    # Defensively restrict allowed CSV names (unknown names return empty)
+    if name not in {"forecasts.csv", "metrics.csv"}:
+        return []
 
     # Use tuple for cache key to avoid string collision issues
     cache_key: Tuple[str, int] = (name, limit)
@@ -113,6 +121,16 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
             and now < _cache_ttl[cache_key]
         ):
             # Return a shallow copy to avoid external mutation of cached data
+            _cache_hits += 1
+            # Periodically log cache stats every 50 lookups
+            total = _cache_hits + _cache_misses
+            if total % 50 == 0:
+                logger.info(
+                    "cache stats: hits=%d misses=%d size=%d",
+                    _cache_hits,
+                    _cache_misses,
+                    len(_cache),
+                )
             return list(_cache[cache_key])
 
     # Cache miss/expired: perform I/O outside lock
@@ -120,6 +138,7 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
 
     # Thread-safe cache write with eviction
     with _cache_lock:
+        _cache_misses += 1
         # Re-check validity in case another thread populated it
         if cache_key not in _cache or now >= _cache_ttl.get(cache_key, datetime.min):
             # Implement simple cache eviction: remove oldest entry if cache is full
@@ -132,6 +151,12 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
             _cache[cache_key] = result
             _cache_ttl[cache_key] = now + CACHE_DURATION
     return result
+
+
+async def _read_csv_async(name: str, limit: int = 1000) -> List[Dict]:
+    """Async wrapper to avoid blocking the event loop during CSV I/O."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, lambda: _read_csv(name, limit))
 
 
 def _read_csv_uncached(name: str, limit: int = 1000) -> List[Dict]:
@@ -167,14 +192,14 @@ def _read_csv_uncached(name: str, limit: int = 1000) -> List[Dict]:
 
 
 @app.get("/api/forecasts")
-def get_forecasts(
+async def get_forecasts(
     limit: int = Query(
         default=1000, ge=1, le=10000, description="Maximum rows to return"
     )
 ) -> Dict[str, List[Dict]]:
     """Return forecast data read from CSV (or a stub if missing)."""
     try:
-        return {"data": _read_csv("forecasts.csv", limit=limit)}
+        return {"data": await _read_csv_async("forecasts.csv", limit=limit)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except FileNotFoundError as e:
@@ -186,14 +211,14 @@ def get_forecasts(
 
 
 @app.get("/api/metrics")
-def get_metrics(
+async def get_metrics(
     limit: int = Query(
         default=1000, ge=1, le=10000, description="Maximum rows to return"
     )
 ) -> Dict[str, List[Dict]]:
     """Return metrics data read from CSV (or a stub if missing)."""
     try:
-        return {"data": _read_csv("metrics.csv", limit=limit)}
+        return {"data": await _read_csv_async("metrics.csv", limit=limit)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except FileNotFoundError as e:
