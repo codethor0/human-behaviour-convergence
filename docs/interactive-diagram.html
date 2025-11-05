@@ -1,0 +1,67 @@
+<!-- SPDX-License-Identifier: MIT-0 -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Behaviour Convergence — Interactive Diagram</title>
+    <style>
+      body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 16px; background: #f7f9fc; }
+      header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+      .container { max-width: 1200px; margin: 0 auto; }
+      .toolbar { display:flex; gap:8px; align-items:center; }
+      .status { color: #555; font-size: 12px; }
+      #diagram { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; overflow: auto; }
+      button { background:#111827; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+      button.secondary { background:#374151; }
+      a.btn { text-decoration:none; }
+      textarea { width: 100%; height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; border:1px solid #e5e7eb; border-radius:6px; padding:8px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'loose', theme: 'base' });
+      async function loadAndRender() {
+        const status = document.getElementById('status');
+        status.textContent = 'Loading…';
+        try {
+          const resp = await fetch('../diagram/behaviour-convergence.mmd');
+          const mmd = await resp.text();
+          document.getElementById('editor').value = mmd;
+          const { svg } = await mermaid.render('bc-diagram', mmd);
+          document.getElementById('diagram').innerHTML = svg;
+          status.textContent = 'Rendered from diagram/behaviour-convergence.mmd';
+        } catch (e) {
+          status.textContent = 'Failed to load diagram: ' + e.message;
+        }
+      }
+      async function reRender() {
+        const mmd = document.getElementById('editor').value;
+        const { svg } = await mermaid.render('bc-diagram', mmd);
+        document.getElementById('diagram').innerHTML = svg;
+      }
+      window.addEventListener('DOMContentLoaded', loadAndRender);
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Behaviour Convergence — Interactive Diagram</h1>
+        <div class="toolbar">
+          <a class="btn" href="https://mermaid.live" target="_blank" rel="noreferrer">
+            <button class="secondary">Open in Mermaid Live</button>
+          </a>
+          <span class="status" id="status"></span>
+        </div>
+      </header>
+      <main>
+        <section>
+          <div id="diagram" aria-label="Interactive diagram" role="img"></div>
+        </section>
+        <section style="margin-top:16px;">
+          <h3>Edit Mermaid Source</h3>
+          <textarea id="editor" oninput="reRender()" aria-label="Mermaid source editor"></textarea>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

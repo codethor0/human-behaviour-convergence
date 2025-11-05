@@ -32,6 +32,9 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 
 ## Architecture Overview
 
+- View the interactive diagram (editable): [Interactive Diagram](docs/interactive-diagram.html)
+- Static fallback:
+
 ![diagram](diagram/behaviour-convergence.svg)
 
 ## What's inside
