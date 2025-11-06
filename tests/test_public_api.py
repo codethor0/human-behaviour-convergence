@@ -3,12 +3,15 @@
 import sys
 from pathlib import Path
 
-# Add backend app to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "app" / "backend"))
+# Ensure project root is on path (for top-level packages like 'connectors')
+sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add backend app to path (so 'from app.main import app' resolves to backend)
+sys.path.insert(1, str(Path(__file__).parent.parent / "app" / "backend"))
 
 import pytest
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 client = TestClient(app)
 
