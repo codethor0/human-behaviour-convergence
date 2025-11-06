@@ -15,10 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 
-try:
-    from app.routers import public
-except ModuleNotFoundError:
-    from routers import public
+# Use relative import to ensure package-local router resolution
+from .routers import public
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues
@@ -136,7 +134,8 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
     # Defensively restrict allowed CSV names (unknown names return empty)
     allowed_names = {"forecasts.csv", "metrics.csv"}
     if name not in allowed_names:
-        raise ValueError(f"Invalid CSV name: {name}")
+        # Unknown names return empty (test expectation)
+        return []
 
     # Use tuple for cache key to avoid string collision issues
     cache_key: Tuple[str, int] = (name, limit)
@@ -312,7 +311,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "app.main:app",
+        "app.backend.app.main:app",
         host=os.getenv("HOST", "127.0.0.1"),
         port=int(os.getenv("PORT", "8000")),
         reload=True,
