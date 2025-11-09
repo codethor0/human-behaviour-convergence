@@ -232,3 +232,7 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 ## License
 
 MIT
+
+## Updates & Announcements
+
+- *Nov 2025:* [Project rationale blog post](docs/blog/0001-rationale.md) — why we built this synthetic, ethics-first explorer.
