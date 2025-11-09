@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Backend README notes covering cache configuration, CSV normalisation, and test workflow.
+- One-command `scripts/dev` bootstrap script.
+- `hbc-cli` console utility for generating synthetic forecasts.
+- Minimal Explorer page at `docs/index.html` for GitHub Pages.
+- Colab/Binder badges to README for cloud execution.
 
 ### Changed
 - FastAPI backend now normalises CSV columns, enforces cache eviction/TTL consistently, and keeps stub responses stable.
 - Introduced a module shim so overrides of `RESULTS_DIR` / `MAX_CACHE_SIZE` stay in sync between `app.main` and the backend implementation.
+- Shared synthetic forecast generator moved to `hbc.forecasting` for reuse across API and CLI.
+- Switched Dockerfile to a multi-stage build that installs the package via `pyproject.toml`.
 
 ### Planned
 - Jupyter notebook with synthetic data demo

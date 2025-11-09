@@ -15,7 +15,9 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from hbc.forecasting import generate_synthetic_forecast
 
 # Use relative import to ensure package-local router resolution
 from .routers import public
@@ -341,6 +343,33 @@ def _get_cache_limit() -> int:
         return 0
 
 
+def _get_version() -> str:
+    return os.getenv("APP_VERSION", app.version)
+
+
+def _get_commit() -> str:
+    commit = os.getenv("GIT_COMMIT")
+    if commit:
+        return commit
+    repo_root = Path(__file__).resolve().parents[3]
+    git_dir = repo_root / ".git"
+    if git_dir.exists():
+        try:
+            import subprocess
+
+            return (
+                subprocess.check_output(
+                    ["git", "-C", str(repo_root), "rev-parse", "--short", "HEAD"],
+                    stderr=subprocess.DEVNULL,
+                )
+                .decode("utf-8")
+                .strip()
+            )
+        except Exception:
+            return "unknown"
+    return "unknown"
+
+
 def _normalize_records(
     name: str, records: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
@@ -451,6 +480,28 @@ class CacheStatus(BaseModel):
     ttl_minutes: int
 
 
+class StatusResponse(BaseModel):
+    ok: bool = True
+    version: str
+    commit: str
+
+
+class ForecastRequest(BaseModel):
+    region: str
+    horizon: int = Field(..., ge=1, le=30)
+    modalities: List[str] = Field(default_factory=list)
+
+
+class ForecastResult(BaseModel):
+    region: str
+    horizon: int
+    modalities: List[str]
+    forecast: float
+    confidence: float
+    explanations: List[str]
+    ethics: Dict[str, bool]
+
+
 @app.get("/api/forecasts", response_model=ForecastResponse)
 async def get_forecasts(
     limit: int = Query(
@@ -491,8 +542,14 @@ async def get_metrics(
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
-@app.get("/api/status", response_model=CacheStatus)
-def get_status() -> CacheStatus:
+@app.get("/api/status", response_model=StatusResponse, tags=["meta"])
+def get_status() -> StatusResponse:
+    """Return service metadata."""
+    return StatusResponse(version=_get_version(), commit=_get_commit())
+
+
+@app.get("/api/cache/status", response_model=CacheStatus, tags=["meta"])
+def get_cache_status() -> CacheStatus:
     """Return basic cache stats for observability."""
     with _cache_lock:
         hits = globals().get("_cache_hits", 0)
@@ -504,6 +561,23 @@ def get_status() -> CacheStatus:
         size=size,
         max_size=MAX_CACHE_SIZE,
         ttl_minutes=CACHE_TTL_MINUTES,
+    )
+
+
+@app.post("/api/forecast", response_model=ForecastResult, tags=["forecasting"])
+def create_forecast(payload: ForecastRequest) -> ForecastResult:
+    """Return a deterministic synthetic forecast for the requested region."""
+    forecast, confidence, explanations = generate_synthetic_forecast(
+        payload.region, payload.horizon, payload.modalities
+    )
+    return ForecastResult(
+        region=payload.region,
+        horizon=payload.horizon,
+        modalities=payload.modalities,
+        forecast=forecast,
+        confidence=confidence,
+        explanations=explanations,
+        ethics={"synthetic": True, "pii": False},
     )
 
 

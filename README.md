@@ -137,15 +137,28 @@ mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -
 
 ## Quick Start
 
-1. **Explore the diagram interactively:**
-   [![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
+1. **Bootstrap locally**
+   ```bash
+   git clone https://github.com/codethor0/human-behaviour-convergence.git
+   cd human-behaviour-convergence
+   ./scripts/dev
+   ```
+   The helper script creates `.venv`, installs dependencies, runs `pytest`, launches `uvicorn app.main:app --port 8000`, and opens the static Explorer page.
 
-2. **Run the demo notebook:**
-   - Open `notebooks/demo.ipynb` in Jupyter Lab/Notebook
-   - Or view online: *(coming soon: Binder/Colab badge)*
+2. **Explore**
+   - API: http://localhost:8000/docs (interactive OpenAPI + ReDoc)
+   - Explorer: open `docs/index.html` (falls back to mocked responses if the API is offline)
 
-3. **Contribute:**
-   See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+3. **Contribute**
+   - Check [CONTRIBUTING.md](./CONTRIBUTING.md) for pre-commit hooks, coding style, and roadmap issues.
+
+## Run in the cloud
+
+[![Open in Colab](https://colab.research.googleusercontent.com/assets/colab-badge.svg)](https://colab.research.google.com/github/codethor0/human-behaviour-convergence/blob/master/notebooks/demo.ipynb)
+[![Launch Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/codethor0/human-behaviour-convergence/HEAD?labpath=notebooks%2Fdemo.ipynb)
+
+1. Click a badge above.
+2. Execute the notebook to reproduce the synthetic pipeline without local setup.
 
 ## Responsible Disclosure
 

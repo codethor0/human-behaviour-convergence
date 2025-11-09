@@ -1,26 +1,29 @@
-# --- Dockerfile for one-command onboarding ---
-FROM python:3.10-slim
+FROM python:3.10-slim AS builder
 
-# Set up working directory
+ENV PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt requirements.txt
-COPY requirements-dev.txt requirements-dev.txt
+COPY pyproject.toml README.md LICENSE ./
+COPY hbc ./hbc
+COPY app ./app
+COPY requirements.txt requirements-dev.txt ./
 
-# Install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install -r requirements-dev.txt
+RUN pip install --upgrade pip \
+    && pip install .
 
-# Copy source code
+FROM python:3.10-slim AS runtime
+
+ENV PIP_NO_CACHE_DIR=1
+WORKDIR /app
+
+COPY --from=builder /usr/local /usr/local
+
 COPY . .
 
-# Expose default port
 EXPOSE 8000
 
-# Default command: run FastAPI app with Uvicorn
-CMD ["uvicorn", "app.backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

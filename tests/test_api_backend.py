@@ -232,16 +232,59 @@ def test_cache_eviction(temp_results_dir, monkeypatch):
     assert ("forecasts.csv", 40) in main._cache
 
 
-def test_status_endpoint(client):
-    """Test the /api/status endpoint returns cache stats."""
-    # Warm up cache a bit
-    _ = client.get("/api/forecasts?limit=5")
+def test_status_endpoint(client, monkeypatch):
+    """Test the /api/status endpoint returns service metadata."""
+    monkeypatch.setenv("APP_VERSION", "9.9.9")
+    monkeypatch.setenv("GIT_COMMIT", "abcdef1")
     resp = client.get("/api/status")
     assert resp.status_code == 200
     data = resp.json()
-    assert set(["hits", "misses", "size", "max_size", "ttl_minutes"]).issubset(
-        data.keys()
-    )
+    assert data == {"ok": True, "version": "9.9.9", "commit": "abcdef1"}
+
+
+def test_cache_status_endpoint(client):
+    """Ensure cache status endpoint exposes statistics."""
+    _ = client.get("/api/forecasts?limit=5")
+    resp = client.get("/api/cache/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert set(["hits", "misses", "size", "max_size", "ttl_minutes"]).issubset(data)
     assert isinstance(data["hits"], int)
     assert isinstance(data["misses"], int)
     assert data["max_size"] >= 1
+
+
+def test_create_forecast_endpoint(client):
+    """POST /api/forecast should return deterministic synthetic data."""
+    payload = {
+        "region": "us-midwest",
+        "horizon": 7,
+        "modalities": ["satellite", "mobile"],
+    }
+    resp = client.post("/api/forecast", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["region"] == payload["region"]
+    assert data["horizon"] == payload["horizon"]
+    assert data["modalities"] == payload["modalities"]
+    assert data["ethics"] == {"synthetic": True, "pii": False}
+    assert 0 < data["forecast"] < 2
+    assert 0.5 <= data["confidence"] <= 0.99
+    assert (
+        len(data["explanations"]) == len(payload["modalities"])
+        or len(payload["modalities"]) == 0
+    )
+
+    # Deterministic response
+    resp_repeat = client.post("/api/forecast", json=payload)
+    assert resp_repeat.status_code == 200
+    assert resp_repeat.json() == data
+
+
+def test_create_forecast_validation(client):
+    """Invalid horizon should return validation error."""
+    resp = client.post(
+        "/api/forecast",
+        json={"region": "us-west", "horizon": 31, "modalities": []},
+    )
+    assert resp.status_code == 422
