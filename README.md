@@ -179,6 +179,7 @@ If you discover a security or privacy issue (including ethical concerns about th
 
 - **Security issues:** Open a confidential issue or email the maintainer (see [SECURITY.md](./SECURITY.md))
 - **Ethical concerns:** See [ETHICS.md](./ETHICS.md) for our approach to privacy, IRB compliance, and misuse mitigation
+- **Synthetic scope:** Review the [Model & Data Card](docs/model-data-card.md) for details on the generation pipeline, limitations, and mitigations.
 
 ## Development
 
