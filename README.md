@@ -160,6 +160,19 @@ mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -
 1. Click a badge above.
 2. Execute the notebook to reproduce the synthetic pipeline without local setup.
 
+## Architecture at a glance
+
+- **Train (online, 5.6B signals):** synthetic clickstream, telemetry, and wiki activity.
+- **Acquire (offline, 2.8B targets):** orbital imagery + ground IoT filling gaps.
+- **Process (planetary scale):** centaur models fuse multimodal features; feedback loop closes the simulation.
+- Explore the full diagram at [`diagram/behaviour-convergence.svg`](diagram/behaviour-convergence.svg) or the interactive version in [`docs/interactive-diagram.html`](docs/interactive-diagram.html).
+
+## Contributing (quick steps)
+
+1. `git clone` and `./scripts/dev` (creates `.venv`, installs deps, runs tests, launches API + Explorer).
+2. Make your change; run `pytest` and `pre-commit run --all-files` before committing.
+3. Open a PR referencing an issue (or create one). We label starter work with `good first issue` and `help wanted`.
+
 ## Responsible Disclosure
 
 If you discover a security or privacy issue (including ethical concerns about the model or data), please report it responsibly:
