@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Backend README notes covering cache configuration, CSV normalisation, and test workflow.
+
+### Changed
+- FastAPI backend now normalises CSV columns, enforces cache eviction/TTL consistently, and keeps stub responses stable.
+- Introduced a module shim so overrides of `RESULTS_DIR` / `MAX_CACHE_SIZE` stay in sync between `app.main` and the backend implementation.
+
 ### Planned
 - Jupyter notebook with synthetic data demo
 - Unit tests and CI workflow for tests
