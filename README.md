@@ -1,14 +1,16 @@
 [![Tip](https://img.shields.io/badge/Tip-support-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
 [![Monthly](https://img.shields.io/badge/Monthly-subscribe-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
 
-# TL;DR
-Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
+# Support my open-source work
 
-**Problem:** Most population forecasting tools are closed, hard to extend, and lack reproducibility.
-**Solution:** This project is open, modular, and ships with synthetic data and a plug-in architecture for predictors.
+If these projects help you, consider supporting ongoing maintenance:
 
-![Demo Screenshot](assets/demo.gif)
+- One-time tip: https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01
+- Monthly support: https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00
 
+**What you fund:** maintenance, docs, roadmap experiments, and new features.
+
+Thank you!
 
 # TL;DR
 Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
