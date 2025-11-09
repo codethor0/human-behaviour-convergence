@@ -3,3 +3,5 @@ uvicorn[standard]>=0.30.0
 pandas>=2.2.0
 requests>=2.31.0
 httpx>=0.28.0
+h3>=4.3.0
+structlog>=23.1.0
