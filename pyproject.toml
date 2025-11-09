@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hbc"
+version = "0.1.0"
+description = "Synthetic, population-scale behavioural forecasting explorer."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [{name = "codethor", email = "codethor0@users.noreply.github.com"}]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pandas>=2.2.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "h3>=3.7.6",
+    "structlog>=23.1.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "responses>=0.24.0",
+]
+
+[project.scripts]
+hbc-cli = "hbc.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["hbc"]

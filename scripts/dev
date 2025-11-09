@@ -1,0 +1,94 @@
+#!/usr/bin/env sh
+set -eu
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+VENV_PATH="$PROJECT_ROOT/.venv"
+PYTHON_BIN="${PYTHON:-python3}"
+
+info() {
+  printf '%s\n' "$*" >&2
+}
+
+fail() {
+  printf 'Error: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/dev [--reset]
+
+Creates (or refreshes) the local development environment, runs the test suite,
+and launches the Behaviour Convergence API.
+
+Options:
+  --reset    Remove the existing .venv before recreating it.
+EOF
+}
+
+RESET_ENV=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --reset)
+      RESET_ENV=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage
+      fail "unknown option: $1"
+      ;;
+  esac
+done
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+  fail "Python interpreter not found: $PYTHON_BIN"
+fi
+
+if [ "$RESET_ENV" -eq 1 ] && [ -d "$VENV_PATH" ]; then
+  info "Removing existing virtual environment at $VENV_PATH"
+  rm -rf "$VENV_PATH" || fail "failed to remove $VENV_PATH"
+fi
+
+if [ ! -d "$VENV_PATH" ]; then
+  info "Creating virtual environment at $VENV_PATH"
+  "$PYTHON_BIN" -m venv "$VENV_PATH" || fail "could not create virtual environment"
+fi
+
+. "$VENV_PATH/bin/activate"
+
+info "Upgrading pip"
+pip install --upgrade pip >/dev/null || fail "pip upgrade failed"
+
+REQ_FILE="$PROJECT_ROOT/requirements.txt"
+DEV_REQ_FILE="$PROJECT_ROOT/requirements-dev.txt"
+
+if [ -f "$REQ_FILE" ]; then
+  info "Installing project requirements"
+  pip install -r "$REQ_FILE" >/dev/null || fail "failed to install requirements.txt"
+fi
+
+if [ -f "$DEV_REQ_FILE" ]; then
+  info "Installing development requirements"
+  pip install -r "$DEV_REQ_FILE" >/dev/null || fail "failed to install requirements-dev.txt"
+fi
+
+info "Running test suite"
+pytest "$PROJECT_ROOT/tests/" --cov || fail "pytest reported failures"
+
+EXPLORER_PAGE="$PROJECT_ROOT/docs/index.html"
+if [ -f "$EXPLORER_PAGE" ]; then
+  info "Opening Explorer page"
+  "$PYTHON_BIN" - <<PY || info "Unable to open Explorer page automatically"
+import pathlib, webbrowser
+path = pathlib.Path(r"$EXPLORER_PAGE").resolve().as_uri()
+webbrowser.open_new_tab(path)
+PY
+fi
+
+info "Starting Behaviour Convergence API"
+info "Explorer: http://localhost:8000/"
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000

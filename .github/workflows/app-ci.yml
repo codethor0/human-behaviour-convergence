@@ -42,6 +42,7 @@ jobs:
 
   frontend:
     name: Frontend (Next.js)
+    if: ${{ hashFiles('app/frontend/package-lock.json') != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

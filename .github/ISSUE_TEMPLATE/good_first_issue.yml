@@ -1,0 +1,20 @@
+name: Good First Issue
+about: Mark this issue as a good entry point for new contributors
+labels: ["good first issue", "community"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for considering contributing! This issue is suitable for newcomers and has a clear, limited scope.
+  - type: textarea
+    id: task-list
+    attributes:
+      label: Task List
+      description: List the steps required to complete this issue.
+      placeholder: |
+        - [ ] Step 1
+        - [ ] Step 2
+        - [ ] Step 3
+    validations:
+      required: true
