@@ -53,6 +53,7 @@ jobs:
 
       - name: Render SVG and PNG (fallback to npm mmdc)
         if: steps.docker.outcome == 'failure'
+        continue-on-error: true
         run: |
           mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg -p .github/puppeteer.config.cjs
           mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -p .github/puppeteer.config.cjs -b transparent -s 2
