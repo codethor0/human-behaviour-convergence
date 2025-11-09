@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT-0
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-test-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Ruff Lint
+        run: ruff .
+      - name: Black Format
+        run: black --check .
+      - name: Mypy Type Check
+        run: mypy --strict .
+      - name: Semgrep Security Scan
+        run: semgrep --config=auto .
+      - name: Run Tests
+        run: pytest --maxfail=1 --disable-warnings
+      - name: Generate SBOM
+        run: pip install syft grype && syft . -o json > sbom.json
+      - name: CVE Scan
+        run: grype sbom:sbom.json -o table > cve-report.txt
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cve
+          path: |
+            sbom.json
+            cve-report.txt

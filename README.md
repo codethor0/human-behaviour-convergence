@@ -1,3 +1,81 @@
+
+# TL;DR
+Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
+
+**Problem:** Most population forecasting tools are closed, hard to extend, and lack reproducibility.
+**Solution:** This project is open, modular, and ships with synthetic data and a plug-in architecture for predictors.
+
+![Demo Screenshot](assets/demo.gif)
+
+
+# TL;DR
+Population-scale forecasting is hard, especially with open synthetic data. This repo provides a transparent, extensible pipeline for behavioural prediction at scale—ready for contributors and new models.
+
+**Problem:** Most population forecasting tools are closed, hard to extend, and lack reproducibility.
+**Solution:** This project is open, modular, and ships with synthetic data and a plug-in architecture for predictors.
+
+![Demo Screenshot](assets/demo.gif)
+
+> **We're building in the open!** Grab a Milestone-0 issue to appear in our all-contributors wall.
+
+<div align="center">
+
+# Behaviour Convergence Explorer
+
+[![Tests](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/tests.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/codethor0/human-behaviour-convergence?logo=codecov)](https://app.codecov.io/gh/codethor0/human-behaviour-convergence)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg?logo=python)](https://www.python.org/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
+[![DOI](https://img.shields.io/badge/DOI-soon-lightgrey.svg)](https://zenodo.org/)
+
+<p><em>Ethics-first, synthetic-only behavioural forecasting. No personal data—ever.</em></p>
+
+</div>
+
+---
+
+## What is this?
+
+This project demonstrates **population-scale behavioural forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioural states at unprecedented scale.
+
+**Status:** Proof-of-concept (v0.1) — research artifact
+**Paper:** Under review
+**Data:** Synthetic sample (1% slice) available; full dataset under restricted access
+**Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
+
+---
+
+## Interactive Architecture
+
+**[Explore the Interactive Diagram →](https://codethor0.github.io/human-behaviour-convergence/docs/interactive-diagram.html)**
+
+Click, zoom, and explore the full system architecture with interactive tooltips and real-time rendering. The diagram shows how 8.4 billion individuals converge into a unified predictive system.
+
+### Features
+- **Interactive nodes** - Click to highlight components and data flows
+- **Zoom & Pan** - Navigate the complete architecture at any scale
+- **Live editing** - Modify the diagram source and see changes instantly
+- **Dark theme** - Optimized for readability and visual impact
+
+<details>
+<summary>View static diagram (fallback)</summary>
+
+![diagram](diagram/behaviour-convergence.svg)
+
+</details>
+
+### Architecture Components
+
+| Layer | Scale | Description |
+|-------|-------|-------------|
+| **TRAIN** | 5.6B online | Digital natives generating clickstream, geolocation, and telemetry data |
+| **ACQUIRE** | 2.8B offline | Limited-connectivity populations via orbital imaging and ground networks |
+| **PROCESS** | 8.4B total | Real-time fusion and inference across planetary scale compute fabric |
+| **FEEDBACK** | Continuous | Predictive outputs enable targeted interventions generating new training data |
+
+
+
 # The Convergence of Human-Behaviour Prediction
 > Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
 
@@ -21,6 +99,9 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 
 ## Architecture Overview
 
+- View the interactive diagram (editable): [Interactive Diagram](docs/interactive-diagram.html)
+- Static fallback:
+
 ![diagram](diagram/behaviour-convergence.svg)
 
 ## What's inside
@@ -41,6 +122,19 @@ This project demonstrates **population-scale behavioural forecasting** using a t
   - Pull requests: renders to a temporary location to validate Mermaid syntax (no commits).
   - Pushes: renders `svg/png` and opens an automated PR only when outputs actually change.
 
+### Optional: local render
+
+If you prefer a local preview without relying on CI or Mermaid Live, you can use the Mermaid CLI (optional):
+
+```bash
+# install once (global)
+npm install -g @mermaid-js/mermaid-cli
+
+# render SVG and PNG locally
+mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg
+mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -b transparent -s 2
+```
+
 ## Who is this for?
 
 - **Data science teams** exploring large-scale behavioural modelling
@@ -50,15 +144,41 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 
 ## Quick Start
 
-1. **Explore the diagram interactively:**
-   [![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
+1. **Bootstrap locally**
+   ```bash
+   git clone https://github.com/codethor0/human-behaviour-convergence.git
+   cd human-behaviour-convergence
+   ./scripts/dev
+   ```
+   The helper script creates `.venv`, installs dependencies, runs `pytest`, launches `uvicorn app.main:app --port 8000`, and opens the static Explorer page.
 
-2. **Run the demo notebook:**
-   - Open `notebooks/demo.ipynb` in Jupyter Lab/Notebook
-   - Or view online: *(coming soon: Binder/Colab badge)*
+2. **Explore**
+   - API: http://localhost:8000/docs (interactive OpenAPI + ReDoc)
+   - Explorer: open `docs/index.html` (falls back to mocked responses if the API is offline)
 
-3. **Contribute:**
-   See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+3. **Contribute**
+   - Check [CONTRIBUTING.md](./CONTRIBUTING.md) for pre-commit hooks, coding style, and roadmap issues.
+
+## Run in the cloud
+
+[![Open in Colab](https://colab.research.googleusercontent.com/assets/colab-badge.svg)](https://colab.research.google.com/github/codethor0/human-behaviour-convergence/blob/master/notebooks/demo.ipynb)
+[![Launch Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/codethor0/human-behaviour-convergence/HEAD?labpath=notebooks%2Fdemo.ipynb)
+
+1. Click a badge above.
+2. Execute the notebook to reproduce the synthetic pipeline without local setup.
+
+## Architecture at a glance
+
+- **Train (online, 5.6B signals):** synthetic clickstream, telemetry, and wiki activity.
+- **Acquire (offline, 2.8B targets):** orbital imagery + ground IoT filling gaps.
+- **Process (planetary scale):** centaur models fuse multimodal features; feedback loop closes the simulation.
+- Explore the full diagram at [`diagram/behaviour-convergence.svg`](diagram/behaviour-convergence.svg) or the interactive version in [`docs/interactive-diagram.html`](docs/interactive-diagram.html).
+
+## Contributing (quick steps)
+
+1. `git clone` and `./scripts/dev` (creates `.venv`, installs deps, runs tests, launches API + Explorer).
+2. Make your change; run `pytest` and `pre-commit run --all-files` before committing.
+3. Open a PR referencing an issue (or create one). We label starter work with `good first issue` and `help wanted`.
 
 ## Responsible Disclosure
 
@@ -66,6 +186,7 @@ If you discover a security or privacy issue (including ethical concerns about th
 
 - **Security issues:** Open a confidential issue or email the maintainer (see [SECURITY.md](./SECURITY.md))
 - **Ethical concerns:** See [ETHICS.md](./ETHICS.md) for our approach to privacy, IRB compliance, and misuse mitigation
+- **Synthetic scope:** Review the [Model & Data Card](docs/model-data-card.md) for details on the generation pipeline, limitations, and mitigations.
 
 ## Development
 
@@ -118,3 +239,9 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 ## License
 
 MIT
+
+## Updates & Announcements
+
+- *Nov 2025:* [Project rationale blog post](docs/blog/0001-rationale.md) — why we built this synthetic, ethics-first explorer.
+- *Nov 2025:* [Repository polish checklist](docs/repo-polish.md) — description, topics, and social preview steps for GitHub settings.
+- *Upcoming:* [Release notes draft for v0.1.0](docs/releases/v0.1.0.md) — update date & DOI at release time.

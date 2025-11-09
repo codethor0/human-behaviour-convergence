@@ -1,0 +1,52 @@
+name: Check Branch Protection
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify branch protection is enabled
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: ["master", "main"]
+    steps:
+      - name: Check if branch exists
+        id: exists
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ matrix.branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "authorization: Bearer $GH_TOKEN" \
+            -H "accept: application/vnd.github+json" \
+            https://api.github.com/repos/$REPO/branches/$BRANCH)
+          echo "status=$code" >> "$GITHUB_OUTPUT"
+
+      - name: Fail if branch protection missing
+        if: steps.exists.outputs.status == '200'
+        env:
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ matrix.branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "authorization: Bearer $GH_TOKEN" \
+            -H "accept: application/vnd.github+json" \
+            https://api.github.com/repos/$REPO/branches/$BRANCH/protection)
+          if [ "$code" != "200" ]; then
+            echo "Branch '$BRANCH' is NOT protected. Enable protection in Settings → Branches."
+            exit 1
+          else
+            echo "Branch '$BRANCH' has protection enabled."
+          fi

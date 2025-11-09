@@ -1,0 +1,23 @@
+name: "Milestone-0: One-Command Repo"
+about: "Track tasks for Milestone-0 onboarding"
+labels:
+  - milestone-0
+  - onboarding
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Milestone-0 aims to make the repo runnable in <5 min for any contributor. Complete these tasks to unlock easy onboarding!
+  - type: checkboxes
+    id: tasks
+    attributes:
+      label: Milestone-0 Tasks
+      options:
+        - label: Dockerfile and docker-compose.yml added
+        - label: devcontainer.json for Codespaces/GitPod
+        - label: Makefile with 'dev' target
+        - label: Demo GIF in assets/demo.gif
+        - label: CI badge green in README
+        - label: Good first issue template enabled
+        - label: EXTENSIBILITY.md docs created

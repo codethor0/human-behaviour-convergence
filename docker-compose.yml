@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - CACHE_MAX_SIZE=100
+      - CACHE_TTL_MINUTES=5
+      - LOG_LEVEL=INFO
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
