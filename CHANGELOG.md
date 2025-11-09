@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `hbc-cli` console utility for generating synthetic forecasts.
 - Minimal Explorer page at `docs/index.html` for GitHub Pages.
 - Colab/Binder badges to README for cloud execution.
+- Draft release notes at `docs/releases/v0.1.0.md`.
 
 ### Changed
 - FastAPI backend now normalises CSV columns, enforces cache eviction/TTL consistently, and keeps stub responses stable.

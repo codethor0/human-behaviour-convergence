@@ -244,3 +244,4 @@ MIT
 
 - *Nov 2025:* [Project rationale blog post](docs/blog/0001-rationale.md) — why we built this synthetic, ethics-first explorer.
 - *Nov 2025:* [Repository polish checklist](docs/repo-polish.md) — description, topics, and social preview steps for GitHub settings.
+- *Upcoming:* [Release notes draft for v0.1.0](docs/releases/v0.1.0.md) — update date & DOI at release time.
