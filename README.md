@@ -121,7 +121,10 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 ## Diagram quickstart
 
 - Edit the source: `diagram/behaviour-convergence.mmd` (don’t edit `.svg/.png`).
-- Preview/edit in your browser via Mermaid Live: https://mermaid.live
+- Preview/edit in your browser via [Mermaid Live (preloaded with this diagram)][mermaid-live-diagram]
+
+[mermaid-live-diagram]: https://mermaid.live/edit#url=https://raw.githubusercontent.com/codethor0/human-behaviour-convergence/main/diagram/behaviour-convergence.mmd
+
 - CI behavior:
   - Pull requests: renders to a temporary location to validate Mermaid syntax (no commits).
   - Pushes: renders `svg/png` and opens an automated PR only when outputs actually change.

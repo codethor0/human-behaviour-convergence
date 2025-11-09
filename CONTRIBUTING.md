@@ -26,7 +26,7 @@ Thanks for your interest in improving this project!
 
 ## Quickstart
 - The diagram’s source of truth is `diagram/behaviour-convergence.mmd`.
-- Preview and edit via Mermaid Live: https://mermaid.live
+- Preview and edit via [Mermaid Live (preloaded with the diagram)][mermaid-live-diagram]
 - On merge to `main`, CI re-renders `diagram/behaviour-convergence.svg` and `.png` via GitHub Actions.
 
 ## Making changes
@@ -46,3 +46,5 @@ Thanks for your interest in improving this project!
 
 ## Code of Conduct
 By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+[mermaid-live-diagram]: https://mermaid.live/edit#url=https://raw.githubusercontent.com/codethor0/human-behaviour-convergence/main/diagram/behaviour-convergence.mmd
