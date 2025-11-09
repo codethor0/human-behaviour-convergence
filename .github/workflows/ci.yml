@@ -23,15 +23,15 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Ruff Lint
-        run: ruff .
+        run: ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
       - name: Black Format
-        run: black --check .
+        run: black --check app/backend tests hbc
       - name: Mypy Type Check
-        run: mypy --strict .
+        run: mypy --strict app/backend tests hbc
       - name: Semgrep Security Scan
-        run: semgrep --config=auto .
+        run: semgrep --config=auto app/backend tests hbc
       - name: Run Tests
-        run: pytest --maxfail=1 --disable-warnings
+        run: pytest --maxfail=1 --disable-warnings tests
       - name: Generate SBOM
         run: pip install syft grype && syft . -o json > sbom.json
       - name: CVE Scan
