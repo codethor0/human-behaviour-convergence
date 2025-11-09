@@ -18,13 +18,20 @@ Population-scale forecasting is hard, especially with open synthetic data. This 
 
 > **We're building in the open!** Grab a Milestone-0 issue to appear in our all-contributors wall.
 
-# The Convergence of Human-Behaviour Prediction
-> Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
+<div align="center">
 
-[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
+# Behaviour Convergence Explorer
+
+[![Tests](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/tests.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/codethor0/human-behaviour-convergence?logo=codecov)](https://app.codecov.io/gh/codethor0/human-behaviour-convergence)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg?logo=python)](https://www.python.org/)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
-[![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
+[![DOI](https://img.shields.io/badge/DOI-soon-lightgrey.svg)](https://zenodo.org/)
+
+<p><em>Ethics-first, synthetic-only behavioural forecasting. No personal data—ever.</em></p>
+
+</div>
 
 ---
 
