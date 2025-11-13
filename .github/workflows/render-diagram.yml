@@ -12,6 +12,7 @@ on:
       - 'diagram/behaviour-convergence.mmd'
       - '.github/workflows/render-diagram.yml'
       - '.github/puppeteer.config.cjs'
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -26,37 +27,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Render SVG and PNG (Docker mermaid-cli)
-        id: docker
-        continue-on-error: true
-        run: |
-          docker run --rm \
-            -v "$PWD":/data \
-            -w /data \
-            ghcr.io/mermaid-js/mermaid-cli:10.9.1 \
-            --input diagram/behaviour-convergence.mmd --output diagram/behaviour-convergence.svg
-          docker run --rm \
-            -v "$PWD":/data \
-            -w /data \
-            ghcr.io/mermaid-js/mermaid-cli:10.9.1 \
-            --input diagram/behaviour-convergence.mmd --output diagram/behaviour-convergence.png --pngFit --backgroundColor transparent --scale 2
-
-      - name: Setup Node.js (fallback)
-        if: steps.docker.outcome == 'failure'
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
 
-      - name: Install mermaid-cli (fallback)
-        if: steps.docker.outcome == 'failure'
+      - name: Install mermaid-cli
         run: npm install -g @mermaid-js/mermaid-cli@10.9.1
 
-      - name: Render SVG and PNG (fallback to npm mmdc)
-        if: steps.docker.outcome == 'failure'
-        continue-on-error: true
+      - name: Render SVG
         run: |
           mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg -p .github/puppeteer.config.cjs
+          if [ ! -f "diagram/behaviour-convergence.svg" ]; then
+            echo "ERROR: SVG file not generated"
+            exit 1
+          fi
+          echo "✓ SVG generated successfully"
+
+      - name: Render PNG
+        run: |
           mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -p .github/puppeteer.config.cjs -b transparent -s 2
+          if [ ! -f "diagram/behaviour-convergence.png" ]; then
+            echo "ERROR: PNG file not generated"
+            exit 1
+          fi
+          echo "✓ PNG generated successfully"
 
       - name: Upload artifacts (PR only)
         if: ${{ github.event_name == 'pull_request' }}
