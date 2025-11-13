@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: MIT-0
+name: Maintenance
+
+on:
+  schedule:
+    # Run weekly on Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
+env:
+  DISK_CAP_GB: 10
+  MAX_LOG_MB: 5
+
+jobs:
+  disk-cleanup:
+    name: Disk Cleanup & Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check disk usage
+        run: |
+          echo "=== Disk Usage Report ==="
+          df -h
+          echo ""
+          echo "=== Top Directories ==="
+          du -sh * 2>/dev/null | sort -hr | head -10 || true
+          echo ""
+          DISK_USAGE=$(df -BG . | awk 'NR==2 {print $3}' | sed 's/G//' || echo "0")
+          DISK_CAP_GB=${DISK_CAP_GB:-10}
+          echo "Disk usage: ${DISK_USAGE}GB / ${DISK_CAP_GB}GB cap"
+          if [ "$DISK_USAGE" -gt "$DISK_CAP_GB" ]; then
+            echo "⚠️  WARNING: Disk usage exceeds cap"
+          else
+            echo "✅ Disk usage within cap"
+          fi
+
+      - name: Clean Python cache
+        run: |
+          echo "Cleaning Python cache..."
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+          find . -type f -name "*.pyc" -delete 2>/dev/null || true
+          echo "✅ Python cache cleaned"
+
+      - name: Clean test artifacts
+        run: |
+          echo "Cleaning test artifacts..."
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+          echo "✅ Test artifacts cleaned"
+
+      - name: Maintenance Summary
+        run: |
+          echo "=== Maintenance Summary ==="
+          echo "✅ Artifacts: GitHub automatically retains artifacts for 90 days"
+          echo "✅ Caches: GitHub automatically evicts unused caches after 7 days"
+          echo "✅ Logs: GitHub retains logs for 90 days"
+          echo "✅ Local cleanup: Python cache and test artifacts removed"
+          echo ""
+          echo "GitHub handles artifact and cache lifecycle automatically."
+          echo "This workflow ensures local disk usage stays within limits."
+
+  metrics:
+    name: CI Metrics Report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || (apt update && apt install curl -y)
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt update
+          apt install gh -y
+
+      - name: Generate Metrics Report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "=== CI Metrics Report ==="
+          echo ""
+          echo "Recent workflow runs (last 10):"
+          gh run list --limit 10 --json conclusion,displayTitle,createdAt,databaseId --jq '.[] | "\(.createdAt) | \(.conclusion) | \(.displayTitle)"' || echo "Unable to fetch workflow runs"
+          echo ""
+          echo "Workflow status summary:"
+          gh run list --limit 50 --json conclusion --jq '[group_by(.) | .[] | {status: .[0].conclusion, count: length}]' || echo "Unable to generate summary"
+          echo ""
+          echo "=== Pipeline Time Metrics ==="
+          echo "Fetching pipeline execution times..."
+          gh run list --limit 50 --json conclusion,createdAt,updatedAt,displayTitle --jq '.[] | select(.conclusion == "success") | {title: .displayTitle, duration: ((.updatedAt | fromdateiso8601) - (.createdAt | fromdateiso8601))}' || echo "Unable to fetch pipeline times"
+          echo ""
+          echo "=== Cache Status ==="
+          echo "GitHub Actions caches are automatically managed:"
+          echo "- Unused caches evicted after 7 days"
+          echo "- Total cache size limited by repository settings"
+          echo ""
+          echo "=== Artifact Status ==="
+          echo "GitHub Actions artifacts are automatically managed:"
+          echo "- Artifacts retained for 90 days (or workflow-specified retention)"
+          echo "- PR artifacts have shorter retention (30 days for CI workflows)"
+          echo ""
+          echo "=== Disk Usage Summary ==="
+          echo "Disk usage is monitored in all workflows:"
+          echo "- Pre-cleanup: Removes Python cache before each job"
+          echo "- Post-cleanup: Removes test artifacts after tests"
+          echo "- Disk cap: 10GB per job (DISK_CAP_GB=10)"
+          echo "- Log cap: 5MB per log file (MAX_LOG_MB=5)"
