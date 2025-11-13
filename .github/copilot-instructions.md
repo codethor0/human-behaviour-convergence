@@ -36,7 +36,7 @@ Note: mark the above as an assumption — the repo contains no package.json or w
 ## Change examples (quick templates for commits)
 
 - Small diagram tweak: "docs: update diagram node labels"
-- Structural diagram change: "feat(diagram): add subsystem X to behaviour convergence diagram"
+- Structural diagram change: "feat(diagram): add subsystem X to behavior convergence diagram"
 
 Keep commit messages short and reference `diagram/behaviour-convergence.mmd` when applicable.
 

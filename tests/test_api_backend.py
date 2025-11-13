@@ -2,11 +2,9 @@
 Comprehensive tests for the FastAPI backend.
 """
 
-import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List
 
 import pytest
 

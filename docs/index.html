@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Behaviour Convergence Explorer</title>
+    <title>Behavior Convergence Explorer</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
     <style>
       body {
@@ -21,7 +21,7 @@
           Synthetic research preview
         </p>
         <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
-          Behaviour Convergence Explorer
+          Behavior Convergence Explorer
         </h1>
         <p class="max-w-3xl text-lg text-slate-300">
           All outputs on this page are purely synthetic. Forecasts are generated
@@ -159,8 +159,8 @@
             class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40 shadow-xl shadow-cyan-500/10"
           >
             <img
-              src="/diagram/behaviour-convergence.svg"
-              alt="Behaviour Convergence architecture diagram"
+              src="../diagram/behaviour-convergence.svg"
+              alt="Behavior Convergence architecture diagram"
               class="w-full"
             />
             <figcaption class="p-4 text-xs text-slate-400">
@@ -168,6 +168,23 @@
               The Explorer serves as a companion UI for the FastAPI backend.
             </figcaption>
           </figure>
+        </div>
+
+        <div class="space-y-3" id="public-stats">
+          <h2 class="text-2xl font-semibold text-slate-100">
+            Live public data snapshot
+          </h2>
+          <div
+            class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 text-sm text-slate-300 shadow-lg shadow-emerald-500/10"
+          >
+            <p id="public-stats-summary" class="text-slate-400">
+              Loading latest snapshot…
+            </p>
+            <ul
+              id="public-stats-list"
+              class="mt-3 space-y-2 text-xs text-slate-400"
+            ></ul>
+          </div>
         </div>
       </section>
     </main>
@@ -271,6 +288,57 @@
             "Local API was unreachable. Displaying mocked synthetic response.";
         }
       });
+
+      async function loadPublicStats() {
+        const summaryEl = document.getElementById("public-stats-summary");
+        const listEl = document.getElementById("public-stats-list");
+        if (!summaryEl || !listEl) return;
+
+        try {
+          const response = await fetch("/api/public/stats", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          const data = await response.json();
+
+          if (!data.available) {
+            summaryEl.textContent =
+              (data.errors && data.errors.snapshot) ||
+              "No live snapshot found. Run `hbc-cli sync-public-data --apply` to populate data/public/latest.";
+            listEl.innerHTML = "";
+            return;
+          }
+
+          const updated = data.generated_at
+            ? new Date(data.generated_at).toLocaleString()
+            : "n/a";
+          summaryEl.textContent = `Date: ${data.date || "unknown"} • Updated ${updated}`;
+          listEl.innerHTML = "";
+
+          const labelMap = {
+            wiki: "Wikipedia pageviews",
+            osm: "OSM changesets",
+            firms: "NASA FIRMS fires",
+          };
+
+          Object.entries(data.sources || {}).forEach(([key, info]) => {
+            const label = labelMap[key] || key.toUpperCase();
+            const li = document.createElement("li");
+            if (info.error) {
+              li.textContent = `${label}: error (${info.error})`;
+              li.style.color = "#fca5a5";
+            } else {
+              li.textContent = `${label}: ${Number(info.rows || 0).toLocaleString()} rows`;
+            }
+            listEl.appendChild(li);
+          });
+        } catch (error) {
+          summaryEl.textContent = `Unable to load snapshot: ${error.message}`;
+          listEl.innerHTML = "";
+        }
+      }
+
+      loadPublicStats();
     </script>
   </body>
 </html>

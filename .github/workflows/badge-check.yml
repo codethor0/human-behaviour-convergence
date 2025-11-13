@@ -1,0 +1,46 @@
+name: Badge Status Check
+
+on:
+  schedule:
+    # Run daily at 3:00 AM UTC to check badge status
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'README.md'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  check-badges:
+    name: Check Badge Status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check workflow badges
+        run: |
+          echo "=== Checking Workflow Badges ==="
+          
+          # Check Tests badge
+          curl -s "https://github.com/${{ github.repository }}/actions/workflows/test.yml/badge.svg?branch=main" | grep -q "passing" && echo "✅ Tests badge: Green" || echo "❌ Tests badge: Not green"
+          
+          # Check CI badge
+          curl -s "https://github.com/${{ github.repository }}/actions/workflows/ci.yml/badge.svg?branch=main" | grep -q "passing" && echo "✅ CI badge: Green" || echo "❌ CI badge: Not green"
+          
+          # Check Render Diagram badge
+          curl -s "https://github.com/${{ github.repository }}/actions/workflows/render-diagram.yml/badge.svg?branch=main" | grep -q "passing" && echo "✅ Render Diagram badge: Green" || echo "❌ Render Diagram badge: Not green"
+          
+          echo ""
+          echo "=== Badge Status Check Complete ==="
+
+      - name: Report badge status
+        if: always()
+        run: |
+          echo "Badge status check completed. See workflow runs for detailed status."
+

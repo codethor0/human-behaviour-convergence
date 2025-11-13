@@ -17,6 +17,7 @@ on:
       - 'requirements*.txt'
       - 'pyproject.toml'
       - '.github/workflows/test.yml'
+  workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates
 concurrency:

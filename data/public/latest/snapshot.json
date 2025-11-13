@@ -1,0 +1,19 @@
+{
+  "date": "2025-11-08",
+  "generated_at": "2025-11-10T17:28:27.401485Z",
+  "sources": {
+    "firms": {
+      "rows": 0,
+      "path": "data/public/2025-11-08/firms_fires.csv"
+    },
+    "osm": {
+      "rows": 0,
+      "path": "data/public/2025-11-08/osm_changesets.csv"
+    },
+    "wiki": {
+      "rows": 0,
+      "path": "data/public/2025-11-08/wiki_pageviews.csv"
+    }
+  },
+  "errors": {}
+}

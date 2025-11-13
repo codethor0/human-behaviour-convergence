@@ -3,7 +3,7 @@
 ## Update repository description
 - Navigate to GitHub → repository home → **About** (right sidebar) → click the pencil icon.
 - Paste the description:
-  > Population-scale behavioural forecasting with synthetic data: centaur models, multimodal fusion, and ethics-first evaluation.
+  > Population-scale behavioral forecasting with synthetic data: centaur models, multimodal fusion, and ethics-first evaluation.
 - Ensure the “Include in home page” checkbox is ticked.
 
 ## Add discoverability topics

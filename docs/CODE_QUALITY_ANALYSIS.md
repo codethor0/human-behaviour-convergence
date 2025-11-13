@@ -419,8 +419,8 @@ class ForecastResponse(BaseModel):
     data: List[Dict[str, Any]]
 
 app = FastAPI(
-    title="Behaviour Convergence API",
-    description="API for accessing behavioural forecasting results",
+    title="Behavior Convergence API",
+    description="API for accessing behavioral forecasting results",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -431,7 +431,7 @@ def get_forecasts() -> ForecastResponse:
     """
     ## Forecasts Endpoint
 
-    Returns behavioural forecast data from CSV.
+    Returns behavioral forecast data from CSV.
 
     - **Limit**: Returns up to 1000 rows by default
     - **Format**: JSON array of forecast records

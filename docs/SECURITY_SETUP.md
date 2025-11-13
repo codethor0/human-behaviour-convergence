@@ -76,7 +76,7 @@ Make the diagram publicly accessible:
 1. Go to: https://github.com/codethor0/human-behaviour-convergence
 2. Click the gear icon (top-right, next to About)
 3. Add:
-   - **Description**: `Population-scale behavioural forecasting in a zero-restriction data regime`
+   - **Description**: `Population-scale behavioral forecasting in a zero-restriction data regime`
    - **Website**: (optional) your docs URL or Pages URL
    - **Topics**: `mermaid`, `forecasting`, `ai-ethics`, `population-scale`, `fastapi`, `nextjs`, `surveillance-tech`, `machine-learning`
 4. Click **Save changes**

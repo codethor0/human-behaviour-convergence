@@ -23,7 +23,7 @@ export default function HomePage() {
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1>Behaviour Convergence Explorer</h1>
+      <h1>Behavior Convergence Explorer</h1>
       <p style={{ color: '#555' }}>Quick scaffold: data from FastAPI backend.</p>
 
       {error && (
@@ -85,11 +85,11 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Behaviour Convergence Explorer</title>
-        <meta name="description" content="Visualize behaviour convergence results and diagrams" />
+        <title>Behavior Convergence Explorer</title>
+        <meta name="description" content="Visualize behavior convergence results and diagrams" />
       </Head>
       <main style={{ padding: '2rem', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Behaviour Convergence Explorer</h1>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Behavior Convergence Explorer</h1>
         <p style={{ marginBottom: '1.5rem', color: '#555' }}>
           Explore the Mermaid diagram and browse research results from this repository.
         </p>

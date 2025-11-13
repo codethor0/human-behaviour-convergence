@@ -1,4 +1,4 @@
-# Behaviour Convergence API (FastAPI)
+# Behavior Convergence API (FastAPI)
 
 Minimal backend that serves CSV-backed endpoints for quick exploration.
 

@@ -78,7 +78,7 @@ def _find_results_dir(start: Path) -> Optional[Path]:
 
 RESULTS_DIR = _find_results_dir(Path(__file__))
 
-app = FastAPI(title="Behaviour Convergence API", version="0.1.0")
+app = FastAPI(title="Behavior Convergence API", version="0.1.0")
 
 # Register routers
 app.include_router(public.router)

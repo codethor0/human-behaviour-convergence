@@ -28,10 +28,12 @@ Population-scale forecasting is hard, especially with open synthetic data. This 
 
 [![Tests](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/test.yml)
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
 [![Coverage](https://img.shields.io/codecov/c/github/codethor0/human-behaviour-convergence?logo=codecov)](https://app.codecov.io/gh/codethor0/human-behaviour-convergence)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg?logo=python)](https://www.python.org/)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge?style=flat)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
+[![Dependabot](https://img.shields.io/badge/dependabot-enabled-025e8c?logo=dependabot)](https://github.com/codethor0/human-behaviour-convergence/security/dependabot)
 [![DOI](https://img.shields.io/badge/DOI-soon-lightgrey.svg)](https://zenodo.org/)
 
 <p><em>Ethics-first, synthetic-only behavioral forecasting. No personal data—ever.</em></p>

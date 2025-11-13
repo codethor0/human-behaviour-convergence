@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 """Wikipedia pageviews connector for public data layer."""
-import bz2
-import os
+import gzip
+import io
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -24,17 +24,21 @@ class WikiPageviewsSync(AbstractSync):
     CACHE_DIR = Path("/tmp/wiki_pageviews_cache")
     PROJECTS = ["en", "de", "fr", "es", "zh"]  # Top 5 languages
 
-    def __init__(self, date: Optional[str] = None):
+    def __init__(self, date: Optional[str] = None, max_hours: int = 24):
         """
         Initialize Wikipedia pageviews connector.
 
         Args:
             date: Date in YYYY-MM-DD format. Defaults to yesterday.
+            max_hours: Maximum number of hourly files to fetch (0-24).
         """
         super().__init__()
         self.date = date or (datetime.now().date() - pd.Timedelta(days=1)).strftime(
             "%Y-%m-%d"
         )
+        if not 1 <= max_hours <= 24:
+            raise ValueError("max_hours must be between 1 and 24")
+        self.max_hours = max_hours
         self.CACHE_DIR.mkdir(exist_ok=True)
 
     @ethical_check
@@ -54,7 +58,7 @@ class WikiPageviewsSync(AbstractSync):
         year, month, day = self.date.split("-")
         all_data = []
 
-        for hour in range(24):
+        for hour in range(self.max_hours):
             filename = f"pageviews-{year}{month}{day}-{hour:02d}0000.gz"
             url = f"{self.BASE_URL}/{year}/{year}-{month}/{filename}"
 
@@ -64,15 +68,29 @@ class WikiPageviewsSync(AbstractSync):
                 response = requests.get(url, timeout=30)
                 response.raise_for_status()
 
-                # Parse pageviews format: project page_title count_views total_response_size
-                lines = response.content.decode("utf-8").strip().split("\n")
+                decompressed = gzip.decompress(response.content).decode(
+                    "utf-8", errors="ignore"
+                )
+                for line in decompressed.splitlines():
+                    line = line.strip()
+                    if not line:
+                        continue
 
-                for line in lines:
                     parts = line.split()
                     if len(parts) < 3:
                         continue
 
-                    project, page_title, views = parts[0], parts[1], int(parts[2])
+                    try:
+                        views = int(parts[2])
+                    except ValueError:
+                        self.logger.debug(
+                            "Skipping non-integer view count",
+                            line_sample=line[:120],
+                            hour=hour,
+                        )
+                        continue
+
+                    project, page_title = parts[0], parts[1]
 
                     # Filter to configured projects only
                     project_code = project.split(".")[0]

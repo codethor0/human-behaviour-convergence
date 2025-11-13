@@ -19,7 +19,7 @@ usage() {
 Usage: scripts/dev [--reset]
 
 Creates (or refreshes) the local development environment, runs the test suite,
-and launches the Behaviour Convergence API.
+and launches the Behavior Convergence API.
 
 Options:
   --reset    Remove the existing .venv before recreating it.
@@ -89,6 +89,6 @@ webbrowser.open_new_tab(path)
 PY
 fi
 
-info "Starting Behaviour Convergence API"
+info "Starting Behavior Convergence API"
 info "Explorer: http://localhost:8000/"
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000

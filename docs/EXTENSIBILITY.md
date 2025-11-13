@@ -1,6 +1,6 @@
-# Extending Behaviour Convergence: Predictor Plugins
+# Extending Behavior Convergence: Predictor Plugins
 
-This project supports plug-in predictors for behavioural forecasting. You can add your own model by creating a Python class and registering it as an entry point.
+This project supports plug-in predictors for behavioral forecasting. You can add your own model by creating a Python class and registering it as an entry point.
 
 ## Quickstart
 

@@ -2,7 +2,7 @@
 from typing import Any, Dict, Type
 
 """
-Plugin registry for behavioural predictors.
+Plugin registry for behavioral predictors.
 Allows dynamic discovery and loading of predictor plugins via entry points.
 """
 

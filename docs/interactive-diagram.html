@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Behaviour Convergence — Minimal Interactive Diagram</title>
-    <meta name="description" content="Minimal interactive SVG viewer for behaviour-convergence diagram" />
+    <title>Behavior Convergence — Minimal Interactive Diagram</title>
+    <meta name="description" content="Minimal interactive SVG viewer for behavior-convergence diagram" />
     <style>
       :root {
         color-scheme: light dark;
@@ -46,11 +46,16 @@
       /* scroll-reveal for FEEDBACK */
       .feedback-hidden { opacity: 0; transition: opacity 600ms ease; }
       .feedback-visible { opacity: 1; }
+      .edge-hoverable { cursor: pointer; transition: stroke 150ms ease, stroke-width 150ms ease; }
+      @keyframes edgePulse {
+        from { stroke-dashoffset: 0; }
+        to { stroke-dashoffset: -28; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>Human Behaviour Convergence — Interactive</h1>
+      <h1>Human Behavior Convergence — Interactive</h1>
       <p class="sub">Minimal, dependency-free interactivity on the auto-generated SVG</p>
     </header>
     <div class="wrap">
@@ -89,7 +94,7 @@
         ['COMPUTE FABRIC', '$500 B NVIDIA backlog + 7 DOE exascale rigs.'],
         ['FUSION & INFERENCE', 'Real-time cross-modal embeddings.'],
         ['PREDICTIVE SYSTEM', '8.4 B simultaneous forecasts with confidence bands.'],
-        ['Centaur AI', '97 % behavioural accuracy.'],
+        ['Centaur AI', '97 % behavioral accuracy.'],
         ['Stanford AI', '85 % personality simulation.'],
         ['Policy Micro-targeting', 'Nudge campaigns & disinfo seeds.'],
         ['Kinetic / Cyber Ops', 'Drone strikes & zero-day timing.'],
@@ -176,6 +181,32 @@
         });
       }
 
+      function enhanceEdges(svg) {
+        const edges = svg.querySelectorAll('.flowchart-link');
+        edges.forEach(edge => {
+          edge.classList.add('edge-hoverable');
+          edge.dataset.origStroke = edge.getAttribute('stroke') || '';
+          edge.dataset.origWidth = edge.getAttribute('stroke-width') || '';
+          edge.dataset.origDash = edge.getAttribute('stroke-dasharray') || '';
+          edge.addEventListener('mouseenter', () => {
+            const dash = edge.dataset.origDash && edge.dataset.origDash !== '0' ? edge.dataset.origDash : '6 3';
+            edge.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#2563eb');
+            edge.setAttribute('stroke-width', '3');
+            edge.setAttribute('stroke-dasharray', dash);
+            edge.style.animation = 'edgePulse 1.2s linear infinite';
+          });
+          edge.addEventListener('mouseleave', () => {
+            if (edge.dataset.origStroke) edge.setAttribute('stroke', edge.dataset.origStroke);
+            else edge.removeAttribute('stroke');
+            if (edge.dataset.origWidth) edge.setAttribute('stroke-width', edge.dataset.origWidth);
+            else edge.removeAttribute('stroke-width');
+            if (edge.dataset.origDash) edge.setAttribute('stroke-dasharray', edge.dataset.origDash);
+            else edge.removeAttribute('stroke-dasharray');
+            edge.style.animation = 'none';
+          });
+        });
+      }
+
       async function load() {
         const res = await fetch(src, { cache: 'no-store' });
         const text = await res.text();
@@ -192,6 +223,7 @@
         attachTooltip(svg);
         setupFeedbackToggle(svg);
         enablePanZoom();
+        enhanceEdges(svg);
       }
 
       load().catch(err => {

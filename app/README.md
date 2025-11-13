@@ -1,4 +1,4 @@
-# Behaviour Convergence App
+# Behavior Convergence App
 
 This folder contains a minimal scaffold for a demo application:
 - Backend: FastAPI serving CSV-backed endpoints.
@@ -41,7 +41,9 @@ npm run dev
 ## Notes
 - CORS is enabled on the backend for local dev.
 - No CI is added yet for the app to keep the repo lean; we can wire one later.
-- The diagram remains the source of truth: edit `diagram/behaviour-convergence.mmd` and let CI regenerate assets.# Behaviour Convergence Explorer
+- The diagram remains the source of truth: edit `diagram/behaviour-convergence.mmd` and let CI regenerate assets.
+
+# Behavior Convergence Explorer
 
 > Application workspace for turning the research repo into an interactive experience.
 

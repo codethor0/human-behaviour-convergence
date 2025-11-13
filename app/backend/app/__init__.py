@@ -1,1 +1,1 @@
-"""Backend package for Behaviour Convergence API."""
+"""Backend package for Behavior Convergence API."""

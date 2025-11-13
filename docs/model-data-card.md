@@ -1,7 +1,7 @@
-# Behaviour Convergence Model & Data Card
+# Behavior Convergence Model & Data Card
 
 ## Purpose
-- Provide a reproducible, synthetic testbed for population-scale behavioural forecasting.
+- Provide a reproducible, synthetic testbed for population-scale behavioral forecasting.
 - Evaluate centaur-style models (human + AI) across multimodal signals without exposing real individuals.
 - Demonstrate observability, cache controls, and ethics-first instrumentation for public APIs.
 
@@ -12,7 +12,7 @@
 - **Storage:** CSV artefacts in `results/` and canned scenarios (coming soon) for explorer dropdowns.
 
 ## Limitations
-- Synthetic signals cannot predict real behaviour; they validate pipelines, not accuracy.
+- Synthetic signals cannot predict real behavior; they validate pipelines, not accuracy.
 - No uncertainty calibration beyond handcrafted confidence scores.
 - Does not model socio-economic or demographic attributes; region strings are free-text labels.
 

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 """OpenStreetMap changesets connector for public data layer."""
 import bz2
+import io
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -23,15 +24,19 @@ class OSMChangesetsSync(AbstractSync):
     BASE_URL = "https://planet.osm.org/planet/changesets-latest.osm.bz2"
     CACHE_DIR = Path("/tmp/osm_changesets_cache")
 
-    def __init__(self, date: Optional[str] = None):
+    def __init__(self, date: Optional[str] = None, max_bytes: int = 100 * 1024 * 1024):
         """
         Initialize OSM changesets connector.
 
         Args:
             date: Date in YYYY-MM-DD format. Defaults to today.
+            max_bytes: Maximum number of decompressed bytes to read (safeguard).
         """
         super().__init__()
         self.date = date or datetime.now().date().strftime("%Y-%m-%d")
+        if max_bytes <= 0:
+            raise ValueError("max_bytes must be positive")
+        self.max_bytes = max_bytes
         self.CACHE_DIR.mkdir(exist_ok=True)
 
     @ethical_check
@@ -51,19 +56,39 @@ class OSMChangesetsSync(AbstractSync):
         self.logger.info("Fetching OSM changesets", url=self.BASE_URL)
 
         try:
-            response = requests.get(self.BASE_URL, timeout=300, stream=True)
+            response = requests.get(self.BASE_URL, timeout=300)
             response.raise_for_status()
 
-            # Decompress bz2 on the fly
-            decompressor = bz2.BZ2Decompressor()
-            xml_data = b""
+            limit = self.max_bytes
+            xml_chunks: list[bytes] = []
+            total_size = 0
 
-            for chunk in response.iter_content(chunk_size=1024 * 1024):  # 1MB chunks
-                if chunk:
-                    xml_data += decompressor.decompress(chunk)
-                    # Limit to first 100MB to avoid memory issues
-                    if len(xml_data) > 100 * 1024 * 1024:
+            with bz2.BZ2File(io.BytesIO(response.content)) as bz_file:
+                while total_size <= limit:
+                    try:
+                        chunk = bz_file.read(1024 * 1024)
+                    except OSError as exc:
+                        if "End of stream already reached" in str(exc):
+                            break
+                        raise
+
+                    if not chunk:
                         break
+
+                    xml_chunks.append(chunk)
+                    total_size += len(chunk)
+                    if total_size >= limit:
+                        self.logger.warning(
+                            "Reached OSM snapshot size limit",
+                            bytes_read=total_size,
+                            limit=limit,
+                        )
+                        break
+
+            if not xml_chunks:
+                raise ValueError("No data returned from OSM changesets download")
+
+            xml_data = b"".join(xml_chunks)
 
             # Parse XML
             root = ET.fromstring(xml_data)

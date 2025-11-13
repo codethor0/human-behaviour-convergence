@@ -1,5 +1,5 @@
 # AI-Powered Code Review Guide
-**Project:** Human Behaviour Convergence
+**Project:** Human Behavior Convergence
 **Last Updated:** November 5, 2025
 **Purpose:** Comprehensive guide for using AI assistants to review and improve code quality
 

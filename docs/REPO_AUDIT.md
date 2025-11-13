@@ -80,7 +80,7 @@
 **Action Items:**
 - [ ] Delete `master` branch (keep only `main`)
 - [ ] Enable GitHub Pages (Settings → Pages → main branch / root)
-- [ ] Add repository description: "Population-scale behavioural forecasting in a zero-restriction data regime"
+- [ ] Add repository description: "Population-scale behavioral forecasting in a zero-restriction data regime"
 - [ ] Add topics: `mermaid`, `forecasting`, `ai-ethics`, `population-scale`, `fastapi`, `nextjs`
 - [ ] Upload social preview banner (assets/social-preview.svg exists)
 
