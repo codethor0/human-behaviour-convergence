@@ -281,7 +281,7 @@ def _on_results_dir_updated(value: Optional[Path]) -> None:
         _cache_ttl.clear()
         _cache_context_marker = None
     if os.getenv("CACHE_DEBUG") == "1":
-        print(f"[cache-debug] RESULTS_DIR updated -> {_cache_context_marker}")
+        print(f"[cache-debug] RESULTS_DIR updated -> {value}")
 
 
 def _on_cache_size_updated(value: int) -> None:
