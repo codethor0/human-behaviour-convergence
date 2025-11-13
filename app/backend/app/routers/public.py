@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 """Public data endpoints for Behavior Convergence Explorer."""
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Literal, Optional
 
@@ -72,7 +72,7 @@ async def get_public_data_latest(
         JSON with source metadata and data rows
     """
     if date is None:
-        date = (datetime.now().date() - pd.Timedelta(days=1)).strftime("%Y-%m-%d")
+        date = (datetime.now() - timedelta(days=1)).date().strftime("%Y-%m-%d")
 
     try:
         if source == "wiki":
@@ -139,14 +139,18 @@ async def get_synthetic_score(h3_res: int, date: str) -> SyntheticScoreResponse:
 
         # Normalize wiki views (0-1)
         wiki_total = wiki["views"].sum()
-        wiki_norm = wiki["views"] / wiki_total if wiki_total > 0 else 0
+        wiki_norm = (
+            wiki["views"] / wiki_total
+            if wiki_total > 0
+            else pd.Series([0] * len(wiki), dtype=float)
+        )
 
         # Normalize OSM changesets (0-1)
         osm_total = osm["changeset_count"].sum()
         osm_norm_values = (
             osm["changeset_count"] / osm_total
             if osm_total > 0
-            else pd.Series([0] * len(osm))
+            else pd.Series([0] * len(osm), dtype=float)
         )
 
         # Fire inverse (fewer fires = higher score)
@@ -154,7 +158,7 @@ async def get_synthetic_score(h3_res: int, date: str) -> SyntheticScoreResponse:
         fire_inv = (
             1 - (firms["fire_count"] / firms_total)
             if firms_total > 0
-            else pd.Series([1] * len(firms))
+            else pd.Series([1] * len(firms), dtype=float)
         )
 
         # Compute synthetic score (0-100 scale)

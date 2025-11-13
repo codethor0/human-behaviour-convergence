@@ -34,4 +34,4 @@ dev = [
 hbc-cli = "hbc.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["hbc"]
+include = ["hbc", "connectors"]

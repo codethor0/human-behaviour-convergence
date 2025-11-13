@@ -40,10 +40,10 @@ def ethical_check(func: Callable) -> Callable:
 
         # K-anonymity check (if count column exists)
         if "count" in df.columns:
+            rows_before = len(df)
             df = df[df["count"] >= 15]
-            logger.info(
-                "k-anonymity filter applied", rows_dropped=len(df[df["count"] < 15])
-            )
+            rows_dropped = rows_before - len(df)
+            logger.info("k-anonymity filter applied", rows_dropped=rows_dropped)
 
         # Geo-precision check (if h3 column exists)
         if "h3_9" in df.columns:

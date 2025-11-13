@@ -175,9 +175,15 @@ def _run_sync_public_data(argv: Sequence[str] | None = None) -> int:
             df = connector.pull()
             csv_path = snapshot_dir / f"{stem}.csv"
             df.to_csv(csv_path, index=False)
+            # Handle paths both inside and outside PROJECT_ROOT
+            try:
+                path_str = str(csv_path.relative_to(PROJECT_ROOT))
+            except ValueError:
+                # Path is outside PROJECT_ROOT, use absolute path
+                path_str = str(csv_path)
             sources_summary[source_name] = {
                 "rows": int(len(df)),
-                "path": str(csv_path.relative_to(PROJECT_ROOT)),
+                "path": path_str,
             }
         except Exception as exc:  # pragma: no cover - external dependencies
             errors[source_name] = str(exc)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 """NASA FIRMS active fire connector for public data layer."""
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -35,7 +35,7 @@ class FIRMSFiresSync(AbstractSync):
             country: Country code (e.g., USA, CAN, MEX). Defaults to USA.
         """
         super().__init__()
-        self.date = date or (datetime.now().date() - pd.Timedelta(days=1)).strftime(
+        self.date = date or (datetime.now() - timedelta(days=1)).date().strftime(
             "%Y-%m-%d"
         )
         self.country = country

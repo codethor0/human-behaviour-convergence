@@ -2,7 +2,7 @@
 """Wikipedia pageviews connector for public data layer."""
 import gzip
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -33,7 +33,7 @@ class WikiPageviewsSync(AbstractSync):
             max_hours: Maximum number of hourly files to fetch (0-24).
         """
         super().__init__()
-        self.date = date or (datetime.now().date() - pd.Timedelta(days=1)).strftime(
+        self.date = date or (datetime.now() - timedelta(days=1)).date().strftime(
             "%Y-%m-%d"
         )
         if not 1 <= max_hours <= 24:

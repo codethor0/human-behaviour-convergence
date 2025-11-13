@@ -3,7 +3,7 @@
 import bz2
 import io
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -29,11 +29,13 @@ class OSMChangesetsSync(AbstractSync):
         Initialize OSM changesets connector.
 
         Args:
-            date: Date in YYYY-MM-DD format. Defaults to today.
+            date: Date in YYYY-MM-DD format. Defaults to yesterday.
             max_bytes: Maximum number of decompressed bytes to read (safeguard).
         """
         super().__init__()
-        self.date = date or datetime.now().date().strftime("%Y-%m-%d")
+        self.date = date or (datetime.now() - timedelta(days=1)).date().strftime(
+            "%Y-%m-%d"
+        )
         if max_bytes <= 0:
             raise ValueError("max_bytes must be positive")
         self.max_bytes = max_bytes
