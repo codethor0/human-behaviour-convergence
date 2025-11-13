@@ -64,7 +64,7 @@ class OSMChangesetsSync(AbstractSync):
             total_size = 0
 
             with bz2.BZ2File(io.BytesIO(response.content)) as bz_file:
-                while total_size <= limit:
+                while total_size < limit:
                     try:
                         chunk = bz_file.read(1024 * 1024)
                     except OSError as exc:
@@ -75,15 +75,23 @@ class OSMChangesetsSync(AbstractSync):
                     if not chunk:
                         break
 
-                    xml_chunks.append(chunk)
-                    total_size += len(chunk)
-                    if total_size >= limit:
+                    # Check if adding this chunk would exceed the limit
+                    if total_size + len(chunk) > limit:
+                        # Read only the remaining bytes to reach exactly the limit
+                        remaining = limit - total_size
+                        if remaining > 0:
+                            chunk = chunk[:remaining]
+                            xml_chunks.append(chunk)
+                            total_size += len(chunk)
                         self.logger.warning(
                             "Reached OSM snapshot size limit",
                             bytes_read=total_size,
                             limit=limit,
                         )
                         break
+
+                    xml_chunks.append(chunk)
+                    total_size += len(chunk)
 
             if not xml_chunks:
                 raise ValueError("No data returned from OSM changesets download")
