@@ -42,6 +42,18 @@ Population-scale forecasting is hard, especially with open synthetic data. This 
 
 ---
 
+## 🎮 Live Interactive Demo
+
+**[Try it now →](https://codethor0.github.io/human-behaviour-convergence/docs/index.html)**
+
+Generate synthetic behavioral forecasts, explore the architecture diagram, and see the system in action—all in your browser. No installation required!
+
+**Features:**
+- 📊 **Interactive Forecasting** - Generate deterministic synthetic forecasts by region, horizon, and modalities
+- 🏗️ **Architecture Visualization** - Explore the complete system diagram with live data flows
+- 📈 **Simulation Playground** - Test different scenarios and see how forecasts change
+- 🔒 **Privacy-First** - All data is synthetic, no personal information ever collected
+
 ## What is this?
 
 This project demonstrates **population-scale behavioral forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioral states at unprecedented scale.

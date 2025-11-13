@@ -190,18 +190,60 @@
     </main>
 
     <script>
-      const mockResponse = (payload) => ({
-        region: payload.region,
-        horizon: payload.horizon,
-        modalities: payload.modalities,
-        forecast: 0.73,
-        confidence: 0.88,
-        explanations: payload.modalities.length
-          ? payload.modalities.map((m, idx) => `${m} contribution: ${0.44 + idx * 0.1}`)
-          : ["baseline synthetic trend applied"],
-        ethics: { synthetic: true, pii: false },
-        _mocked: true,
-      });
+      // Deterministic synthetic forecast generator (matches Python backend logic)
+      function generateSyntheticForecast(region, horizon, modalities) {
+        // Create deterministic seed
+        const normalizedModalities = [...modalities].sort();
+        const seed = `${region.toLowerCase()}:${horizon}:${normalizedModalities.join(',')}`;
+        
+        // Simple seeded PRNG (based on string hash)
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+          const char = seed.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32-bit integer
+        }
+        
+        function seededRandom() {
+          hash = Math.imul(hash, 0x9e3779b9);
+          hash = hash ^ (hash >>> 15);
+          return ((hash >>> 0) / 4294967296); // Normalize to [0, 1)
+        }
+        
+        // Generate forecast (matching Python logic)
+        const base = 0.45 + seededRandom() * (0.85 - 0.45);
+        const modalityFactor = 1.0 + 0.05 * normalizedModalities.length;
+        const forecast = Math.round(base * modalityFactor * 1000) / 1000;
+        const confidence = Math.round(Math.min(0.99, 0.55 + seededRandom() * 0.35) * 1000) / 1000;
+        
+        // Generate explanations
+        const explanations = [];
+        if (normalizedModalities.length > 0) {
+          normalizedModalities.forEach(modality => {
+            const weight = Math.round((0.3 + seededRandom() * 0.5) * 1000) / 1000;
+            explanations.push(`${modality} contribution: ${weight}`);
+          });
+        } else {
+          explanations.push("baseline synthetic trend applied");
+        }
+        
+        return {
+          region,
+          horizon,
+          modalities: normalizedModalities,
+          forecast,
+          confidence,
+          explanations,
+          ethics: { synthetic: true, pii: false },
+        };
+      }
+      
+      // Fallback for API calls
+      const mockResponse = (payload) => generateSyntheticForecast(
+        payload.region,
+        payload.horizon,
+        payload.modalities
+      );
 
       const renderForecast = (data, container) => {
         const { region, horizon, modalities, forecast, confidence, explanations, ethics, _mocked } =
@@ -227,10 +269,18 @@
               <div>
                 <p class="text-xs text-slate-400">Forecast index</p>
                 <p class="text-3xl font-bold text-cyan-300">${forecast}</p>
+                <div class="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-cyan-400 transition-all duration-500" style="width: ${Math.min(100, forecast * 100)}%"></div>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">${(forecast * 100).toFixed(1)}% convergence index</p>
               </div>
               <div>
                 <p class="text-xs text-slate-400">Confidence</p>
                 <p class="text-3xl font-bold text-emerald-300">${confidence}</p>
+                <div class="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-emerald-400 transition-all duration-500" style="width: ${Math.min(100, confidence * 100)}%"></div>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">${(confidence * 100).toFixed(1)}% model confidence</p>
               </div>
             </div>
             <div>
@@ -242,11 +292,7 @@
             <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-400">
               Ethics: synthetic=${ethics.synthetic}, pii=${ethics.pii}. Outputs never reference real individuals.
             </div>
-            ${
-              _mocked
-                ? '<p class="text-xs text-amber-300">Displayed using mocked data (API unreachable).</p>'
-                : ""
-            }
+            ${_mocked ? '<p class="text-xs text-emerald-400">Generated in browser (deterministic synthetic data).</p>' : ''}
           </div>
         `;
       };
@@ -255,9 +301,14 @@
       const status = document.getElementById("form-status");
       const content = document.getElementById("forecast-content");
 
+      // Try to detect API availability
+      const API_BASE = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8000' 
+        : null;
+      
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        status.textContent = "Requesting forecast…";
+        status.textContent = "Generating forecast…";
 
         const formData = new FormData(form);
         const payload = {
@@ -266,27 +317,36 @@
           modalities: formData.getAll("modalities"),
         };
 
-        try {
-          const response = await fetch("/api/forecast", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
+        // Try API first if available, otherwise use client-side generation
+        if (API_BASE) {
+          try {
+            const response = await fetch(`${API_BASE}/api/forecast`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
 
-          if (!response.ok) {
-            throw new Error(`API responded with ${response.status}`);
+            if (response.ok) {
+              const data = await response.json();
+              renderForecast(data, content);
+              status.textContent = "✓ Served by local API";
+              return;
+            }
+          } catch (error) {
+            console.warn("API unavailable, using client-side generation:", error);
           }
-
-          const data = await response.json();
-          renderForecast(data, content);
-          status.textContent = "Served by local API.";
-        } catch (error) {
-          console.warn("Falling back to mocked response:", error);
-          const data = mockResponse(payload);
-          renderForecast(data, content);
-          status.textContent =
-            "Local API was unreachable. Displaying mocked synthetic response.";
         }
+        
+        // Use client-side generation (always works)
+        const data = generateSyntheticForecast(
+          payload.region,
+          payload.horizon,
+          payload.modalities
+        );
+        renderForecast(data, content);
+        status.textContent = API_BASE 
+          ? "Using client-side generation (API unavailable)"
+          : "✓ Generated in browser";
       });
 
       async function loadPublicStats() {
@@ -294,8 +354,15 @@
         const listEl = document.getElementById("public-stats-list");
         if (!summaryEl || !listEl) return;
 
+        // Only try API if on localhost
+        if (!API_BASE) {
+          summaryEl.textContent = "Public data requires backend API (available in local development)";
+          listEl.innerHTML = '<li class="text-slate-400">Run <code class="bg-slate-800 px-1 rounded">docker compose up</code> to access live data</li>';
+          return;
+        }
+
         try {
-          const response = await fetch("/api/public/stats", { cache: "no-store" });
+          const response = await fetch(`${API_BASE}/api/public/stats`, { cache: "no-store" });
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
