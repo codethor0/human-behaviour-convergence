@@ -155,7 +155,7 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
         print(
             f"[cache-debug] pre-ensure name={name} limit={limit} marker={results_marker} "
             f"context={_cache_context_marker} cache_keys={list(_cache.keys())} "
-            f"max_cache={globals().get('MAX_CACHE_SIZE')} id={id(globals())}"
+            f"max_cache={MAX_CACHE_SIZE} id={id(globals())}"
         )
 
     _ensure_cache_context(results_marker)
@@ -322,7 +322,8 @@ def _get_results_dir() -> Optional[Path]:
             namespace = vars(main_mod)
             if "RESULTS_DIR" in namespace:
                 return namespace["RESULTS_DIR"]
-    return globals().get("RESULTS_DIR")
+    # Fallback to module-level variable (direct access, not globals().get())
+    return RESULTS_DIR
 
 
 def _get_cache_limit() -> int:
@@ -337,8 +338,9 @@ def _get_cache_limit() -> int:
                     return int(namespace["MAX_CACHE_SIZE"])
                 except (TypeError, ValueError):
                     return 0
+    # Fallback to module-level variable (direct access, not globals().get())
     try:
-        return int(globals().get("MAX_CACHE_SIZE", 0))
+        return int(MAX_CACHE_SIZE)
     except (TypeError, ValueError):
         return 0
 
@@ -552,8 +554,9 @@ def get_status() -> StatusResponse:
 def get_cache_status() -> CacheStatus:
     """Return basic cache stats for observability."""
     with _cache_lock:
-        hits = globals().get("_cache_hits", 0)
-        misses = globals().get("_cache_misses", 0)
+        # Access module-level variables directly (not globals().get())
+        hits = _cache_hits
+        misses = _cache_misses
         size = len(_cache)
     return CacheStatus(
         hits=hits,

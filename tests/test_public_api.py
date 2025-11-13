@@ -35,7 +35,7 @@ class TestPublicDataEndpoints:
             }
         )
 
-        response = client.get("/api/public/wiki/latest?date=2024-11-04", timeout=5.0)
+        response = client.get("/api/public/wiki/latest?date=2024-11-04")
         assert (
             response.status_code == 200
         ), f"Unexpected status code: {response.status_code}"
@@ -63,7 +63,7 @@ class TestPublicDataEndpoints:
             }
         )
 
-        response = client.get("/api/public/osm/latest?date=2024-11-04", timeout=5.0)
+        response = client.get("/api/public/osm/latest?date=2024-11-04")
         assert (
             response.status_code == 200
         ), f"Unexpected status code: {response.status_code}"
@@ -103,7 +103,7 @@ class TestPublicDataEndpoints:
         mock_firms = mock_firms_class.return_value
         mock_firms.pull.return_value = pd.DataFrame({"fire_count": [1, 2]})
 
-        response = client.get("/api/public/synthetic_score/9/2024-11-04", timeout=5.0)
+        response = client.get("/api/public/synthetic_score/9/2024-11-04")
         assert (
             response.status_code == 200
         ), f"Unexpected status code: {response.status_code}"
