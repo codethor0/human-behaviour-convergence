@@ -210,6 +210,90 @@ docker run --rm hbc-test sh -c "pip install -r requirements-dev.txt black ruff &
 docker run --rm hbc-test sh -c "pip install -r requirements-dev.txt ruff && ruff check app/backend tests hbc"
 ```
 
+## Testing
+
+### Quick Start
+
+**Run all tests with Docker (recommended):**
+```bash
+docker compose run --rm test
+```
+
+**Run all tests locally:**
+```bash
+pytest tests/ --cov --cov-report=term-missing -v
+```
+
+### Test Execution
+
+**With Docker (Recommended):**
+```bash
+# All tests
+docker compose run --rm test
+
+# Unit tests only
+docker compose run --rm test pytest tests/test_forecasting.py tests/test_cli.py -v
+
+# Integration tests only
+docker compose run --rm test pytest tests/test_api_backend.py tests/test_public_api.py tests/test_connectors.py -v
+
+# With HTML coverage report
+docker compose run --rm test pytest tests/ --cov --cov-report=html -v
+```
+
+**Local Execution:**
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # On macOS/Linux
+# OR: .venv\Scripts\activate  # On Windows
+
+# Run tests
+pytest tests/ --cov --cov-report=term-missing -v
+
+# With parallel execution
+pytest tests/ --cov --cov-report=term-missing -v -n auto
+```
+
+### Test Coverage
+
+**Current Coverage:** 78% (target: ≥65%)
+
+**Coverage Reports:**
+- Terminal: `--cov-report=term-missing`
+- XML: `--cov-report=xml` (for Codecov)
+- HTML: `--cov-report=html` (open `htmlcov/index.html`)
+
+**View Coverage:**
+```bash
+# Generate HTML report
+pytest tests/ --cov --cov-report=html -v
+
+# Open in browser
+open htmlcov/index.html  # On macOS
+```
+
+### Test Types
+
+- **Unit Tests:** Pure functions, CLI parsing, data processing (5 tests)
+- **Integration Tests:** API endpoints, connectors, caching (27 tests)
+- **E2E Tests:** Not yet implemented
+
+**Test Files:**
+- `tests/test_forecasting.py` - Forecasting logic (3 tests)
+- `tests/test_cli.py` - CLI tool (2 tests)
+- `tests/test_api_backend.py` - FastAPI backend (15 tests)
+- `tests/test_public_api.py` - Public API endpoints (8 tests)
+- `tests/test_connectors.py` - Data connectors (4 tests)
+
+**Total:** 33 tests (all passing ✅)
+
+### Test Documentation
+
+For detailed test documentation, see:
+- [`TEST_REPORT.md`](TEST_REPORT.md) - Comprehensive test report
+- [`TEST_STRATEGY.md`](TEST_STRATEGY.md) - Test strategy and layering
+- [`TESTING_INVENTORY.md`](TESTING_INVENTORY.md) - Test infrastructure inventory
+
 ### CI Matrix Jobs
 
 The test workflow runs on Python 3.10, 3.11, and 3.12. To test a specific version:
