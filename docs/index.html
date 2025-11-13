@@ -6,225 +6,351 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Behavior Convergence Explorer</title>
+    <title>Behavior Convergence Explorer - Interactive Demo</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
       body {
         background: radial-gradient(circle at top, #0f172a, #020617 55%);
       }
+      .forecast-card {
+        transition: all 0.3s ease;
+        animation: fadeIn 0.5s ease-in;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .modality-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .modality-badge:hover {
+        transform: scale(1.05);
+      }
+      .slider-container {
+        position: relative;
+      }
+      .slider-value {
+        position: absolute;
+        right: 0;
+        top: -1.5rem;
+        font-size: 0.75rem;
+        color: #06b6d4;
+        font-weight: 600;
+      }
+      canvas {
+        max-height: 300px;
+      }
     </style>
   </head>
   <body class="min-h-screen text-slate-100">
-    <main class="mx-auto max-w-5xl px-6 py-12 space-y-12">
-      <header class="space-y-4">
+    <main class="mx-auto max-w-7xl px-6 py-12 space-y-12">
+      <header class="space-y-4 text-center">
         <p class="inline-flex items-center rounded-full bg-slate-800/60 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cyan-300">
-          Synthetic research preview
+          Interactive Simulation Preview
         </p>
-        <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
+        <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
           Behavior Convergence Explorer
         </h1>
-        <p class="max-w-3xl text-lg text-slate-300">
-          All outputs on this page are purely synthetic. Forecasts are generated
-          deterministically from handcrafted signals to illustrate the API surface
-          and ethical guardrails without exposing personal data.
+        <p class="max-w-3xl mx-auto text-lg text-slate-300">
+          Real-time synthetic forecasting simulation. Adjust parameters below to see forecasts update instantly.
+          All data is deterministic and synthetic—no personal information is ever collected.
         </p>
       </header>
 
-      <section class="grid gap-10 lg:grid-cols-[2fr,3fr]">
-        <div class="space-y-4">
-          <h2 class="text-2xl font-semibold text-slate-100">
-            Try a synthetic forecast
-          </h2>
-          <form
-            id="forecast-form"
-            class="space-y-4 rounded-xl border border-slate-700 bg-slate-900/70 p-6 shadow-lg shadow-black/30 backdrop-blur"
-          >
-            <div>
-              <label for="region" class="block text-sm font-medium text-slate-200"
-                >Region</label
-              >
-              <input
-                id="region"
-                name="region"
-                type="text"
-                inputmode="text"
-                required
-                value="us-midwest"
-                class="mt-1 block w-full rounded-md border-slate-600 bg-slate-950/70 text-slate-100 placeholder-slate-500 shadow-sm focus:border-cyan-400 focus:ring-cyan-400"
-                placeholder="e.g. us-midwest"
-              />
-            </div>
+      <!-- Interactive Controls -->
+      <section class="grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Real-time Parameter Controls -->
+          <div class="rounded-xl border border-slate-700 bg-slate-900/70 p-6 shadow-lg shadow-black/30 backdrop-blur">
+            <h2 class="text-2xl font-semibold text-slate-100 mb-6">
+              Simulation Parameters
+            </h2>
+            
+            <div class="space-y-6">
+              <!-- Region Input -->
+              <div>
+                <label for="region" class="block text-sm font-medium text-slate-200 mb-2">
+                  Region
+                </label>
+                <input
+                  id="region"
+                  type="text"
+                  value="us-midwest"
+                  class="w-full rounded-md border-slate-600 bg-slate-950/70 text-slate-100 px-3 py-2 focus:border-cyan-400 focus:ring-cyan-400"
+                  placeholder="e.g. us-midwest, us-west, europe-central"
+                />
+              </div>
 
-            <div>
-              <label for="horizon" class="block text-sm font-medium text-slate-200"
-                >Horizon (days)</label
-              >
-              <input
-                id="horizon"
-                name="horizon"
-                type="number"
-                min="1"
-                max="30"
-                value="7"
-                required
-                class="mt-1 block w-full rounded-md border-slate-600 bg-slate-950/70 text-slate-100 shadow-sm focus:border-cyan-400 focus:ring-cyan-400"
-              />
-              <p class="mt-1 text-xs text-slate-400">
-                The API accepts horizons between 1 and 30 days.
-              </p>
-            </div>
+              <!-- Horizon Slider -->
+              <div class="slider-container">
+                <label for="horizon" class="block text-sm font-medium text-slate-200 mb-2">
+                  Forecast Horizon (days)
+                </label>
+                <span class="slider-value" id="horizon-value">7 days</span>
+                <input
+                  id="horizon"
+                  type="range"
+                  min="1"
+                  max="30"
+                  value="7"
+                  class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                />
+                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>1</span>
+                  <span>30</span>
+                </div>
+              </div>
 
-            <fieldset>
-              <legend class="block text-sm font-medium text-slate-200">
-                Modalities
-              </legend>
-              <p class="mt-1 text-xs text-slate-400">
-                Choose one or more synthetic data sources to weight the forecast.
-              </p>
-              <div
-                class="mt-3 grid gap-2 rounded-lg border border-slate-700 bg-slate-950/50 p-3 sm:grid-cols-2"
-              >
-                <label class="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="modalities"
-                    value="satellite"
-                    class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
-                    checked
-                  />
-                  <span class="text-sm text-slate-200">Satellite imagery</span>
+              <!-- Modalities -->
+              <div>
+                <label class="block text-sm font-medium text-slate-200 mb-3">
+                  Data Modalities
                 </label>
-                <label class="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="modalities"
-                    value="mobility"
-                    class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
-                  />
-                  <span class="text-sm text-slate-200">Mobility telemetry</span>
-                </label>
-                <label class="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="modalities"
-                    value="social"
-                    class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
-                  />
-                  <span class="text-sm text-slate-200">Social activity</span>
-                </label>
-                <label class="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="modalities"
-                    value="environmental"
-                    class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
-                  />
-                  <span class="text-sm text-slate-200">Environmental sensors</span>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-950/50 cursor-pointer hover:bg-slate-900/50 transition">
+                    <input
+                      type="checkbox"
+                      name="modality"
+                      value="satellite"
+                      class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                      checked
+                    />
+                    <div>
+                      <div class="text-sm font-medium text-slate-200">Satellite</div>
+                      <div class="text-xs text-slate-400">Imagery data</div>
+                    </div>
+                  </label>
+                  <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-950/50 cursor-pointer hover:bg-slate-900/50 transition">
+                    <input
+                      type="checkbox"
+                      name="modality"
+                      value="mobility"
+                      class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                      checked
+                    />
+                    <div>
+                      <div class="text-sm font-medium text-slate-200">Mobility</div>
+                      <div class="text-xs text-slate-400">Telemetry data</div>
+                    </div>
+                  </label>
+                  <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-950/50 cursor-pointer hover:bg-slate-900/50 transition">
+                    <input
+                      type="checkbox"
+                      name="modality"
+                      value="social"
+                      class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                    />
+                    <div>
+                      <div class="text-sm font-medium text-slate-200">Social</div>
+                      <div class="text-xs text-slate-400">Activity signals</div>
+                    </div>
+                  </label>
+                  <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-950/50 cursor-pointer hover:bg-slate-900/50 transition">
+                    <input
+                      type="checkbox"
+                      name="modality"
+                      value="environmental"
+                      class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                    />
+                    <div>
+                      <div class="text-sm font-medium text-slate-200">Environmental</div>
+                      <div class="text-xs text-slate-400">Sensor data</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Auto-update Toggle -->
+              <div class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-950/50">
+                <input
+                  type="checkbox"
+                  id="auto-update"
+                  class="rounded border-slate-600 bg-slate-900 text-cyan-400 focus:ring-cyan-400"
+                  checked
+                />
+                <label for="auto-update" class="text-sm font-medium text-slate-200 cursor-pointer">
+                  Auto-update forecast (real-time simulation)
                 </label>
               </div>
-            </fieldset>
 
-            <button
-              type="submit"
-              class="inline-flex w-full items-center justify-center rounded-md bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-900 shadow transition hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900"
-            >
-              Generate forecast
-            </button>
-            <p id="form-status" class="text-xs text-slate-400"></p>
-          </form>
-
-          <section
-            id="forecast-output"
-            class="space-y-4 rounded-xl border border-slate-700 bg-slate-900/60 p-6 shadow"
-            aria-live="polite"
-          >
-            <h3 class="text-xl font-semibold text-slate-100">
-              Forecast preview
-            </h3>
-            <div id="forecast-content" class="space-y-3 text-sm text-slate-200">
-              <p class="text-slate-400">
-                Submit the form to request a forecast. If the local API is not
-                available, we will display a mocked response so you can explore the
-                interface. All numbers remain synthetic.
-              </p>
+              <!-- Simulation Speed -->
+              <div class="slider-container">
+                <label for="sim-speed" class="block text-sm font-medium text-slate-200 mb-2">
+                  Simulation Speed
+                </label>
+                <span class="slider-value" id="sim-speed-value">Normal</span>
+                <input
+                  id="sim-speed"
+                  type="range"
+                  min="1"
+                  max="5"
+                  value="3"
+                  class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                  <span>Slow</span>
+                  <span>Fast</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-400">
+                  Adjusts how frequently forecasts regenerate when auto-update is enabled
+                </p>
+              </div>
             </div>
-          </section>
+          </div>
+
+          <!-- Live Forecast Display -->
+          <div id="forecast-display" class="rounded-xl border border-slate-700 bg-slate-900/70 p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-2xl font-semibold text-slate-100">
+                Live Forecast
+              </h2>
+              <button
+                id="generate-btn"
+                class="px-4 py-2 rounded-md bg-cyan-500 text-slate-900 font-semibold hover:bg-cyan-400 transition shadow"
+              >
+                Generate Now
+              </button>
+            </div>
+            <div id="current-forecast" class="space-y-4">
+              <p class="text-slate-400">Adjust parameters above to see forecast update in real-time.</p>
+            </div>
+          </div>
+
+          <!-- Forecast History Chart -->
+          <div class="rounded-xl border border-slate-700 bg-slate-900/70 p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-2xl font-semibold text-slate-100">
+                Forecast History
+              </h2>
+              <button
+                id="clear-history"
+                class="px-3 py-1 text-xs rounded-md bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+              >
+                Clear
+              </button>
+            </div>
+            <canvas id="forecast-chart" width="400" height="300"></canvas>
+          </div>
+
+          <!-- Comparison View -->
+          <div class="rounded-xl border border-slate-700 bg-slate-900/70 p-6 shadow-lg">
+            <h2 class="text-2xl font-semibold text-slate-100 mb-4">
+              Scenario Comparison
+            </h2>
+            <div id="comparison-grid" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <!-- Comparison cards will be added here -->
+            </div>
+            <button
+              id="save-scenario"
+              class="mt-4 px-4 py-2 rounded-md bg-emerald-500 text-slate-900 font-semibold hover:bg-emerald-400 transition shadow"
+            >
+              Save Current Scenario
+            </button>
+          </div>
         </div>
 
-        <div class="space-y-4">
-          <h2 class="text-2xl font-semibold text-slate-100">
-            Architecture snapshot
-          </h2>
-          <figure
-            class="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40 shadow-xl shadow-cyan-500/10"
-          >
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <!-- Architecture Diagram -->
+          <div class="rounded-xl border border-slate-800 bg-slate-900/40 shadow-xl">
             <img
               src="../diagram/behaviour-convergence.svg"
               alt="Behavior Convergence architecture diagram"
-              class="w-full"
+              class="w-full rounded-t-xl"
             />
-            <figcaption class="p-4 text-xs text-slate-400">
-              Diagram rendered from the Mermaid source in <code>diagram/</code>.
-              The Explorer serves as a companion UI for the FastAPI backend.
-            </figcaption>
-          </figure>
-        </div>
+            <div class="p-4">
+              <h3 class="text-lg font-semibold text-slate-100 mb-2">System Architecture</h3>
+              <p class="text-xs text-slate-400">
+                Interactive diagram showing the complete forecasting pipeline. Click to explore.
+              </p>
+              <a
+                href="interactive-diagram.html"
+                class="mt-3 inline-block text-xs text-cyan-400 hover:text-cyan-300 transition"
+              >
+                Open interactive view →
+              </a>
+            </div>
+          </div>
 
-        <div class="space-y-3" id="public-stats">
-          <h2 class="text-2xl font-semibold text-slate-100">
-            Live public data snapshot
-          </h2>
-          <div
-            class="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 text-sm text-slate-300 shadow-lg shadow-emerald-500/10"
-          >
-            <p id="public-stats-summary" class="text-slate-400">
-              Loading latest snapshot…
-            </p>
-            <ul
-              id="public-stats-list"
-              class="mt-3 space-y-2 text-xs text-slate-400"
-            ></ul>
+          <!-- Stats Panel -->
+          <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
+            <h3 class="text-lg font-semibold text-slate-100 mb-3">Simulation Stats</h3>
+            <div id="stats-panel" class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Forecasts Generated:</span>
+                <span class="text-slate-100 font-semibold" id="forecast-count">0</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Avg. Forecast:</span>
+                <span class="text-slate-100 font-semibold" id="avg-forecast">0.00</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Avg. Confidence:</span>
+                <span class="text-slate-100 font-semibold" id="avg-confidence">0.00</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Scenarios Saved:</span>
+                <span class="text-slate-100 font-semibold" id="scenario-count">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Public Data Snapshot -->
+          <div class="rounded-xl border border-slate-800 bg-slate-900/50 p-4 shadow-lg">
+            <h3 class="text-lg font-semibold text-slate-100 mb-3">Public Data</h3>
+            <div id="public-stats" class="text-sm space-y-2">
+              <p class="text-slate-400">Loading...</p>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
     <script>
-      // Deterministic synthetic forecast generator (matches Python backend logic)
+      // State management
+      let forecastHistory = [];
+      let savedScenarios = [];
+      let currentForecast = null;
+      let chartInstance = null;
+      let autoUpdateInterval = null;
+
+      // Deterministic synthetic forecast generator (matches Python backend)
       function generateSyntheticForecast(region, horizon, modalities) {
-        // Create deterministic seed
         const normalizedModalities = [...modalities].sort();
         const seed = `${region.toLowerCase()}:${horizon}:${normalizedModalities.join(',')}`;
         
-        // Simple seeded PRNG (based on string hash)
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
           const char = seed.charCodeAt(i);
           hash = ((hash << 5) - hash) + char;
-          hash = hash & hash; // Convert to 32-bit integer
+          hash = hash & hash;
         }
         
         function seededRandom() {
           hash = Math.imul(hash, 0x9e3779b9);
           hash = hash ^ (hash >>> 15);
-          return ((hash >>> 0) / 4294967296); // Normalize to [0, 1)
+          return ((hash >>> 0) / 4294967296);
         }
         
-        // Generate forecast (matching Python logic)
         const base = 0.45 + seededRandom() * (0.85 - 0.45);
         const modalityFactor = 1.0 + 0.05 * normalizedModalities.length;
         const forecast = Math.round(base * modalityFactor * 1000) / 1000;
         const confidence = Math.round(Math.min(0.99, 0.55 + seededRandom() * 0.35) * 1000) / 1000;
         
-        // Generate explanations
         const explanations = [];
         if (normalizedModalities.length > 0) {
           normalizedModalities.forEach(modality => {
             const weight = Math.round((0.3 + seededRandom() * 0.5) * 1000) / 1000;
-            explanations.push(`${modality} contribution: ${weight}`);
+            explanations.push({ modality, weight });
           });
         } else {
-          explanations.push("baseline synthetic trend applied");
+          explanations.push({ modality: 'baseline', weight: 1.0 });
         }
         
         return {
@@ -234,178 +360,402 @@
           forecast,
           confidence,
           explanations,
+          timestamp: new Date(),
           ethics: { synthetic: true, pii: false },
         };
       }
-      
-      // Fallback for API calls
-      const mockResponse = (payload) => generateSyntheticForecast(
-        payload.region,
-        payload.horizon,
-        payload.modalities
-      );
 
-      const renderForecast = (data, container) => {
-        const { region, horizon, modalities, forecast, confidence, explanations, ethics, _mocked } =
-          data;
+      // Generate forecast from current form values
+      function generateForecast() {
+        const region = document.getElementById('region').value.trim() || 'us-midwest';
+        const horizon = parseInt(document.getElementById('horizon').value);
+        const modalities = Array.from(document.querySelectorAll('input[name="modality"]:checked'))
+          .map(cb => cb.value);
+
+        const forecast = generateSyntheticForecast(region, horizon, modalities);
+        currentForecast = forecast;
+        forecastHistory.push({
+          ...forecast,
+          id: Date.now(),
+        });
+
+        updateForecastDisplay(forecast);
+        updateChart();
+        updateStats();
+        
+        return forecast;
+      }
+
+      // Update forecast display with animations
+      function updateForecastDisplay(forecast) {
+        const container = document.getElementById('current-forecast');
+        
+        const modalityBadges = forecast.modalities.map(m => 
+          `<span class="modality-badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">${m}</span>`
+        ).join('');
+
         container.innerHTML = `
-          <div class="space-y-2">
-            <p class="text-sm uppercase tracking-wide text-cyan-300">Synthetic forecast</p>
-            <div class="flex flex-wrap gap-6 text-base">
+          <div class="forecast-card space-y-4">
+            <div class="flex items-center justify-between">
               <div>
-                <p class="text-xs text-slate-400">Region</p>
-                <p class="font-semibold">${region}</p>
+                <p class="text-xs text-slate-400 uppercase tracking-wide">Current Forecast</p>
+                <p class="text-2xl font-bold text-cyan-300 mt-1">${forecast.forecast}</p>
               </div>
-              <div>
-                <p class="text-xs text-slate-400">Horizon</p>
-                <p class="font-semibold">${horizon} day(s)</p>
-              </div>
-              <div>
-                <p class="text-xs text-slate-400">Modalities</p>
-                <p class="font-semibold">${modalities.length ? modalities.join(", ") : "baseline"}</p>
+              <div class="text-right">
+                <p class="text-xs text-slate-400 uppercase tracking-wide">Confidence</p>
+                <p class="text-2xl font-bold text-emerald-300 mt-1">${forecast.confidence}</p>
               </div>
             </div>
-            <div class="grid gap-4 rounded-lg border border-slate-800 bg-slate-950/60 p-4 sm:grid-cols-2">
-              <div>
-                <p class="text-xs text-slate-400">Forecast index</p>
-                <p class="text-3xl font-bold text-cyan-300">${forecast}</p>
-                <div class="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-cyan-400 transition-all duration-500" style="width: ${Math.min(100, forecast * 100)}%"></div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <div class="space-y-2">
+                <p class="text-xs text-slate-400">Forecast Index</p>
+                <div class="h-4 w-full rounded-full bg-slate-800 overflow-hidden relative">
+                  <div 
+                    class="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-700 ease-out"
+                    style="width: ${Math.min(100, forecast.forecast * 100)}%"
+                  ></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-slate-900">
+                    ${(forecast.forecast * 100).toFixed(1)}%
+                  </span>
                 </div>
-                <p class="mt-1 text-xs text-slate-400">${(forecast * 100).toFixed(1)}% convergence index</p>
+              </div>
+
+              <div class="space-y-2">
+                <p class="text-xs text-slate-400">Confidence Level</p>
+                <div class="h-4 w-full rounded-full bg-slate-800 overflow-hidden relative">
+                  <div 
+                    class="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700 ease-out"
+                    style="width: ${Math.min(100, forecast.confidence * 100)}%"
+                  ></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-slate-900">
+                    ${(forecast.confidence * 100).toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3 rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+              <p class="text-xs text-slate-400 uppercase tracking-wide">Parameters</p>
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p class="text-slate-400">Region</p>
+                  <p class="text-slate-100 font-semibold">${forecast.region}</p>
+                </div>
+                <div>
+                  <p class="text-slate-400">Horizon</p>
+                  <p class="text-slate-100 font-semibold">${forecast.horizon} days</p>
+                </div>
               </div>
               <div>
-                <p class="text-xs text-slate-400">Confidence</p>
-                <p class="text-3xl font-bold text-emerald-300">${confidence}</p>
-                <div class="mt-2 h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-emerald-400 transition-all duration-500" style="width: ${Math.min(100, confidence * 100)}%"></div>
+                <p class="text-slate-400 mb-2">Modalities</p>
+                <div class="flex flex-wrap gap-2">
+                  ${modalityBadges || '<span class="text-slate-500 italic">None selected</span>'}
                 </div>
-                <p class="mt-1 text-xs text-slate-400">${(confidence * 100).toFixed(1)}% model confidence</p>
               </div>
             </div>
-            <div>
-              <p class="text-xs text-slate-400">Modal contribution notes</p>
-              <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-200">
-                ${explanations.map((text) => `<li>${text}</li>`).join("")}
-              </ul>
+
+            <div class="space-y-2 rounded-lg border border-slate-800 bg-slate-950/60 p-4">
+              <p class="text-xs text-slate-400 uppercase tracking-wide mb-2">Modal Contributions</p>
+              <div class="space-y-2">
+                ${forecast.explanations.map(exp => `
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-300 capitalize">${exp.modality}</span>
+                    <div class="flex items-center gap-2 flex-1 mx-3">
+                      <div class="h-2 flex-1 rounded-full bg-slate-800 overflow-hidden">
+                        <div 
+                          class="h-full bg-cyan-500 transition-all duration-500"
+                          style="width: ${exp.weight * 100}%"
+                        ></div>
+                      </div>
+                      <span class="text-xs text-slate-400 w-12 text-right">${exp.weight.toFixed(3)}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
             </div>
-            <div class="rounded-lg border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-400">
-              Ethics: synthetic=${ethics.synthetic}, pii=${ethics.pii}. Outputs never reference real individuals.
+
+            <div class="rounded-lg border border-emerald-800/30 bg-emerald-950/20 p-3 text-xs text-emerald-300">
+              ✓ Synthetic data only • No PII • Deterministic outputs
             </div>
-            ${_mocked ? '<p class="text-xs text-emerald-400">Generated in browser (deterministic synthetic data).</p>' : ''}
           </div>
         `;
-      };
+      }
 
-      const form = document.getElementById("forecast-form");
-      const status = document.getElementById("form-status");
-      const content = document.getElementById("forecast-content");
-
-      // Try to detect API availability
-      const API_BASE = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8000' 
-        : null;
-      
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        status.textContent = "Generating forecast…";
-
-        const formData = new FormData(form);
-        const payload = {
-          region: formData.get("region").trim(),
-          horizon: Number(formData.get("horizon")),
-          modalities: formData.getAll("modalities"),
-        };
-
-        // Try API first if available, otherwise use client-side generation
-        if (API_BASE) {
-          try {
-            const response = await fetch(`${API_BASE}/api/forecast`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              renderForecast(data, content);
-              status.textContent = "✓ Served by local API";
-              return;
-            }
-          } catch (error) {
-            console.warn("API unavailable, using client-side generation:", error);
-          }
-        }
+      // Update chart with forecast history
+      function updateChart() {
+        const ctx = document.getElementById('forecast-chart').getContext('2d');
         
-        // Use client-side generation (always works)
-        const data = generateSyntheticForecast(
-          payload.region,
-          payload.horizon,
-          payload.modalities
-        );
-        renderForecast(data, content);
-        status.textContent = API_BASE 
-          ? "Using client-side generation (API unavailable)"
-          : "✓ Generated in browser";
-      });
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
 
-      async function loadPublicStats() {
-        const summaryEl = document.getElementById("public-stats-summary");
-        const listEl = document.getElementById("public-stats-list");
-        if (!summaryEl || !listEl) return;
+        const labels = forecastHistory.slice(-20).map((f, i) => `#${forecastHistory.length - 20 + i + 1}`);
+        const forecastData = forecastHistory.slice(-20).map(f => f.forecast);
+        const confidenceData = forecastHistory.slice(-20).map(f => f.confidence);
 
-        // Only try API if on localhost
-        if (!API_BASE) {
-          summaryEl.textContent = "Public data requires backend API (available in local development)";
-          listEl.innerHTML = '<li class="text-slate-400">Run <code class="bg-slate-800 px-1 rounded">docker compose up</code> to access live data</li>';
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Forecast Index',
+                data: forecastData,
+                borderColor: 'rgb(6, 182, 212)',
+                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                tension: 0.4,
+                fill: true,
+              },
+              {
+                label: 'Confidence',
+                data: confidenceData,
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                labels: { color: '#cbd5e1' },
+              },
+            },
+            scales: {
+              x: {
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(148, 163, 184, 0.1)' },
+              },
+              y: {
+                min: 0,
+                max: 1,
+                ticks: { color: '#94a3b8' },
+                grid: { color: 'rgba(148, 163, 184, 0.1)' },
+              },
+            },
+          },
+        });
+      }
+
+      // Update statistics panel
+      function updateStats() {
+        if (forecastHistory.length === 0) return;
+
+        const avgForecast = forecastHistory.reduce((sum, f) => sum + f.forecast, 0) / forecastHistory.length;
+        const avgConfidence = forecastHistory.reduce((sum, f) => sum + f.confidence, 0) / forecastHistory.length;
+
+        document.getElementById('forecast-count').textContent = forecastHistory.length;
+        document.getElementById('avg-forecast').textContent = avgForecast.toFixed(3);
+        document.getElementById('avg-confidence').textContent = avgConfidence.toFixed(3);
+        document.getElementById('scenario-count').textContent = savedScenarios.length;
+      }
+
+      // Save current scenario
+      function saveScenario() {
+        if (!currentForecast) return;
+        
+        const scenario = {
+          ...currentForecast,
+          id: Date.now(),
+          name: `${currentForecast.region} (${currentForecast.horizon}d)`,
+        };
+        
+        savedScenarios.push(scenario);
+        updateComparisonGrid();
+        updateStats();
+      }
+
+      // Update comparison grid
+      function updateComparisonGrid() {
+        const grid = document.getElementById('comparison-grid');
+        
+        if (savedScenarios.length === 0) {
+          grid.innerHTML = '<p class="text-slate-400 text-sm col-span-full">No scenarios saved yet. Click "Save Current Scenario" to compare forecasts.</p>';
           return;
         }
 
-        try {
-          const response = await fetch(`${API_BASE}/api/public/stats`, { cache: "no-store" });
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-          const data = await response.json();
+        grid.innerHTML = savedScenarios.slice(-6).map(scenario => `
+          <div class="forecast-card rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm font-semibold text-slate-100">${scenario.name}</p>
+                <p class="text-xs text-slate-400 mt-1">
+                  ${scenario.modalities.length} modality${scenario.modalities.length !== 1 ? 'ies' : 'y'}
+                </p>
+              </div>
+              <button 
+                onclick="removeScenario(${scenario.id})"
+                class="text-slate-500 hover:text-red-400 text-xs"
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <p class="text-xs text-slate-400">Forecast</p>
+                <p class="text-2xl font-bold text-cyan-300">${scenario.forecast}</p>
+              </div>
+              <div>
+                <p class="text-xs text-slate-400">Confidence</p>
+                <p class="text-2xl font-bold text-emerald-300">${scenario.confidence}</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1">
+              ${scenario.modalities.map(m => 
+                `<span class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-300">${m}</span>`
+              ).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
 
-          if (!data.available) {
-            summaryEl.textContent =
-              (data.errors && data.errors.snapshot) ||
-              "No live snapshot found. Run `hbc-cli sync-public-data --apply` to populate data/public/latest.";
-            listEl.innerHTML = "";
+      // Remove scenario
+      window.removeScenario = function(id) {
+        savedScenarios = savedScenarios.filter(s => s.id !== id);
+        updateComparisonGrid();
+        updateStats();
+      };
+
+      // Real-time updates based on simulation speed
+      function setupAutoUpdate() {
+        if (autoUpdateInterval) {
+          clearInterval(autoUpdateInterval);
+        }
+
+        const speed = parseInt(document.getElementById('sim-speed').value);
+        const intervals = [2000, 1500, 1000, 500, 250]; // Slow to Fast
+        const interval = intervals[speed - 1];
+
+        autoUpdateInterval = setInterval(() => {
+          if (document.getElementById('auto-update')?.checked) {
+            generateForecast();
+          }
+        }, interval);
+      }
+
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        // Horizon slider update
+        const horizonSlider = document.getElementById('horizon');
+        const horizonValue = document.getElementById('horizon-value');
+        
+        horizonSlider.addEventListener('input', (e) => {
+          horizonValue.textContent = `${e.target.value} day${e.target.value !== '1' ? 's' : ''}`;
+          if (document.getElementById('auto-update')?.checked) {
+            generateForecast();
+          }
+        });
+
+        // Simulation speed slider
+        const simSpeedSlider = document.getElementById('sim-speed');
+        const simSpeedValue = document.getElementById('sim-speed-value');
+        const speedLabels = ['Very Slow', 'Slow', 'Normal', 'Fast', 'Very Fast'];
+        
+        simSpeedSlider.addEventListener('input', (e) => {
+          simSpeedValue.textContent = speedLabels[e.target.value - 1];
+          setupAutoUpdate();
+        });
+
+        // Modality checkboxes
+        document.querySelectorAll('input[name="modality"]').forEach(cb => {
+          cb.addEventListener('change', () => {
+            if (document.getElementById('auto-update')?.checked) {
+              generateForecast();
+            }
+          });
+        });
+
+        // Region input (debounced)
+        let regionTimeout;
+        document.getElementById('region').addEventListener('input', () => {
+          clearTimeout(regionTimeout);
+          regionTimeout = setTimeout(() => {
+            if (document.getElementById('auto-update')?.checked) {
+              generateForecast();
+            }
+          }, 500);
+        });
+
+        // Generate button
+        document.getElementById('generate-btn').addEventListener('click', generateForecast);
+
+        // Save scenario button
+        document.getElementById('save-scenario').addEventListener('click', saveScenario);
+
+        // Clear history
+        document.getElementById('clear-history').addEventListener('click', () => {
+          forecastHistory = [];
+          updateChart();
+          updateStats();
+        });
+
+        // Initial forecast
+        generateForecast();
+        setupAutoUpdate();
+
+        // Auto-update toggle
+        const autoUpdateCheckbox = document.getElementById('auto-update');
+        autoUpdateCheckbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            setupAutoUpdate();
+          } else {
+            if (autoUpdateInterval) {
+              clearInterval(autoUpdateInterval);
+              autoUpdateInterval = null;
+            }
+          }
+        });
+
+        // Load public stats if API available
+        const API_BASE = window.location.hostname === 'localhost' 
+          ? 'http://localhost:8000' 
+          : null;
+
+        async function loadPublicStats() {
+          const container = document.getElementById('public-stats');
+          
+          if (!API_BASE) {
+            container.innerHTML = '<p class="text-xs text-slate-400">Run <code class="bg-slate-800 px-1 rounded">docker compose up</code> for live data</p>';
             return;
           }
 
-          const updated = data.generated_at
-            ? new Date(data.generated_at).toLocaleString()
-            : "n/a";
-          summaryEl.textContent = `Date: ${data.date || "unknown"} • Updated ${updated}`;
-          listEl.innerHTML = "";
-
-          const labelMap = {
-            wiki: "Wikipedia pageviews",
-            osm: "OSM changesets",
-            firms: "NASA FIRMS fires",
-          };
-
-          Object.entries(data.sources || {}).forEach(([key, info]) => {
-            const label = labelMap[key] || key.toUpperCase();
-            const li = document.createElement("li");
-            if (info.error) {
-              li.textContent = `${label}: error (${info.error})`;
-              li.style.color = "#fca5a5";
+          try {
+            const response = await fetch(`${API_BASE}/api/public/stats`);
+            const data = await response.json();
+            
+            if (data.available) {
+              container.innerHTML = `
+                <div class="space-y-2 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Date:</span>
+                    <span class="text-slate-100">${data.date || 'n/a'}</span>
+                  </div>
+                  ${Object.entries(data.sources || {}).map(([key, info]) => `
+                    <div class="flex justify-between">
+                      <span class="text-slate-400 capitalize">${key}:</span>
+                      <span class="text-slate-100">${info.rows || 0} rows</span>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
             } else {
-              li.textContent = `${label}: ${Number(info.rows || 0).toLocaleString()} rows`;
+              container.innerHTML = '<p class="text-xs text-slate-400">No live data available</p>';
             }
-            listEl.appendChild(li);
-          });
-        } catch (error) {
-          summaryEl.textContent = `Unable to load snapshot: ${error.message}`;
-          listEl.innerHTML = "";
+          } catch (error) {
+            container.innerHTML = '<p class="text-xs text-slate-400">API unavailable (demo mode)</p>';
+          }
         }
-      }
 
-      loadPublicStats();
+        loadPublicStats();
+        
+        // Initial chart setup
+        updateComparisonGrid();
+      });
     </script>
   </body>
 </html>
