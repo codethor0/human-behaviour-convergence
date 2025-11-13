@@ -60,7 +60,9 @@ def _sanitize(text: str) -> str:
     sanitized = text
     for token in _ALLOWED_SUBSTRINGS:
         sanitized = sanitized.replace(token, token.replace("behaviour", "behavoir"))
-        sanitized = sanitized.replace(token.capitalize(), token.capitalize().replace("Behaviour", "Behavoir"))
+        sanitized = sanitized.replace(
+            token.capitalize(), token.capitalize().replace("Behaviour", "Behavoir")
+        )
     return sanitized
 
 
@@ -79,10 +81,15 @@ def main() -> int:
         match = _PATTERN.search(sanitized)
         if match:
             line_no = sanitized[: match.start()].count("\n") + 1
-            failures.append(f"{path}: line {line_no} contains British spelling '{match.group(0)}'")
+            failures.append(
+                f"{path}: line {line_no} contains British spelling '{match.group(0)}'"
+            )
 
     if failures:
-        print("American English required (behavior/behavioral). Found British spellings:", file=sys.stderr)
+        print(
+            "American English required (behavior/behavioral). Found British spellings:",
+            file=sys.stderr,
+        )
         for item in failures:
             print(f"  - {item}", file=sys.stderr)
         return 1

@@ -46,4 +46,3 @@ Thanks for your interest in improving this project!
 
 ## Code of Conduct
 By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
-

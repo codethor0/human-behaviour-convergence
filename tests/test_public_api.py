@@ -34,10 +34,12 @@ class TestPublicDataEndpoints:
                 "views": [1000, 2000],
             }
         )
-        
+
         response = client.get("/api/public/wiki/latest?date=2024-11-04", timeout=5.0)
-        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
-        
+        assert (
+            response.status_code == 200
+        ), f"Unexpected status code: {response.status_code}"
+
         data = response.json()
         assert "source" in data
         assert data["source"] == "wiki"
@@ -60,10 +62,12 @@ class TestPublicDataEndpoints:
                 "timestamp": ["2024-11-04T00:00:00Z"],
             }
         )
-        
+
         response = client.get("/api/public/osm/latest?date=2024-11-04", timeout=5.0)
-        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
-        
+        assert (
+            response.status_code == 200
+        ), f"Unexpected status code: {response.status_code}"
+
         data = response.json()
         assert data["source"] == "osm"
 
@@ -85,21 +89,25 @@ class TestPublicDataEndpoints:
     @patch.object(public, "FIRMSFiresSync")
     @patch.object(public, "OSMChangesetsSync")
     @patch.object(public, "WikiPageviewsSync")
-    def test_synthetic_score_endpoint(self, mock_wiki_class, mock_osm_class, mock_firms_class):
+    def test_synthetic_score_endpoint(
+        self, mock_wiki_class, mock_osm_class, mock_firms_class
+    ):
         """Test /api/public/synthetic_score endpoint."""
         # Mock all three connector classes
         mock_wiki = mock_wiki_class.return_value
         mock_wiki.pull.return_value = pd.DataFrame({"views": [1000, 2000]})
-        
+
         mock_osm = mock_osm_class.return_value
         mock_osm.pull.return_value = pd.DataFrame({"changeset_count": [5, 10]})
-        
+
         mock_firms = mock_firms_class.return_value
         mock_firms.pull.return_value = pd.DataFrame({"fire_count": [1, 2]})
-        
+
         response = client.get("/api/public/synthetic_score/9/2024-11-04", timeout=5.0)
-        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
-        
+        assert (
+            response.status_code == 200
+        ), f"Unexpected status code: {response.status_code}"
+
         data = response.json()
         assert "h3_res" in data
         assert data["h3_res"] == 9

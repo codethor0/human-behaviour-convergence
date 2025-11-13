@@ -2,6 +2,7 @@
 """Tests for public data connectors."""
 import bz2
 import gzip
+
 import pandas as pd
 import responses
 
