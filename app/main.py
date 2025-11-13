@@ -27,8 +27,10 @@ class _BackendProxyModule(ModuleType):
         return getattr(_backend_module, name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        setattr(_backend_module, name, value)
+        # Update shim's namespace first so backend hooks can read the new value
         ModuleType.__setattr__(self, name, value)
+        # Then update backend module (triggers hooks like _on_cache_size_updated)
+        setattr(_backend_module, name, value)
 
 
 _module = sys.modules[__name__]
