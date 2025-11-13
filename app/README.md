@@ -1,12 +1,22 @@
 # Behavior Convergence App
 
-This folder contains a minimal scaffold for a demo application:
-- Backend: FastAPI serving CSV-backed endpoints.
-- Frontend: Next.js (TypeScript) consuming those endpoints.
+This folder contains the Behavior Convergence Explorer application workspace:
+- **Backend:** FastAPI serving CSV-backed endpoints (`app/backend/`)
+- **Frontend:** Next.js (TypeScript) consuming those endpoints (`app/frontend/`)
 
 Both are intentionally lightweight and optional. The repo remains documentation- and diagram-first.
 
-## Run locally (macOS zsh)
+## Current Structure
+
+```
+app/
+  backend/          FastAPI application (Python)
+  frontend/         Next.js application (TypeScript)
+  main.py           Module shim for backend compatibility
+  README.md         This file
+```
+
+## Run Locally
 
 Open two terminals at the repo root.
 
@@ -38,29 +48,12 @@ export NEXT_PUBLIC_API_BASE="http://127.0.0.1:8000"
 npm run dev
 ```
 
-## Notes
+## Development Notes
+
 - CORS is enabled on the backend for local dev.
-- No CI is added yet for the app to keep the repo lean; we can wire one later.
+- CI workflows exist for both backend and frontend (`.github/workflows/app-ci.yml`).
 - The diagram remains the source of truth: edit `diagram/behaviour-convergence.mmd` and let CI regenerate assets.
 
-# Behavior Convergence Explorer
+## Roadmap
 
-> Application workspace for turning the research repo into an interactive experience.
-
-## Structure (planned)
-
-```
-app/
-  frontend/   (Next.js - React + TypeScript)
-  backend/    (FastAPI - Python)
-```
-
-## Setup
-
-This folder currently contains planning materials only. Scaffolding will be added in milestone `app-v0.1`:
-
-1. `frontend/` — Next.js bootstrap with pnpm.
-2. `backend/` — FastAPI project with Poetry/uv.
-3. Shared config (ESLint, Prettier, Makefile) at `app/` root.
-
-Refer to [../docs/app-plan.md](../docs/app-plan.md) for detailed roadmap.
+For detailed product plan and milestones, see [../docs/app-plan.md](../docs/app-plan.md).

@@ -88,36 +88,6 @@ Click, zoom, and explore the full system architecture with interactive tooltips 
 | **PROCESS** | 8.4B total | Real-time fusion and inference across planetary scale compute fabric |
 | **FEEDBACK** | Continuous | Predictive outputs enable targeted interventions generating new training data |
 
-
-
-# The Convergence of Human-Behavior Prediction
-> Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
-
-[![Render Diagram](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge?style=flat)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
-[![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
-
----
-
-## What is this?
-
-This project demonstrates **population-scale behavioral forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioral states at unprecedented scale.
-
-**Status:** Proof-of-concept (v0.1) — research artifact
-**Paper:** Under review
-**Data:** Synthetic sample (1% slice) available; full dataset under restricted access
-**Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
-
----
-
-## Architecture Overview
-
-- View the interactive diagram (editable): [Interactive Diagram](docs/interactive-diagram.html)
-- Static fallback:
-
-![diagram](diagram/behaviour-convergence.svg)
-
 ## What's inside
 | File | Purpose |
 |------|---------|
@@ -177,7 +147,7 @@ mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.png -
 
 ## Run in the cloud
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/codethor0/human-behaviour-convergence/blob/master/notebooks/demo.ipynb)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/codethor0/human-behaviour-convergence/blob/main/notebooks/demo.ipynb)
 [![Launch Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/codethor0/human-behaviour-convergence/HEAD?labpath=notebooks%2Fdemo.ipynb)
 
 1. Click a badge above.
@@ -377,7 +347,7 @@ If you use this project in your research, please cite:
 See [CITATION.cff](./CITATION.cff) for machine-readable metadata.
 
 ## Enable Pages
-To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `master` / (root). After a successful deploy the diagram will be available at:
+To publish the rendered SVG as a static page, enable GitHub Pages in your repo settings: Settings → Pages → Deploy from a branch → Branch: `main` / (root). After a successful deploy the diagram will be available at:
 
 `https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg`
 
