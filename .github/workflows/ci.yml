@@ -18,6 +18,55 @@ env:
   MAX_LOG_MB: 5
 
 jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pre-cleanup disk
+        run: |
+          echo "=== Pre-cleanup Disk Usage ==="
+          df -h | head -2
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            app/backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r app/backend/requirements.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Verify build
+        run: |
+          python -c "import app; import hbc; import connectors; print('[PASS] All modules import successfully')"
+
+  emoji-check:
+    name: check-no-emoji
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Check for emojis in Markdown files
+        run: python .github/scripts/check_no_emoji.py
+
   lint-format:
     name: Lint & Format
     runs-on: ubuntu-latest
