@@ -118,7 +118,7 @@ Or via GitHub UI:
 - [x] `.gitignore` for sensitive files (`.env`, `.pem`, etc.)
 - [x] Clean project dependencies (no vulnerabilities in venv)
 
-### ⏳ Manual Steps Required (GitHub UI)
+### Manual Steps Required (GitHub UI)
 - [ ] Enable branch protection rules on `main`
 - [ ] Enable secret scanning + push protection
 - [ ] Enable GitHub Pages
