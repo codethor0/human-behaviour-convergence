@@ -42,7 +42,7 @@ jobs:
             echo "ERROR: SVG file not generated"
             exit 1
           fi
-          echo "✓ SVG generated successfully"
+          echo "[PASS] SVG generated successfully"
 
       - name: Render PNG
         run: |
@@ -51,7 +51,7 @@ jobs:
             echo "ERROR: PNG file not generated"
             exit 1
           fi
-          echo "✓ PNG generated successfully"
+          echo "[PASS] PNG generated successfully"
 
       - name: Upload artifacts (PR only)
         if: ${{ github.event_name == 'pull_request' }}
