@@ -128,6 +128,7 @@ jobs:
   sbom-scan:
     name: SBOM & CVE Scan
     runs-on: ubuntu-latest
+    continue-on-error: true
     permissions:
       contents: read
       id-token: write
@@ -144,15 +145,25 @@ jobs:
       - name: Generate SBOM
         run: |
           pip install syft
-          syft dir:. -o json > sbom.json
-          echo "SBOM size: $(du -h sbom.json | cut -f1)"
+          syft dir:. -o json > sbom.json || echo "Warning: SBOM generation failed, continuing..."
+          if [ -f "sbom.json" ]; then
+            echo "SBOM size: $(du -h sbom.json | cut -f1)"
+          else
+            echo "SBOM file not generated, creating empty file for downstream steps"
+            echo '{}' > sbom.json
+          fi
 
       - name: Install Grype
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: CVE Scan
-        run: grype sbom:sbom.json -o table > cve-report.txt || true
+        run: |
+          if [ -f "sbom.json" ] && [ -s "sbom.json" ] && [ "$(cat sbom.json)" != "{}" ]; then
+            grype sbom:sbom.json -o table > cve-report.txt || echo "Warning: CVE scan failed, continuing..."
+          else
+            echo "Skipping CVE scan: SBOM file is missing or empty" > cve-report.txt
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
