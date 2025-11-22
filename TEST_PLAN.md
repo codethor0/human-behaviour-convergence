@@ -1,14 +1,14 @@
 # Test Plan
 
-**Repository:** human-behaviour-convergence  
-**Branch:** chore/spelling-behavior-standardization  
-**Date:** 2025-11-10  
+**Repository:** human-behaviour-convergence
+**Branch:** chore/spelling-behavior-standardization
+**Date:** 2025-11-10
 
 ## Detected Languages & Frameworks
 
 - **Primary:** Python 3.10+ (requires >=3.10)
 - **Package Manager:** pip (requirements.txt, requirements-dev.txt, app/backend/requirements.txt)
-- **Package Structure:** 
+- **Package Structure:**
   - `hbc/` - Main package
   - `connectors/` - Data connectors
   - `app/backend/` - FastAPI backend
@@ -164,4 +164,3 @@ From quality-gates workflow:
 - Type checking is non-blocking (`mypy --strict` with `continue-on-error: true`)
 - Security scanning uses Semgrep with auto-config
 - Pre-commit hooks must pass before commits (but may fail on missing Python executable)
-
