@@ -1,8 +1,8 @@
 # Test Report
 
-**Repository:** human-behaviour-convergence  
-**Date:** 2025-11-10  
-**Status:** ✅ All tests passing  
+**Repository:** human-behaviour-convergence
+**Date:** 2025-11-10
+**Status:** [PASS] All tests passing
 
 ---
 
@@ -10,10 +10,10 @@
 
 The repository has a **comprehensive test suite** with 33 tests covering unit, integration, and API testing. All tests pass consistently in both local and Docker environments. Coverage is **78%** overall, exceeding the 65% threshold.
 
-**Test Execution:** ✅ Passing (33/33)  
-**Coverage:** 78% (target: ≥65%)  
-**Dockerized:** ✅ Yes (docker-compose test service)  
-**CI Integration:** ✅ Yes (GitHub Actions workflows)  
+**Test Execution:** [PASS] Passing (33/33)
+**Coverage:** 78% (target: ≥65%)
+**Dockerized:** [PASS] Yes (docker-compose test service)
+**CI Integration:** [PASS] Yes (GitHub Actions workflows)
 
 ---
 
@@ -21,9 +21,9 @@ The repository has a **comprehensive test suite** with 33 tests covering unit, i
 
 ### Unit Tests (Fast Path)
 
-**Location:** `tests/test_forecasting.py`, `tests/test_cli.py`  
-**Count:** 5 tests  
-**Execution Time:** < 1 second  
+**Location:** `tests/test_forecasting.py`, `tests/test_cli.py`
+**Count:** 5 tests
+**Execution Time:** < 1 second
 
 **Coverage:**
 - Pure forecasting logic (`hbc/forecasting.py`): 95% coverage
@@ -45,9 +45,9 @@ pytest tests/test_forecasting.py tests/test_cli.py -v
 
 ### Integration Tests (Medium Path)
 
-**Location:** `tests/test_api_backend.py`, `tests/test_public_api.py`, `tests/test_connectors.py`  
-**Count:** 27 tests  
-**Execution Time:** < 2 seconds  
+**Location:** `tests/test_api_backend.py`, `tests/test_public_api.py`, `tests/test_connectors.py`
+**Count:** 27 tests
+**Execution Time:** < 2 seconds
 
 **Coverage:**
 - FastAPI backend (`app/backend/app/main.py`): 70% coverage
@@ -70,8 +70,8 @@ pytest tests/test_api_backend.py tests/test_public_api.py tests/test_connectors.
 
 ### E2E Tests (Future)
 
-**Status:** Not yet implemented  
-**Planned:** Frontend + backend integration tests  
+**Status:** Not yet implemented
+**Planned:** Frontend + backend integration tests
 
 ---
 
@@ -236,7 +236,7 @@ docker compose run --rm test pytest tests/ --cov --cov-report=html -v
 - Complexity checks
 - Maintainability checks
 
-**CI Status:** ✅ All workflows passing
+**CI Status:** [PASS] All workflows passing
 
 ---
 
@@ -280,17 +280,17 @@ def test_get_forecasts_with_csv(temp_results_dir, client):
 ## Known Limitations
 
 ### 1. Frontend Tests
-**Status:** Not implemented  
-**Impact:** No tests for Next.js frontend  
-**Recommendation:** Add component tests with Vitest or Jest  
+**Status:** Not implemented
+**Impact:** No tests for Next.js frontend
+**Recommendation:** Add component tests with Vitest or Jest
 
 ### 2. E2E Tests
-**Status:** Not implemented  
-**Impact:** No full-stack integration tests  
-**Recommendation:** Add Playwright or Cypress tests for critical user flows  
+**Status:** Not implemented
+**Impact:** No full-stack integration tests
+**Recommendation:** Add Playwright or Cypress tests for critical user flows
 
 ### 3. Low Coverage Areas
-**Status:** Identified  
+**Status:** Identified
 **Areas:**
 - `connectors/firms_fires.py`: 48% (error handling, edge cases)
 - `hbc/cli.py`: 44% (CLI argument parsing, error handling)
@@ -298,9 +298,9 @@ def test_get_forecasts_with_csv(temp_results_dir, client):
 **Recommendation:** Add tests for error paths and edge cases
 
 ### 4. Type Checking
-**Status:** Non-blocking in CI  
-**Issue:** 44 mypy type errors with `--strict` mode  
-**Impact:** Reduced type safety, but tests still pass  
+**Status:** Non-blocking in CI
+**Issue:** 44 mypy type errors with `--strict` mode
+**Impact:** Reduced type safety, but tests still pass
 **Recommendation:** Address in future phase (install stub packages, add annotations)
 
 ---
@@ -322,7 +322,7 @@ def test_get_forecasts_with_csv(temp_results_dir, client):
 - **Matrix Jobs:** Run in parallel (3 Python versions)
 - **Caching:** Pip dependencies cached for faster runs
 
-**Performance Status:** ✅ Fast (all suites < 2 seconds)
+**Performance Status:** [PASS] Fast (all suites < 2 seconds)
 
 ---
 
@@ -373,29 +373,29 @@ docker compose run --rm test pytest tests/ -v -n auto
 
 ## Success Criteria
 
-### ✅ Completed
+### [PASS] Completed
 
 1. **Docker Test Environment:**
-   - ✅ Test service in docker-compose.yml
-   - ✅ Tests run successfully in Docker
-   - ✅ Execution time < 2 minutes
+   - [PASS] Test service in docker-compose.yml
+   - [PASS] Tests run successfully in Docker
+   - [PASS] Execution time < 2 minutes
 
 2. **Test Suite:**
-   - ✅ 33 tests passing (100%)
-   - ✅ Coverage ≥ 65% (78% achieved)
-   - ✅ Unit and integration tests implemented
+   - [PASS] 33 tests passing (100%)
+   - [PASS] Coverage ≥ 65% (78% achieved)
+   - [PASS] Unit and integration tests implemented
 
 3. **CI Integration:**
-   - ✅ Tests run in GitHub Actions
-   - ✅ Coverage reports uploaded
-   - ✅ Multiple Python versions tested
+   - [PASS] Tests run in GitHub Actions
+   - [PASS] Coverage reports uploaded
+   - [PASS] Multiple Python versions tested
 
 4. **Documentation:**
-   - ✅ Test commands documented
-   - ✅ Docker usage documented
-   - ✅ Coverage metrics tracked
+   - [PASS] Test commands documented
+   - [PASS] Docker usage documented
+   - [PASS] Coverage metrics tracked
 
-### ⚠️ Future Improvements
+### [WARN] Future Improvements
 
 1. **Frontend Tests:** Add component tests for Next.js app
 2. **E2E Tests:** Add full-stack integration tests
@@ -440,5 +440,4 @@ docker compose run --rm test pytest tests/ --cov --cov-report=html -v
 
 ---
 
-**Repository Status:** ✅ GREEN - All tests passing, Dockerized, CI integrated
-
+**Repository Status:** [PASS] GREEN - All tests passing, Dockerized, CI integrated

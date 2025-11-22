@@ -44,5 +44,63 @@ Thanks for your interest in improving this project!
   - Example:
     - `npx @mermaid-js/mermaid-cli -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg`
 
+## Local Workflow
+
+Before pushing changes, follow this workflow:
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
+
+Or use the bootstrap script:
+
+```bash
+./scripts/dev
+```
+
+### 2. Run pre-commit hooks
+
+```bash
+pre-commit run --all-files
+```
+
+If pre-commit is not installed, you can run individual checks:
+
+```bash
+# Emoji check
+python .github/scripts/check_no_emoji.py
+
+# Format check (requires black)
+black --check app/backend tests hbc
+
+# Lint check (requires ruff)
+ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
+```
+
+### 3. Run tests
+
+**Recommended: Docker**
+
+```bash
+docker compose run --rm test
+```
+
+**Local execution**
+
+```bash
+pytest tests/ --cov --cov-report=term-missing -v
+```
+
+### 4. Verify and push
+
+After all checks pass locally:
+
+1. Commit your changes
+2. Push to your branch
+3. Verify that all GitHub Actions checks are green
+
 ## Code of Conduct
 By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).

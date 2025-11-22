@@ -30,20 +30,20 @@ Fixed high-priority Semgrep security findings and low-priority TestClient deprec
 ```bash
 pytest tests/ --cov --cov-report=term-missing -v
 ```
-✅ **Result:** 33 passed, 0 warnings
+[PASS] **Result:** 33 passed, 0 warnings
 
 ### Linters
 ```bash
 ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
 black --check app/backend tests hbc
 ```
-✅ **Result:** All checks passed
+[PASS] **Result:** All checks passed
 
 ### Security Scan
 ```bash
 semgrep --config=auto app/backend tests hbc
 ```
-✅ **Result:** 0 findings (previously 3)
+[PASS] **Result:** 0 findings (previously 3)
 
 ## Risks
 
@@ -83,7 +83,6 @@ Consider addressing mypy type errors in a future phase:
 
 ---
 
-**Status:** ✅ Ready for review  
-**Priority:** High (security fixes)  
+**Status:** [PASS] Ready for review
+**Priority:** High (security fixes)
 **Type:** Bug fix (security & deprecation)
-

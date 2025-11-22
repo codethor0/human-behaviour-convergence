@@ -1,13 +1,13 @@
 # Bug Summary
 
-**Repository:** human-behaviour-convergence  
-**Branch:** chore/spelling-behavior-standardization  
-**Date:** 2025-11-10  
-**Baseline Run:** Phase 1  
+**Repository:** human-behaviour-convergence
+**Branch:** chore/spelling-behavior-standardization
+**Date:** 2025-11-10
+**Baseline Run:** Phase 1
 
 ## Test Results
 
-### Tests: ✅ PASSING (33/33)
+### Tests: [PASS] PASSING (33/33)
 
 **Command:** `pytest tests/ --cov --cov-report=term-missing -v`
 
@@ -36,7 +36,7 @@
 
 ## Lint Results
 
-### Ruff: ✅ PASSING
+### Ruff: [PASS] PASSING
 
 **Command:** `ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402`
 
@@ -44,7 +44,7 @@
 
 ---
 
-### Black: ✅ PASSING
+### Black: [PASS] PASSING
 
 **Command:** `black --check app/backend tests hbc`
 
@@ -52,7 +52,7 @@
 
 ---
 
-### Mypy: ❌ FAILING (Non-blocking in CI)
+### Mypy: [FAIL] FAILING (Non-blocking in CI)
 
 **Command:** `mypy --strict app/backend tests hbc`
 
@@ -101,7 +101,7 @@
 
 ---
 
-### Semgrep: ⚠️ SECURITY FINDINGS (3 blocking)
+### Semgrep: [WARN] SECURITY FINDINGS (3 blocking)
 
 **Command:** `semgrep --config=auto app/backend tests hbc`
 
@@ -130,12 +130,12 @@
 
 ## Summary
 
-### ✅ Passing Checks
+### [PASS] Passing Checks
 - **Tests:** 33/33 passing (77% coverage)
 - **Ruff:** All checks pass
 - **Black:** All files properly formatted
 
-### ⚠️ Issues Found
+### [WARN] Issues Found
 - **Mypy:** 44 type checking errors (non-blocking in CI)
   - Mostly missing type annotations and stub packages
   - Should be fixed for better type safety but not urgent
@@ -143,7 +143,7 @@
   - All related to `globals()` usage
   - False positive pattern match but should be refactored
 
-### 📊 Priority Assessment
+### Priority Assessment
 
 **High Priority:**
 1. **Semgrep security findings** - Should be addressed to improve security posture
@@ -166,4 +166,3 @@
 1. Fix Semgrep security findings (high priority)
 2. Address mypy type errors (medium priority)
 3. Remove deprecated TestClient `timeout` parameter (low priority)
-

@@ -36,9 +36,9 @@ jobs:
           DISK_CAP_GB=${DISK_CAP_GB:-10}
           echo "Disk usage: ${DISK_USAGE}GB / ${DISK_CAP_GB}GB cap"
           if [ "$DISK_USAGE" -gt "$DISK_CAP_GB" ]; then
-            echo "⚠️  WARNING: Disk usage exceeds cap"
+            echo "[WARN] WARNING: Disk usage exceeds cap"
           else
-            echo "✅ Disk usage within cap"
+            echo "[PASS] Disk usage within cap"
           fi
 
       - name: Clean Python cache
@@ -47,22 +47,22 @@ jobs:
           find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
           find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
           find . -type f -name "*.pyc" -delete 2>/dev/null || true
-          echo "✅ Python cache cleaned"
+          echo "[PASS] Python cache cleaned"
 
       - name: Clean test artifacts
         run: |
           echo "Cleaning test artifacts..."
           find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
           find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
-          echo "✅ Test artifacts cleaned"
+          echo "[PASS] Test artifacts cleaned"
 
       - name: Maintenance Summary
         run: |
           echo "=== Maintenance Summary ==="
-          echo "✅ Artifacts: GitHub automatically retains artifacts for 90 days"
-          echo "✅ Caches: GitHub automatically evicts unused caches after 7 days"
-          echo "✅ Logs: GitHub retains logs for 90 days"
-          echo "✅ Local cleanup: Python cache and test artifacts removed"
+          echo "[PASS] Artifacts: GitHub automatically retains artifacts for 90 days"
+          echo "[PASS] Caches: GitHub automatically evicts unused caches after 7 days"
+          echo "[PASS] Logs: GitHub retains logs for 90 days"
+          echo "[PASS] Local cleanup: Python cache and test artifacts removed"
           echo ""
           echo "GitHub handles artifact and cache lifecycle automatically."
           echo "This workflow ensures local disk usage stays within limits."

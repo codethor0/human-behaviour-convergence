@@ -42,17 +42,17 @@ Population-scale forecasting is hard, especially with open synthetic data. This 
 
 ---
 
-## 🎮 Live Interactive Demo
+## Live Interactive Demo
 
 **[Try it now →](https://codethor0.github.io/human-behaviour-convergence/docs/index.html)**
 
 Generate synthetic behavioral forecasts, explore the architecture diagram, and see the system in action—all in your browser. No installation required!
 
 **Features:**
-- 📊 **Interactive Forecasting** - Generate deterministic synthetic forecasts by region, horizon, and modalities
-- 🏗️ **Architecture Visualization** - Explore the complete system diagram with live data flows
-- 📈 **Simulation Playground** - Test different scenarios and see how forecasts change
-- 🔒 **Privacy-First** - All data is synthetic, no personal information ever collected
+- **Interactive Forecasting** - Generate deterministic synthetic forecasts by region, horizon, and modalities
+- **Architecture Visualization** - Explore the complete system diagram with live data flows
+- **Simulation Playground** - Test different scenarios and see how forecasts change
+- **Privacy-First** - All data is synthetic, no personal information ever collected
 
 ## What is this?
 
@@ -297,7 +297,7 @@ open htmlcov/index.html  # On macOS
 - `tests/test_public_api.py` - Public API endpoints (8 tests)
 - `tests/test_connectors.py` - Data connectors (4 tests)
 
-**Total:** 33 tests (all passing ✅)
+**Total:** 33 tests (all passing)
 
 ### Test Documentation
 

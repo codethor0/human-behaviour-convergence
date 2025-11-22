@@ -1,8 +1,8 @@
 # Test Strategy
 
-**Repository:** human-behaviour-convergence  
-**Date:** 2025-11-10  
-**Phase:** 1 - Test Strategy and Plan  
+**Repository:** human-behaviour-convergence
+**Date:** 2025-11-10
+**Phase:** 1 - Test Strategy and Plan
 
 ---
 
@@ -130,25 +130,25 @@ tests/
     test_cli.py
     test_data_processing.py  # New
     conftest.py      # Shared fixtures
-  
+
   integration/       # Integration tests (< 2min)
     test_api_backend.py
     test_public_api.py
     test_connectors.py
     test_cache.py    # New: Cache system tests
     conftest.py      # Shared fixtures (TestClient, temp dirs)
-  
+
   e2e/              # End-to-end tests (< 10min)
     test_full_stack.py  # New: Frontend + Backend
     test_cli_e2e.py     # New: CLI workflows
     conftest.py      # E2E fixtures (docker compose, servers)
-  
+
   fixtures/         # Shared test data
     sample_forecasts.csv
     sample_metrics.csv
     sample_wiki_data.json
     sample_osm_data.xml
-  
+
   README.md         # Updated test documentation
 ```
 
@@ -506,51 +506,50 @@ test('renders Behavior Convergence Explorer title', () => {
 ## Known Limitations and Workarounds
 
 ### 1. Network-Dependent Tests
-**Issue:** Some tests may need network access for external APIs  
-**Workaround:** Mock all HTTP requests using `responses` or `unittest.mock`  
-**Status:** ✅ Already implemented (tests use mocking)
+**Issue:** Some tests may need network access for external APIs
+**Workaround:** Mock all HTTP requests using `responses` or `unittest.mock`
+**Status:** [PASS] Already implemented (tests use mocking)
 
 ### 2. File System Tests
-**Issue:** Tests may need to read/write files  
-**Workaround:** Use `tempfile.TemporaryDirectory` or pytest's `tmpdir` fixture  
-**Status:** ✅ Already implemented (tests use temp directories)
+**Issue:** Tests may need to read/write files
+**Workaround:** Use `tempfile.TemporaryDirectory` or pytest's `tmpdir` fixture
+**Status:** [PASS] Already implemented (tests use temp directories)
 
 ### 3. Frontend Tests
-**Issue:** No frontend tests currently exist  
-**Workaround:** Add basic component tests as part of this workflow  
-**Status:** ⚠️ To be implemented
+**Issue:** No frontend tests currently exist
+**Workaround:** Add basic component tests as part of this workflow
+**Status:** [WARN] To be implemented
 
 ### 4. E2E Tests
-**Issue:** No E2E tests currently exist  
-**Workaround:** Add basic E2E tests for critical user flows  
-**Status:** ⚠️ To be implemented
+**Issue:** No E2E tests currently exist
+**Workaround:** Add basic E2E tests for critical user flows
+**Status:** [WARN] To be implemented
 
 ---
 
 ## Success Criteria
 
 ### Phase 2 (Docker Test Environment)
-- ✅ `docker compose run --rm test` works reliably
-- ✅ Tests pass in Docker environment
-- ✅ Test execution time < 2 minutes for unit+integration
+- [PASS] `docker compose run --rm test` works reliably
+- [PASS] Tests pass in Docker environment
+- [PASS] Test execution time < 2 minutes for unit+integration
 
 ### Phase 3 (Test Augmentation)
-- ✅ Unit test coverage ≥ 80% for core modules
-- ✅ Integration test coverage ≥ 70% for API endpoints
-- ✅ At least 1 E2E test for critical user flow
+- [PASS] Unit test coverage ≥ 80% for core modules
+- [PASS] Integration test coverage ≥ 70% for API endpoints
+- [PASS] At least 1 E2E test for critical user flow
 
 ### Phase 4 (CI Integration)
-- ✅ CI runs canonical test command
-- ✅ Tests pass reliably in CI
-- ✅ Coverage reports uploaded correctly
+- [PASS] CI runs canonical test command
+- [PASS] Tests pass reliably in CI
+- [PASS] Coverage reports uploaded correctly
 
 ### Final State
-- ✅ All tests pass (unit, integration, e2e)
-- ✅ Tests run in Docker consistently
-- ✅ Tests documented in README
-- ✅ New contributors can run tests with one command
+- [PASS] All tests pass (unit, integration, e2e)
+- [PASS] Tests run in Docker consistently
+- [PASS] Tests documented in README
+- [PASS] New contributors can run tests with one command
 
 ---
 
 **Next Phase:** Phase 2 - Dockerized Test Environment
-

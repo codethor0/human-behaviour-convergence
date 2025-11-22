@@ -1,9 +1,9 @@
 # Patch Report
 
-**Repository:** human-behaviour-convergence  
-**Branch:** chore/spelling-behavior-standardization  
-**Date:** 2025-11-10  
-**Phase:** 2-3 (Targeted Fixes & Re-run)  
+**Repository:** human-behaviour-convergence
+**Branch:** chore/spelling-behavior-standardization
+**Date:** 2025-11-10
+**Phase:** 2-3 (Targeted Fixes & Re-run)
 
 ## Summary
 
@@ -27,7 +27,7 @@ Semgrep flagged 3 instances of `globals().get()` as security vulnerabilities bec
    ```python
    # Before:
    return globals().get("RESULTS_DIR")
-   
+
    # After:
    return RESULTS_DIR  # Direct module-level variable access
    ```
@@ -36,7 +36,7 @@ Semgrep flagged 3 instances of `globals().get()` as security vulnerabilities bec
    ```python
    # Before:
    return int(globals().get("MAX_CACHE_SIZE", 0))
-   
+
    # After:
    return int(MAX_CACHE_SIZE)  # Direct module-level variable access
    ```
@@ -46,7 +46,7 @@ Semgrep flagged 3 instances of `globals().get()` as security vulnerabilities bec
    # Before:
    hits = globals().get("_cache_hits", 0)
    misses = globals().get("_cache_misses", 0)
-   
+
    # After:
    hits = _cache_hits  # Direct module-level variable access
    misses = _cache_misses  # Direct module-level variable access
@@ -56,7 +56,7 @@ Semgrep flagged 3 instances of `globals().get()` as security vulnerabilities bec
    ```python
    # Before:
    f"max_cache={globals().get('MAX_CACHE_SIZE')} id={id(globals())}"
-   
+
    # After:
    f"max_cache={MAX_CACHE_SIZE} id={id(globals())}"
    ```
@@ -93,7 +93,7 @@ The `timeout` parameter in `TestClient.get()` is deprecated in Starlette. TestCl
    ```python
    # Before:
    response = client.get("/api/public/wiki/latest?date=2024-11-04", timeout=5.0)
-   
+
    # After:
    response = client.get("/api/public/wiki/latest?date=2024-11-04")
    ```
@@ -102,7 +102,7 @@ The `timeout` parameter in `TestClient.get()` is deprecated in Starlette. TestCl
    ```python
    # Before:
    response = client.get("/api/public/osm/latest?date=2024-11-04", timeout=5.0)
-   
+
    # After:
    response = client.get("/api/public/osm/latest?date=2024-11-04")
    ```
@@ -111,7 +111,7 @@ The `timeout` parameter in `TestClient.get()` is deprecated in Starlette. TestCl
    ```python
    # Before:
    response = client.get("/api/public/synthetic_score/9/2024-11-04", timeout=5.0)
-   
+
    # After:
    response = client.get("/api/public/synthetic_score/9/2024-11-04")
    ```
@@ -132,41 +132,41 @@ The `timeout` parameter in `TestClient.get()` is deprecated in Starlette. TestCl
 
 ## Test Results After Fixes
 
-### Test Suite: ✅ PASSING (33/33)
+### Test Suite: [PASS] PASSING (33/33)
 
 **Command:** `pytest tests/ --cov --cov-report=term-missing -v`
 
 **Result:**
-- ✅ 33 tests passed
-- ✅ 0 warnings (fixed 3 deprecation warnings)
-- ✅ 77% coverage (unchanged)
-- ✅ All test files pass
+- [PASS] 33 tests passed
+- [PASS] 0 warnings (fixed 3 deprecation warnings)
+- [PASS] 77% coverage (unchanged)
+- [PASS] All test files pass
 
-### Lint Checks: ✅ PASSING
+### Lint Checks: [PASS] PASSING
 
 **Ruff:**
 ```bash
 ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
 ```
-✅ All checks passed
+[PASS] All checks passed
 
 **Black:**
 ```bash
 black --check app/backend tests hbc
 ```
-✅ All files properly formatted
+[PASS] All files properly formatted
 
 **Semgrep:**
 ```bash
 semgrep --config=auto app/backend tests hbc
 ```
-✅ **0 findings** (fixed 3 security findings)
+[PASS] **0 findings** (fixed 3 security findings)
 
 **Mypy:**
 ```bash
 mypy --strict app/backend tests hbc
 ```
-⚠️ 44 type checking errors (non-blocking in CI, not addressed in this phase)
+[WARN] 44 type checking errors (non-blocking in CI, not addressed in this phase)
 
 ---
 
@@ -189,20 +189,20 @@ mypy --strict app/backend tests hbc
    ```bash
    pytest tests/ --cov --cov-report=term-missing -v
    ```
-   ✅ **Result:** 33 passed, 0 warnings
+   [PASS] **Result:** 33 passed, 0 warnings
 
 2. **Lint:**
    ```bash
    ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
    black --check app/backend tests hbc
    ```
-   ✅ **Result:** All checks passed
+   [PASS] **Result:** All checks passed
 
 3. **Security Scan:**
    ```bash
    semgrep --config=auto app/backend tests hbc
    ```
-   ✅ **Result:** 0 findings (previously 3)
+   [PASS] **Result:** 0 findings (previously 3)
 
 ---
 
@@ -225,21 +225,21 @@ mypy --strict app/backend tests hbc
 
 ## Final Status
 
-✅ **All high-priority issues fixed**
+[PASS] **All high-priority issues fixed**
 - Semgrep security findings: **0** (down from 3)
 - TestClient deprecation warnings: **0** (down from 3)
 
-✅ **Test suite status:**
+[PASS] **Test suite status:**
 - Tests: **33/33 passing** (100%)
 - Warnings: **0** (100% clean)
 - Coverage: **77%** (maintained)
 
-✅ **Lint status:**
+[PASS] **Lint status:**
 - Ruff: **Passing**
 - Black: **Passing**
 - Semgrep: **0 findings**
 
-⚠️ **Non-blocking issues remaining:**
+[WARN] **Non-blocking issues remaining:**
 - Mypy type errors: 44 (addressed in future phase)
 
 ---
@@ -269,8 +269,8 @@ All commands pass on the final commit.
 
 ## Final Verification (Phase 4)
 
-**Date:** 2025-11-10  
-**Commit:** After all fixes applied  
+**Date:** 2025-11-10
+**Commit:** After all fixes applied
 
 ### Commands Run:
 
@@ -278,32 +278,31 @@ All commands pass on the final commit.
    ```bash
    pytest tests/ --cov --cov-report=term-missing -v
    ```
-   ✅ **Result:** `33 passed` (100% passing, 0 warnings)
+   [PASS] **Result:** `33 passed` (100% passing, 0 warnings)
 
 2. **Security Scan:**
    ```bash
    semgrep --config=auto app/backend tests hbc
    ```
-   ✅ **Result:** `0 findings (0 blocking)`
+   [PASS] **Result:** `0 findings (0 blocking)`
 
 3. **Linters:**
    ```bash
    ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
    black --check app/backend tests hbc
    ```
-   ✅ **Result:** All checks passed
+   [PASS] **Result:** All checks passed
 
 ### Final Status:
 
-✅ **All high-priority issues fixed**
+[PASS] **All high-priority issues fixed**
 - Semgrep security findings: **0** (fixed from 3)
 - TestClient deprecation warnings: **0** (fixed from 3)
 
-✅ **Test suite:** 33/33 passing, 0 warnings, 77% coverage  
-✅ **Security scan:** 0 findings  
-✅ **Linters:** All passing  
+[PASS] **Test suite:** 33/33 passing, 0 warnings, 77% coverage
+[PASS] **Security scan:** 0 findings
+[PASS] **Linters:** All passing
 
-⚠️ **Non-blocking issues:** 44 mypy type errors (not addressed, non-blocking in CI)
+[WARN] **Non-blocking issues:** 44 mypy type errors (not addressed, non-blocking in CI)
 
-**Repository Status:** ✅ GREEN - All critical checks passing
-
+**Repository Status:** [PASS] GREEN - All critical checks passing

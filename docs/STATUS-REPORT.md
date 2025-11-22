@@ -17,31 +17,31 @@ The repository is in a **functional but inconsistent** state. Core features (dia
 
 ### What Exists and Works
 
-✅ **Diagram System**
+[PASS] **Diagram System**
 - Source Mermaid file: `diagram/behaviour-convergence.mmd`
 - Rendered assets: `diagram/behaviour-convergence.svg`, `.png`
 - CI workflow: `.github/workflows/render-diagram.yml` (auto-renders on push)
 - Interactive HTML: `docs/interactive-diagram.html`
 - GitHub Pages deployment: `.github/workflows/deploy-pages.yml`
 
-✅ **Application Stack**
+[PASS] **Application Stack**
 - FastAPI backend: `app/backend/app/main.py` (functional with routers)
 - Next.js frontend: `app/frontend/` (TypeScript, configured)
 - CLI tool: `hbc/cli.py` (syncing public data)
 - Data connectors: `connectors/` (Wiki, OSM, FIRMS)
 
-✅ **Testing & CI**
+[PASS] **Testing & CI**
 - Test suite: `tests/` (api_backend, connectors, public_api, cli, forecasting)
 - Test workflow: `.github/workflows/test.yml` (runs on Python 3.10-3.12)
 - CI workflow: `.github/workflows/ci.yml` (lint, type-check, security-scan, sbom-scan)
 - 13 active workflows total (including CodeQL, Dependabot, scorecard, etc.)
 
-✅ **Data & Results**
+[PASS] **Data & Results**
 - Results directory: `results/` (contains forecasts.csv, ground_truth.csv, metrics.csv, intervals.csv, manifest.json)
 - Public data snapshots: `data/public/` (with latest/ and dated directories)
 - Jupyter notebook: `notebooks/demo.ipynb`
 
-✅ **Documentation**
+[PASS] **Documentation**
 - Core docs: README.md, CHANGELOG.md, CONTRIBUTING.md, ETHICS.md, SECURITY.md
 - Extended docs: `docs/` (app-plan.md, model-data-card.md, blog posts, etc.)
 - Citation: CITATION.cff
@@ -107,10 +107,10 @@ The repository is in a **functional but inconsistent** state. Core features (dia
 ### 4. CHANGELOG "Planned" Items Already Implemented
 
 CHANGELOG.md [Unreleased] section lists as "Planned":
-- ❌ "Jupyter notebook with synthetic data demo" → **Actually exists:** `notebooks/demo.ipynb`
-- ❌ "Unit tests and CI workflow for tests" → **Actually exists:** `tests/` directory + `test.yml` workflow
-- ❌ "Results folder with example CSVs" → **Actually exists:** `results/` with forecasts.csv, metrics.csv, etc.
-- ❌ "Python package structure with requirements.txt" → **Actually exists:** `requirements.txt`, `requirements-dev.txt`, `pyproject.toml`
+- [FAIL] "Jupyter notebook with synthetic data demo" → **Actually exists:** `notebooks/demo.ipynb`
+- [FAIL] "Unit tests and CI workflow for tests" → **Actually exists:** `tests/` directory + `test.yml` workflow
+- [FAIL] "Results folder with example CSVs" → **Actually exists:** `results/` with forecasts.csv, metrics.csv, etc.
+- [FAIL] "Python package structure with requirements.txt" → **Actually exists:** `requirements.txt`, `requirements-dev.txt`, `pyproject.toml`
 
 **Impact:** Misleading to contributors. Makes it seem like less is done than actually is.
 
@@ -165,14 +165,14 @@ SNAPSHOT-2024-11-03-1900-UTC.md says:
 ### 8. Missing File References Check
 
 **References to verify:**
-- `docs/model-data-card.md` (referenced in README line 336) → **Exists** ✅
-- `docs/app-plan.md` (referenced in README line 357) → **Exists** ✅
-- `docs/releases/v0.1.0.md` (referenced in README line 394) → **Exists** ✅
-- `docs/blog/0001-rationale.md` (referenced in README line 392) → **Exists** ✅
-- `docs/repo-polish.md` (referenced in README line 393) → **Exists** ✅
-- `CODE_OF_CONDUCT.md` (referenced in CONTRIBUTING.md line 48) → **Exists** ✅
+- `docs/model-data-card.md` (referenced in README line 336) → **Exists** [PASS]
+- `docs/app-plan.md` (referenced in README line 357) → **Exists** [PASS]
+- `docs/releases/v0.1.0.md` (referenced in README line 394) → **Exists** [PASS]
+- `docs/blog/0001-rationale.md` (referenced in README line 392) → **Exists** [PASS]
+- `docs/repo-polish.md` (referenced in README line 393) → **Exists** [PASS]
+- `CODE_OF_CONDUCT.md` (referenced in CONTRIBUTING.md line 48) → **Exists** [PASS]
 
-All file references appear valid. ✅
+All file references appear valid. [PASS]
 
 ---
 
@@ -234,12 +234,12 @@ None needed - data structures exist and appear valid.
 ## Next Steps
 
 **Phase 1** should address:
-1. ✅ Fix all documentation inconsistencies
-2. ✅ Align version numbers across all files
-3. ✅ Fix branch name references
-4. ✅ Clean up CHANGELOG
-5. ✅ Consolidate README
-6. ✅ Rewrite app/README.md
+1. [PASS] Fix all documentation inconsistencies
+2. [PASS] Align version numbers across all files
+3. [PASS] Fix branch name references
+4. [PASS] Clean up CHANGELOG
+5. [PASS] Consolidate README
+6. [PASS] Rewrite app/README.md
 
 **Phase 2** should address:
 1. Verify diagram rendering works
