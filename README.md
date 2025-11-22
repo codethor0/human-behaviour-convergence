@@ -5,8 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
-[![Tip](https://img.shields.io/badge/Tip-❤-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
-[![Monthly](https://img.shields.io/badge/Monthly-♻️-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
+[![Tip](https://img.shields.io/badge/Tip-support-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
+[![Monthly](https://img.shields.io/badge/Monthly-subscribe-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
 
 ---
 
@@ -124,9 +124,9 @@ MIT
 
 If this project helps you, consider supporting ongoing maintenance:
 
-- ❤️ **One-time tip:** https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01  
-- ♻️ **Monthly support:** https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00
+- **One-time tip:** https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01  
+- **Monthly support:** https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00
 
 **What you fund:** maintenance, docs, roadmap experiments, and new features.
 
-Thank you! 🙌🏿
+Thank you!
