@@ -7,6 +7,7 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
+# SPDX-License-Identifier: MIT-0
 
   - repo: https://github.com/psf/black
     rev: 24.8.0
@@ -28,3 +29,9 @@ repos:
         language: system
         pass_filenames: false
         types: [markdown]
+      - id: enforce-american-spelling
+        name: enforce-american-spelling
+        entry: python .github/scripts/check_american_spelling.py
+        language: system
+        pass_filenames: false
+        types: [text]

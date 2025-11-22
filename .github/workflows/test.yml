@@ -2,36 +2,61 @@ name: Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+  workflow_dispatch: {}
+
+# Cancel in-progress runs for the same workflow on PR updates
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+
+env:
+  DISK_CAP_GB: 10
+  MAX_LOG_MB: 5
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.10', '3.11', '3.12']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Pre-cleanup disk
+        run: |
+          echo "=== Pre-cleanup Disk Usage ==="
+          df -h | head -2
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            app/backend/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov
+          pip install -r app/backend/requirements.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          pytest tests/ --cov --cov-report=term-missing
+          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v -n auto
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'
@@ -40,3 +65,14 @@ jobs:
           files: ./coverage.xml
           flags: unittests
           name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Post-cleanup test artifacts
+        if: always()
+        run: |
+          echo "=== Post-cleanup Disk Usage ==="
+          df -h | head -2
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+          find . -type f -name ".coverage.*" -delete 2>/dev/null || true
+          # Keep coverage.xml for codecov upload

@@ -1,12 +1,12 @@
-# Behaviour Convergence Explorer — Product Plan
+# Behavior Convergence Explorer — Product Plan
 
 ## Vision
-Build an interactive application that communicates the behavioural forecasting pipeline, lets stakeholders explore synthetic scenarios safely, and highlights the ethical controls applied to population-scale data.
+Build an interactive application that communicates the behavioral forecasting pipeline, lets stakeholders explore synthetic scenarios safely, and highlights the ethical controls applied to population-scale data.
 
 ## Target Users
 - **Policy analysts** evaluating socio-technical interventions.
 - **Research reviewers** validating methodology and reproducibility.
-- **Data science teams** investigating large-scale behavioural models.
+- **Data science teams** investigating large-scale behavioral models.
 
 ## Goals
 1. Present the architecture and maturity of each pipeline component.

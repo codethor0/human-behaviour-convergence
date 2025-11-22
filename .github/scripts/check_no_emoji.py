@@ -49,6 +49,9 @@ def main():
         if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
     ]
 
+    # Exclude audit reports that document emojis as findings
+    md_files = [f for f in md_files if "REPO_HEALTH_AUDIT" not in f.name]
+
     found_emojis = False
 
     for md_file in sorted(md_files):
@@ -56,16 +59,16 @@ def main():
         if violations:
             found_emojis = True
             rel_path = md_file.relative_to(root)
-            print(f"\n❌ Emojis found in {rel_path}:")
+            print(f"\n[FAIL] Emojis found in {rel_path}:")
             for line_num, line_content in violations:
                 print(f"  Line {line_num}: {line_content}")
 
     if found_emojis:
-        print("\n❌ CI FAILED: Emojis detected in Markdown files.")
+        print("\n[FAIL] CI FAILED: Emojis detected in Markdown files.")
         print("Please remove all emojis to maintain professional documentation.")
         sys.exit(1)
     else:
-        print("✅ No emojis found in Markdown files.")
+        print("[PASS] No emojis found in Markdown files.")
         sys.exit(0)
 
 

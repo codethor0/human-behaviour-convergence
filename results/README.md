@@ -4,7 +4,7 @@ This folder contains example outputs from the convergence forecasting pipeline.
 
 ## Files
 
-- `ground_truth.csv` — Ground truth behavioural states (aggregate, coarse-grained)
+- `ground_truth.csv` — Ground truth behavioral states (aggregate, coarse-grained)
 - `forecasts.csv` — Point forecasts for each time step
 - `intervals.csv` — 95% prediction intervals
 - `metrics.csv` — Error metrics (MAE, RMSE, CRPS, coverage)

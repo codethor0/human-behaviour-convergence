@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - CACHE_MAX_SIZE=100
+      - CACHE_TTL_MINUTES=5
+      - LOG_LEVEL=INFO
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - .:/app
+      - pytest_cache:/app/.pytest_cache
+      - htmlcov:/app/htmlcov
+    working_dir: /app
+    command: pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v
+    environment:
+      - CI=true
+      - PYTHONUNBUFFERED=1
+      - CACHE_MAX_SIZE=10
+      - CACHE_TTL_MINUTES=1
+    networks:
+      - default
+
+volumes:
+  pytest_cache:
+  htmlcov:

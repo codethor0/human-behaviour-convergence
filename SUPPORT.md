@@ -1,8 +1,10 @@
-# Support
+# Support my open-source work
 
-This repository is documentation-focused. If you need help:
+If these projects help you, consider supporting ongoing maintenance:
 
-- Check the `README.md` for usage and links.
-- Open an issue and pick the most appropriate template (bug or feature request). Describe what you’re trying to do and include links or screenshots if relevant.
+- One-time tip: https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01
+- Monthly support: https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00
 
-For small edits, you can also open a PR directly—CI will re-render the diagram for you.
+**What you fund:** maintenance, docs, roadmap experiments, and new features.
+
+Thank you!

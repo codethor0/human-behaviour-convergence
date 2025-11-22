@@ -2,11 +2,9 @@
 Comprehensive tests for the FastAPI backend.
 """
 
-import json
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List
 
 import pytest
 
@@ -47,7 +45,7 @@ def temp_results_dir():
 def client(temp_results_dir, monkeypatch):
     """Create a test client with mocked RESULTS_DIR."""
     # Import here to ensure RESULTS_DIR is set before module loads
-    from app.backend.app import main
+    from app import main
 
     # Mock RESULTS_DIR to use our temp directory
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
@@ -99,7 +97,7 @@ def test_get_metrics_with_csv(client):
 
 def test_forecasts_without_csv(monkeypatch):
     """Test forecasts endpoint when CSV file is missing (fallback stub)."""
-    from app.backend.app import main
+    from app import main
 
     # Mock RESULTS_DIR to None to trigger fallback
     monkeypatch.setattr(main, "RESULTS_DIR", None)
@@ -117,7 +115,7 @@ def test_forecasts_without_csv(monkeypatch):
 
 def test_metrics_without_csv(monkeypatch):
     """Test metrics endpoint when CSV file is missing (fallback stub)."""
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", None)
 
@@ -148,7 +146,7 @@ def test_csv_limit_parameter(temp_results_dir, monkeypatch):
         rows.append(f"2025-01-{i % 28 + 1:02d},A,{i}.0")
     large_csv.write_text("\n".join(rows))
 
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
 
@@ -159,7 +157,7 @@ def test_csv_limit_parameter(temp_results_dir, monkeypatch):
 
 def test_find_results_dir():
     """Test the _find_results_dir utility function."""
-    from app.backend.app.main import _find_results_dir
+    from app.main import _find_results_dir
 
     # Should find results dir from repo structure
     result = _find_results_dir(Path(__file__).parent)
@@ -169,7 +167,7 @@ def test_find_results_dir():
 
 def test_read_csv_invalid_file(temp_results_dir, monkeypatch):
     """Test _read_csv with invalid/non-existent file."""
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
 
@@ -184,7 +182,7 @@ def test_api_error_handling_bad_csv(temp_results_dir, monkeypatch):
     bad_csv = temp_results_dir / "forecasts.csv"
     bad_csv.write_text("this,is,not\nvalid,csv,content\nwith,mismatched,columns,extra")
 
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
 
@@ -197,7 +195,7 @@ def test_api_error_handling_bad_csv(temp_results_dir, monkeypatch):
 
 def test_csv_negative_limit_validation(temp_results_dir, monkeypatch):
     """Test that negative limit values are rejected."""
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
 
@@ -208,7 +206,7 @@ def test_csv_negative_limit_validation(temp_results_dir, monkeypatch):
 
 def test_cache_eviction(temp_results_dir, monkeypatch):
     """Test that cache eviction works when MAX_CACHE_SIZE is exceeded."""
-    from app.backend.app import main
+    from app import main
 
     monkeypatch.setattr(main, "RESULTS_DIR", temp_results_dir)
     monkeypatch.setattr(main, "MAX_CACHE_SIZE", 3)  # Set small cache for testing
@@ -230,3 +228,61 @@ def test_cache_eviction(temp_results_dir, monkeypatch):
     # First entry should be evicted
     assert ("forecasts.csv", 10) not in main._cache
     assert ("forecasts.csv", 40) in main._cache
+
+
+def test_status_endpoint(client, monkeypatch):
+    """Test the /api/status endpoint returns service metadata."""
+    monkeypatch.setenv("APP_VERSION", "9.9.9")
+    monkeypatch.setenv("GIT_COMMIT", "abcdef1")
+    resp = client.get("/api/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data == {"ok": True, "version": "9.9.9", "commit": "abcdef1"}
+
+
+def test_cache_status_endpoint(client):
+    """Ensure cache status endpoint exposes statistics."""
+    _ = client.get("/api/forecasts?limit=5")
+    resp = client.get("/api/cache/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert set(["hits", "misses", "size", "max_size", "ttl_minutes"]).issubset(data)
+    assert isinstance(data["hits"], int)
+    assert isinstance(data["misses"], int)
+    assert data["max_size"] >= 1
+
+
+def test_create_forecast_endpoint(client):
+    """POST /api/forecast should return deterministic synthetic data."""
+    payload = {
+        "region": "us-midwest",
+        "horizon": 7,
+        "modalities": ["satellite", "mobile"],
+    }
+    resp = client.post("/api/forecast", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["region"] == payload["region"]
+    assert data["horizon"] == payload["horizon"]
+    assert data["modalities"] == payload["modalities"]
+    assert data["ethics"] == {"synthetic": True, "pii": False}
+    assert 0 < data["forecast"] < 2
+    assert 0.5 <= data["confidence"] <= 0.99
+    assert (
+        len(data["explanations"]) == len(payload["modalities"])
+        or len(payload["modalities"]) == 0
+    )
+
+    # Deterministic response
+    resp_repeat = client.post("/api/forecast", json=payload)
+    assert resp_repeat.status_code == 200
+    assert resp_repeat.json() == data
+
+
+def test_create_forecast_validation(client):
+    """Invalid horizon should return validation error."""
+    resp = client.post(
+        "/api/forecast",
+        json={"region": "us-west", "horizon": 31, "modalities": []},
+    )
+    assert resp.status_code == 422

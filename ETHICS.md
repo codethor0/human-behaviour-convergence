@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project explores **population-scale behavioural forecasting** in a data-rich regime. While the architecture diagram depicts a hypothetical "no-guard-rails" system, **this research adheres to strict ethical and privacy standards**.
+This project explores **population-scale behavioral forecasting** in a data-rich regime. While the architecture diagram depicts a hypothetical "no-guard-rails" system, **this research adheres to strict ethical and privacy standards**.
 
 ---
 
@@ -29,7 +29,7 @@ If real data were to be used, the following safeguards would apply:
 
 ## Misuse Mitigation
 
-We recognize the dual-use nature of predictive behavioural models. To reduce risk:
+We recognize the dual-use nature of predictive behavioral models. To reduce risk:
 
 - **Coarse-Grained Outputs:** Forecasts are provided at macro-level (5 km, 24 h) to prevent individual tracking
 - **No Real-Time Targeting:** The system is designed for aggregate trend analysis, not individual prediction

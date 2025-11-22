@@ -1,6 +1,6 @@
 # Code Quality Metrics & Improvement Roadmap
-**Analysis Date:** November 4, 2025  
-**Repository:** human-behaviour-convergence  
+**Analysis Date:** November 4, 2025
+**Repository:** human-behaviour-convergence
 **Codebase Size:** 191 Python LOC, 111 TypeScript LOC
 
 ---
@@ -18,25 +18,25 @@
 
 ## 1. Current State Assessment
 
-### 1.1 Cyclomatic Complexity ✅ PASS
+### 1.1 Cyclomatic Complexity PASS
 **Target: < 10 per function | Actual: 3.3 average**
 
 | Module | Function | Complexity | Grade | Status |
 |--------|----------|------------|-------|--------|
-| main.py | `_read_csv` | 6 | B | ✅ Acceptable |
-| main.py | `_find_results_dir` | 4 | A | ✅ Good |
-| main.py | `get_forecasts` | 2 | A | ✅ Excellent |
-| main.py | `get_metrics` | 2 | A | ✅ Excellent |
-| main.py | `health` | 1 | A | ✅ Excellent |
-| check_no_emoji.py | `main` | 8 | B | ✅ Acceptable |
-| check_no_emoji.py | `check_file` | 4 | A | ✅ Good |
-| test_forecasting.py | All tests | 2 | A | ✅ Excellent |
+| main.py | `_read_csv` | 6 | B | Acceptable |
+| main.py | `_find_results_dir` | 4 | A | Good |
+| main.py | `get_forecasts` | 2 | A | Excellent |
+| main.py | `get_metrics` | 2 | A | Excellent |
+| main.py | `health` | 1 | A | Excellent |
+| check_no_emoji.py | `main` | 8 | B | Acceptable |
+| check_no_emoji.py | `check_file` | 4 | A | Good |
+| test_forecasting.py | All tests | 2 | A | Excellent |
 
 **Verdict:** All functions meet complexity targets. No refactoring required.
 
 ---
 
-### 1.2 Code Duplication ✅ PASS
+### 1.2 Code Duplication PASS
 **Target: < 3% | Actual: ~0-1% (estimated)**
 
 Analysis via radon and manual inspection:
@@ -49,7 +49,7 @@ Analysis via radon and manual inspection:
 
 ---
 
-### 1.3 Test Coverage ❌ FAIL
+### 1.3 Test Coverage FAIL
 **Target: > 85% | Actual: 0%**
 
 ```
@@ -61,17 +61,17 @@ TOTAL                                  79     79     0%
 ```
 
 **Critical Gaps:**
-- ❌ Backend API endpoints: 0% coverage
-- ❌ CSV reading logic: 0% coverage
-- ❌ Health check: 0% coverage
-- ❌ Emoji check script: 0% coverage
-- ✅ Placeholder tests exist but don't import/test actual code
+- FAIL Backend API endpoints: 0% coverage
+- FAIL CSV reading logic: 0% coverage
+- FAIL Health check: 0% coverage
+- FAIL Emoji check script: 0% coverage
+- PASS Placeholder tests exist but don't import/test actual code
 
 **Impact:** HIGH - No automated validation of API behavior or error handling.
 
 ---
 
-### 1.4 Maintainability Index ✅ EXCELLENT
+### 1.4 Maintainability Index EXCELLENT
 **Target: > 65 | Actual: 64.8-90.7**
 
 | File | Score | Grade | Interpretation |
@@ -89,7 +89,7 @@ TOTAL                                  79     79     0%
 
 ---
 
-### 1.5 Code Quality Score (Pylint) ⚠️ NEEDS IMPROVEMENT
+### 1.5 Code Quality Score (Pylint) WARNING: NEEDS IMPROVEMENT
 **Target: > 8.0/10 | Actual: 6.96/10**
 
 **Issues Found:**
@@ -110,7 +110,7 @@ TOTAL                                  79     79     0%
 
 ---
 
-### 1.6 Security Vulnerabilities ✅ PASS
+### 1.6 Security Vulnerabilities PASS
 **Target: 0 critical/high | Actual: 0 critical, 1 medium**
 
 **Bandit Scan Results:**
@@ -122,10 +122,10 @@ Total Issues: 1
 ```
 
 **Assessment:**
-- ✅ No SQL injection risks (no SQL)
-- ✅ No hardcoded secrets
-- ✅ No insecure deserialization
-- ⚠️ One medium issue: dev server binds to 0.0.0.0 (acceptable for development)
+- PASS No SQL injection risks (no SQL)
+- PASS No hardcoded secrets
+- PASS No insecure deserialization
+- WARNING One medium issue: dev server binds to 0.0.0.0 (acceptable for development)
 
 **Dependency Vulnerabilities:**
 - Direct dependencies (pandas, fastapi, uvicorn, pytest): No known CVEs
@@ -135,14 +135,14 @@ Total Issues: 1
 
 ---
 
-### 1.7 Performance Bottlenecks ✅ GOOD
+### 1.7 Performance Bottlenecks GOOD
 **Analysis:** Manual code review + profiling recommendations
 
 **Current Implementation:**
-- ✅ CSV caching not implemented (loads on every request)
-- ✅ No pagination (returns all rows up to limit=1000)
-- ✅ Synchronous pandas operations (blocking)
-- ✅ No connection pooling (file I/O only)
+- PASS CSV caching not implemented (loads on every request)
+- PASS No pagination (returns all rows up to limit=1000)
+- PASS Synchronous pandas operations (blocking)
+- PASS No connection pooling (file I/O only)
 
 **Potential Issues:**
 1. **CSV reload on every request** - Impact: Medium for large files
@@ -153,15 +153,15 @@ Total Issues: 1
    - Recommendation: OK for POC, add pagination for production
 
 **Frontend Performance:**
-- ✅ React rendering efficient (small datasets)
-- ✅ No unnecessary re-renders detected
-- ⚠️ Error handling could be more granular
+- React rendering efficient (small datasets)
+- No unnecessary re-renders detected
+- Error handling could be more granular
 
 **Verdict:** Acceptable for POC scale; needs caching for production.
 
 ---
 
-### 1.8 Documentation Coverage ⚠️ ADEQUATE
+### 1.8 Documentation Coverage WARNING: ADEQUATE
 **Target: All public APIs documented | Actual: ~40%**
 
 **Code Documentation:**
@@ -173,40 +173,40 @@ Total Issues: 1
 | Type hints | Excellent | - | A |
 
 **Project Documentation:**
-- ✅ README.md: Excellent
-- ✅ CONTRIBUTING.md: Present
-- ✅ SECURITY.md: Present
-- ✅ API endpoints: Undocumented
-- ✅ Architecture docs: Present
-- ❌ API reference: Missing
+- PASS README.md: Excellent
+- PASS CONTRIBUTING.md: Present
+- PASS SECURITY.md: Present
+- PASS API endpoints: Undocumented
+- PASS Architecture docs: Present
+- FAIL API reference: Missing
 
 **Impact:** Medium - Code is readable but lacks formal API docs.
 
 ---
 
-### 1.9 Dependency Health ✅ ACCEPTABLE
+### 1.9 Dependency Health ACCEPTABLE
 **Project Dependencies (requirements.txt):**
 
 | Package | Current | Latest | Status | Risk |
 |---------|---------|--------|--------|------|
-| pandas | >=2.0.0 | 2.2.x | ✅ Recent | Low |
-| numpy | >=1.24.0 | 1.26.x | ⚠️ Could update | Low |
-| matplotlib | >=3.7.0 | 3.9.x | ⚠️ Could update | Low |
-| fastapi | >=0.115.0 | 0.115.x | ✅ Latest | Low |
-| uvicorn | >=0.30.0 | 0.32.x | ⚠️ Patch behind | Low |
-| pytest | >=8.0.0 | 8.3.x | ✅ Recent | Low |
+| pandas | >=2.0.0 | 2.2.x | Recent | Low |
+| numpy | >=1.24.0 | 1.26.x | Could update | Low |
+| matplotlib | >=3.7.0 | 3.9.x | Could update | Low |
+| fastapi | >=0.115.0 | 0.115.x | Latest | Low |
+| uvicorn | >=0.30.0 | 0.32.x | Patch behind | Low |
+| pytest | >=8.0.0 | 8.3.x | Recent | Low |
 
 **Frontend Dependencies (package.json):**
-- ✅ All packages up to date
-- ✅ Next.js 14.2.5 (stable)
-- ✅ React 18.2.0/18.3.1 (minor version mismatch in duplicate entries)
-- ✅ TypeScript 5.4.5 (latest stable)
+- All packages up to date
+- Next.js 14.2.5 (stable)
+- React 18.2.0/18.3.1 (minor version mismatch in duplicate entries)
+- TypeScript 5.4.5 (latest stable)
 
 **Verdict:** Dependencies are healthy. Minor updates recommended but not urgent.
 
 ---
 
-## 2. Technical Debt Ratio ✅ PASS
+## 2. Technical Debt Ratio PASS
 **Target: < 5% | Actual: ~3.2%**
 
 **Calculation:**
@@ -242,15 +242,15 @@ Debt ratio: 11 / 40 = 27.5%
 
 | Metric | Target | Actual | Status | Priority |
 |--------|--------|--------|--------|----------|
-| Cyclomatic Complexity | < 10 | 3.3 avg | ✅ PASS | - |
-| Code Duplication | < 3% | ~0% | ✅ PASS | - |
-| Test Coverage | > 85% | 0% | ❌ FAIL | **CRITICAL** |
-| Technical Debt | < 5% | ~27% | ⚠️ HIGH | **HIGH** |
-| Maintainability Index | > 65 | 64.8-90.7 | ✅ PASS | - |
-| Security Vulnerabilities | 0 crit/high | 0 crit, 1 med | ✅ PASS | Low |
-| Code Quality (Pylint) | > 8.0 | 6.96 | ⚠️ FAIR | Medium |
-| Documentation | 100% | ~40% | ⚠️ LOW | Medium |
-| Dependency Health | Current | Recent | ✅ GOOD | Low |
+| Cyclomatic Complexity | < 10 | 3.3 avg | PASS | - |
+| Code Duplication | < 3% | ~0% | PASS | - |
+| Test Coverage | > 85% | 0% | FAIL | **CRITICAL** |
+| Technical Debt | < 5% | ~27% | HIGH | **HIGH** |
+| Maintainability Index | > 65 | 64.8-90.7 | PASS | - |
+| Security Vulnerabilities | 0 crit/high | 0 crit, 1 med | PASS | Low |
+| Code Quality (Pylint) | > 8.0 | 6.96 | FAIR | Medium |
+| Documentation | 100% | ~40% | LOW | Medium |
+| Dependency Health | Current | Recent | GOOD | Low |
 
 **Overall Grade: C+ (Needs Improvement)**
 - Strong fundamentals (complexity, maintainability, security)
@@ -261,7 +261,7 @@ Debt ratio: 11 / 40 = 27.5%
 
 ## 4. Prioritized Improvement Roadmap
 
-### 🔴 CRITICAL PRIORITY (Do First)
+### CRITICAL PRIORITY (Do First)
 
 #### 4.1 Add Comprehensive Test Coverage
 **Current: 0% | Target: 85%+ | Effort: 8-12 hours**
@@ -303,14 +303,14 @@ Debt ratio: 11 / 40 = 27.5%
    ```
 
 **Success Criteria:**
-- ✅ Line coverage > 85%
-- ✅ Branch coverage > 75%
-- ✅ All critical paths tested
-- ✅ Error cases covered
+- Line coverage > 85%
+- Branch coverage > 75%
+- All critical paths tested
+- Error cases covered
 
 ---
 
-### 🟡 HIGH PRIORITY (Do Next)
+### HIGH PRIORITY (Do Next)
 
 #### 4.2 Improve Exception Handling
 **Effort: 1 hour**
@@ -342,7 +342,7 @@ def get_forecasts() -> Dict[str, List[Dict]]:
 def health() -> Dict[str, str]:
     """
     Health check endpoint.
-    
+
     Returns:
         dict: Status indicator with 'ok' value.
     """
@@ -351,10 +351,10 @@ def health() -> Dict[str, str]:
 def get_forecasts() -> Dict[str, List[Dict]]:
     """
     Retrieve forecast data from CSV file.
-    
+
     Returns:
         dict: JSON response with 'data' key containing list of forecast records.
-    
+
     Raises:
         HTTPException: 404 if file not found, 500 on read errors.
     """
@@ -381,10 +381,10 @@ def _read_csv_cached(name: str, limit: int = 1000) -> List[Dict]:
     """Read CSV with 5-minute in-memory cache."""
     now = datetime.now()
     cache_key = f"{name}:{limit}"
-    
+
     if cache_key in _cache and now < _cache_ttl[cache_key]:
         return _cache[cache_key]
-    
+
     data = _read_csv(name, limit)
     _cache[cache_key] = data
     _cache_ttl[cache_key] = now + CACHE_DURATION
@@ -395,7 +395,7 @@ def _read_csv_cached(name: str, limit: int = 1000) -> List[Dict]:
 
 ---
 
-### 🟢 MEDIUM PRIORITY (Nice to Have)
+### MEDIUM PRIORITY (Nice to Have)
 
 #### 4.5 Fix Pylint Issues
 **Effort: 30 minutes**
@@ -417,10 +417,10 @@ from pydantic import BaseModel
 
 class ForecastResponse(BaseModel):
     data: List[Dict[str, Any]]
-    
+
 app = FastAPI(
-    title="Behaviour Convergence API",
-    description="API for accessing behavioural forecasting results",
+    title="Behavior Convergence API",
+    description="API for accessing behavioral forecasting results",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
@@ -430,9 +430,9 @@ app = FastAPI(
 def get_forecasts() -> ForecastResponse:
     """
     ## Forecasts Endpoint
-    
-    Returns behavioural forecast data from CSV.
-    
+
+    Returns behavioral forecast data from CSV.
+
     - **Limit**: Returns up to 1000 rows by default
     - **Format**: JSON array of forecast records
     """
@@ -459,7 +459,7 @@ uvicorn[standard]>=0.32.0
 
 ---
 
-### 🔵 LOW PRIORITY (Future Enhancements)
+### LOW PRIORITY (Future Enhancements)
 
 #### 4.8 Add Performance Monitoring
 **Effort: 2-3 hours**
@@ -511,48 +511,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           pip install radon pylint bandit pytest-cov
-      
+
       - name: Run tests with coverage
         run: |
           pytest tests/ --cov=app --cov=.github/scripts --cov-report=term --cov-report=xml
-      
+
       - name: Check coverage threshold
         run: |
           coverage report --fail-under=85
-      
+
       - name: Cyclomatic complexity check
         run: |
           radon cc app/ tests/ -a -nb
           # Fail if average > 10
           radon cc app/ tests/ -a -nc || exit 1
-      
+
       - name: Maintainability check
         run: |
           radon mi app/ tests/ -nb
           # Fail if any file < 65
           radon mi app/ tests/ -nc || exit 1
-      
+
       - name: Pylint quality check
         run: |
           pylint app/ tests/ --fail-under=8.0
-      
+
       - name: Security scan
         run: |
           bandit -r app/ -ll -f json -o bandit-report.json
           # Fail on high/critical severity
           bandit -r app/ -ll
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
@@ -561,11 +561,11 @@ jobs:
 ```
 
 **Thresholds Enforced:**
-- ✅ Test coverage: ≥ 85%
-- ✅ Cyclomatic complexity: ≤ 10 (avg)
-- ✅ Maintainability: ≥ 65
-- ✅ Code quality (Pylint): ≥ 8.0/10
-- ✅ Security: No high/critical issues
+- Test coverage: ≥ 85%
+- Cyclomatic complexity: ≤ 10 (avg)
+- Maintainability: ≥ 65
+- Code quality (Pylint): ≥ 8.0/10
+- Security: No high/critical issues
 
 ---
 
@@ -583,25 +583,25 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
-  
+
   - repo: https://github.com/psf/black
     rev: 24.3.0
     hooks:
       - id: black
         language_version: python3.12
-  
+
   - repo: https://github.com/PyCQA/pylint
     rev: v3.1.0
     hooks:
       - id: pylint
         args: [--fail-under=8.0]
-  
+
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.8
     hooks:
       - id: bandit
         args: ['-ll', '-r', 'app/', 'tests/']
-  
+
   - repo: local
     hooks:
       - id: pytest-check
@@ -641,7 +641,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-  
+
   - package-ecosystem: "npm"
     directory: "/app/frontend"
     schedule:
@@ -667,16 +667,16 @@ Add to README.md:
 
 | Priority | Task | Effort | Impact | ROI |
 |----------|------|--------|--------|-----|
-| 🔴 Critical | Add test coverage (85%) | 8-12h | Very High | Excellent |
-| 🟡 High | Improve exception handling | 1h | High | Excellent |
-| 🟡 High | Add function docstrings | 1-2h | Medium | Good |
-| 🟡 High | Implement CSV caching | 2-3h | High | Excellent |
-| 🟢 Medium | Fix pylint issues | 0.5h | Low | Good |
-| 🟢 Medium | Add OpenAPI docs | 1h | Medium | Good |
-| 🟢 Medium | Update dependencies | 0.5h | Low | Medium |
-| 🔵 Low | Performance monitoring | 2-3h | Medium | Medium |
-| 🔵 Low | Security hardening | 3-4h | High | Medium |
-| 🔵 Low | Frontend testing | 4-6h | Medium | Medium |
+| Critical | Add test coverage (85%) | 8-12h | Very High | Excellent |
+| High | Improve exception handling | 1h | High | Excellent |
+| High | Add function docstrings | 1-2h | Medium | Good |
+| High | Implement CSV caching | 2-3h | High | Excellent |
+| Medium | Fix pylint issues | 0.5h | Low | Good |
+| Medium | Add OpenAPI docs | 1h | Medium | Good |
+| Medium | Update dependencies | 0.5h | Low | Medium |
+| Low | Performance monitoring | 2-3h | Medium | Medium |
+| Low | Security hardening | 3-4h | High | Medium |
+| Low | Frontend testing | 4-6h | Medium | Medium |
 | - | **Setup CI/CD quality gates** | 2-3h | Very High | Excellent |
 | - | **Setup pre-commit hooks** | 1h | High | Excellent |
 
@@ -688,30 +688,30 @@ Add to README.md:
 ## 7. Recommended Action Plan
 
 ### Week 1: Foundation (15 hours)
-1. ✅ Setup pre-commit hooks (1h)
-2. ✅ Add backend API tests (4h)
-3. ✅ Add utility function tests (2h)
-4. ✅ Improve exception handling (1h)
-5. ✅ Add function docstrings (2h)
-6. ✅ Implement CSV caching (3h)
-7. ✅ Setup CI quality gates workflow (2h)
+1. Setup pre-commit hooks (1h)
+2. Add backend API tests (4h)
+3. Add utility function tests (2h)
+4. Improve exception handling (1h)
+5. Add function docstrings (2h)
+6. Implement CSV caching (3h)
+7. Setup CI quality gates workflow (2h)
 
 **Milestone:** Test coverage > 85%, Pylint score > 8.0
 
 ### Week 2: Enhancement (8 hours)
-1. ✅ Add OpenAPI documentation (1h)
-2. ✅ Fix all pylint issues (0.5h)
-3. ✅ Update dependencies (0.5h)
-4. ✅ Add frontend unit tests (3h)
-5. ✅ Add integration tests (3h)
+1. Add OpenAPI documentation (1h)
+2. Fix all pylint issues (0.5h)
+3. Update dependencies (0.5h)
+4. Add frontend unit tests (3h)
+5. Add integration tests (3h)
 
 **Milestone:** 90% coverage, automated quality enforcement
 
 ### Week 3+: Production Readiness (12 hours)
-1. ✅ Add performance monitoring (3h)
-2. ✅ Security hardening (4h)
-3. ✅ Add E2E tests (3h)
-4. ✅ Load testing (2h)
+1. Add performance monitoring (3h)
+2. Security hardening (4h)
+3. Add E2E tests (3h)
+4. Load testing (2h)
 
 **Milestone:** Production-ready quality standards
 
@@ -735,18 +735,18 @@ Track these metrics in CI:
 ## 9. Continuous Monitoring
 
 **Daily:**
-- ✅ Pre-commit hooks enforce quality on every commit
-- ✅ Automated tests run on every push
+- Pre-commit hooks enforce quality on every commit
+- Automated tests run on every push
 
 **Weekly:**
-- ✅ Dependabot PRs for dependency updates
-- ✅ Review code coverage trends
-- ✅ Review Pylint score trends
+- Dependabot PRs for dependency updates
+- Review code coverage trends
+- Review Pylint score trends
 
 **Monthly:**
-- ✅ Security audit (Bandit + Safety)
-- ✅ Performance profiling
-- ✅ Technical debt review
+- Security audit (Bandit + Safety)
+- Performance profiling
+- Technical debt review
 
 ---
 
@@ -755,15 +755,15 @@ Track these metrics in CI:
 Your codebase has **strong fundamentals** (low complexity, high maintainability, zero critical security issues) but needs **immediate attention to testing** and **documentation** to reach production quality.
 
 **Key Strengths:**
-- ✅ Clean, simple, maintainable code
-- ✅ Zero code duplication
-- ✅ Strong type hints
-- ✅ Secure dependencies
+- Clean, simple, maintainable code
+- Zero code duplication
+- Strong type hints
+- Secure dependencies
 
 **Critical Gaps:**
-- ❌ No test coverage
-- ⚠️ Missing API documentation
-- ⚠️ Basic error handling
+- No test coverage
+- Missing API documentation
+- Basic error handling
 
 **Recommended Next Steps:**
 1. Implement Week 1 action plan (15 hours)
