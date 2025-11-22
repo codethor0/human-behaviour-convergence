@@ -7,4 +7,6 @@ backend FastAPI application located at `app/backend/app/main.py`.
 
 # Re-export submodule so imports like `from app import main` work consistently.
 # We rely on namespace packages (PEP 420) for `app.backend`.
-from .backend.app import main  # type: ignore
+from .backend.app import main  # type: ignore  # noqa: F401
+
+__all__ = ["main"]

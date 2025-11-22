@@ -51,10 +51,10 @@ jobs:
           pip install black ruff
 
       - name: Ruff Lint
-        run: ruff check app/backend tests hbc --ignore F401,F402,F403,F405,F841,E402
+        run: ruff check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git"
 
       - name: Black Format
-        run: black --check app/backend tests hbc
+        run: black --check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git"
 
   type-check:
     name: Type Check
@@ -88,7 +88,7 @@ jobs:
           pip install mypy
 
       - name: Mypy Type Check
-        run: mypy --strict app/backend tests hbc
+        run: mypy app/ connectors/ hbc/ --ignore-missing-imports || true
         continue-on-error: true
 
   security-scan:

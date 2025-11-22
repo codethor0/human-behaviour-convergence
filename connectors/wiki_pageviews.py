@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 """Wikipedia pageviews connector for public data layer."""
 import gzip
-import io
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
@@ -9,7 +8,7 @@ from typing import Optional
 import pandas as pd
 import requests
 
-from connectors.base import AbstractSync, ethical_check, logger
+from connectors.base import AbstractSync, ethical_check
 
 
 class WikiPageviewsSync(AbstractSync):

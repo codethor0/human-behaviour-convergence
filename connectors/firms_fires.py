@@ -8,7 +8,7 @@ from typing import Optional
 import pandas as pd
 import requests
 
-from connectors.base import AbstractSync, ethical_check, logger
+from connectors.base import AbstractSync, ethical_check
 
 
 class FIRMSFiresSync(AbstractSync):

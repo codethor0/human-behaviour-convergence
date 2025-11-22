@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT-0
 """Base classes and utilities for public data connectors."""
-import re
 from abc import ABC, abstractmethod
 from functools import wraps
 from typing import Any, Callable
