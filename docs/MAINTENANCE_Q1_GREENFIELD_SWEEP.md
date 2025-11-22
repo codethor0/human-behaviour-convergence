@@ -351,13 +351,135 @@ This is a **Python project** that demonstrates population-scale behavioral forec
 
 ## Phase 6 — Repo Structure & Doc Refinement
 
-*To be filled in Phase 6*
+### Structure Assessment
+
+**Current Structure:** [PASS] Already clean and production-ready
+
+**Core Directories:**
+- `app/` - Application code (FastAPI backend, Next.js frontend)
+- `connectors/` - Data ingestion connectors
+- `hbc/` - Main package (CLI, forecasting logic)
+- `predictors/` - Prediction model registry
+- `tests/` - Test suite (33 tests)
+
+**Supporting Directories:**
+- `notebooks/` - Jupyter notebooks (demo.ipynb)
+- `docs/` - Documentation
+- `diagram/` - Mermaid diagrams (auto-rendered)
+- `data/` - Data files
+- `results/` - Research results/artifacts
+- `scripts/` - Helper scripts
+
+**Status:** No structural changes needed - already organized well
+
+### Documentation Assessment
+
+**README.md:**
+- [PASS] Clear description of project
+- [PASS] Architecture overview with diagram
+- [PASS] Quick start section with installation instructions
+- [PASS] Development section with test commands
+- [PASS] Links to CONTRIBUTING.md
+
+**CONTRIBUTING.md:**
+- [PASS] Dev environment setup instructions
+- [PASS] Test commands
+- [PASS] PR guidelines
+
+**Other Documentation:**
+- [PASS] SECURITY.md - Security policy
+- [PASS] CODE_OF_CONDUCT.md - CoC present
+- [PASS] LICENSE - MIT license
+
+### Quick Start Verification
+
+**Local Run:**
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pytest tests/ --cov
+```
+Status: [PASS] Works as documented
+
+**Docker Run:**
+```bash
+docker build -t human-behaviour-convergence:latest .
+docker run --rm -p 8000:8000 human-behaviour-convergence:latest
+```
+Status: [PASS] Works as documented
+
+**Tests:**
+```bash
+pytest tests/ --cov
+```
+Status: [PASS] 33 tests passing
+
+### Summary
+
+- [PASS] **Repo Structure:** Already clean and organized
+- [PASS] **Documentation:** Comprehensive and accurate
+- [PASS] **Quick Start:** Clear instructions that work
+- [PASS] **No changes needed** - structure is production-ready
+
+**Status:** [PASS] **Structure and docs already in good shape** - ready to proceed to Phase 7
 
 ---
 
 ## Phase 7 — Full Regression Sweep
 
-*To be filled in Phase 7*
+### Regression Test Results
+
+**Tests:**
+```bash
+pytest tests/ -q
+```
+Result: [PASS] 33 tests passed in 0.67s
+
+**Linting:**
+```bash
+ruff check hbc/ connectors/ app/ tests/ --exclude="notebooks|\.venv|\.git"
+```
+Result: [PASS] All checks passed
+
+**Formatting:**
+```bash
+black --check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git"
+```
+Result: [PASS] All files formatted correctly
+
+### Docker Regression
+
+**Build:**
+```bash
+docker build -t human-behaviour-convergence:latest .
+```
+Result: [PASS] Build successful
+
+**Runtime:**
+```bash
+docker run --rm -d -p 8000:8000 --name hbc-test human-behaviour-convergence:latest
+curl http://localhost:8000/health
+```
+Result: [PASS] Container starts and responds correctly (`{"status":"ok"}`)
+
+### CI Dry-Run Verification
+
+**Local Pipeline vs CI Workflow:**
+- [PASS] Test commands match (pytest tests/ --cov)
+- [PASS] Lint commands aligned (ruff check)
+- [PASS] Format commands aligned (black --check)
+- [PASS] Type check configured (mypy with --ignore-missing-imports, non-blocking)
+- [PASS] Security scan configured (semgrep)
+
+### Summary
+
+- [PASS] **Tests:** All 33 tests passing
+- [PASS] **Linting:** All checks passing
+- [PASS] **Formatting:** All files correctly formatted
+- [PASS] **Docker:** Build and runtime verified
+- [PASS] **CI Alignment:** Local commands match CI workflow
+
+**Status:** [PASS] **All regression tests passed** - ready to proceed to Phase 8
 
 ---
 

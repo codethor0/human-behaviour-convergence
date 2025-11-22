@@ -123,7 +123,7 @@ jobs:
           pip install semgrep
 
       - name: Semgrep Security Scan
-        run: semgrep --config=auto app/backend tests hbc
+        run: semgrep --config=auto app/ connectors/ tests/ hbc/
 
   sbom-scan:
     name: SBOM & CVE Scan
