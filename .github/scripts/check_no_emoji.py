@@ -49,8 +49,9 @@ def main():
         if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
     ]
 
-    # Exclude audit reports that document emojis as findings
-    md_files = [f for f in md_files if "REPO_HEALTH_AUDIT" not in f.name]
+           # Exclude audit reports that document emojis as findings
+           md_files = [f for f in md_files if "REPO_HEALTH_AUDIT" not in f.name]
+           md_files = [f for f in md_files if "ISSUE_STATUS_REPORT" not in f.name]
 
     found_emojis = False
 
