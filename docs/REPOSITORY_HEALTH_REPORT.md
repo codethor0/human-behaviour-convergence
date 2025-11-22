@@ -145,4 +145,3 @@ The repository is now in **excellent health** and ready for continued developmen
 2. **American spelling check**: The pre-commit hook fails on the project name "behaviour" (British spelling), which is expected and acceptable for this project.
 
 3. **Default branch**: GitHub default branch is `master`. Both `master` and `main` are kept in sync and contain identical content.
-
