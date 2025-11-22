@@ -4,20 +4,8 @@ name: CI
 on:
   push:
     branches: [main, master]
-    paths:
-      - '**.py'
-      - 'tests/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main, master]
-    paths:
-      - '**.py'
-      - 'tests/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/ci.yml'
   workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates

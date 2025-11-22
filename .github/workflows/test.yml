@@ -3,20 +3,8 @@ name: Tests
 on:
   push:
     branches: [main, master]
-    paths:
-      - '**.py'
-      - 'tests/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/test.yml'
   pull_request:
     branches: [main, master]
-    paths:
-      - '**.py'
-      - 'tests/**'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - '.github/workflows/test.yml'
   workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates
