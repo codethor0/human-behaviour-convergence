@@ -95,6 +95,22 @@ This project is a **public-data-driven behavioral forecasting application** that
        "days_back": 30,
        "forecast_horizon": 7
      }'
+   
+   # Check available data sources
+   curl "http://localhost:8000/api/forecasting/data-sources"
+   
+   # Check available models
+   curl "http://localhost:8000/api/forecasting/models"
+   ```
+
+3. **Use the web interface:**
+   ```bash
+   # In a separate terminal, start the Next.js frontend
+   cd app/frontend
+   npm install
+   npm run dev
+   # Frontend runs on http://localhost:3000
+   # Navigate to http://localhost:3000/forecast to generate forecasts interactively
    ```
 
 3. **Contribute:**

@@ -1,12 +1,25 @@
 # Behavior Convergence API (FastAPI)
 
-Minimal backend that serves CSV-backed endpoints for quick exploration.
+Public-data-driven behavioral forecasting API that serves real-time forecasts and historical data.
 
-## Endpoints
+## Core Forecasting Endpoints
 
-- `GET /health` – simple liveness check
-- `GET /api/forecasts` – returns data from `results/forecasts.csv` if present, else a two-row stub
-- `GET /api/metrics` – returns data from `results/metrics.csv` if present, else a two-row stub
+- `POST /api/forecast` – Generate behavioral forecast using public economic and weather data
+  - Request: `{ latitude, longitude, region_name, days_back, forecast_horizon }`
+  - Response: `{ history, forecast, sources, metadata }`
+- `POST /api/forecasting/run` – Alias for `/api/forecast`
+- `GET /api/forecasting/data-sources` – List available public data sources
+- `GET /api/forecasting/models` – List available forecasting models
+- `GET /api/forecasting/status` – System health and component status
+- `GET /api/forecasting/history` – Historical forecasts (prepared for future database integration)
+
+## Data Endpoints
+
+- `GET /health` – Simple liveness check
+- `GET /api/forecasts` – Returns data from `results/forecasts.csv` if present, else a stub
+- `GET /api/metrics` – Returns data from `results/metrics.csv` if present, else a stub
+- `GET /api/status` – Service metadata (version, commit)
+- `GET /api/cache/status` – Cache statistics (hits, misses, size)
 
 The service automatically searches for a `results/` folder by walking up from the backend package location, so it works when run from inside `app/backend` or the repo root.
 
