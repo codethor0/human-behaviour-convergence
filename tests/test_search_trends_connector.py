@@ -22,7 +22,7 @@ class TestSearchTrendsFetcher:
         """Test that fetcher returns empty DataFrame when API not configured."""
         fetcher = SearchTrendsFetcher()
         result = fetcher.fetch_search_interest(query="test", days_back=30)
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
@@ -56,7 +56,9 @@ class TestSearchTrendsFetcher:
         fetcher = SearchTrendsFetcher()
         fetcher.session = mock_session
 
-        result = fetcher.fetch_search_interest(query="test", days_back=3, use_cache=False)
+        result = fetcher.fetch_search_interest(
+            query="test", days_back=3, use_cache=False
+        )
 
         assert result is not None
         assert isinstance(result, pd.DataFrame)
@@ -91,10 +93,11 @@ class TestSearchTrendsFetcher:
         fetcher = SearchTrendsFetcher()
         fetcher.session = mock_session
 
-        result = fetcher.fetch_search_interest(query="test", days_back=3, use_cache=False)
+        result = fetcher.fetch_search_interest(
+            query="test", days_back=3, use_cache=False
+        )
 
         # Should return empty DataFrame with correct structure
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
         assert "search_interest_score" in result.columns
-

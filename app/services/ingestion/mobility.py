@@ -35,7 +35,8 @@ class MobilityFetcher:
 
         # Setup requests session with caching
         self.session = requests_cache.CachedSession(
-            ".cache/mobility_cache", expire_after=timedelta(minutes=cache_duration_minutes)
+            ".cache/mobility_cache",
+            expire_after=timedelta(minutes=cache_duration_minutes),
         )
 
     def fetch_mobility_index(
@@ -61,7 +62,9 @@ class MobilityFetcher:
             mobility_index is normalized to 0.0-1.0 where 1.0 = maximum mobility/activity
         """
         # Check cache validity
-        cache_key = f"{region_code or 'default'},{latitude or ''},{longitude or ''},{days_back}"
+        cache_key = (
+            f"{region_code or 'default'},{latitude or ''},{longitude or ''},{days_back}"
+        )
         if (
             use_cache
             and self._cache is not None
@@ -183,4 +186,3 @@ class MobilityFetcher:
                 columns=["timestamp", "mobility_index"],
                 dtype=float,
             )
-

@@ -199,8 +199,9 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
             _enforce_cache_limit()
             if os.getenv("CACHE_DEBUG") == "1":
                 print(
-                    f"[cache-debug] inserting key={cache_key} size_before={len(_cache)} "
-                    f"limit={MAX_CACHE_SIZE} globals_id={id(globals())}"
+                    f"[cache-debug] inserting key={cache_key} "
+                    f"size_before={len(_cache)} limit={MAX_CACHE_SIZE} "
+                    f"globals_id={id(globals())}"
                 )
             _cache[cache_key] = result
             _cache_ttl[cache_key] = now + CACHE_DURATION
@@ -519,7 +520,7 @@ class ForecastItem(BaseModel):
 
 class ForecastResult(BaseModel):
     history: List[ForecastHistoryItem]
-    forecast: List[ForecastPredictionItem]
+    forecast: List[ForecastItem]
     sources: List[str]
     metadata: Dict[str, Any]
 

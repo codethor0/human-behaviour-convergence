@@ -116,7 +116,18 @@ class TestDataHarmonizer:
         search_data = pd.DataFrame(
             {
                 "timestamp": dates,
-                "search_interest_score": [0.4, 0.5, 0.3, 0.6, 0.4, 0.4, 0.5, 0.3, 0.6, 0.4],
+                "search_interest_score": [
+                    0.4,
+                    0.5,
+                    0.3,
+                    0.6,
+                    0.4,
+                    0.4,
+                    0.5,
+                    0.3,
+                    0.6,
+                    0.4,
+                ],
             }
         )
 
@@ -142,7 +153,7 @@ class TestDataHarmonizer:
             health_data=health_data,
             mobility_data=mobility_data,
         )
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
@@ -152,7 +163,7 @@ class TestDataHarmonizer:
         assert "search_interest_score" in result.columns
         assert "health_risk_index" in result.columns
         assert "mobility_index" in result.columns
-        
+
         # Verify behavior_index is in valid range
         assert result["behavior_index"].min() >= 0.0
         assert result["behavior_index"].max() <= 1.0

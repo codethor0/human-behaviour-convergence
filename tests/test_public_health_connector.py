@@ -21,7 +21,7 @@ class TestPublicHealthFetcher:
         """Test that fetcher returns empty DataFrame when API not configured."""
         fetcher = PublicHealthFetcher()
         result = fetcher.fetch_health_risk_index(days_back=30)
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
@@ -76,9 +76,8 @@ class TestPublicHealthFetcher:
         """Test that fetcher accepts region_code parameter."""
         fetcher = PublicHealthFetcher()
         result = fetcher.fetch_health_risk_index(region_code="US", days_back=30)
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
         assert "health_risk_index" in result.columns
-

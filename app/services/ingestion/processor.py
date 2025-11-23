@@ -47,11 +47,11 @@ class DataHarmonizer:
             Merged DataFrame with columns:
             ['timestamp', 'stress_index', 'discomfort_score', 'search_interest_score',
              'health_risk_index', 'mobility_index', 'behavior_index']
-            
+
             behavior_index formula (weights sum to 1.0):
             (inverse_stress * 0.25) + (comfort * 0.25) + (attention_score * 0.15) +
             (inverse_health_burden * 0.15) + (mobility_activity * 0.10) + (seasonality * 0.10)
-            
+
             Where:
             - inverse_stress = 1 - stress_index
             - comfort = 1 - discomfort_score
@@ -92,35 +92,35 @@ class DataHarmonizer:
         # Ensure timestamp columns are datetime and set as index
         dataframes = []
         names = []
-        
+
         if not market_data.empty:
             market_data = market_data.copy()
             market_data["timestamp"] = pd.to_datetime(market_data["timestamp"])
             market_data = market_data.set_index("timestamp").sort_index()
             dataframes.append(market_data)
             names.append("market")
-        
+
         if not weather_data.empty:
             weather_data = weather_data.copy()
             weather_data["timestamp"] = pd.to_datetime(weather_data["timestamp"])
             weather_data = weather_data.set_index("timestamp").sort_index()
             dataframes.append(weather_data)
             names.append("weather")
-        
+
         if not search_data.empty:
             search_data = search_data.copy()
             search_data["timestamp"] = pd.to_datetime(search_data["timestamp"])
             search_data = search_data.set_index("timestamp").sort_index()
             dataframes.append(search_data)
             names.append("search")
-        
+
         if not health_data.empty:
             health_data = health_data.copy()
             health_data["timestamp"] = pd.to_datetime(health_data["timestamp"])
             health_data = health_data.set_index("timestamp").sort_index()
             dataframes.append(health_data)
             names.append("health")
-        
+
         if not mobility_data.empty:
             mobility_data = mobility_data.copy()
             mobility_data["timestamp"] = pd.to_datetime(mobility_data["timestamp"])
@@ -148,13 +148,17 @@ class DataHarmonizer:
         if not market_data.empty:
             all_date_sources.append((market_data.index.min(), market_data.index.max()))
         if not weather_data.empty:
-            all_date_sources.append((weather_data.index.min(), weather_data.index.max()))
+            all_date_sources.append(
+                (weather_data.index.min(), weather_data.index.max())
+            )
         if not search_data.empty:
             all_date_sources.append((search_data.index.min(), search_data.index.max()))
         if not health_data.empty:
             all_date_sources.append((health_data.index.min(), health_data.index.max()))
         if not mobility_data.empty:
-            all_date_sources.append((mobility_data.index.min(), mobility_data.index.max()))
+            all_date_sources.append(
+                (mobility_data.index.min(), mobility_data.index.max())
+            )
 
         if all_date_sources:
             start_date = min(ds[0] for ds in all_date_sources)
@@ -237,7 +241,7 @@ class DataHarmonizer:
 
         # Forward-fill missing values (for weekends in market data)
         merged["stress_index"] = merged["stress_index"].ffill(limit=forward_fill_days)
-        
+
         # Interpolate other continuous signals
         merged["discomfort_score"] = merged["discomfort_score"].interpolate(
             method="linear", limit_direction="both"
@@ -255,19 +259,19 @@ class DataHarmonizer:
         # Calculate derived features for behavior_index
         # Inverse of stress (low stress = high activity)
         stress_inv = 1.0 - merged["stress_index"].fillna(0.5)
-        
+
         # Comfort = 1 - discomfort (low discomfort = high comfort)
         comfort = 1.0 - merged["discomfort_score"].fillna(0.5)
-        
+
         # Attention score from search trends (already normalized)
         attention_score = merged["search_interest_score"].fillna(0.5)
-        
+
         # Inverse health burden (low risk = high activity)
         inverse_health_burden = 1.0 - merged["health_risk_index"].fillna(0.5)
-        
+
         # Mobility activity (already normalized)
         mobility_activity = merged["mobility_index"].fillna(0.5)
-        
+
         # Seasonality component (day of year normalized to 0-1)
         merged["day_of_year"] = pd.to_datetime(merged["timestamp"]).dt.dayofyear
         seasonality = (merged["day_of_year"] / 365.0).values
@@ -310,11 +314,7 @@ class DataHarmonizer:
                 merged["behavior_index"].min(),
                 merged["behavior_index"].max(),
             ),
-            available_signals=[
-                col
-                for col in signal_cols
-                if merged[col].notna().any()
-            ],
+            available_signals=[col for col in signal_cols if merged[col].notna().any()],
         )
 
         return merged

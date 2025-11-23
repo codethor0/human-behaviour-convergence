@@ -21,7 +21,7 @@ class TestMobilityFetcher:
         """Test that fetcher returns empty DataFrame when API not configured."""
         fetcher = MobilityFetcher()
         result = fetcher.fetch_mobility_index(days_back=30)
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
@@ -78,9 +78,8 @@ class TestMobilityFetcher:
         result = fetcher.fetch_mobility_index(
             latitude=40.7128, longitude=-74.0060, days_back=30
         )
-        
+
         assert result is not None
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
         assert "mobility_index" in result.columns
-

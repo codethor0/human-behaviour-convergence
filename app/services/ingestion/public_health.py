@@ -160,7 +160,9 @@ class PublicHealthFetcher:
                 )
                 return result
             else:
-                logger.warning("No public health data returned", region_code=region_code)
+                logger.warning(
+                    "No public health data returned", region_code=region_code
+                )
                 return pd.DataFrame(
                     columns=["timestamp", "health_risk_index"],
                     dtype=float,
@@ -178,4 +180,3 @@ class PublicHealthFetcher:
                 columns=["timestamp", "health_risk_index"],
                 dtype=float,
             )
-

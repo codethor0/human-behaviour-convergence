@@ -164,9 +164,19 @@ def get_forecasting_status() -> Dict[str, Any]:
         "data_sources": {
             "economic_indicators": "active",
             "weather_patterns": "active",
-            "search_trends": "configured" if os.getenv("SEARCH_TRENDS_API_ENDPOINT") else "not_configured",
-            "public_health": "configured" if os.getenv("PUBLIC_HEALTH_API_ENDPOINT") else "not_configured",
-            "mobility_patterns": "configured" if os.getenv("MOBILITY_API_ENDPOINT") else "not_configured",
+            "search_trends": (
+                "configured"
+                if os.getenv("SEARCH_TRENDS_API_ENDPOINT")
+                else "not_configured"
+            ),
+            "public_health": (
+                "configured"
+                if os.getenv("PUBLIC_HEALTH_API_ENDPOINT")
+                else "not_configured"
+            ),
+            "mobility_patterns": (
+                "configured" if os.getenv("MOBILITY_API_ENDPOINT") else "not_configured"
+            ),
         },
         "models": {
             "exponential_smoothing": "available",

@@ -34,7 +34,8 @@ class SearchTrendsFetcher:
 
         # Setup requests session with caching
         self.session = requests_cache.CachedSession(
-            ".cache/search_trends_cache", expire_after=timedelta(minutes=cache_duration_minutes)
+            ".cache/search_trends_cache",
+            expire_after=timedelta(minutes=cache_duration_minutes),
         )
 
     def fetch_search_interest(
@@ -62,7 +63,11 @@ class SearchTrendsFetcher:
         ):
             age_minutes = (datetime.now() - self._cache_timestamp).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached search trends data", age_minutes=age_minutes, query=query)
+                logger.info(
+                    "Using cached search trends data",
+                    age_minutes=age_minutes,
+                    query=query,
+                )
                 return self._cache.copy()
 
         try:
@@ -162,4 +167,3 @@ class SearchTrendsFetcher:
                 columns=["timestamp", "search_interest_score"],
                 dtype=float,
             )
-
