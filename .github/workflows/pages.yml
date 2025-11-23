@@ -1,26 +1,30 @@
-name: Render Mermaid Diagram
+# SPDX-License-Identifier: MIT-0
+name: Deploy GitHub Pages
 
 on:
-  pull_request:
-    paths:
-      - 'diagram/behaviour-convergence.mmd'
-      - '.github/workflows/render-diagram.yml'
-      - '.github/puppeteer.config.cjs'
   push:
     branches: [ main, master ]
     paths:
-      - 'diagram/behaviour-convergence.mmd'
-      - '.github/workflows/render-diagram.yml'
-      - '.github/puppeteer.config.cjs'
-  workflow_dispatch: {}
+      - 'docs/**'
+      - 'diagram/**'
+      - '.github/workflows/pages.yml'
+      - 'index.html'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
   pull-requests: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
-  render:
+  render-diagram:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,6 +65,7 @@ jobs:
           path: |
             diagram/behaviour-convergence.svg
             diagram/behaviour-convergence.png
+          retention-days: 1
 
       - name: Create update PR if outputs changed (push only)
         if: ${{ github.event_name == 'push' }}
@@ -76,3 +81,36 @@ jobs:
           add-paths: |
             diagram/behaviour-convergence.svg
             diagram/behaviour-convergence.png
+
+  build:
+    needs: render-diagram
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site
+        run: |
+          mkdir -p out
+          cp -R docs out/
+          cp -R diagram out/
+          cp index.html out/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
