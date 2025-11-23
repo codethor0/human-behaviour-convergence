@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 """Forecasting endpoints for behavioral prediction."""
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -28,7 +28,7 @@ class ModelInfo(BaseModel):
     description: str
     type: str
     parameters: Dict[str, str]
-    default_parameters: Dict[str, any]
+    default_parameters: Dict[str, Any]
 
 
 @router.get("/data-sources", response_model=List[DataSourceInfo])
