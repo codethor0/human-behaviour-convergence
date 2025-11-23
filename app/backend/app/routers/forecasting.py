@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 """Forecasting endpoints for behavioral prediction."""
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.core.prediction import BehavioralForecaster
