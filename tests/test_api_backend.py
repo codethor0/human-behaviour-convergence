@@ -280,9 +280,15 @@ def test_create_forecast_endpoint(client):
 
 
 def test_create_forecast_validation(client):
-    """Invalid horizon should return validation error."""
+    """Invalid coordinates should return validation error."""
     resp = client.post(
         "/api/forecast",
-        json={"region": "us-west", "horizon": 31, "modalities": []},
+        json={
+            "latitude": 100.0,
+            "longitude": -74.0060,
+            "region_name": "Invalid",
+            "days_back": 30,
+            "forecast_horizon": 7,
+        },
     )
     assert resp.status_code == 422
