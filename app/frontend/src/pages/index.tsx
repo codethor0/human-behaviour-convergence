@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Head from 'next/head';
 
 type Forecast = Record<string, any>;
 type Metric = Record<string, any>;
@@ -23,33 +24,43 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-      <h1>Behavior Convergence Explorer</h1>
-      <p style={{ color: '#555' }}>Public-data-driven behavioral forecasting application.</p>
+    <>
+      <Head>
+        <title>Behavior Convergence Explorer</title>
+        <meta name="description" content="Public-data-driven behavioral forecasting application" />
+      </Head>
+      <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 1200, margin: '0 auto' }}>
+        <h1>Behavior Convergence Explorer</h1>
+        <p style={{ color: '#555', marginBottom: 24 }}>
+          Public-data-driven behavioral forecasting application using economic and environmental signals.
+        </p>
 
-      <nav style={{ marginBottom: 32, display: 'flex', gap: 16 }}>
-        <Link href="/forecast" style={{ textDecoration: 'underline', color: '#0070f3' }}>
-          Generate Forecast
-        </Link>
-        <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
-          Results Dashboard
-        </Link>
-      </nav>
+        <nav style={{ marginBottom: 32, display: 'flex', gap: 16 }}>
+          <Link href="/forecast" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+            Generate Forecast
+          </Link>
+          <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+            Results Dashboard
+          </Link>
+        </nav>
 
-      {error && (
-        <p style={{ color: 'crimson' }}>Failed to load data: {error}</p>
-      )}
+        {error && (
+          <section style={{ padding: 16, backgroundColor: '#f8d7da', color: '#721c24', borderRadius: 4, marginBottom: 24 }}>
+            <strong>Error:</strong> {error}
+          </section>
+        )}
 
-      <section>
-        <h2>Forecasts (first 10)</h2>
-        <DataTable rows={forecasts.slice(0, 10)} emptyMessage="No forecast data" />
-      </section>
+        <section style={{ marginBottom: 32 }}>
+          <h2>Recent Forecasts (first 10)</h2>
+          <DataTable rows={forecasts.slice(0, 10)} emptyMessage="No forecast data available" />
+        </section>
 
-      <section>
-        <h2>Metrics</h2>
-        <DataTable rows={metrics} emptyMessage="No metrics data" />
-      </section>
-    </main>
+        <section style={{ marginBottom: 32 }}>
+          <h2>Metrics</h2>
+          <DataTable rows={metrics} emptyMessage="No metrics data available" />
+        </section>
+      </main>
+    </>
   );
 }
 
@@ -87,30 +98,4 @@ function DataTable({ rows, emptyMessage }: { rows: Record<string, any>[]; emptyM
       </table>
     </div>
   );
-}
-import Head from 'next/head'
-import Link from 'next/link'
-
-export default function Home() {
-  return (
-    <>
-      <Head>
-        <title>Behavior Convergence Explorer</title>
-        <meta name="description" content="Visualize behavior convergence results and diagrams" />
-      </Head>
-      <main style={{ padding: '2rem', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Behavior Convergence Explorer</h1>
-        <p style={{ marginBottom: '1.5rem', color: '#555' }}>
-          Explore the Mermaid diagram and browse research results from this repository.
-        </p>
-        <nav style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Link href="/diagram" style={{ textDecoration: 'underline' }}>Diagram</Link>
-          <Link href="/results" style={{ textDecoration: 'underline' }}>Results</Link>
-          <a href="https://github.com/thor/human-behaviour-convergence" target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>
-            GitHub Repo
-          </a>
-        </nav>
-      </main>
-    </>
-  )
 }
