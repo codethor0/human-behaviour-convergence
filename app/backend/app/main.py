@@ -455,7 +455,7 @@ def _normalize_metric_row(row: Dict[str, Any]) -> Dict[str, Any]:
 # ====== Response Models ======
 
 
-class ForecastItem(BaseModel):
+class ForecastCSVItem(BaseModel):
     timestamp: str
     series: str
     value: float
@@ -467,7 +467,7 @@ class MetricItem(BaseModel):
 
 
 class ForecastResponse(BaseModel):
-    data: List[ForecastItem]
+    data: List[ForecastCSVItem]
 
 
 class MetricsResponse(BaseModel):
