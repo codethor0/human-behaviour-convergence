@@ -82,6 +82,7 @@ app = FastAPI(title="Behavior Convergence API", version="0.1.0")
 
 # Register routers
 app.include_router(public.router)
+app.include_router(forecasting.router)
 
 # Configure CORS from environment (comma-separated)
 ALLOWED_ORIGINS = os.getenv(
