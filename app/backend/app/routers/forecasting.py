@@ -108,7 +108,7 @@ def get_models() -> List[ModelInfo]:
 
 
 @router.get("/status")
-def get_forecasting_status() -> Dict[str, any]:
+def get_forecasting_status() -> Dict[str, Any]:
     """
     Get status of forecasting system components.
 
