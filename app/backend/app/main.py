@@ -154,9 +154,10 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
 
     if os.getenv("CACHE_DEBUG") == "1":
         print(
-            f"[cache-debug] pre-ensure name={name} limit={limit} marker={results_marker} "
-            f"context={_cache_context_marker} cache_keys={list(_cache.keys())} "
-            f"max_cache={MAX_CACHE_SIZE} id={id(globals())}"
+            f"[cache-debug] pre-ensure name={name} limit={limit} "
+            f"marker={results_marker} context={_cache_context_marker} "
+            f"cache_keys={list(_cache.keys())} max_cache={MAX_CACHE_SIZE} "
+            f"id={id(globals())}"
         )
 
     _ensure_cache_context(results_marker)
