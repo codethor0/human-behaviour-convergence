@@ -306,11 +306,25 @@ class _MainModule(ModuleType):
     def __setattr__(
         self, name: str, value: Any
     ) -> None:  # pragma: no cover - simple hook
-        ModuleType.__setattr__(self, name, value)
-        if name == "RESULTS_DIR":
-            _on_results_dir_updated(value)
-        elif name == "MAX_CACHE_SIZE":
-            _on_cache_size_updated(value)
+        # Prevent recursion by checking if we're already setting this attribute
+        if hasattr(self, '_setting_attr'):
+            # Fallback to parent if we're already in the middle of setting
+            return ModuleType.__setattr__(self, name, value)
+        
+        # Mark that we're setting an attribute to prevent recursion
+        self._setting_attr = True
+        try:
+            # Update the module's namespace first
+            ModuleType.__setattr__(self, name, value)
+            # Then trigger hooks if needed
+            if name == "RESULTS_DIR":
+                _on_results_dir_updated(value)
+            elif name == "MAX_CACHE_SIZE":
+                _on_cache_size_updated(value)
+        finally:
+            # Always clear the flag
+            if hasattr(self, '_setting_attr'):
+                delattr(self, '_setting_attr')
 
 
 sys.modules[__name__].__class__ = _MainModule
