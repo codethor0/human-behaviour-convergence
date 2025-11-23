@@ -1,2 +1,5 @@
 # SPDX-License-Identifier: MIT-0
-"""Public data API router."""
+"""API routers for Behavior Convergence API."""
+from . import forecasting, public
+
+__all__ = ["forecasting", "public"]
