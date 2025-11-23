@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type Forecast = Record<string, any>;
 type Metric = Record<string, any>;
@@ -24,7 +25,16 @@ export default function HomePage() {
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
       <h1>Behavior Convergence Explorer</h1>
-      <p style={{ color: '#555' }}>Quick scaffold: data from FastAPI backend.</p>
+      <p style={{ color: '#555' }}>Public-data-driven behavioral forecasting application.</p>
+
+      <nav style={{ marginBottom: 32, display: 'flex', gap: 16 }}>
+        <Link href="/forecast" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+          Generate Forecast
+        </Link>
+        <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+          Results Dashboard
+        </Link>
+      </nav>
 
       {error && (
         <p style={{ color: 'crimson' }}>Failed to load data: {error}</p>

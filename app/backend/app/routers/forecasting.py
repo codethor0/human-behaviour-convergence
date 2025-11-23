@@ -128,3 +128,39 @@ def get_forecasting_status() -> Dict[str, any]:
         "cache_status": "healthy",
     }
 
+
+class HistoricalForecastItem(BaseModel):
+    """Historical forecast entry."""
+
+    forecast_id: str
+    region_name: str
+    latitude: float
+    longitude: float
+    forecast_date: str
+    forecast_horizon: int
+    model_type: str
+    sources: List[str]
+    accuracy_score: float = None
+
+
+@router.get("/history", response_model=List[HistoricalForecastItem])
+def get_forecast_history(
+    region_name: Optional[str] = Query(None, description="Filter by region name"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+) -> List[HistoricalForecastItem]:
+    """
+    Retrieve historical forecasts and their performance metrics.
+
+    Args:
+        region_name: Optional filter by region name
+        limit: Maximum number of historical forecasts to return (default: 100, max: 1000)
+
+    Returns:
+        List of historical forecast entries with metadata and accuracy scores
+
+    Note:
+        This endpoint currently returns an empty list as historical tracking
+        is not yet implemented. Future versions will store forecasts in a database.
+    """
+    return []
+
