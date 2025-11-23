@@ -124,8 +124,36 @@ class BehavioralForecaster:
             if not weather_data.empty:
                 sources.append("openmeteo.com (Weather)")
 
+            # Fetch search trends data
+            search_data = self.search_fetcher.fetch_search_interest(
+                query="behavioral patterns", days_back=days_back
+            )
+            if not search_data.empty:
+                sources.append("search trends API")
+
+            # Fetch public health data
+            # Derive region code from coordinates if possible (placeholder)
+            health_data = self.health_fetcher.fetch_health_risk_index(
+                region_code=None, days_back=days_back
+            )
+            if not health_data.empty:
+                sources.append("public health API")
+
+            # Fetch mobility data
+            mobility_data = self.mobility_fetcher.fetch_mobility_index(
+                latitude=latitude, longitude=longitude, days_back=days_back
+            )
+            if not mobility_data.empty:
+                sources.append("mobility API")
+
             # Harmonize data
-            if market_data.empty and weather_data.empty:
+            if (
+                market_data.empty
+                and weather_data.empty
+                and search_data.empty
+                and health_data.empty
+                and mobility_data.empty
+            ):
                 logger.warning("No data available for forecast")
                 return {
                     "history": [],

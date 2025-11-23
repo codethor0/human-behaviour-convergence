@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 """Forecasting endpoints for behavioral prediction."""
+import os
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
