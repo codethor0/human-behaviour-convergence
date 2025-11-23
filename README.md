@@ -28,6 +28,7 @@ This project is a **public-data-driven behavioral forecasting application** that
    - Environmental factors (weather patterns, climate anomalies)
    - Search interest trends (aggregated public data)
    - Public health signals (aggregated statistics)
+   - Mobility and activity patterns (aggregated public data)
 
 2. **Feature Layer** — Transforms signals into unified behavioral features:
    - Time-series feature engineering (lags, moving averages, normalization)

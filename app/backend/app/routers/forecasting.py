@@ -10,6 +10,9 @@ from app.services.ingestion import (
     DataHarmonizer,
     EnvironmentalImpactFetcher,
     MarketSentimentFetcher,
+    MobilityFetcher,
+    PublicHealthFetcher,
+    SearchTrendsFetcher,
 )
 
 router = APIRouter(prefix="/api/forecasting", tags=["forecasting"])

@@ -139,7 +139,13 @@ class BehavioralForecaster:
                     },
                 }
 
-            harmonized = self.harmonizer.harmonize(market_data, weather_data)
+            harmonized = self.harmonizer.harmonize(
+                market_data=market_data,
+                weather_data=weather_data,
+                search_data=search_data,
+                health_data=health_data,
+                mobility_data=mobility_data,
+            )
 
             if harmonized.empty or "behavior_index" not in harmonized.columns:
                 logger.warning("Harmonized data is empty or missing behavior_index")
