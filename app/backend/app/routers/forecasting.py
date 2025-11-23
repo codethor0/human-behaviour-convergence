@@ -3,10 +3,9 @@
 import os
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from app.core.prediction import BehavioralForecaster
 from app.services.ingestion import (
     DataHarmonizer,
     EnvironmentalImpactFetcher,
