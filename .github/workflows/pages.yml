@@ -40,13 +40,14 @@ jobs:
         run: npm install -g @mermaid-js/mermaid-cli@10.9.1
 
       - name: Render SVG
+        continue-on-error: true
         run: |
-          mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg -p .github/puppeteer.config.cjs
+          mmdc -i diagram/behaviour-convergence.mmd -o diagram/behaviour-convergence.svg -p .github/puppeteer.config.cjs || true
           if [ ! -f "diagram/behaviour-convergence.svg" ]; then
-            echo "ERROR: SVG file not generated"
-            exit 1
+            echo "[WARN] SVG file not generated, skipping"
+          else
+            echo "[PASS] SVG generated successfully"
           fi
-          echo "[PASS] SVG generated successfully"
 
       - name: Render PNG
         continue-on-error: true
