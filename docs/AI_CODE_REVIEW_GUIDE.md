@@ -7,8 +7,8 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Universal Code Review Prompt](#universal-code-review-prompt)
-3. [Language-Specific Prompts](#language-specific-prompts)
+2. [Universal Code Review Template](#universal-code-review-template)
+3. [Language-Specific Review Templates](#language-specific-review-templates)
 4. [Integration with Development Workflow](#integration-with-development-workflow)
 5. [Specialized Review Types](#specialized-review-types)
 6. [Best Practices](#best-practices)
@@ -213,7 +213,7 @@ Review this pull request for a Python FastAPI backend:
 Before committing, run:
 ```bash
 git diff | pbcopy  # Copy diff to clipboard
-# Paste into ChatGPT/Claude with review prompt
+# Paste into code review tool with review template
 ```
 
 ### 3. GitHub Actions Automation
