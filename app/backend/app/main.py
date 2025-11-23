@@ -309,7 +309,7 @@ class _MainModule(ModuleType):
         # Prevent recursion by checking if we're already setting this attribute
         # Use object.__getattribute__ to bypass our own __setattr__ method
         try:
-            setting_flag = object.__getattribute__(self, '_setting_attr')
+            setting_flag = object.__getattribute__(self, "_setting_attr")
             if setting_flag:
                 # Already in the middle of setting, bypass hooks
                 return ModuleType.__setattr__(self, name, value)
@@ -319,7 +319,7 @@ class _MainModule(ModuleType):
 
         # Mark that we're setting an attribute to prevent recursion
         # Use object.__setattr__ to bypass our own __setattr__ method
-        object.__setattr__(self, '_setting_attr', True)
+        object.__setattr__(self, "_setting_attr", True)
         try:
             # Update the module's namespace first
             ModuleType.__setattr__(self, name, value)
@@ -331,7 +331,7 @@ class _MainModule(ModuleType):
         finally:
             # Always clear the flag using object.__delattr__ to bypass __setattr__
             try:
-                object.__delattr__(self, '_setting_attr')
+                object.__delattr__(self, "_setting_attr")
             except AttributeError:
                 pass
 
