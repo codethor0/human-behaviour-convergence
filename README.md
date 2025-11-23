@@ -113,7 +113,7 @@ This project is a **public-data-driven behavioral forecasting application** that
    # Navigate to http://localhost:3000/forecast to generate forecasts interactively
    ```
 
-3. **Contribute:**
+4. **Contribute:**
    See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ## Responsible Disclosure
