@@ -134,13 +134,15 @@ class EnvironmentalImpactFetcher:
             hourly_precipitation = hourly.Variables(1).ValuesAsNumpy()
             hourly_windspeed_10m = hourly.Variables(2).ValuesAsNumpy()
 
-            # Generate timestamps
+            # Generate timestamps (UTC-aware, then normalize to naive UTC)
             date_range = pd.date_range(
                 start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
                 end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
                 freq=pd.Timedelta(seconds=hourly.Interval()),
                 inclusive="left",
             )
+            # Normalize to timezone-naive UTC (remove timezone info for consistency)
+            date_range = date_range.tz_localize(None)
 
             # Create DataFrame
             df = pd.DataFrame(

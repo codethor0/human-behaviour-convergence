@@ -45,14 +45,20 @@ class _BackendProxyModule(ModuleType):
             # Then update backend module (triggers hooks like _on_cache_size_updated)
             # Check if backend module has a custom __setattr__ by looking at its class
             backend_class = type(_backend_module)
-            if backend_class is not ModuleType and hasattr(backend_class, "__setattr__"):
+            if backend_class is not ModuleType and hasattr(
+                backend_class, "__setattr__"
+            ):
                 # Backend has custom __setattr__ (likely _MainModule), use object methods to avoid recursion
                 # Store the value directly in the module's __dict__ to bypass __setattr__
                 _backend_module.__dict__[name] = value
                 # Manually trigger hooks if needed (for RESULTS_DIR and MAX_CACHE_SIZE)
-                if name == "RESULTS_DIR" and hasattr(_backend_module, "_on_results_dir_updated"):
+                if name == "RESULTS_DIR" and hasattr(
+                    _backend_module, "_on_results_dir_updated"
+                ):
                     _backend_module._on_results_dir_updated(value)
-                elif name == "MAX_CACHE_SIZE" and hasattr(_backend_module, "_on_cache_size_updated"):
+                elif name == "MAX_CACHE_SIZE" and hasattr(
+                    _backend_module, "_on_cache_size_updated"
+                ):
                     _backend_module._on_cache_size_updated(value)
             else:
                 # Backend has no custom __setattr__, safe to use regular setattr

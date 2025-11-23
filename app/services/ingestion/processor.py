@@ -95,35 +95,64 @@ class DataHarmonizer:
 
         if not market_data.empty:
             market_data = market_data.copy()
-            market_data["timestamp"] = pd.to_datetime(market_data["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            market_data["timestamp"] = pd.to_datetime(
+                market_data["timestamp"], utc=True
+            )
+            if market_data["timestamp"].dt.tz is not None:
+                market_data["timestamp"] = market_data["timestamp"].dt.tz_localize(None)
             market_data = market_data.set_index("timestamp").sort_index()
             dataframes.append(market_data)
             names.append("market")
 
         if not weather_data.empty:
             weather_data = weather_data.copy()
-            weather_data["timestamp"] = pd.to_datetime(weather_data["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            weather_data["timestamp"] = pd.to_datetime(
+                weather_data["timestamp"], utc=True
+            )
+            if weather_data["timestamp"].dt.tz is not None:
+                weather_data["timestamp"] = weather_data["timestamp"].dt.tz_localize(
+                    None
+                )
             weather_data = weather_data.set_index("timestamp").sort_index()
             dataframes.append(weather_data)
             names.append("weather")
 
         if not search_data.empty:
             search_data = search_data.copy()
-            search_data["timestamp"] = pd.to_datetime(search_data["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            search_data["timestamp"] = pd.to_datetime(
+                search_data["timestamp"], utc=True
+            )
+            if search_data["timestamp"].dt.tz is not None:
+                search_data["timestamp"] = search_data["timestamp"].dt.tz_localize(None)
             search_data = search_data.set_index("timestamp").sort_index()
             dataframes.append(search_data)
             names.append("search")
 
         if not health_data.empty:
             health_data = health_data.copy()
-            health_data["timestamp"] = pd.to_datetime(health_data["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            health_data["timestamp"] = pd.to_datetime(
+                health_data["timestamp"], utc=True
+            )
+            if health_data["timestamp"].dt.tz is not None:
+                health_data["timestamp"] = health_data["timestamp"].dt.tz_localize(None)
             health_data = health_data.set_index("timestamp").sort_index()
             dataframes.append(health_data)
             names.append("health")
 
         if not mobility_data.empty:
             mobility_data = mobility_data.copy()
-            mobility_data["timestamp"] = pd.to_datetime(mobility_data["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            mobility_data["timestamp"] = pd.to_datetime(
+                mobility_data["timestamp"], utc=True
+            )
+            if mobility_data["timestamp"].dt.tz is not None:
+                mobility_data["timestamp"] = mobility_data["timestamp"].dt.tz_localize(
+                    None
+                )
             mobility_data = mobility_data.set_index("timestamp").sort_index()
             dataframes.append(mobility_data)
             names.append("mobility")
@@ -179,10 +208,13 @@ class DataHarmonizer:
                 dtype=float,
             )
 
-        # Create daily index
+        # Create daily index (timezone-naive for consistency)
         date_range = pd.date_range(
-            start=start_date, end=end_date, freq="D", normalize=True
+            start=start_date, end=end_date, freq="D", normalize=True, tz=None
         )
+        # Ensure all dates are timezone-naive
+        if date_range.tz is not None:
+            date_range = date_range.tz_localize(None)
 
         # Reindex all DataFrames to common date range
         if not market_data.empty:

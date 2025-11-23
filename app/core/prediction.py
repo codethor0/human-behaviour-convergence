@@ -94,9 +94,22 @@ class BehavioralForecaster:
         if cache_key in self._cache:
             logger.info("Using cached forecast", cache_key=cache_key)
             history, forecast, metadata = self._cache[cache_key]
+            # Convert timestamps to ISO strings for API response
+            history_dict = history.copy()
+            if not history.empty and "timestamp" in history_dict.columns:
+                history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                )
+            forecast_dict = forecast.copy()
+            if not forecast.empty and "timestamp" in forecast_dict.columns:
+                forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                )
             return {
-                "history": history.to_dict("records") if not history.empty else [],
-                "forecast": forecast.to_dict("records") if not forecast.empty else [],
+                "history": history_dict.to_dict("records") if not history.empty else [],
+                "forecast": (
+                    forecast_dict.to_dict("records") if not forecast.empty else []
+                ),
                 "sources": metadata.get("sources", []),
                 "metadata": metadata,
             }
@@ -192,7 +205,10 @@ class BehavioralForecaster:
 
             # Prepare history data
             history = harmonized[["timestamp", "behavior_index"]].copy()
-            history["timestamp"] = pd.to_datetime(history["timestamp"])
+            # Normalize timestamps to timezone-naive UTC
+            history["timestamp"] = pd.to_datetime(history["timestamp"], utc=True)
+            if history["timestamp"].dt.tz is not None:
+                history["timestamp"] = history["timestamp"].dt.tz_localize(None)
             history = history.sort_values("timestamp").reset_index(drop=True)
 
             # Ensure we have enough data points for forecasting (minimum 7 days)
@@ -201,8 +217,14 @@ class BehavioralForecaster:
                     "Insufficient historical data for forecasting",
                     data_points=len(history),
                 )
+                # Convert timestamps to ISO strings for API response
+                history_dict = history.copy()
+                if "timestamp" in history_dict.columns:
+                    history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
                 return {
-                    "history": history.to_dict("records"),
+                    "history": history_dict.to_dict("records"),
                     "forecast": [],
                     "sources": sources,
                     "metadata": {
@@ -243,6 +265,7 @@ class BehavioralForecaster:
                             start=behavior_ts.index[-1] + pd.Timedelta(days=1),
                             periods=forecast_horizon,
                             freq="D",
+                            tz=None,
                         ),
                     )
                     std_error = behavior_ts.std() if len(behavior_ts) > 1 else 0.1
@@ -284,6 +307,7 @@ class BehavioralForecaster:
                         start=last_date + timedelta(days=1),
                         periods=forecast_horizon,
                         freq="D",
+                        tz=None,
                     )
 
                 # Create forecast DataFrame with confidence intervals
@@ -335,9 +359,19 @@ class BehavioralForecaster:
                     ),
                 )
 
+                # Convert timestamps to ISO strings for API response
+                history_dict = history.copy()
+                history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                )
+                forecast_dict = forecast_df.copy()
+                forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                )
+
                 return {
-                    "history": history.to_dict("records"),
-                    "forecast": forecast_df.to_dict("records"),
+                    "history": history_dict.to_dict("records"),
+                    "forecast": forecast_dict.to_dict("records"),
                     "sources": sources,
                     "metadata": metadata,
                 }
@@ -346,8 +380,14 @@ class BehavioralForecaster:
                 logger.error(
                     "Error fitting forecasting model", error=str(e), exc_info=True
                 )
+                # Convert timestamps to ISO strings for API response
+                history_dict = history.copy()
+                if "timestamp" in history_dict.columns:
+                    history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
                 return {
-                    "history": history.to_dict("records"),
+                    "history": history_dict.to_dict("records"),
                     "forecast": [],
                     "sources": sources,
                     "metadata": {
