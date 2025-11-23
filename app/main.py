@@ -27,10 +27,42 @@ class _BackendProxyModule(ModuleType):
         return getattr(_backend_module, name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        # Update shim's namespace first so backend hooks can read the new value
-        ModuleType.__setattr__(self, name, value)
-        # Then update backend module (triggers hooks like _on_cache_size_updated)
-        setattr(_backend_module, name, value)
+        # Prevent recursion by checking if we're already setting this attribute
+        try:
+            setting_flag = object.__getattribute__(self, "_setting_attr")
+            if setting_flag:
+                # Already in the middle of setting, bypass hooks
+                return ModuleType.__setattr__(self, name, value)
+        except AttributeError:
+            # Flag doesn't exist yet, that's fine
+            pass
+
+        # Mark that we're setting an attribute to prevent recursion
+        object.__setattr__(self, "_setting_attr", True)
+        try:
+            # Update shim's namespace first so backend hooks can read the new value
+            ModuleType.__setattr__(self, name, value)
+            # Then update backend module (triggers hooks like _on_cache_size_updated)
+            # Check if backend module has a custom __setattr__ by looking at its class
+            backend_class = type(_backend_module)
+            if backend_class is not ModuleType and hasattr(backend_class, "__setattr__"):
+                # Backend has custom __setattr__ (likely _MainModule), use object methods to avoid recursion
+                # Store the value directly in the module's __dict__ to bypass __setattr__
+                _backend_module.__dict__[name] = value
+                # Manually trigger hooks if needed (for RESULTS_DIR and MAX_CACHE_SIZE)
+                if name == "RESULTS_DIR" and hasattr(_backend_module, "_on_results_dir_updated"):
+                    _backend_module._on_results_dir_updated(value)
+                elif name == "MAX_CACHE_SIZE" and hasattr(_backend_module, "_on_cache_size_updated"):
+                    _backend_module._on_cache_size_updated(value)
+            else:
+                # Backend has no custom __setattr__, safe to use regular setattr
+                setattr(_backend_module, name, value)
+        finally:
+            # Always clear the flag using object.__delattr__ to bypass __setattr__
+            try:
+                object.__delattr__(self, "_setting_attr")
+            except AttributeError:
+                pass
 
 
 _module = sys.modules[__name__]
