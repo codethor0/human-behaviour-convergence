@@ -67,6 +67,42 @@ def get_data_sources() -> List[DataSourceInfo]:
                 "refresh_rate": "30 minutes",
             },
         ),
+        DataSourceInfo(
+            name="search_trends",
+            description="Digital attention signals from search interest trends (requires API configuration)",
+            status="active",
+            available=False,
+            parameters={
+                "type": "time_series",
+                "frequency": "daily",
+                "requires": "query parameter, API credentials",
+                "refresh_rate": "60 minutes",
+            },
+        ),
+        DataSourceInfo(
+            name="public_health",
+            description="Public health indicators from aggregated health statistics (requires API configuration)",
+            status="active",
+            available=False,
+            parameters={
+                "type": "time_series",
+                "frequency": "daily",
+                "requires": "region_code (optional), API credentials",
+                "refresh_rate": "24 hours",
+            },
+        ),
+        DataSourceInfo(
+            name="mobility_patterns",
+            description="Mobility and activity pattern data from public APIs (requires API configuration)",
+            status="active",
+            available=False,
+            parameters={
+                "type": "time_series",
+                "frequency": "daily",
+                "requires": "region_code or coordinates, API credentials",
+                "refresh_rate": "60 minutes",
+            },
+        ),
     ]
 
 
@@ -124,6 +160,9 @@ def get_forecasting_status() -> Dict[str, Any]:
         "data_sources": {
             "economic_indicators": "active",
             "weather_patterns": "active",
+            "search_trends": "configured" if os.getenv("SEARCH_TRENDS_API_ENDPOINT") else "not_configured",
+            "public_health": "configured" if os.getenv("PUBLIC_HEALTH_API_ENDPOINT") else "not_configured",
+            "mobility_patterns": "configured" if os.getenv("MOBILITY_API_ENDPOINT") else "not_configured",
         },
         "models": {
             "exponential_smoothing": "available",

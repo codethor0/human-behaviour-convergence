@@ -18,6 +18,9 @@ from app.services.ingestion import (
     DataHarmonizer,
     EnvironmentalImpactFetcher,
     MarketSentimentFetcher,
+    MobilityFetcher,
+    PublicHealthFetcher,
+    SearchTrendsFetcher,
 )
 
 logger = structlog.get_logger("core.prediction")
@@ -35,6 +38,9 @@ class BehavioralForecaster:
         self,
         market_fetcher: Optional[MarketSentimentFetcher] = None,
         weather_fetcher: Optional[EnvironmentalImpactFetcher] = None,
+        search_fetcher: Optional[SearchTrendsFetcher] = None,
+        health_fetcher: Optional[PublicHealthFetcher] = None,
+        mobility_fetcher: Optional[MobilityFetcher] = None,
         harmonizer: Optional[DataHarmonizer] = None,
     ):
         """
@@ -43,10 +49,16 @@ class BehavioralForecaster:
         Args:
             market_fetcher: Market sentiment fetcher instance (creates new if None)
             weather_fetcher: Environmental impact fetcher instance (creates new if None)
+            search_fetcher: Search trends fetcher instance (creates new if None)
+            health_fetcher: Public health fetcher instance (creates new if None)
+            mobility_fetcher: Mobility fetcher instance (creates new if None)
             harmonizer: Data harmonizer instance (creates new if None)
         """
         self.market_fetcher = market_fetcher or MarketSentimentFetcher()
         self.weather_fetcher = weather_fetcher or EnvironmentalImpactFetcher()
+        self.search_fetcher = search_fetcher or SearchTrendsFetcher()
+        self.health_fetcher = health_fetcher or PublicHealthFetcher()
+        self.mobility_fetcher = mobility_fetcher or MobilityFetcher()
         self.harmonizer = harmonizer or DataHarmonizer()
         self._cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, Dict]] = {}
 

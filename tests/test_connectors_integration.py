@@ -8,7 +8,10 @@ import pytest
 
 from app.core.prediction import BehavioralForecaster
 from app.services.ingestion.finance import MarketSentimentFetcher
+from app.services.ingestion.mobility import MobilityFetcher
 from app.services.ingestion.processor import DataHarmonizer
+from app.services.ingestion.public_health import PublicHealthFetcher
+from app.services.ingestion.search_trends import SearchTrendsFetcher
 from app.services.ingestion.weather import EnvironmentalImpactFetcher
 
 
@@ -97,21 +100,62 @@ class TestDataHarmonizer:
         # Create mock input data
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
         market_data = pd.DataFrame(
-            {"stress_index": [0.5, 0.6, 0.4, 0.7, 0.5] * 2},
-            index=dates[:5].repeat(2)[:10],
+            {
+                "timestamp": dates,
+                "stress_index": [0.5, 0.6, 0.4, 0.7, 0.5, 0.5, 0.6, 0.4, 0.7, 0.5],
+            }
         )
 
         weather_data = pd.DataFrame(
-            {"discomfort_index": [0.3, 0.4, 0.2, 0.5, 0.3] * 2},
-            index=dates[:5].repeat(2)[:10],
+            {
+                "timestamp": dates,
+                "discomfort_score": [0.3, 0.4, 0.2, 0.5, 0.3, 0.3, 0.4, 0.2, 0.5, 0.3],
+            }
         )
 
-        # Test if harmonize method exists
-        if hasattr(harmonizer, "harmonize"):
-            result = harmonizer.harmonize(market_data, weather_data)
-            assert result is not None
-            assert isinstance(result, pd.DataFrame)
-            assert "Behavior_Index" in result.columns or len(result.columns) > 0
+        search_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "search_interest_score": [0.4, 0.5, 0.3, 0.6, 0.4, 0.4, 0.5, 0.3, 0.6, 0.4],
+            }
+        )
+
+        health_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "health_risk_index": [0.2, 0.3, 0.1, 0.4, 0.2, 0.2, 0.3, 0.1, 0.4, 0.2],
+            }
+        )
+
+        mobility_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "mobility_index": [0.6, 0.7, 0.5, 0.8, 0.6, 0.6, 0.7, 0.5, 0.8, 0.6],
+            }
+        )
+
+        # Test harmonize with all connectors
+        result = harmonizer.harmonize(
+            market_data=market_data,
+            weather_data=weather_data,
+            search_data=search_data,
+            health_data=health_data,
+            mobility_data=mobility_data,
+        )
+        
+        assert result is not None
+        assert isinstance(result, pd.DataFrame)
+        assert "timestamp" in result.columns
+        assert "behavior_index" in result.columns
+        assert "stress_index" in result.columns
+        assert "discomfort_score" in result.columns
+        assert "search_interest_score" in result.columns
+        assert "health_risk_index" in result.columns
+        assert "mobility_index" in result.columns
+        
+        # Verify behavior_index is in valid range
+        assert result["behavior_index"].min() >= 0.0
+        assert result["behavior_index"].max() <= 1.0
 
 
 class TestBehavioralForecaster:
@@ -125,27 +169,70 @@ class TestBehavioralForecaster:
 
     @patch("app.services.ingestion.finance.MarketSentimentFetcher")
     @patch("app.services.ingestion.weather.EnvironmentalImpactFetcher")
+    @patch("app.services.ingestion.search_trends.SearchTrendsFetcher")
+    @patch("app.services.ingestion.public_health.PublicHealthFetcher")
+    @patch("app.services.ingestion.mobility.MobilityFetcher")
     @patch("app.services.ingestion.processor.DataHarmonizer")
     def test_forecast_pipeline_mocked(
-        self, mock_harmonizer, mock_weather, mock_finance
+        self,
+        mock_harmonizer,
+        mock_mobility,
+        mock_health,
+        mock_search,
+        mock_weather,
+        mock_finance,
     ):
-        """Test end-to-end forecast with mocked connectors."""
+        """Test end-to-end forecast with all connectors mocked."""
         # Mock harmonized data
         dates = pd.date_range("2024-01-01", periods=30, freq="D")
         mock_harmonized = pd.DataFrame(
-            {"Behavior_Index": [0.5 + 0.1 * (i % 7) / 7 for i in range(30)]},
-            index=dates,
+            {
+                "timestamp": dates,
+                "behavior_index": [0.5 + 0.1 * (i % 7) / 7 for i in range(30)],
+            }
         )
 
         mock_harmonizer_instance = Mock()
         mock_harmonizer_instance.harmonize.return_value = mock_harmonized
         mock_harmonizer.return_value = mock_harmonizer_instance
 
+        # Mock all fetchers
+        mock_finance_instance = Mock()
+        mock_finance_instance.fetch_stress_index.return_value = pd.DataFrame(
+            {"timestamp": dates, "stress_index": [0.5] * 30}
+        )
+        mock_finance.return_value = mock_finance_instance
+
+        mock_weather_instance = Mock()
+        mock_weather_instance.fetch_regional_comfort.return_value = pd.DataFrame(
+            {"timestamp": dates, "discomfort_score": [0.3] * 30}
+        )
+        mock_weather.return_value = mock_weather_instance
+
+        mock_search_instance = Mock()
+        mock_search_instance.fetch_search_interest.return_value = pd.DataFrame()
+        mock_search.return_value = mock_search_instance
+
+        mock_health_instance = Mock()
+        mock_health_instance.fetch_health_risk_index.return_value = pd.DataFrame()
+        mock_health.return_value = mock_health_instance
+
+        mock_mobility_instance = Mock()
+        mock_mobility_instance.fetch_mobility_index.return_value = pd.DataFrame()
+        mock_mobility.return_value = mock_mobility_instance
+
         forecaster = BehavioralForecaster()
 
-        # Test if forecast method exists
-        if hasattr(forecaster, "forecast"):
-            result = forecaster.forecast(
-                latitude=40.7128, longitude=-74.0060, days_back=30, forecast_horizon=7
-            )
-            assert result is not None
+        # Test forecast method
+        result = forecaster.forecast(
+            latitude=40.7128,
+            longitude=-74.0060,
+            region_name="Test Region",
+            days_back=30,
+            forecast_horizon=7,
+        )
+        assert result is not None
+        assert "history" in result
+        assert "forecast" in result
+        assert "sources" in result
+        assert "metadata" in result
