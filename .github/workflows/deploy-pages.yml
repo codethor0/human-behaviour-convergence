@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [ main, master, feat/public-layer ]
+    branches: [ main, master ]
     paths:
       - 'docs/**'
       - 'diagram/**'

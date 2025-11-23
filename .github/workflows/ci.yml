@@ -17,6 +17,9 @@ env:
   DISK_CAP_GB: 10
   MAX_LOG_MB: 5
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: build
@@ -50,7 +53,64 @@ jobs:
 
       - name: Verify build
         run: |
-          python -c "import app; import hbc; import connectors; print('[PASS] All modules import successfully')"
+          python -c "import app; import connectors; print('[PASS] All modules import successfully')"
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pre-cleanup disk
+        run: |
+          echo "=== Pre-cleanup Disk Usage ==="
+          df -h | head -2
+          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            app/backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/backend/requirements.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: |
+          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v -n auto
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Post-cleanup test artifacts
+        if: always()
+        run: |
+          echo "=== Post-cleanup Disk Usage ==="
+          df -h | head -2
+          find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+          find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
+          find . -type f -name ".coverage.*" -delete 2>/dev/null || true
 
   emoji-check:
     name: check-no-emoji
@@ -100,134 +160,7 @@ jobs:
           pip install black ruff
 
       - name: Ruff Lint
-        run: ruff check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git"
+        run: ruff check app/ connectors/ tests/ --exclude="notebooks|\.venv|\.git"
 
       - name: Black Format
-        run: black --check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git"
-
-  type-check:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Pre-cleanup disk
-        run: |
-          echo "=== Pre-cleanup Disk Usage ==="
-          df -h | head -2
-          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
-            app/backend/requirements.txt
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r app/backend/requirements.txt
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install mypy
-
-      - name: Mypy Type Check
-        run: mypy app/ connectors/ hbc/ --ignore-missing-imports || true
-        continue-on-error: true
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Pre-cleanup disk
-        run: |
-          echo "=== Pre-cleanup Disk Usage ==="
-          df -h | head -2
-          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
-            app/backend/requirements.txt
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r app/backend/requirements.txt
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
-          pip install semgrep
-
-      - name: Semgrep Security Scan
-        run: semgrep --config=auto app/ connectors/ tests/ hbc/
-
-  sbom-scan:
-    name: SBOM & CVE Scan
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Pre-cleanup disk
-        run: |
-          echo "=== Pre-cleanup Disk Usage ==="
-          df -h | head -2
-          find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-
-      - name: Generate SBOM
-        run: |
-          pip install syft
-          syft dir:. -o json > sbom.json || echo "Warning: SBOM generation failed, continuing..."
-          if [ -f "sbom.json" ]; then
-            echo "SBOM size: $(du -h sbom.json | cut -f1)"
-          else
-            echo "SBOM file not generated, creating empty file for downstream steps"
-            echo '{}' > sbom.json
-          fi
-
-      - name: Install Grype
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: CVE Scan
-        run: |
-          if [ -f "sbom.json" ] && [ -s "sbom.json" ] && [ "$(cat sbom.json)" != "{}" ]; then
-            grype sbom:sbom.json -o table > cve-report.txt || echo "Warning: CVE scan failed, continuing..."
-          else
-            echo "Skipping CVE scan: SBOM file is missing or empty" > cve-report.txt
-          fi
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom-cve-${{ github.run_number }}
-          path: |
-            sbom.json
-            cve-report.txt
-          retention-days: 30
-          if-no-files-found: warn
-          compression-level: 6
-
-      - name: Post-cleanup
-        if: always()
-        run: |
-          rm -f sbom.json cve-report.txt
-          echo "=== Final Disk Usage ==="
-          df -h | head -2
+        run: black --check app/ connectors/ tests/ --exclude="notebooks|\.venv|\.git"

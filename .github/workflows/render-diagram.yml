@@ -7,7 +7,7 @@ on:
       - '.github/workflows/render-diagram.yml'
       - '.github/puppeteer.config.cjs'
   push:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - 'diagram/behaviour-convergence.mmd'
       - '.github/workflows/render-diagram.yml'

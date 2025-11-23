@@ -5,10 +5,10 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  schedule:
-    # Run weekly on Monday at 2:00 AM UTC
-    - cron: '0 2 * * 1'
   workflow_dispatch: {}
+  # Schedule disabled to reduce compute costs - run manually when needed
+  # schedule:
+  #   - cron: '0 2 * * 1'
 
 permissions:
   contents: read
