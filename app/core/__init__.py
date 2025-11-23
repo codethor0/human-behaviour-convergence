@@ -4,4 +4,3 @@
 from .prediction import BehavioralForecaster
 
 __all__ = ["BehavioralForecaster"]
-

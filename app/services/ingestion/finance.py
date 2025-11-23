@@ -47,13 +47,17 @@ class MarketSentimentFetcher:
         if use_cache and self._cache is not None and self._cache_timestamp is not None:
             age_minutes = (datetime.now() - self._cache_timestamp).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached market sentiment data", age_minutes=age_minutes)
+                logger.info(
+                    "Using cached market sentiment data", age_minutes=age_minutes
+                )
                 return self._cache.copy()
 
         try:
             # Calculate date range
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=days_back + 5)  # Extra days for weekends
+            start_date = end_date - timedelta(
+                days=days_back + 5
+            )  # Extra days for weekends
 
             logger.info(
                 "Fetching market sentiment data",
@@ -70,7 +74,11 @@ class MarketSentimentFetcher:
             spy_data = spy_ticker.history(start=start_date, end=end_date, interval="1d")
 
             if vix_data.empty or spy_data.empty:
-                logger.warning("Empty data returned from yfinance", vix_empty=vix_data.empty, spy_empty=spy_data.empty)
+                logger.warning(
+                    "Empty data returned from yfinance",
+                    vix_empty=vix_data.empty,
+                    spy_empty=spy_data.empty,
+                )
                 # Return empty DataFrame with correct structure
                 return pd.DataFrame(
                     columns=["timestamp", "vix", "spy", "stress_index"],
@@ -137,16 +145,20 @@ class MarketSentimentFetcher:
             logger.info(
                 "Market sentiment data fetched successfully",
                 rows=len(result),
-                stress_index_range=(result["stress_index"].min(), result["stress_index"].max()),
+                stress_index_range=(
+                    result["stress_index"].min(),
+                    result["stress_index"].max(),
+                ),
             )
 
             return result
 
         except Exception as e:
-            logger.error("Error fetching market sentiment data", error=str(e), exc_info=True)
+            logger.error(
+                "Error fetching market sentiment data", error=str(e), exc_info=True
+            )
             # Return empty DataFrame with correct structure on error
             return pd.DataFrame(
                 columns=["timestamp", "vix", "spy", "stress_index"],
                 dtype=float,
             )
-

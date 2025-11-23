@@ -490,11 +490,19 @@ class StatusResponse(BaseModel):
 
 
 class ForecastRequest(BaseModel):
-    latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate (-90 to 90)")
-    longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate (-180 to 180)")
+    latitude: float = Field(
+        ..., ge=-90, le=90, description="Latitude coordinate (-90 to 90)"
+    )
+    longitude: float = Field(
+        ..., ge=-180, le=180, description="Longitude coordinate (-180 to 180)"
+    )
     region_name: str = Field(..., description="Human-readable region name")
-    days_back: int = Field(default=30, ge=7, le=365, description="Number of historical days to use")
-    forecast_horizon: int = Field(default=7, ge=1, le=30, description="Number of days to forecast ahead")
+    days_back: int = Field(
+        default=30, ge=7, le=365, description="Number of historical days to use"
+    )
+    forecast_horizon: int = Field(
+        default=7, ge=1, le=30, description="Number of days to forecast ahead"
+    )
 
 
 class ForecastHistoryItem(BaseModel):

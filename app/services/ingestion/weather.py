@@ -33,12 +33,17 @@ class EnvironmentalImpactFetcher:
 
         # Setup requests session with caching
         self.session = requests_cache.CachedSession(
-            ".cache/weather_cache", expire_after=timedelta(minutes=cache_duration_minutes)
+            ".cache/weather_cache",
+            expire_after=timedelta(minutes=cache_duration_minutes),
         )
         self.openmeteo = openmeteo_requests.Client(session=self.session)
 
     def fetch_regional_comfort(
-        self, latitude: float, longitude: float, days_back: int = 30, use_cache: bool = True
+        self,
+        latitude: float,
+        longitude: float,
+        days_back: int = 30,
+        use_cache: bool = True,
     ) -> pd.DataFrame:
         """
         Fetch weather data and calculate regional comfort/discomfort score.
@@ -55,17 +60,30 @@ class EnvironmentalImpactFetcher:
         """
         # Validate coordinates
         if not (-90 <= latitude <= 90):
-            raise ValueError(f"Invalid latitude: {latitude} (must be between -90 and 90)")
+            raise ValueError(
+                f"Invalid latitude: {latitude} (must be between -90 and 90)"
+            )
         if not (-180 <= longitude <= 180):
-            raise ValueError(f"Invalid longitude: {longitude} (must be between -180 and 180)")
+            raise ValueError(
+                f"Invalid longitude: {longitude} (must be between -180 and 180)"
+            )
 
         cache_key = f"{latitude:.4f},{longitude:.4f},{days_back}"
 
         # Check cache validity
-        if use_cache and self._cache is not None and self._cache_key == cache_key and self._cache_timestamp is not None:
+        if (
+            use_cache
+            and self._cache is not None
+            and self._cache_key == cache_key
+            and self._cache_timestamp is not None
+        ):
             age_minutes = (datetime.now() - self._cache_timestamp).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached weather data", age_minutes=age_minutes, cache_key=cache_key)
+                logger.info(
+                    "Using cached weather data",
+                    age_minutes=age_minutes,
+                    cache_key=cache_key,
+                )
                 return self._cache.copy()
 
         try:
@@ -98,7 +116,13 @@ class EnvironmentalImpactFetcher:
             if not responses or len(responses) == 0:
                 logger.warning("Empty response from Open-Meteo API")
                 return pd.DataFrame(
-                    columns=["timestamp", "temperature", "precipitation", "windspeed", "discomfort_score"],
+                    columns=[
+                        "timestamp",
+                        "temperature",
+                        "precipitation",
+                        "windspeed",
+                        "discomfort_score",
+                    ],
                     dtype=float,
                 )
 
@@ -134,7 +158,13 @@ class EnvironmentalImpactFetcher:
             if df.empty:
                 logger.warning("No valid weather data returned from Open-Meteo API")
                 return pd.DataFrame(
-                    columns=["timestamp", "temperature", "precipitation", "windspeed", "discomfort_score"],
+                    columns=[
+                        "timestamp",
+                        "temperature",
+                        "precipitation",
+                        "windspeed",
+                        "discomfort_score",
+                    ],
                     dtype=float,
                 )
 
@@ -153,7 +183,9 @@ class EnvironmentalImpactFetcher:
 
             # Combined discomfort score: weighted average
             # Temperature deviation weighted most, then precipitation, then wind
-            discomfort_score = (temp_score * 0.5) + (precip_score * 0.3) + (wind_score * 0.2)
+            discomfort_score = (
+                (temp_score * 0.5) + (precip_score * 0.3) + (wind_score * 0.2)
+            )
 
             # Add discomfort_score column
             df["discomfort_score"] = discomfort_score.clip(0.0, 1.0)
@@ -190,7 +222,10 @@ class EnvironmentalImpactFetcher:
             logger.info(
                 "Weather data fetched successfully",
                 rows=len(daily_df),
-                discomfort_score_range=(daily_df["discomfort_score"].min(), daily_df["discomfort_score"].max()),
+                discomfort_score_range=(
+                    daily_df["discomfort_score"].min(),
+                    daily_df["discomfort_score"].max(),
+                ),
             )
 
             return daily_df
@@ -205,7 +240,12 @@ class EnvironmentalImpactFetcher:
             )
             # Return empty DataFrame with correct structure on error
             return pd.DataFrame(
-                columns=["timestamp", "temperature", "precipitation", "windspeed", "discomfort_score"],
+                columns=[
+                    "timestamp",
+                    "temperature",
+                    "precipitation",
+                    "windspeed",
+                    "discomfort_score",
+                ],
                 dtype=float,
             )
-

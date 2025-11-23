@@ -6,4 +6,3 @@ from .processor import DataHarmonizer
 from .weather import EnvironmentalImpactFetcher
 
 __all__ = ["MarketSentimentFetcher", "EnvironmentalImpactFetcher", "DataHarmonizer"]
-

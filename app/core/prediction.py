@@ -8,12 +8,17 @@ import structlog
 
 try:
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
     HAS_STATSMODELS = True
 except ImportError:
     HAS_STATSMODELS = False
     ExponentialSmoothing = None
 
-from app.services.ingestion import DataHarmonizer, EnvironmentalImpactFetcher, MarketSentimentFetcher
+from app.services.ingestion import (
+    DataHarmonizer,
+    EnvironmentalImpactFetcher,
+    MarketSentimentFetcher,
+)
 
 logger = structlog.get_logger("core.prediction")
 
@@ -145,7 +150,10 @@ class BehavioralForecaster:
 
             # Ensure we have enough data points for forecasting (minimum 7 days)
             if len(history) < 7:
-                logger.warning("Insufficient historical data for forecasting", data_points=len(history))
+                logger.warning(
+                    "Insufficient historical data for forecasting",
+                    data_points=len(history),
+                )
                 return {
                     "history": history.to_dict("records"),
                     "forecast": [],
@@ -165,17 +173,30 @@ class BehavioralForecaster:
             # Fit Exponential Smoothing (Holt-Winters) model
             try:
                 if not HAS_STATSMODELS:
-                    logger.warning("statsmodels not available, using simple moving average forecast")
+                    logger.warning(
+                        "statsmodels not available, using simple moving average forecast"
+                    )
                     # Fallback to simple moving average if statsmodels not available
                     window_size = min(7, len(behavior_ts) // 2)
                     if window_size < 2:
                         window_size = 2
                     ma = behavior_ts.rolling(window=window_size, center=False).mean()
                     last_value = ma.iloc[-1] if not ma.empty else behavior_ts.iloc[-1]
-                    trend = (behavior_ts.iloc[-1] - behavior_ts.iloc[0]) / len(behavior_ts) if len(behavior_ts) > 1 else 0
+                    trend = (
+                        (behavior_ts.iloc[-1] - behavior_ts.iloc[0]) / len(behavior_ts)
+                        if len(behavior_ts) > 1
+                        else 0
+                    )
                     forecast_result = pd.Series(
-                        [last_value + trend * i for i in range(1, forecast_horizon + 1)],
-                        index=pd.date_range(start=behavior_ts.index[-1] + pd.Timedelta(days=1), periods=forecast_horizon, freq="D")
+                        [
+                            last_value + trend * i
+                            for i in range(1, forecast_horizon + 1)
+                        ],
+                        index=pd.date_range(
+                            start=behavior_ts.index[-1] + pd.Timedelta(days=1),
+                            periods=forecast_horizon,
+                            freq="D",
+                        ),
                     )
                     std_error = behavior_ts.std() if len(behavior_ts) > 1 else 0.1
                 else:
@@ -186,11 +207,15 @@ class BehavioralForecaster:
                             behavior_ts,
                             trend="add",
                             seasonal="add",
-                            seasonal_periods=min(7, len(behavior_ts) // 4),  # Weekly seasonality
+                            seasonal_periods=min(
+                                7, len(behavior_ts) // 4
+                            ),  # Weekly seasonality
                         ).fit(optimized=True)
                     else:
                         # Trend-only for shorter series
-                        model = ExponentialSmoothing(behavior_ts, trend="add").fit(optimized=True)
+                        model = ExponentialSmoothing(behavior_ts, trend="add").fit(
+                            optimized=True
+                        )
 
                     # Generate forecast
                     forecast_result = model.forecast(steps=forecast_horizon)
@@ -201,12 +226,17 @@ class BehavioralForecaster:
                     std_error = residuals.std()
 
                 # Generate forecast dates
-                if isinstance(forecast_result, pd.Series) and not forecast_result.index.empty:
+                if (
+                    isinstance(forecast_result, pd.Series)
+                    and not forecast_result.index.empty
+                ):
                     forecast_dates = forecast_result.index
                 else:
                     last_date = behavior_ts.index.max()
                     forecast_dates = pd.date_range(
-                        start=last_date + timedelta(days=1), periods=forecast_horizon, freq="D"
+                        start=last_date + timedelta(days=1),
+                        periods=forecast_horizon,
+                        freq="D",
                     )
 
                 # Create forecast DataFrame with confidence intervals
@@ -228,7 +258,11 @@ class BehavioralForecaster:
                 forecast_df = forecast_df.reset_index(drop=True)
 
                 # Prepare metadata
-                model_type = "Moving Average + Trend" if not HAS_STATSMODELS else "ExponentialSmoothing (Holt-Winters)"
+                model_type = (
+                    "Moving Average + Trend"
+                    if not HAS_STATSMODELS
+                    else "ExponentialSmoothing (Holt-Winters)"
+                )
                 metadata = {
                     "region_name": region_name,
                     "latitude": latitude,
@@ -262,7 +296,9 @@ class BehavioralForecaster:
                 }
 
             except Exception as e:
-                logger.error("Error fitting forecasting model", error=str(e), exc_info=True)
+                logger.error(
+                    "Error fitting forecasting model", error=str(e), exc_info=True
+                )
                 return {
                     "history": history.to_dict("records"),
                     "forecast": [],
@@ -288,4 +324,3 @@ class BehavioralForecaster:
                     "error": str(e),
                 },
             }
-

@@ -155,4 +155,3 @@ class TestForecastingEndpoints:
             },
         )
         assert response.status_code == 422
-

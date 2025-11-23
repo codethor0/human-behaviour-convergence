@@ -6,7 +6,11 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.core.prediction import BehavioralForecaster
-from app.services.ingestion import DataHarmonizer, EnvironmentalImpactFetcher, MarketSentimentFetcher
+from app.services.ingestion import (
+    DataHarmonizer,
+    EnvironmentalImpactFetcher,
+    MarketSentimentFetcher,
+)
 
 router = APIRouter(prefix="/api/forecasting", tags=["forecasting"])
 
@@ -146,7 +150,9 @@ class HistoricalForecastItem(BaseModel):
 @router.get("/history", response_model=List[HistoricalForecastItem])
 def get_forecast_history(
     region_name: Optional[str] = Query(None, description="Filter by region name"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    limit: int = Query(
+        100, ge=1, le=1000, description="Maximum number of records to return"
+    ),
 ) -> List[HistoricalForecastItem]:
     """
     Retrieve historical forecasts and their performance metrics.
@@ -163,4 +169,3 @@ def get_forecast_history(
         is not yet implemented. Future versions will store forecasts in a database.
     """
     return []
-

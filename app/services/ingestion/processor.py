@@ -44,7 +44,12 @@ class DataHarmonizer:
         if market_data.empty and weather_data.empty:
             logger.warning("Both market and weather data are empty")
             return pd.DataFrame(
-                columns=["timestamp", "stress_index", "discomfort_score", "behavior_index"],
+                columns=[
+                    "timestamp",
+                    "stress_index",
+                    "discomfort_score",
+                    "behavior_index",
+                ],
                 dtype=float,
             )
 
@@ -72,7 +77,11 @@ class DataHarmonizer:
 
         if not market_data.empty:
             start_date = market_data.index.min()
-            end_date = max(end_date, market_data.index.max()) if end_date else market_data.index.max()
+            end_date = (
+                max(end_date, market_data.index.max())
+                if end_date
+                else market_data.index.max()
+            )
 
         if not weather_data.empty:
             weather_start = weather_data.index.min()
@@ -89,12 +98,19 @@ class DataHarmonizer:
         if start_date is None or end_date is None:
             logger.warning("Cannot determine date range from empty data")
             return pd.DataFrame(
-                columns=["timestamp", "stress_index", "discomfort_score", "behavior_index"],
+                columns=[
+                    "timestamp",
+                    "stress_index",
+                    "discomfort_score",
+                    "behavior_index",
+                ],
                 dtype=float,
             )
 
         # Create daily index
-        date_range = pd.date_range(start=start_date, end=end_date, freq="D", normalize=True)
+        date_range = pd.date_range(
+            start=start_date, end=end_date, freq="D", normalize=True
+        )
 
         # Reindex both DataFrames to common date range
         if not market_data.empty:
@@ -108,8 +124,12 @@ class DataHarmonizer:
             weather_aligned = pd.DataFrame(index=date_range)
 
         # Extract key columns
-        market_stress = market_aligned.get("stress_index", pd.Series(index=date_range, dtype=float))
-        weather_discomfort = weather_aligned.get("discomfort_score", pd.Series(index=date_range, dtype=float))
+        market_stress = market_aligned.get(
+            "stress_index", pd.Series(index=date_range, dtype=float)
+        )
+        weather_discomfort = weather_aligned.get(
+            "discomfort_score", pd.Series(index=date_range, dtype=float)
+        )
 
         # Create merged DataFrame
         merged = pd.DataFrame(
@@ -122,7 +142,9 @@ class DataHarmonizer:
 
         # Forward-fill missing values (for weekends in market data)
         merged["stress_index"] = merged["stress_index"].ffill(limit=forward_fill_days)
-        merged["discomfort_score"] = merged["discomfort_score"].interpolate(method="linear", limit_direction="both")
+        merged["discomfort_score"] = merged["discomfort_score"].interpolate(
+            method="linear", limit_direction="both"
+        )
 
         # Calculate behavior index
         # Inverse of stress (low stress = high activity)
@@ -154,8 +176,10 @@ class DataHarmonizer:
             "Data harmonized successfully",
             rows=len(merged),
             date_range=(merged["timestamp"].min(), merged["timestamp"].max()),
-            behavior_index_range=(merged["behavior_index"].min(), merged["behavior_index"].max()),
+            behavior_index_range=(
+                merged["behavior_index"].min(),
+                merged["behavior_index"].max(),
+            ),
         )
 
         return merged
-
