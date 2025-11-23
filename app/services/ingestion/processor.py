@@ -133,21 +133,32 @@ class DataHarmonizer:
             market_daily = market_data.resample("D").last()
             market_daily = market_daily.ffill(limit=forward_fill_days)
             market_data = market_daily
+            # Update market_data in dataframes list if it was added
+            if "market" in names and len(dataframes) > 0:
+                market_idx = names.index("market")
+                if market_idx < len(dataframes):
+                    dataframes[market_idx] = market_data
 
         # Determine common date range from all available data
         start_date = None
         end_date = None
 
-        for df in dataframes:
-            if not df.empty:
-                df_start = df.index.min()
-                df_end = df.index.max()
-                if start_date is None:
-                    start_date = df_start
-                    end_date = df_end
-                else:
-                    start_date = min(start_date, df_start)
-                    end_date = max(end_date, df_end)
+        # Collect all date ranges from modified dataframes and original variables
+        all_date_sources = []
+        if not market_data.empty:
+            all_date_sources.append((market_data.index.min(), market_data.index.max()))
+        if not weather_data.empty:
+            all_date_sources.append((weather_data.index.min(), weather_data.index.max()))
+        if not search_data.empty:
+            all_date_sources.append((search_data.index.min(), search_data.index.max()))
+        if not health_data.empty:
+            all_date_sources.append((health_data.index.min(), health_data.index.max()))
+        if not mobility_data.empty:
+            all_date_sources.append((mobility_data.index.min(), mobility_data.index.max()))
+
+        if all_date_sources:
+            start_date = min(ds[0] for ds in all_date_sources)
+            end_date = max(ds[1] for ds in all_date_sources)
 
         if start_date is None or end_date is None:
             logger.warning("Cannot determine date range from empty data")
