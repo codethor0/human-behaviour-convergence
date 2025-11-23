@@ -1,7 +1,7 @@
 # Human Behaviour Convergence
 > Public-data-driven behavioral forecasting for population-scale analysis and planning.
 
-[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
+[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/codethor0/human-behaviour-convergence/badge)](https://securityscorecards.dev/viewer/?uri=github.com/codethor0/human-behaviour-convergence)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/codethor0/human-behaviour-convergence)
