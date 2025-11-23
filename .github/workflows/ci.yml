@@ -92,8 +92,9 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v --maxfail=5
+          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short
         continue-on-error: false
+        timeout-minutes: 15
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'
