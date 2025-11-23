@@ -32,28 +32,26 @@ This guide provides a framework for using AI assistants (GitHub Copilot, ChatGPT
 **Education** - Learn best practices through AI explanations
 **Complementary** - Augments (not replaces) human review---
 
-## Universal Code Review Prompt
+## Universal Code Review Template
 
-Use this prompt as a foundation for all AI code reviews. Copy and customize as needed.
+Use this template as a foundation for all code reviews. Copy and customize as needed.
 
 ### Basic Template
 
-```markdown
-# Role
-You are a senior software engineer conducting a code review. Your goal is to ensure the code is correct, secure, performant, and maintainable.
+This template provides a structured approach to code review. Use it as a framework when conducting reviews or requesting reviews from team members.
 
-# Context
+**Review Context:**
 - **Language:** [Python/TypeScript/etc.]
 - **Framework:** [FastAPI/Next.js/etc.]
 - **Purpose:** [What this code does]
 - **Environment:** [Production/Development/Test]
 
-# Code to Review
+**Code to Review:**
 ```[language]
 [paste code here]
 ```
 
-# Review Instructions
+**Review Checklist:**
 Analyze the code for:
 
 1. **Logic & Correctness**
@@ -85,7 +83,7 @@ Analyze the code for:
    - Appropriate HTTP status codes (if API)
    - Logging for debugging
 
-# Output Format
+**Output Format:**
 For each issue found:
 - **Category:** [Logic/Security/Performance/Quality/Error Handling]
 - **Severity:** [Critical/High/Medium/Low]
@@ -97,7 +95,7 @@ For each issue found:
 
 ---
 
-## Language-Specific Prompts
+## Language-Specific Review Templates
 
 ### Python / FastAPI
 
@@ -120,7 +118,7 @@ For each issue found:
 - Authentication middleware
 ```
 
-**Example Prompt for This Repository:**
+**Example Review Checklist for This Repository:**
 
 ```markdown
 Review this FastAPI endpoint for:
@@ -192,7 +190,7 @@ Open Copilot Chat and ask:
 
 #### Pull Request Review
 1. Copy the PR diff
-2. Use this prompt:
+2. Use this review template:
 
 ```markdown
 Review this pull request for a Python FastAPI backend:
@@ -257,9 +255,9 @@ jobs:
 
 ### Security-Focused Review
 
-**Prompt:**
+**Review Template:**
 ```markdown
-Act as a security specialist. Review this code for vulnerabilities:
+Security-focused code review checklist:
 
 **OWASP Top 10 focus:**
 1. Injection attacks (SQL, NoSQL, command)
@@ -295,9 +293,9 @@ def _read_csv(name: str, limit: int = 1000):
 
 ### Performance-Focused Review
 
-**Prompt:**
+**Review Template:**
 ```markdown
-Review this code for performance optimization:
+Performance-focused code review checklist:
 
 1. **Algorithmic complexity:** Time/space complexity analysis
 2. **Database queries:** N+1 problems, missing indexes
@@ -332,9 +330,9 @@ def _read_csv(name: str, limit: int = 1000):
 
 ### Debugging-Focused Review
 
-**Prompt:**
+**Review Template:**
 ```markdown
-Help me debug this function:
+Debugging-focused review checklist:
 
 **Error message:**
 ```
@@ -357,7 +355,7 @@ Help me debug this function:
 
 ## Best Practices
 
-### 1. Prompt Engineering
+### 1. Review Template Engineering
 
  **DO:**
 - Be specific: "Check for SQL injection" > "Review security"
@@ -366,10 +364,10 @@ Help me debug this function:
 - Request examples: "Show me the corrected code"
 
  **DON'T:**
-- Use vague prompts: "Is this good?"
+- Use vague requests: "Is this good?"
 - Omit context: "Review this code" (which language?)
-- Accept answers blindly: Always verify AI suggestions
-- Skip human review: AI augments, doesn't replace
+- Accept suggestions blindly: Always verify recommendations
+- Skip human review: Automated tools augment, don't replace human judgment
 
 ### 2. Iterative Review
 
@@ -401,7 +399,7 @@ Fourth pass: Documentation and tests
 - Always have a human review AI findings
 - Run automated tests to verify AI suggestions
 - Use multiple AI models for critical code
-- Keep AI prompts updated with latest best practices
+- Keep review templates updated with latest best practices
 
 ---
 
@@ -411,7 +409,7 @@ Fourth pass: Documentation and tests
 
 **Original Issue:** Unbounded cache could cause memory issues
 
-**AI Review Prompt:**
+**Review Checklist:**
 ```markdown
 Review this caching implementation for memory safety:
 
@@ -464,7 +462,7 @@ def _read_csv(name: str, limit: int = 1000):
 
 **Original Issue:** Negative limit values not validated
 
-**AI Review Prompt:**
+**Review Checklist:**
 ```markdown
 Check this function for input validation issues:
 
@@ -499,7 +497,7 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
 
 ### Example 3: Test Coverage
 
-**AI Review Prompt:**
+**Review Checklist:**
 ```markdown
 Current test coverage: 74% on app/backend/app/main.py
 
@@ -534,9 +532,9 @@ def test_cache_eviction(temp_results_dir, monkeypatch):
 
 ### Pre-Commit Checklist
 ```bash
-# 1. Run AI review locally
+# 1. Run code review locally
 git diff | pbcopy  # Copy changes
-# Paste into ChatGPT/Copilot with review prompt
+# Use code review tool with review template
 
 # 2. Run automated checks
 pytest tests/ --cov=app --cov-report=term
