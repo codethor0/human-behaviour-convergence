@@ -62,3 +62,17 @@ build/
 coverage/
 reports/
 coverage.xml
+
+# Internal artifacts
+*_REPORT.md
+*_AUDIT.md
+*_SUMMARY.md
+*master_prompt*.md
+*MASTER_PROMPT*.md
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+*.pyc
+__pycache__/
