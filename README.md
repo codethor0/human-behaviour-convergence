@@ -1,5 +1,5 @@
-# The Convergence of Human-Behaviour Prediction
-> Population-scale forecasting in a **zero-restriction** (*No-Guard-Rails*) data regime.
+# Human Behaviour Convergence
+> Public-data-driven behavioral forecasting for population-scale analysis and planning.
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/render-diagram.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
