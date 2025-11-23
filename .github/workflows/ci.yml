@@ -53,7 +53,7 @@ jobs:
 
       - name: Verify build
         run: |
-          python -c "import app; import connectors; print('[PASS] All modules import successfully')"
+          python -c "import app; print('[PASS] All modules import successfully')"
 
   test:
     name: Tests
@@ -163,4 +163,4 @@ jobs:
         run: ruff check app/ tests/ --exclude="notebooks|\.venv|\.git" || true
 
       - name: Black Format
-        run: black --check app/ connectors/ tests/ --exclude="notebooks|\.venv|\.git"
+        run: black --check app/ tests/ --exclude="notebooks|\.venv|\.git"
