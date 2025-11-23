@@ -89,8 +89,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r app/backend/requirements.txt
+          # Install root requirements first (data processing, forecasting libraries)
           pip install -r requirements.txt
+          # Install backend requirements (FastAPI, uvicorn - complements root requirements)
+          pip install -r app/backend/requirements.txt
+          # Install development dependencies
           pip install -r requirements-dev.txt
 
       - name: Run tests
