@@ -30,8 +30,9 @@ class BehavioralForecaster:
     """
     Multi-vector behavioral forecasting engine.
 
-    Uses economic (VIX/SPY) and environmental (weather) data to forecast
-    human behavioral convergence using exponential smoothing (Holt-Winters) model.
+    Uses economic (VIX/SPY), environmental (weather), search trends,
+    public health, and mobility data to forecast human behavioral
+    convergence using exponential smoothing (Holt-Winters) model.
     """
 
     def __init__(

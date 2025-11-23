@@ -7,17 +7,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md LICENSE ./
-COPY hbc ./hbc
-COPY app ./app
 COPY requirements.txt requirements-dev.txt ./
 COPY app/backend/requirements.txt ./app/backend/
+COPY app ./app
 
 RUN pip install --upgrade pip \
     && pip install -r requirements.txt \
     && pip install -r requirements-dev.txt \
-    && pip install -r app/backend/requirements.txt \
-    && pip install .
+    && pip install -r app/backend/requirements.txt
 
 FROM python:3.10-slim AS runtime
 
