@@ -6,14 +6,6 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from app.services.ingestion import (
-    DataHarmonizer,
-    EnvironmentalImpactFetcher,
-    MarketSentimentFetcher,
-    MobilityFetcher,
-    PublicHealthFetcher,
-    SearchTrendsFetcher,
-)
 
 router = APIRouter(prefix="/api/forecasting", tags=["forecasting"])
 
