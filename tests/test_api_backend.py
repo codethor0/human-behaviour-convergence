@@ -253,25 +253,23 @@ def test_cache_status_endpoint(client):
 
 
 def test_create_forecast_endpoint(client):
-    """POST /api/forecast should return deterministic synthetic data."""
+    """POST /api/forecast should return a valid forecast result."""
     payload = {
-        "region": "us-midwest",
-        "horizon": 7,
-        "modalities": ["satellite", "mobile"],
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
     }
     resp = client.post("/api/forecast", json=payload)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["region"] == payload["region"]
-    assert data["horizon"] == payload["horizon"]
-    assert data["modalities"] == payload["modalities"]
-    assert data["ethics"] == {"synthetic": True, "pii": False}
-    assert 0 < data["forecast"] < 2
-    assert 0.5 <= data["confidence"] <= 0.99
-    assert (
-        len(data["explanations"]) == len(payload["modalities"])
-        or len(payload["modalities"]) == 0
-    )
+    assert "history" in data
+    assert "forecast" in data
+    assert "sources" in data
+    assert "metadata" in data
+    assert len(data["history"]) > 0
+    assert len(data["forecast"]) == payload["forecast_horizon"]
 
     # Deterministic response
     resp_repeat = client.post("/api/forecast", json=payload)

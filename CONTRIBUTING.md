@@ -29,11 +29,18 @@ Thanks for your interest in improving this project!
 - Preview and edit via Mermaid Live (preloaded with the diagram): https://mermaid.live/edit#url=https://raw.githubusercontent.com/codethor0/human-behaviour-convergence/main/diagram/behaviour-convergence.mmd
 - On merge to `main`, CI re-renders `diagram/behaviour-convergence.svg` and `.png` via GitHub Actions.
 
+## Branching Strategy
+
+- **`main` is the canonical default branch** for development and production.
+- All pull requests should target `main`.
+- The `master` branch is legacy and kept in sync for compatibility, but `main` is the primary branch.
+- All CI workflows are configured to run on pushes and pull requests to `main`.
+
 ## Making changes
-1. Fork and create a branch.
+1. Fork and create a branch from `main`.
 2. Edit `diagram/behaviour-convergence.mmd` only. Do not edit generated `.svg`/`.png` by hand.
 3. If you add nodes/edges, keep labels concise and wrap long text with `\n` for readability.
-4. Open a Pull Request. The render workflow will attach updated artifacts if they change.
+4. Open a Pull Request targeting `main`. The render workflow will attach updated artifacts if they change.
 
 ## Commit style
 - Use concise, descriptive commits. Conventional Commits are welcome, e.g., `feat(diagram): add feedback loop` or `docs(readme): clarify Pages URL`.

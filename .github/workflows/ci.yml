@@ -3,9 +3,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates
@@ -47,8 +47,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r app/backend/requirements.txt
+          # Install root requirements first (data processing, forecasting libraries)
           pip install -r requirements.txt
+          # Install backend requirements (FastAPI, uvicorn - complements root requirements)
+          pip install -r app/backend/requirements.txt
+          # Install development dependencies
           pip install -r requirements-dev.txt
 
       - name: Verify build
@@ -157,8 +160,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r app/backend/requirements.txt
+          # Install root requirements first (data processing, forecasting libraries)
           pip install -r requirements.txt
+          # Install backend requirements (FastAPI, uvicorn - complements root requirements)
+          pip install -r app/backend/requirements.txt
+          # Install development dependencies
           pip install -r requirements-dev.txt
           pip install black ruff
 
