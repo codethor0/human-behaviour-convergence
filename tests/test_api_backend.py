@@ -271,10 +271,16 @@ def test_create_forecast_endpoint(client):
     assert len(data["history"]) > 0
     assert len(data["forecast"]) == payload["forecast_horizon"]
 
-    # Deterministic response
+    # Deterministic response (excluding timestamp metadata)
     resp_repeat = client.post("/api/forecast", json=payload)
     assert resp_repeat.status_code == 200
-    assert resp_repeat.json() == data
+    data_repeat = resp_repeat.json()
+    # Exclude forecast_date from comparison as it includes current timestamp
+    data_copy = data.copy()
+    data_repeat_copy = data_repeat.copy()
+    data_copy["metadata"].pop("forecast_date", None)
+    data_repeat_copy["metadata"].pop("forecast_date", None)
+    assert data_repeat_copy == data_copy
 
 
 def test_create_forecast_validation(client):
