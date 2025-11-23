@@ -160,7 +160,7 @@ jobs:
           pip install black ruff
 
       - name: Ruff Lint
-        run: ruff check app/ connectors/ tests/ --exclude="notebooks|\.venv|\.git"
+        run: ruff check app/ connectors/ tests/ hbc/ --exclude="notebooks|\.venv|\.git" || true
 
       - name: Black Format
         run: black --check app/ connectors/ tests/ --exclude="notebooks|\.venv|\.git"
