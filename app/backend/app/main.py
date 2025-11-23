@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 
-from hbc.forecasting import generate_synthetic_forecast
+from app.core.prediction import BehavioralForecaster
 
 # Use relative import to ensure package-local router resolution
 from .routers import public
@@ -489,19 +489,30 @@ class StatusResponse(BaseModel):
 
 
 class ForecastRequest(BaseModel):
-    region: str
-    horizon: int = Field(..., ge=1, le=30)
-    modalities: List[str] = Field(default_factory=list)
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate (-90 to 90)")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate (-180 to 180)")
+    region_name: str = Field(..., description="Human-readable region name")
+    days_back: int = Field(default=30, ge=7, le=365, description="Number of historical days to use")
+    forecast_horizon: int = Field(default=7, ge=1, le=30, description="Number of days to forecast ahead")
+
+
+class ForecastHistoryItem(BaseModel):
+    timestamp: str
+    behavior_index: float
+
+
+class ForecastItem(BaseModel):
+    timestamp: str
+    prediction: float
+    lower_bound: float
+    upper_bound: float
 
 
 class ForecastResult(BaseModel):
-    region: str
-    horizon: int
-    modalities: List[str]
-    forecast: float
-    confidence: float
-    explanations: List[str]
-    ethics: Dict[str, bool]
+    history: List[ForecastHistoryItem]
+    forecast: List[ForecastPredictionItem]
+    sources: List[str]
+    metadata: Dict[str, Any]
 
 
 @app.get("/api/forecasts", response_model=ForecastResponse)
@@ -569,19 +580,27 @@ def get_cache_status() -> CacheStatus:
 
 @app.post("/api/forecast", response_model=ForecastResult, tags=["forecasting"])
 def create_forecast(payload: ForecastRequest) -> ForecastResult:
-    """Return a deterministic synthetic forecast for the requested region."""
-    forecast, confidence, explanations = generate_synthetic_forecast(
-        payload.region, payload.horizon, payload.modalities
+    """
+    Generate behavioral forecast using real-world public data.
+
+    Uses economic (VIX/SPY) and environmental (weather) data to forecast
+    human behavioral convergence using exponential smoothing model.
+
+    Args:
+        payload: ForecastRequest with latitude, longitude, region_name, etc.
+
+    Returns:
+        ForecastResult with history, forecast, sources, and metadata
+    """
+    forecaster = BehavioralForecaster()
+    result = forecaster.forecast(
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        region_name=payload.region_name,
+        days_back=payload.days_back,
+        forecast_horizon=payload.forecast_horizon,
     )
-    return ForecastResult(
-        region=payload.region,
-        horizon=payload.horizon,
-        modalities=payload.modalities,
-        forecast=forecast,
-        confidence=confidence,
-        explanations=explanations,
-        ethics={"synthetic": True, "pii": False},
-    )
+    return ForecastResult(**result)
 
 
 if __name__ == "__main__":
