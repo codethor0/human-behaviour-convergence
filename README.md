@@ -14,12 +14,30 @@
 
 ## What is this?
 
-This project demonstrates **population-scale behavioural forecasting** using a three-layer architecture: 5.6B online training samples, 2.8B offline targets acquired via satellite & ground imagery, and 8.4B inference endpoints. The system combines centaur AI models, multi-modal fusion pipelines, and real-time prediction to forecast macro-behavioural states at unprecedented scale.
+This project is a **public-data-driven behavioral forecasting application** that uses free, publicly available data sources to predict human behavioral patterns at population scale. The system combines economic indicators, environmental signals, and other public time-series data to produce behavioral forecasts that support research, planning, and policy scenario exploration.
 
-**Status:** Proof-of-concept (v0.1) — research artifact
-**Paper:** Under review
-**Data:** Synthetic sample (1% slice) available; full dataset under restricted access
+**Status:** Active development (v0.1) — transitioning from proof-of-concept to production-ready forecasting engine
+**Data:** Public sources only — no individual user data, no proprietary datasets, fully aggregated
+**Ethics:** Strict privacy-first approach — see [ETHICS.md](./ETHICS.md) for details
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
+
+### Three-Layer Architecture
+
+1. **Signal Layer** — Public data sources providing time-series signals:
+   - Economic indicators (market sentiment, volatility indices)
+   - Environmental factors (weather patterns, climate anomalies)
+   - Search interest trends (aggregated public data)
+   - Public health signals (aggregated statistics)
+
+2. **Feature Layer** — Transforms signals into unified behavioral features:
+   - Time-series feature engineering (lags, moving averages, normalization)
+   - Multi-source fusion (combining signals into composite indices)
+   - Regional aggregation and temporal alignment
+
+3. **Forecast Layer** — Forecasting models producing future behavioral states:
+   - Classical time-series models (exponential smoothing, ARIMA)
+   - Forecast outputs over configurable time horizons
+   - Confidence intervals and quality indicators
 
 ---
 
@@ -57,9 +75,27 @@ This project demonstrates **population-scale behavioural forecasting** using a t
 1. **Explore the diagram interactively:**
    [![Mermaid Live](https://img.shields.io/badge/Edit-Mermaid%20Live-orange?logo=mermaid)](https://mermaid.live/edit#pako:eNptkktvwjAMhf-KyhVapW2AbaQuTGySTQIkTpN2mrYpTeo0qfpxQvz3OV0YQ6VW9rPzsx379oL6oUdBD5yDAiVgNBzB0B8BqE7OaDbzOJt5NJt5tJj5tJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5NJj5)
 
-2. **Run the demo notebook:**
-   - Open `notebooks/demo.ipynb` in Jupyter Lab/Notebook
-   - Or view online: *(coming soon: Binder/Colab badge)*
+2. **Run your first forecast:**
+   ```bash
+   # Install dependencies
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   
+   # Start the API server
+   python -m app.backend.app.main
+   # Server runs on http://localhost:8000
+   
+   # Make a forecast request
+   curl -X POST "http://localhost:8000/api/forecast" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "latitude": 40.7128,
+       "longitude": -74.0060,
+       "region_name": "New York City",
+       "days_back": 30,
+       "forecast_horizon": 7
+     }'
+   ```
 
 3. **Contribute:**
    See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
@@ -88,12 +124,22 @@ If you discover a security or privacy issue (including ethical concerns about th
 
 ## Application Roadmap
 
-We are building **Behaviour Convergence Explorer**, an interactive web application that surfaces the forecasting pipeline, synthetic results, and ethical guardrails.
+We are building **Behaviour Convergence Explorer**, an interactive web application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard.
 
 - Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
-- Current milestone: `app-v0.1` — scaffold Next.js + FastAPI workspace, CI, and interactive diagram
-- Tech stack preview: Next.js (TypeScript), Tailwind, FastAPI, Pandas, Vercel/Render
-- Principles: synthetic data only, transparent ethics, extensible APIs
+- Current milestone: `app-v0.1` — public-data ingestion, forecasting engine, API endpoints, and dashboard
+- Tech stack: Next.js (TypeScript), FastAPI (Python), Pandas, Statsmodels
+- Principles: public data only, transparent ethics, extensible APIs, no individual tracking
+
+### How It Works
+
+1. **Signals**: The system ingests public data from multiple sources (economic indicators, weather APIs, aggregated search trends) and normalizes them into standardized time-series formats.
+
+2. **Features**: Signal data is transformed into behavioral features through time-series engineering (lags, rolling statistics, normalization) and multi-source fusion to create composite behavioral indices.
+
+3. **Forecasts**: Forecasting models (exponential smoothing, classical time-series methods) produce future behavioral predictions over configurable horizons with confidence intervals.
+
+4. **API & UI**: FastAPI endpoints expose forecasts programmatically, while a Next.js dashboard provides interactive exploration of historical data, forecasts, and model metadata.
 
 Contributions welcome! Open an issue with the label `app` to collaborate on frontend, backend, or UX tasks.
 

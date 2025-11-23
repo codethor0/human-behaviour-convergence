@@ -1,7 +1,7 @@
 # Behavior Convergence Explorer — Product Plan
 
 ## Vision
-Build an interactive application that communicates the behavioral forecasting pipeline, lets stakeholders explore synthetic scenarios safely, and highlights the ethical controls applied to population-scale data.
+Build an interactive application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard. The system ingests public signals (economic, environmental, search trends), transforms them into behavioral features, and produces forecasts using classical time-series models.
 
 ## Target Users
 - **Policy analysts** evaluating socio-technical interventions.
@@ -15,9 +15,10 @@ Build an interactive application that communicates the behavioral forecasting pi
 4. Provide clear contribution pathways and API documentation for future collaborators.
 
 ## Non-Goals (v0.1)
-- Serving real or sensitive datasets.
 - Individual-level predictions or targeting capabilities.
+- Proprietary or sensitive datasets.
 - Production hardening for high-traffic public use.
+- Real-time individual tracking or micro-targeting.
 
 ---
 
@@ -31,11 +32,31 @@ Build an interactive application that communicates the behavioral forecasting pi
 
 ## Architecture Overview
 
+### Three-Layer Forecasting System
+
+1. **Signal Layer** (`app/services/ingestion/`):
+   - Public data source connectors (economic, weather, search trends)
+   - Standardized time-series format
+   - Error handling and caching
+
+2. **Feature Layer** (`app/services/ingestion/processor.py`):
+   - Time-series feature engineering (lags, rolling statistics, normalization)
+   - Multi-source fusion and harmonization
+   - Behavioral index computation
+
+3. **Forecast Layer** (`app/core/prediction.py`):
+   - Time-series forecasting models (exponential smoothing, classical methods)
+   - Forecast generation with confidence intervals
+   - Model metadata and quality indicators
+
+### Technology Stack
+
 | Layer | Technology | Purpose |
 |-------|------------|---------|
 | UI | Next.js (React + TypeScript), Tailwind CSS | SPA with SSR, charts, Mermaid integration |
-| API | FastAPI (Python 3.11) | Serve synthetic data, metrics, diagram metadata |
-| Data | CSVs in `results/`, config YAML for maturity states | Source-of-truth for demo data |
+| API | FastAPI (Python 3.10+) | Serve forecasts, historical data, metadata |
+| Data | Public APIs (economic, weather), CSVs in `results/` | Real-time public data + cached results |
+| Forecasting | Statsmodels, Pandas | Classical time-series models |
 | Infra | GitHub Actions → Vercel (frontend) + Render (API) | Automated deploy on main |
 
 > _Rationale:_ Next.js provides a great developer experience, static export for GitHub Pages fallback, and first-class TypeScript support. FastAPI aligns with existing Python tooling and lets us reuse notebook logic for future iterations.

@@ -8,10 +8,11 @@ This project explores **population-scale behavioral forecasting** in a data-rich
 
 ## Legal Basis & IRB
 
-- **Status:** Research prototype using synthetic data and publicly available aggregate statistics
-- **IRB:** Not applicable (no human subjects data collected)
-- **GDPR Compliance:** All real-world data references (if any) are anonymized, aggregated to coarse spatial/temporal bins (≥5 km, ≥24 h), and comply with GDPR Art. 6-1-f (legitimate interest for research)
-- **Data Minimization:** Only the minimum necessary features are extracted; raw identifiers are never stored
+- **Status:** Public-data-driven forecasting application using only free, publicly available aggregate statistics
+- **Data Sources:** Economic indicators (market indices), environmental data (weather patterns), and other public time-series data
+- **IRB:** Not applicable (no human subjects data collected; only aggregated public data)
+- **GDPR Compliance:** All data is publicly available aggregate statistics, aggregated to coarse spatial/temporal bins (≥5 km, ≥24 h), and complies with GDPR Art. 6-1-f (legitimate interest for research)
+- **Data Minimization:** Only the minimum necessary features are extracted; no individual-level data is ever collected or stored
 
 ---
 
