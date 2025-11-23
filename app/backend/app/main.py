@@ -307,12 +307,19 @@ class _MainModule(ModuleType):
         self, name: str, value: Any
     ) -> None:  # pragma: no cover - simple hook
         # Prevent recursion by checking if we're already setting this attribute
-        if hasattr(self, '_setting_attr'):
-            # Fallback to parent if we're already in the middle of setting
-            return ModuleType.__setattr__(self, name, value)
-        
+        # Use object.__getattribute__ to bypass our own __setattr__ method
+        try:
+            setting_flag = object.__getattribute__(self, '_setting_attr')
+            if setting_flag:
+                # Already in the middle of setting, bypass hooks
+                return ModuleType.__setattr__(self, name, value)
+        except AttributeError:
+            # Flag doesn't exist yet, that's fine
+            pass
+
         # Mark that we're setting an attribute to prevent recursion
-        self._setting_attr = True
+        # Use object.__setattr__ to bypass our own __setattr__ method
+        object.__setattr__(self, '_setting_attr', True)
         try:
             # Update the module's namespace first
             ModuleType.__setattr__(self, name, value)
@@ -322,9 +329,11 @@ class _MainModule(ModuleType):
             elif name == "MAX_CACHE_SIZE":
                 _on_cache_size_updated(value)
         finally:
-            # Always clear the flag
-            if hasattr(self, '_setting_attr'):
-                delattr(self, '_setting_attr')
+            # Always clear the flag using object.__delattr__ to bypass __setattr__
+            try:
+                object.__delattr__(self, '_setting_attr')
+            except AttributeError:
+                pass
 
 
 sys.modules[__name__].__class__ = _MainModule
