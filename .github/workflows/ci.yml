@@ -92,7 +92,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v -n auto
+          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'
