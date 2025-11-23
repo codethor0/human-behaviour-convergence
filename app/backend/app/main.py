@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from app.core.prediction import BehavioralForecaster
 
 # Use relative import to ensure package-local router resolution
-from .routers import public
+from .routers import public, forecasting
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues
