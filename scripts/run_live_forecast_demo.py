@@ -32,29 +32,47 @@ from app.core.prediction import BehavioralForecaster  # noqa: E402
 def sanitize_for_output(value: any) -> str:
     """
     Sanitize potentially sensitive data for console output.
-    
+
     This function ensures no sensitive information is logged in clear text.
     Only safe, aggregate data is returned for display.
+
+    This is used in a demo script only - not production code.
     """
     if value is None:
         return "N/A"
     if isinstance(value, (int, float)):
+        # Numeric values are safe to display
         return str(value)
     if isinstance(value, str):
         # Basic sanitization: check for potential PII patterns
         # Allow short strings (like region names, model types) but sanitize potential PII
-        if "@" in value:
-            return "[REDACTED-EMAIL]"
-        if len(value) > 200:
-            return value[:200] + "..."
-        return value
+        sanitized = value
+        if "@" in sanitized:
+            sanitized = "[REDACTED-EMAIL]"
+        elif len(sanitized) > 200:
+            sanitized = sanitized[:200] + "..."
+        # Additional check: ensure no API keys, tokens, or secrets
+        if any(
+            pattern in sanitized.lower()
+            for pattern in ["key", "token", "secret", "password", "api_key"]
+        ):
+            # If it looks like it might contain a secret, redact it
+            if len(sanitized) > 20:
+                sanitized = "[REDACTED]"
+        return sanitized
     if isinstance(value, list):
-        # For source lists, join safely
+        # For source lists, join safely - only show safe source names
         if all(isinstance(x, str) for x in value):
-            return ", ".join(str(x) for x in value[:10])  # Limit to 10 items
+            safe_items = [
+                str(x)[:50] for x in value[:10]
+            ]  # Limit to 10 items, 50 chars each
+            return ", ".join(safe_items)
         return f"[{len(value)} items]"
-    # For dicts and other types, convert to string safely
-    return str(value)[:200] if len(str(value)) > 200 else str(value)
+    # For dicts and other types, convert to string safely but truncate
+    str_repr = str(value)
+    if len(str_repr) > 200:
+        return str_repr[:200] + "..."
+    return str_repr
 
 
 def check_optional_sources():
@@ -138,11 +156,13 @@ def main():
         # Metadata - extract values first to avoid CodeQL alerts about dictionary access in f-strings
         if "metadata" in result:
             meta = result["metadata"]
-            region_name = sanitize_for_output(meta.get('region_name'))
-            model_type = sanitize_for_output(meta.get('model_type'))
-            forecast_date = sanitize_for_output(meta.get('forecast_date'))
-            historical_points = sanitize_for_output(meta.get('historical_data_points', 0))
-            forecast_horizon = sanitize_for_output(meta.get('forecast_horizon', 0))
+            region_name = sanitize_for_output(meta.get("region_name"))
+            model_type = sanitize_for_output(meta.get("model_type"))
+            forecast_date = sanitize_for_output(meta.get("forecast_date"))
+            historical_points = sanitize_for_output(
+                meta.get("historical_data_points", 0)
+            )
+            forecast_horizon = sanitize_for_output(meta.get("forecast_horizon", 0))
             print("Metadata:")
             print(f"  Region: {region_name}")
             print(f"  Model: {model_type}")
@@ -153,11 +173,11 @@ def main():
 
         # Sources - extract and sanitize before printing
         if "sources" in result:
-            sources_list = result.get('sources', [])
+            sources_list = result.get("sources", [])
             if sources_list:
                 # Only show source names, not full paths or keys
                 safe_sources = [sanitize_for_output(s) for s in sources_list]
-                sources_str = ', '.join(safe_sources)
+                sources_str = ", ".join(safe_sources)
                 print(f"Data Sources Used: {sources_str}")
             else:
                 print("Data Sources Used: None")
@@ -172,10 +192,10 @@ def main():
                 first = history_list[0]
                 last = history_list[-1]
                 # Extract and sanitize values before printing
-                first_ts = sanitize_for_output(first.get('timestamp'))
-                first_idx = float(first.get('behavior_index', 0.0))
-                last_ts = sanitize_for_output(last.get('timestamp'))
-                last_idx = float(last.get('behavior_index', 0.0))
+                first_ts = sanitize_for_output(first.get("timestamp"))
+                first_idx = float(first.get("behavior_index", 0.0))
+                last_ts = sanitize_for_output(last.get("timestamp"))
+                last_idx = float(last.get("behavior_index", 0.0))
                 print(f"  First: {first_ts} - Index: {first_idx:.3f}")
                 print(f"  Last: {last_ts} - Index: {last_idx:.3f}")
             print()
@@ -190,10 +210,10 @@ def main():
             print(f"Forecast: {forecast_count} days ahead")
             for i, fc in enumerate(forecast_list[:5], 1):
                 # Extract values before printing to avoid dictionary access in f-strings
-                fc_ts = sanitize_for_output(fc.get('timestamp'))
-                fc_pred = float(fc.get('prediction', 0.0))
-                fc_lower = float(fc.get('lower_bound', 0.0))
-                fc_upper = float(fc.get('upper_bound', 0.0))
+                fc_ts = sanitize_for_output(fc.get("timestamp"))
+                fc_pred = float(fc.get("prediction", 0.0))
+                fc_lower = float(fc.get("lower_bound", 0.0))
+                fc_upper = float(fc.get("upper_bound", 0.0))
                 print(
                     f"  Day {i} ({fc_ts}): "
                     f"Prediction={fc_pred:.3f}, "
