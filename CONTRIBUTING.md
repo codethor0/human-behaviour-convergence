@@ -1,25 +1,3 @@
-# AI-Generated Hardening Checklist
-
-1. SHALL add SPDX MIT-0 license header to every new file.
-2. SHALL use ruff, black, mypy --strict, and semgrep in pre-commit.
-3. SHALL validate all external input for type, range, and allowed values.
-4. SHALL avoid magic numbers; use named constants.
-5. SHALL add type hints to all functions and methods.
-6. SHALL avoid unprotected file I/O and catch all exceptions.
-7. SHALL ensure all plugin registries use importlib.metadata.
-8. SHALL add unit tests for every new module.
-9. SHALL fail CI on any linter or type checker warning.
-10. SHALL generate and upload SBOM and CVE report on every CI run.
-11. SHALL avoid global mutable state unless protected by locks.
-12. SHALL document every public API and plugin interface.
-13. SHALL use only OSI-approved licenses in dependencies.
-14. SHALL avoid deprecated or insecure APIs.
-15. SHALL keep test coverage at 100% for high-risk files.
-16. SHALL use block-style YAML in all config files.
-17. SHALL avoid shell-injection and unsafe subprocess usage.
-18. SHALL review all code for performance anti-patterns.
-19. SHALL keep all secrets out of source control.
-20. SHALL update this checklist with every major release.
 # Contributing
 
 Thanks for your interest in improving this project!

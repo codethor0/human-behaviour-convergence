@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 """Search trends data ingestion using public APIs for digital attention analysis."""
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-import os
 import pandas as pd
-import requests
 import requests_cache
 import structlog
 

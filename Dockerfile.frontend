@@ -1,0 +1,17 @@
+FROM node:20-slim
+
+WORKDIR /app/app/frontend
+
+# Copy package files
+COPY app/frontend/package.json app/frontend/package-lock.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy frontend source
+COPY app/frontend ./
+
+EXPOSE 3000
+
+# Use dev mode for local development (can be overridden in docker-compose)
+CMD ["npm", "run", "dev"]

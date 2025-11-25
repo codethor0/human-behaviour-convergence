@@ -2,7 +2,6 @@
 """Tests for forecasting API endpoints."""
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.backend.app.main import app

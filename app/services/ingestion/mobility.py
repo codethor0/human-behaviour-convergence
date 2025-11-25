@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 """Mobility data ingestion using public APIs for activity pattern analysis."""
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
-import os
 import pandas as pd
-import requests
 import requests_cache
 import structlog
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 """Behavioral forecasting engine using real-world public data."""
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 import structlog

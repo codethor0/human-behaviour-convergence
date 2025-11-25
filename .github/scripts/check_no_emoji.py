@@ -42,11 +42,14 @@ def main():
     root = Path(__file__).parent.parent.parent
     md_files = list(root.glob("**/*.md"))
 
-    # Exclude files in hidden directories or specific paths
+    # Exclude files in hidden directories, node_modules, or specific paths
     md_files = [
         f
         for f in md_files
         if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
+        and "node_modules" not in f.parts
+        and ".venv" not in f.parts
+        and "venv" not in f.parts
     ]
 
     # Exclude audit reports that document emojis as findings

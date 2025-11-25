@@ -1,17 +1,12 @@
 # SPDX-License-Identifier: MIT-0
 """Integration tests for data connectors and harmonization pipeline."""
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 import pandas as pd
-import pytest
 
 from app.core.prediction import BehavioralForecaster
 from app.services.ingestion.finance import MarketSentimentFetcher
-from app.services.ingestion.mobility import MobilityFetcher
 from app.services.ingestion.processor import DataHarmonizer
-from app.services.ingestion.public_health import PublicHealthFetcher
-from app.services.ingestion.search_trends import SearchTrendsFetcher
 from app.services.ingestion.weather import EnvironmentalImpactFetcher
 
 

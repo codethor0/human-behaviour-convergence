@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 """Tests for SearchTrendsFetcher connector."""
 from unittest.mock import Mock, patch
-from datetime import datetime
 
 import pandas as pd
-import pytest
 
 from app.services.ingestion.search_trends import SearchTrendsFetcher
 

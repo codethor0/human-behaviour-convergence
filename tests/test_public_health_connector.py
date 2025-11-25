@@ -3,7 +3,6 @@
 from unittest.mock import Mock, patch
 
 import pandas as pd
-import pytest
 
 from app.services.ingestion.public_health import PublicHealthFetcher
 

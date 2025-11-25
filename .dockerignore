@@ -1,0 +1,70 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv
+venv
+ENV
+env
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+coverage.xml
+
+# Node
+node_modules
+.npm
+.yarn
+.next
+out
+dist
+
+# Build artifacts
+build
+dist
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+*.pem
+*.key
+
+# Cache
+.cache
+*.cache
+
+# Documentation (not needed in containers)
+docs/
+*.md
+!README.md
+
+# Test artifacts
+.pytest_cache
+htmlcov
+coverage
+reports
+
+# Results (runtime data)
+results/
+
+# CI/CD
+.github

@@ -1,6 +1,9 @@
 services:
-  app:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
     ports:
       - "8000:8000"
     volumes:
@@ -9,8 +12,36 @@ services:
       - CACHE_MAX_SIZE=100
       - CACHE_TTL_MINUTES=5
       - LOG_LEVEL=INFO
-      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000
+      - MOBILITY_API_ENDPOINT=${MOBILITY_API_ENDPOINT:-}
+      - MOBILITY_API_KEY=${MOBILITY_API_KEY:-}
+      - PUBLIC_HEALTH_API_ENDPOINT=${PUBLIC_HEALTH_API_ENDPOINT:-}
+      - PUBLIC_HEALTH_API_KEY=${PUBLIC_HEALTH_API_KEY:-}
+      - SEARCH_TRENDS_API_ENDPOINT=${SEARCH_TRENDS_API_ENDPOINT:-}
+      - SEARCH_TRENDS_API_KEY=${SEARCH_TRENDS_API_KEY:-}
     command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./app/frontend:/app/app/frontend
+      - /app/app/frontend/node_modules
+      - /app/app/frontend/.next
 
   test:
     build:
@@ -28,6 +59,7 @@ services:
       - PYTHONUNBUFFERED=1
       - CACHE_MAX_SIZE=10
       - CACHE_TTL_MINUTES=1
+      - PYTHONPATH=/app
     networks:
       - default
 

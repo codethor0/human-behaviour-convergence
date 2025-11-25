@@ -1,52 +1,48 @@
-# Python# OS
-
-__pycache__/.DS_Store
-
-*.pycThumbs.db
-
+# Python
+__pycache__/
+*.pyc
 *.pyo
+*.pyd
 
-*.pyd# Editors/IDE
+# OS
+.DS_Store
+Thumbs.db
 
-.venv/.idea/
+# Editors/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-.env.vscode/
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
 
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.log
 
+# Node
+node_modules/
+.npm
+.yarn
 
-# Test & coverage# Node
-
-.pytest_cache/node_modules/
-
-.coverage*.log
-
-htmlcov/.next/
-
+# Build artifacts
+dist/
+build/
 out/
+.next/
 
 # Tools
-
-.ruff_cache/# Python
-
-.mypy_cache/__pycache__/
-
-*.pyc
-
-# Node*.pyo
-
-node_modules/.venv/
-
-venv/
-
-# macOSENV/
-
-.DS_Store.pytest_cache/
-
-.coverage
-
-# VS Codehtmlcov/
-
-.vscode/
+.ruff_cache/
+.mypy_cache/
+.cache/
 
 # Env and secrets
 .env
@@ -57,11 +53,8 @@ venv/
 *.pfx
 
 # Build artifacts
-dist/
-build/
 coverage/
 reports/
-coverage.xml
 
 # Internal artifacts
 *_REPORT.md
@@ -69,10 +62,3 @@ coverage.xml
 *_SUMMARY.md
 *master_prompt*.md
 *MASTER_PROMPT*.md
-
-# Test artifacts
-.pytest_cache/
-.coverage
-htmlcov/
-*.pyc
-__pycache__/

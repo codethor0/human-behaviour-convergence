@@ -66,12 +66,11 @@ export default function HomePage() {
 
 function DataTable({ rows, emptyMessage }: { rows: Record<string, any>[]; emptyMessage?: string }) {
   if (!rows || rows.length === 0) return <p>{emptyMessage || 'No data'}</p>;
-  const columns = Array.from(
-    rows.reduce((set, r) => {
-      Object.keys(r).forEach((k) => set.add(k));
-      return set;
-    }, new Set<string>())
-  );
+  const columnSet = rows.reduce<Set<string>>((set, r) => {
+    Object.keys(r).forEach((k) => set.add(k));
+    return set;
+  }, new Set<string>());
+  const columns = Array.from(columnSet);
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ borderCollapse: 'collapse', minWidth: 600 }}>

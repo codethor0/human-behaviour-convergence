@@ -33,5 +33,8 @@ dev = [
 [project.scripts]
 hbc-cli = "hbc.cli:main"
 
+[project.entry-points."human_behaviour_predictor"]
+example = "predictors.example_predictor:ExamplePredictor"
+
 [tool.setuptools.packages.find]
-include = ["hbc", "connectors"]
+include = ["hbc", "connectors", "predictors"]

@@ -1,7 +1,7 @@
-# AI-Powered Code Review Guide
+# Code Review Guide
 **Project:** Human Behavior Convergence
 **Last Updated:** November 5, 2025
-**Purpose:** Comprehensive guide for using AI assistants to review and improve code quality
+**Purpose:** Comprehensive guide for code review practices and quality standards
 
 ---
 
@@ -18,19 +18,19 @@
 
 ## Introduction
 
-This guide provides a framework for using AI assistants (GitHub Copilot, ChatGPT, Claude, etc.) to perform comprehensive code reviews. It's based on industry best practices and tailored for this repository's technology stack:
+This guide provides a framework for comprehensive code reviews. It's based on industry best practices and tailored for this repository's technology stack:
 
 - **Backend:** Python 3.12+, FastAPI, Pandas
 - **Frontend:** TypeScript, Next.js, React
 - **Infrastructure:** Mermaid diagrams, GitHub Actions
 - **Testing:** pytest, pytest-cov, FastAPI TestClient
 
-### Benefits of AI Code Review
+### Benefits of Structured Code Review
 
 **Consistency** - Same review criteria applied across all code
-**Speed** - Instant feedback on pull requests
-**Education** - Learn best practices through AI explanations
-**Complementary** - Augments (not replaces) human review---
+**Speed** - Systematic approach enables faster review cycles
+**Education** - Learn best practices through structured analysis
+**Quality** - Ensures code meets project standards before merging
 
 ## Universal Code Review Template
 
@@ -165,32 +165,24 @@ Review this FastAPI endpoint for:
 
 ## Integration with Development Workflow
 
-### 1. GitHub Copilot Integration
+### 1. In-IDE Code Review
 
-#### In-IDE Suggestions
-Use comments to trigger Copilot assistance:
+Use structured comments to guide review focus:
 
 ```python
-# @copilot review this function for security vulnerabilities
+# TODO: Review this function for security vulnerabilities
 def process_user_input(data: str):
     ...
 
-# @copilot suggest performance improvements
+# TODO: Consider performance improvements
 def calculate_metrics(df: pd.DataFrame):
     ...
 ```
 
-#### Copilot Chat
-Open Copilot Chat and ask:
-- `@workspace What is the attack surface of this API?`
-- `Are there any security vulnerabilities in /api/forecasts?`
-- `How can I improve the test coverage for main.py?`
+### 2. Pull Request Review Process
 
-### 2. ChatGPT / Claude Integration
-
-#### Pull Request Review
-1. Copy the PR diff
-2. Use this review template:
+#### Review Template
+Use this structured template when reviewing pull requests:
 
 ```markdown
 Review this pull request for a Python FastAPI backend:
@@ -210,10 +202,11 @@ Review this pull request for a Python FastAPI backend:
 ```
 
 #### Pre-Commit Review
-Before committing, run:
+Before committing, review your changes:
+
 ```bash
-git diff | pbcopy  # Copy diff to clipboard
-# Paste into code review tool with review template
+git diff  # Review changes
+# Use review template to systematically check code
 ```
 
 ### 3. GitHub Actions Automation
@@ -226,28 +219,9 @@ This repository uses automated quality gates (`.github/workflows/quality-gates.y
 -  Pylint score ≥7.0
 -  Bandit security scan (no high severity)
 
-**To add AI review to CI:**
+**Automated Quality Checks:**
 
-```yaml
-# .github/workflows/ai-code-review.yml
-name: AI Code Review
-on: [pull_request]
-
-jobs:
-  ai-review:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: AI Code Review
-        uses: some-org/ai-code-review-action@v1
-        with:
-          ai_model: gpt-4
-          api_key: ${{ secrets.OPENAI_API_KEY }}
-          focus: security,performance,bugs
-```
-
-*(Note: Replace with actual AI review action from GitHub Marketplace)*
+This repository uses automated quality gates (`.github/workflows/quality-gates.yml`) to enforce code quality standards before merging.
 
 ---
 
@@ -382,7 +356,7 @@ Fourth pass: Documentation and tests
 
 | Tool | Purpose | When to Use |
 |------|---------|-------------|
-| **AI (ChatGPT/Copilot)** | Semantic understanding, design review | Complex logic, architecture |
+| **Code Review Tools** | Semantic understanding, design review | Complex logic, architecture |
 | **Pylint/ESLint** | Style and simple bugs | Pre-commit, CI |
 | **Bandit/Snyk** | Security vulnerabilities | Pre-commit, CI |
 | **pytest** | Functional correctness | Development, CI |
@@ -396,7 +370,7 @@ Fourth pass: Documentation and tests
  **Outdated Knowledge:** AI may suggest deprecated patterns
 
 **Mitigation:**
-- Always have a human review AI findings
+- Always have a human review automated findings
 - Run automated tests to verify AI suggestions
 - Use multiple AI models for critical code
 - Keep review templates updated with latest best practices
@@ -431,7 +405,7 @@ Issues to check:
 - Eviction strategy
 ```
 
-**AI Findings:**
+**Review Findings:**
 1.  **No size limit** → cache grows unbounded
 2.  **String cache keys** → potential collision if name contains `:`
 3.  **No eviction** → expired entries stay in memory
@@ -510,7 +484,7 @@ Uncovered lines:
 Generate pytest test cases to cover these lines.
 ```
 
-**AI Generated Tests:**
+**Generated Test Cases:**
 ```python
 def test_csv_negative_limit_validation(temp_results_dir, monkeypatch):
     """Test that negative limit values are rejected."""
@@ -590,7 +564,7 @@ Check:
 - [Google Engineering Practices - Code Review](https://google.github.io/eng-practices/review/)
 - [PEP 8 - Python Style Guide](https://peps.python.org/pep-0008/)
 - [FastAPI Best Practices](https://github.com/zhanymkanov/fastapi-best-practices)
-- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
+- [GitHub Code Review Best Practices](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests)
 
 ---
 
@@ -599,7 +573,7 @@ Check:
 Found an issue with this guide or have suggestions?
 1. Open an issue with the `documentation` label
 2. Submit a PR to improve the examples
-3. Share your AI code review experiences in Discussions
+3. Share your code review experiences in Discussions
 
 ---
 
