@@ -4,6 +4,7 @@ import bz2
 import gzip
 
 import pandas as pd
+import pytest
 import responses
 
 from connectors.firms_fires import FIRMSFiresSync
@@ -52,6 +53,62 @@ class TestWikiPageviewsSync:
         )
         # ethical_check should filter count < 15 in production pipeline
         assert (df["count"] < 15).any()
+
+    def test_date_validation_invalid_format(self):
+        """Test that invalid date format raises ValueError when pull() is called."""
+        # Remove cache file if it exists to force validation path
+        from pathlib import Path
+
+        cache_file = Path("/tmp/wiki_pageviews_cache/wiki_pageviews_not-a-date.parquet")
+        if cache_file.exists():
+            cache_file.unlink()
+
+        connector = WikiPageviewsSync(date="not-a-date", max_hours=1)
+        # Date validation happens in pull(), not __init__()
+        with pytest.raises(ValueError, match="Invalid date format"):
+            connector.pull()
+
+    def test_date_validation_invalid_date_values(self):
+        """Test that invalid date values raise ValueError when pull() is called."""
+        # datetime.strptime itself validates, but we also check ranges
+        # Test with dates that pass strptime but fail our range check
+        # Actually, strptime validates month/day ranges, so we need to test edge cases
+        from pathlib import Path
+
+        # Test with invalid month (strptime will catch this, but our code handles it)
+        cache_file = Path("/tmp/wiki_pageviews_cache/wiki_pageviews_2024-13-01.parquet")
+        if cache_file.exists():
+            cache_file.unlink()
+
+        connector = WikiPageviewsSync(date="2024-13-01", max_hours=1)
+        # This will fail at strptime, which is what we want
+        with pytest.raises(ValueError, match="Invalid date format"):
+            connector.pull()
+
+        # Test with invalid day
+        cache_file2 = Path(
+            "/tmp/wiki_pageviews_cache/wiki_pageviews_2024-01-32.parquet"
+        )
+        if cache_file2.exists():
+            cache_file2.unlink()
+
+        connector2 = WikiPageviewsSync(date="2024-01-32", max_hours=1)
+        with pytest.raises(ValueError, match="Invalid date format"):
+            connector2.pull()
+
+    def test_date_validation_injection_attempt(self):
+        """Test that date injection attempts are rejected."""
+        from pathlib import Path
+
+        cache_file = Path(
+            "/tmp/wiki_pageviews_cache/wiki_pageviews_2024-01-01-etc-passwd.parquet"
+        )
+        if cache_file.exists():
+            cache_file.unlink()
+
+        connector = WikiPageviewsSync(date="2024-01-01/../../etc/passwd", max_hours=1)
+        with pytest.raises(ValueError, match="Invalid date format"):
+            connector.pull()
 
 
 class TestOSMChangesetsSync:
