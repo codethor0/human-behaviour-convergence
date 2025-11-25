@@ -54,7 +54,23 @@ class WikiPageviewsSync(AbstractSync):
             self.logger.info("Loading from cache", cache_file=str(cache_file))
             return pd.read_parquet(cache_file)
 
-        year, month, day = self.date.split("-")
+        # Validate and parse date components (prevents SSRF via URL injection)
+        try:
+            parsed_date = datetime.strptime(self.date, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError(f"Invalid date format: {self.date} (must be YYYY-MM-DD)")
+
+        # Extract validated date components
+        year = parsed_date.strftime("%Y")
+        month = parsed_date.strftime("%m")
+        day = parsed_date.strftime("%d")
+
+        # Ensure date components are numeric and within valid ranges
+        if not (year.isdigit() and month.isdigit() and day.isdigit()):
+            raise ValueError(f"Invalid date format: {self.date}")
+        if not (1 <= int(month) <= 12 and 1 <= int(day) <= 31):
+            raise ValueError(f"Invalid date values: {self.date}")
+
         all_data = []
 
         for hour in range(self.max_hours):

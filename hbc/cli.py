@@ -88,6 +88,8 @@ def _run_forecast(argv: Sequence[str] | None = None) -> int:
         output = _output_payload(args.region, args.horizon, args.modalities, args.json)
     except Exception as exc:  # pragma: no cover - protective fallback
         parser.error(str(exc))
+        # parser.error() raises SystemExit, but type checker needs explicit return
+        return 1  # Unreachable, but satisfies static analysis
 
     print(output)
     return 0
