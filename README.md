@@ -184,6 +184,14 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 ## License
 
 MIT
+
+## Maintainer
+
+This project is maintained by **Thor Thor**.
+
+- Email: [codethor@gmail.com](mailto:codethor@gmail.com)
+- LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/thor-thor0)
+
 ## Support
 
 If this project helps you, consider supporting ongoing maintenance:
