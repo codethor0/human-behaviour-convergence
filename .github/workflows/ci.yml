@@ -172,7 +172,7 @@ jobs:
           pip install black ruff
 
       - name: Ruff Lint
-        run: ruff check app/ tests/ --exclude="notebooks|\.venv|\.git" || true
+        run: ruff check app/ tests/ scripts/ --exclude="notebooks|\.venv|\.git|node_modules"
 
       - name: Black Format
-        run: black --check app/ tests/ --exclude="notebooks|\.venv|\.git"
+        run: black --check app/ tests/ scripts/ --exclude="notebooks|\.venv|\.git|node_modules"
