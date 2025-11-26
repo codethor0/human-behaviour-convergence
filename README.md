@@ -80,11 +80,11 @@ This project is a **public-data-driven behavioral forecasting application** that
    # Install dependencies
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
-   
+
    # Start the API server
    python -m app.backend.app.main
    # Server runs on http://localhost:8000
-   
+
    # Make a forecast request
    curl -X POST "http://localhost:8000/api/forecast" \
      -H "Content-Type: application/json" \
@@ -95,10 +95,10 @@ This project is a **public-data-driven behavioral forecasting application** that
        "days_back": 30,
        "forecast_horizon": 7
      }'
-   
+
    # Check available data sources
    curl "http://localhost:8000/api/forecasting/data-sources"
-   
+
    # Check available models
    curl "http://localhost:8000/api/forecasting/models"
    ```
@@ -143,6 +143,9 @@ If you discover a security or privacy issue (including ethical concerns about th
 We are building **Behaviour Convergence Explorer**, an interactive web application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard.
 
 - Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
+- System status: [docs/SYSTEM_STATUS.md](./docs/SYSTEM_STATUS.md)
+- Data sources: [docs/DATA_SOURCES.md](./docs/DATA_SOURCES.md)
+- Roadmap milestones: [docs/ROADMAP.md](./docs/ROADMAP.md)
 - Current milestone: `app-v0.1` — public-data ingestion, forecasting engine, API endpoints, and dashboard
 - Tech stack: Next.js (TypeScript), FastAPI (Python), Pandas, Statsmodels
 - Principles: public data only, transparent ethics, extensible APIs, no individual tracking
