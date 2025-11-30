@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Environmental data ingestion using Open-Meteo API for weather impact analysis."""
 from datetime import datetime, timedelta
 from typing import Optional

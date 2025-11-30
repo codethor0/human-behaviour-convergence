@@ -1,10 +1,10 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
 import sys
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Lock
@@ -12,15 +12,23 @@ from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
+import structlog
 from fastapi import FastAPI, HTTPException, Query
+
+logger = structlog.get_logger("backend.main")
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 
+from app.core.behavior_index import BehaviorIndexComputer
+from app.core.explanations import generate_explanation
+from app.core.live_monitor import get_live_monitor
 from app.core.prediction import BehavioralForecaster
+from app.core.regions import get_region_by_id
+from app.storage import ForecastDB
 
 # Use relative import to ensure package-local router resolution
-from .routers import public, forecasting
+from .routers import forecasting, live, playground, public
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues
@@ -38,32 +46,32 @@ MAX_CACHE_SIZE = int(
 CACHE_TTL_MINUTES = int(os.getenv("CACHE_TTL_MINUTES", "5"))
 CACHE_DURATION = timedelta(minutes=CACHE_TTL_MINUTES)
 
+# Configure structlog for consistent logging across the app
+# Only configure once to avoid duplicate handlers
+if not structlog.is_configured():
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            (
+                structlog.processors.JSONRenderer()
+                if os.getenv("LOG_FORMAT", "text") == "json"
+                else structlog.dev.ConsoleRenderer()
+            ),
+        ],
+        wrapper_class=structlog.stdlib.BoundLogger,
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
 
-# Structured logging: enable JSON format if LOG_FORMAT=json
-LOG_FORMAT = os.getenv("LOG_FORMAT", "text")
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    if LOG_FORMAT == "json":
-        import json
-
-        class JsonFormatter(logging.Formatter):
-            def format(self, record):
-                log_record = {
-                    "level": record.levelname,
-                    "time": self.formatTime(record, self.datefmt),
-                    "name": record.name,
-                    "message": record.getMessage(),
-                }
-                if record.exc_info:
-                    log_record["exception"] = self.formatException(record.exc_info)
-                return json.dumps(log_record)
-
-        handler = logging.StreamHandler()
-        handler.setFormatter(JsonFormatter())
-        logger.addHandler(handler)
-        logger.setLevel(os.getenv("LOG_LEVEL", "INFO").upper())
-    else:
-        logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+logger = structlog.get_logger("backend.main")
 
 
 def _find_results_dir(start: Path) -> Optional[Path]:
@@ -83,6 +91,8 @@ app = FastAPI(title="Behavior Convergence API", version="0.1.0")
 # Register routers
 app.include_router(public.router)
 app.include_router(forecasting.router)
+app.include_router(playground.router)
+app.include_router(live.router)
 
 # Configure CORS from environment (comma-separated)
 ALLOWED_ORIGINS = os.getenv(
@@ -100,6 +110,49 @@ app.add_middleware(
 
 # Enable gzip compression for large responses
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+# Background refresh for live monitoring
+_refresh_thread: Optional[threading.Thread] = None
+_refresh_stop_event = threading.Event()
+
+
+def _background_refresh_loop() -> None:
+    """Background thread that periodically refreshes live monitoring data."""
+    monitor = get_live_monitor()
+    refresh_interval = monitor.refresh_interval_minutes * 60  # Convert to seconds
+
+    while not _refresh_stop_event.is_set():
+        try:
+            logger.info("Starting background refresh of live monitoring data")
+            monitor.refresh_all_regions()
+        except Exception as e:
+            logger.error("Error in background refresh", error=str(e), exc_info=True)
+
+        # Wait for refresh interval or until stop event
+        if _refresh_stop_event.wait(timeout=refresh_interval):
+            break  # Stop event was set
+
+
+@app.on_event("startup")
+def startup_event() -> None:
+    """Start background refresh thread on application startup."""
+    global _refresh_thread
+    if _refresh_thread is None or not _refresh_thread.is_alive():
+        _refresh_stop_event.clear()
+        _refresh_thread = threading.Thread(target=_background_refresh_loop, daemon=True)
+        _refresh_thread.start()
+        logger.info("Started background refresh thread for live monitoring")
+
+
+@app.on_event("shutdown")
+def shutdown_event() -> None:
+    """Stop background refresh thread on application shutdown."""
+    global _refresh_thread
+    _refresh_stop_event.set()
+    if _refresh_thread and _refresh_thread.is_alive():
+        _refresh_thread.join(timeout=5.0)
+        logger.info("Stopped background refresh thread for live monitoring")
 
 
 @app.get("/health")
@@ -182,10 +235,10 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
             total = _cache_hits + _cache_misses
             if total % 50 == 0:
                 logger.info(
-                    "cache stats: hits=%d misses=%d size=%d",
-                    _cache_hits,
-                    _cache_misses,
-                    len(_cache),
+                    "cache stats",
+                    hits=_cache_hits,
+                    misses=_cache_misses,
+                    size=len(_cache),
                 )
             return list(_cache[cache_key])
 
@@ -228,7 +281,7 @@ def _read_csv_uncached(name: str, limit: int = 1000) -> List[Dict]:
                 records = df.to_dict(orient="records")
                 return _normalize_records(name, records)
         except Exception as e:
-            logger.warning("Failed to read CSV %s: %s", name, e)
+            logger.warning("Failed to read CSV", name=name, error=str(e))
     # mypy: strict
 
     # Fallback stubs
@@ -515,13 +568,23 @@ class StatusResponse(BaseModel):
 
 
 class ForecastRequest(BaseModel):
-    latitude: float = Field(
-        ..., ge=-90, le=90, description="Latitude coordinate (-90 to 90)"
+    latitude: Optional[float] = Field(
+        None,
+        ge=-90,
+        le=90,
+        description="Latitude coordinate (-90 to 90). Required if region_id not provided.",
     )
-    longitude: float = Field(
-        ..., ge=-180, le=180, description="Longitude coordinate (-180 to 180)"
+    longitude: Optional[float] = Field(
+        None,
+        ge=-180,
+        le=180,
+        description="Longitude coordinate (-180 to 180). Required if region_id not provided.",
     )
     region_name: str = Field(..., description="Human-readable region name")
+    region_id: Optional[str] = Field(
+        None,
+        description="Region identifier (e.g., 'us_mn', 'city_nyc'). If provided, overrides latitude/longitude.",
+    )
     days_back: int = Field(
         default=30, ge=7, le=365, description="Number of historical days to use"
     )
@@ -530,9 +593,67 @@ class ForecastRequest(BaseModel):
     )
 
 
+class SubIndices(BaseModel):
+    """Sub-indices breakdown for a behavior index value."""
+
+    economic_stress: float
+    environmental_stress: float
+    mobility_activity: float
+    digital_attention: float
+    public_health_stress: float
+
+
+class SubIndexContribution(BaseModel):
+    """Contribution of a sub-index to the behavior index."""
+
+    value: float
+    weight: float
+    contribution: float
+
+
+class SubIndexContributions(BaseModel):
+    """Contributions of all sub-indices to the behavior index."""
+
+    economic_stress: SubIndexContribution
+    environmental_stress: SubIndexContribution
+    mobility_activity: SubIndexContribution
+    digital_attention: SubIndexContribution
+    public_health_stress: SubIndexContribution
+
+
+class SubIndexComponent(BaseModel):
+    """Component-level detail for a sub-index."""
+
+    id: str
+    label: str
+    value: float
+    weight: float
+    source: str
+
+
+class SubIndexDetailsItem(BaseModel):
+    """Details for a single sub-index including components."""
+
+    value: float
+    components: List[SubIndexComponent]
+
+
+class SubIndexDetails(BaseModel):
+    """Component-level breakdown for all sub-indices."""
+
+    economic_stress: SubIndexDetailsItem
+    environmental_stress: SubIndexDetailsItem
+    mobility_activity: SubIndexDetailsItem
+    digital_attention: SubIndexDetailsItem
+    public_health_stress: SubIndexDetailsItem
+
+
 class ForecastHistoryItem(BaseModel):
     timestamp: str
     behavior_index: float
+    sub_indices: Optional[SubIndices] = None
+    subindex_contributions: Optional[SubIndexContributions] = None
+    subindex_details: Optional[SubIndexDetails] = None
 
 
 class ForecastItem(BaseModel):
@@ -540,6 +661,34 @@ class ForecastItem(BaseModel):
     prediction: float
     lower_bound: float
     upper_bound: float
+    sub_indices: Optional[SubIndices] = None
+    subindex_contributions: Optional[SubIndexContributions] = None
+    subindex_details: Optional[SubIndexDetails] = None
+
+
+class ComponentExplanation(BaseModel):
+    """Component-level explanation."""
+
+    id: str
+    label: str
+    direction: str  # "up", "down", or "neutral"
+    importance: str  # "high", "medium", or "low"
+    explanation: str
+
+
+class SubIndexExplanation(BaseModel):
+    """Explanation for a single sub-index."""
+
+    level: str  # "low", "moderate", or "high"
+    reason: str
+    components: List[ComponentExplanation]
+
+
+class Explanations(BaseModel):
+    """Structured explanations for a forecast."""
+
+    summary: str
+    subindices: Dict[str, SubIndexExplanation]
 
 
 class ForecastResult(BaseModel):
@@ -547,6 +696,8 @@ class ForecastResult(BaseModel):
     forecast: List[ForecastItem]
     sources: List[str]
     metadata: Dict[str, Any]
+    explanation: Optional[str] = None
+    explanations: Optional[Explanations] = None
 
 
 @app.get("/api/forecasts", response_model=ForecastResponse)
@@ -612,6 +763,79 @@ def get_cache_status() -> CacheStatus:
     )
 
 
+def _generate_explanation(
+    behavior_index: float,
+    sub_indices: Optional[SubIndices],
+    sources: List[str],
+) -> str:
+    """
+    Generate human-readable explanation of behavior index.
+
+    Args:
+        behavior_index: Current behavior index value (0.0-1.0)
+        sub_indices: Sub-index breakdown if available
+        sources: List of data sources used
+
+    Returns:
+        Human-readable explanation string
+    """
+    if behavior_index < 0.3:
+        level = "low"
+        interpretation = "stable, normal behavioral patterns"
+    elif behavior_index < 0.6:
+        level = "moderate"
+        interpretation = "mixed signals or partial disruption"
+    else:
+        level = "high"
+        interpretation = "significant behavioral stress or disruption"
+
+    explanation = f"Behavior Index is {level} ({behavior_index:.2f}), indicating {interpretation}."
+
+    if sub_indices:
+        # Identify primary drivers
+        drivers = []
+        if sub_indices.economic_stress > 0.6:
+            drivers.append("elevated economic stress")
+        if sub_indices.environmental_stress > 0.6:
+            drivers.append("environmental stress")
+        if sub_indices.mobility_activity < 0.4:
+            drivers.append("reduced mobility activity")
+        if sub_indices.digital_attention > 0.6:
+            drivers.append("high digital attention")
+        if sub_indices.public_health_stress > 0.6:
+            drivers.append("public health stress")
+
+        if drivers:
+            explanation += f" Primary drivers: {', '.join(drivers)}."
+        else:
+            explanation += " All sub-indices are within normal ranges."
+
+    if sources:
+        explanation += f" Data sources: {', '.join(sources)}."
+
+    return explanation
+
+
+def _extract_sub_indices(record: Dict[str, Any]) -> Optional[SubIndices]:
+    """Extract sub-indices from a record if available."""
+    sub_index_keys = [
+        "economic_stress",
+        "environmental_stress",
+        "mobility_activity",
+        "digital_attention",
+        "public_health_stress",
+    ]
+    if all(key in record for key in sub_index_keys):
+        return SubIndices(
+            economic_stress=float(record["economic_stress"]),
+            environmental_stress=float(record["environmental_stress"]),
+            mobility_activity=float(record["mobility_activity"]),
+            digital_attention=float(record["digital_attention"]),
+            public_health_stress=float(record["public_health_stress"]),
+        )
+    return None
+
+
 @app.post("/api/forecast", response_model=ForecastResult, tags=["forecasting"])
 def create_forecast(payload: ForecastRequest) -> ForecastResult:
     """
@@ -621,20 +845,368 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
     human behavioral convergence using exponential smoothing model.
 
     Args:
-        payload: ForecastRequest with latitude, longitude, region_name, etc.
+        payload: ForecastRequest with latitude/longitude or region_id, region_name, etc.
 
     Returns:
         ForecastResult with history, forecast, sources, and metadata
+        Includes sub-indices breakdown for each history and forecast item if available.
     """
+    # Resolve coordinates from region_id if provided
+    latitude = payload.latitude
+    longitude = payload.longitude
+
+    if payload.region_id:
+        region = get_region_by_id(payload.region_id)
+        if region is None:
+            raise HTTPException(
+                status_code=404, detail=f"Region not found: {payload.region_id}"
+            )
+        latitude = region.latitude
+        longitude = region.longitude
+        # Optionally update region_name from region if not explicitly provided
+        if not payload.region_name or payload.region_name == "":
+            payload.region_name = region.name
+    elif latitude is None or longitude is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Either region_id or both latitude and longitude must be provided",
+        )
+
     forecaster = BehavioralForecaster()
     result = forecaster.forecast(
-        latitude=payload.latitude,
-        longitude=payload.longitude,
+        latitude=latitude,
+        longitude=longitude,
         region_name=payload.region_name,
         days_back=payload.days_back,
         forecast_horizon=payload.forecast_horizon,
     )
-    return ForecastResult(**result)
+
+    # Get behavior index computer for contribution analysis and component details
+    index_computer = BehaviorIndexComputer()
+
+    # Get harmonized DataFrame from metadata if available (for component extraction)
+    harmonized_df = None
+    # Get a reference to the actual metadata dict (not a copy)
+    if "metadata" in result:
+        result_metadata = result["metadata"]
+        if "_harmonized_df" in result_metadata:
+            harmonized_df = result_metadata["_harmonized_df"]
+            # Remove from metadata immediately (it's not JSON-serializable)
+            del result_metadata["_harmonized_df"]
+    else:
+        result_metadata = {}
+
+    # Enrich history and forecast with sub-indices, contributions, and component details
+    history_records = []
+    latest_behavior_index = 0.5
+    latest_sub_indices = None
+
+    for idx, record in enumerate(result.get("history", [])):
+        sub_indices = _extract_sub_indices(record)
+        # Compute contributions if we have sub-indices
+        contributions = None
+        subindex_details = None
+        if sub_indices:
+            import pandas as pd
+
+            row = pd.Series(
+                {
+                    "behavior_index": float(record["behavior_index"]),
+                    "economic_stress": sub_indices.economic_stress,
+                    "environmental_stress": sub_indices.environmental_stress,
+                    "mobility_activity": sub_indices.mobility_activity,
+                    "digital_attention": sub_indices.digital_attention,
+                    "public_health_stress": sub_indices.public_health_stress,
+                }
+            )
+            contrib_dict = index_computer.get_contribution_analysis(row)
+            contributions = SubIndexContributions(
+                economic_stress=SubIndexContribution(**contrib_dict["economic_stress"]),
+                environmental_stress=SubIndexContribution(
+                    **contrib_dict["environmental_stress"]
+                ),
+                mobility_activity=SubIndexContribution(
+                    **contrib_dict["mobility_activity"]
+                ),
+                digital_attention=SubIndexContribution(
+                    **contrib_dict["digital_attention"]
+                ),
+                public_health_stress=SubIndexContribution(
+                    **contrib_dict["public_health_stress"]
+                ),
+            )
+
+            # Extract component details if harmonized DataFrame is available
+            if harmonized_df is not None and len(harmonized_df) > idx:
+                try:
+                    details_dict = index_computer.get_subindex_details(
+                        harmonized_df, idx
+                    )
+                    subindex_details = SubIndexDetails(
+                        economic_stress=SubIndexDetailsItem(
+                            value=details_dict["economic_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["economic_stress"][
+                                    "components"
+                                ]
+                            ],
+                        ),
+                        environmental_stress=SubIndexDetailsItem(
+                            value=details_dict["environmental_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["environmental_stress"][
+                                    "components"
+                                ]
+                            ],
+                        ),
+                        mobility_activity=SubIndexDetailsItem(
+                            value=details_dict["mobility_activity"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["mobility_activity"][
+                                    "components"
+                                ]
+                            ],
+                        ),
+                        digital_attention=SubIndexDetailsItem(
+                            value=details_dict["digital_attention"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["digital_attention"][
+                                    "components"
+                                ]
+                            ],
+                        ),
+                        public_health_stress=SubIndexDetailsItem(
+                            value=details_dict["public_health_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["public_health_stress"][
+                                    "components"
+                                ]
+                            ],
+                        ),
+                    )
+                except (IndexError, KeyError, AttributeError) as e:
+                    # If extraction fails, log but don't break the response
+                    logger.warning("Failed to extract subindex details", error=str(e))
+
+        history_item = ForecastHistoryItem(
+            timestamp=str(record["timestamp"]),
+            behavior_index=float(record["behavior_index"]),
+            sub_indices=sub_indices,
+            subindex_contributions=contributions,
+            subindex_details=subindex_details,
+        )
+        history_records.append(history_item)
+        # Track latest values for explanation
+        latest_behavior_index = float(record["behavior_index"])
+        latest_sub_indices = history_item.sub_indices
+
+    forecast_records = []
+    for record in result.get("forecast", []):
+        sub_indices = _extract_sub_indices(record)
+        # Compute contributions for forecast items if we have sub-indices
+        contributions = None
+        if sub_indices:
+            import pandas as pd
+
+            # Use prediction as behavior_index for forecast items
+            row = pd.Series(
+                {
+                    "behavior_index": float(
+                        record.get("prediction", record.get("behavior_index", 0.5))
+                    ),
+                    "economic_stress": sub_indices.economic_stress,
+                    "environmental_stress": sub_indices.environmental_stress,
+                    "mobility_activity": sub_indices.mobility_activity,
+                    "digital_attention": sub_indices.digital_attention,
+                    "public_health_stress": sub_indices.public_health_stress,
+                }
+            )
+            contrib_dict = index_computer.get_contribution_analysis(row)
+            contributions = SubIndexContributions(
+                economic_stress=SubIndexContribution(**contrib_dict["economic_stress"]),
+                environmental_stress=SubIndexContribution(
+                    **contrib_dict["environmental_stress"]
+                ),
+                mobility_activity=SubIndexContribution(
+                    **contrib_dict["mobility_activity"]
+                ),
+                digital_attention=SubIndexContribution(
+                    **contrib_dict["digital_attention"]
+                ),
+                public_health_stress=SubIndexContribution(
+                    **contrib_dict["public_health_stress"]
+                ),
+            )
+
+        forecast_item = ForecastItem(
+            timestamp=str(record["timestamp"]),
+            prediction=float(record["prediction"]),
+            lower_bound=float(record["lower_bound"]),
+            upper_bound=float(record["upper_bound"]),
+            sub_indices=sub_indices,
+            subindex_contributions=contributions,
+        )
+        forecast_records.append(forecast_item)
+
+    # Generate structured explanations
+    explanations_obj = None
+    if latest_sub_indices:
+        # Convert sub_indices to dict
+        sub_indices_dict = {
+            "economic_stress": latest_sub_indices.economic_stress,
+            "environmental_stress": latest_sub_indices.environmental_stress,
+            "mobility_activity": latest_sub_indices.mobility_activity,
+            "digital_attention": latest_sub_indices.digital_attention,
+            "public_health_stress": latest_sub_indices.public_health_stress,
+        }
+
+        # Get subindex details for latest record if available
+        subindex_details_dict = None
+        if history_records and history_records[-1].subindex_details:
+            details = history_records[-1].subindex_details
+            subindex_details_dict = {
+                "economic_stress": {
+                    "value": details.economic_stress.value,
+                    "components": [
+                        {
+                            "id": c.id,
+                            "label": c.label,
+                            "value": c.value,
+                            "weight": c.weight,
+                            "source": c.source,
+                        }
+                        for c in details.economic_stress.components
+                    ],
+                },
+                "environmental_stress": {
+                    "value": details.environmental_stress.value,
+                    "components": [
+                        {
+                            "id": c.id,
+                            "label": c.label,
+                            "value": c.value,
+                            "weight": c.weight,
+                            "source": c.source,
+                        }
+                        for c in details.environmental_stress.components
+                    ],
+                },
+                "mobility_activity": {
+                    "value": details.mobility_activity.value,
+                    "components": [
+                        {
+                            "id": c.id,
+                            "label": c.label,
+                            "value": c.value,
+                            "weight": c.weight,
+                            "source": c.source,
+                        }
+                        for c in details.mobility_activity.components
+                    ],
+                },
+                "digital_attention": {
+                    "value": details.digital_attention.value,
+                    "components": [
+                        {
+                            "id": c.id,
+                            "label": c.label,
+                            "value": c.value,
+                            "weight": c.weight,
+                            "source": c.source,
+                        }
+                        for c in details.digital_attention.components
+                    ],
+                },
+                "public_health_stress": {
+                    "value": details.public_health_stress.value,
+                    "components": [
+                        {
+                            "id": c.id,
+                            "label": c.label,
+                            "value": c.value,
+                            "weight": c.weight,
+                            "source": c.source,
+                        }
+                        for c in details.public_health_stress.components
+                    ],
+                },
+            }
+
+        try:
+            explanations_dict = generate_explanation(
+                behavior_index=latest_behavior_index,
+                sub_indices=sub_indices_dict,
+                subindex_details=subindex_details_dict,
+                region_name=payload.region_name,
+            )
+
+            # Convert to Pydantic models
+            explanations_obj = Explanations(
+                summary=explanations_dict["summary"],
+                subindices={
+                    key: SubIndexExplanation(
+                        level=val["level"],
+                        reason=val["reason"],
+                        components=[
+                            ComponentExplanation(**comp) for comp in val["components"]
+                        ],
+                    )
+                    for key, val in explanations_dict["subindices"].items()
+                },
+            )
+        except Exception as e:
+            # If explanation generation fails, log but don't break the response
+            logger.warning("Failed to generate explanations", error=str(e))
+
+    # Generate legacy text explanation (for backward compatibility)
+    explanation = _generate_explanation(
+        latest_behavior_index, latest_sub_indices, result.get("sources", [])
+    )
+
+    # Prepare metadata for response (remove non-serializable items like DataFrames)
+    # Use the already-cleaned metadata from result_metadata (DataFrame already removed)
+    metadata = result_metadata.copy()
+    metadata["explanation"] = explanation
+
+    # Store forecast in database (if available)
+    try:
+        db = ForecastDB()
+        db.save_forecast(
+            region_name=payload.region_name,
+            latitude=latitude,
+            longitude=longitude,
+            model_name=metadata.get("model_type", "ExponentialSmoothing"),
+            behavior_index=latest_behavior_index,
+            sub_indices=(
+                {
+                    "economic_stress": latest_sub_indices.economic_stress,
+                    "environmental_stress": latest_sub_indices.environmental_stress,
+                    "mobility_activity": latest_sub_indices.mobility_activity,
+                    "digital_attention": latest_sub_indices.digital_attention,
+                    "public_health_stress": latest_sub_indices.public_health_stress,
+                }
+                if latest_sub_indices
+                else None
+            ),
+            metadata=metadata,
+        )
+    except Exception as e:
+        # Database is optional, log but don't fail
+        logger.warning("Failed to save forecast to database", error=str(e))
+
+    return ForecastResult(
+        history=history_records,
+        forecast=forecast_records,
+        sources=result.get("sources", []),
+        metadata=metadata,
+        explanation=explanation,
+        explanations=explanations_obj,
+    )
 
 
 if __name__ == "__main__":

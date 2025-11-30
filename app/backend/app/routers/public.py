@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Public data endpoints for Behavior Convergence Explorer."""
 import json
 from datetime import datetime, timedelta

@@ -10,6 +10,16 @@ LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/t
 
 ---
 
+## Geographic Coverage
+
+Environmental and economic signals are available for all configured regions, including:
+- Global cities (New York City, London, Tokyo)
+- All 50 US states plus District of Columbia
+
+See `docs/REGIONS.md` for the complete list of supported regions.
+
+---
+
 ## Current Data Sources
 
 ### 1. Economic Indicators (Market Sentiment)
@@ -211,19 +221,233 @@ All data sources must:
 
 ---
 
-## Future Data Sources (Proposed)
+## Planned Data Sources (High Priority)
 
-### 6. Social Media Sentiment (Planned)
+### 6. FRED Economic Indicators
+
+**Status:** Implemented (requires API key configuration)
+
+**Implementation:**
+- **Connector:** `app/services/ingestion/economic_fred.py` → `FREDEconomicFetcher`
+- **API:** FRED (Federal Reserve Economic Data) API
+- **Base URL:** https://api.stlouisfed.org/fred/
+- **Authentication:** API key required (free registration at https://fred.stlouisfed.org/docs/api/api_key.html)
+- **Rate Limits:** 120 requests per 120 seconds
+- **Update Frequency:** Varies by series (daily, weekly, monthly)
+
+**Available Indicators:**
+- **Consumer Sentiment** (UMCSENT): University of Michigan Consumer Sentiment Index (monthly)
+- **Unemployment Rate** (UNRATE): U.S. national unemployment rate (monthly)
+- **Initial Jobless Claims** (ICSA): Weekly initial jobless claims (weekly)
+
+**Configuration:**
+- Set `FRED_API_KEY` environment variable with your FRED API key
+
+**Usage:**
+```python
+from app.services.ingestion.economic_fred import FREDEconomicFetcher
+
+fetcher = FREDEconomicFetcher()
+consumer_sentiment = fetcher.fetch_consumer_sentiment(days_back=90)
+unemployment = fetcher.fetch_unemployment_rate(days_back=90)
+jobless_claims = fetcher.fetch_jobless_claims(days_back=30)
+```
+
+**Output Schema:**
+- All methods return DataFrame with columns: `['timestamp', '<indicator_name>']`
+- Values normalized to [0.0, 1.0] where 1.0 = maximum stress/uncertainty
+- Returns empty DataFrame if API key not set or on error
+
+**Notes:**
+- Handles missing values gracefully (FRED uses "." for missing data)
+- Caches responses for 60 minutes by default
+- Returns empty DataFrame on API errors (graceful degradation)
+
+---
+
+### 7. Wikipedia Pageviews (Digital Attention)
+
+**Status:** Connector exists, integration pending
+
+**Implementation:**
+- **Connector:** `connectors/wiki_pageviews.py` → `WikiPageviewsSync`
+- **Source:** Wikimedia pageviews dumps (https://dumps.wikimedia.org/other/pageviews/)
+- **Authentication:** None required
+- **Update Frequency:** Daily (hourly dumps available)
+- **Data Granularity:** Hourly pageview counts by project (language)
+
+**Usage:**
+```python
+from connectors.wiki_pageviews import WikiPageviewsSync
+
+connector = WikiPageviewsSync(date="2025-01-15", max_hours=24)
+df = connector.pull()  # Returns: ['project', 'hour', 'views']
+```
+
+**Integration Notes:**
+- Currently used by `/api/public/wiki/latest` endpoint
+- Needs adapter to convert to forecasting pipeline format
+- Should aggregate by day and normalize to attention index
+
+---
+
+### 8. GDELT Media Tone (Digital Attention)
+
+**Status:** Planned
+
+**Implementation:**
+- **Connector:** To be implemented in `app/services/ingestion/digital_gdelt.py`
+- **API:** GDELT Project API (https://api.gdeltproject.org/api/v2/)
+- **Authentication:** None required for basic queries
+- **Rate Limits:** Generous free tier
+- **Update Frequency:** Daily
+
+**Planned Indicators:**
+- **Media Tone Score:** Average tone of global media coverage (-100 to +100, normalized)
+- **Event Counts:** Daily event counts by type (conflict, disaster, etc.)
+
+**Configuration:**
+- No API key required for basic access
+- May require API key for advanced features
+
+**Output Schema:**
+- DataFrame with columns: `['timestamp', 'tone_score', 'event_count']`
+- Values normalized to [0.0, 1.0] where 1.0 = maximum attention/stress
+
+---
+
+### 9. Our World in Data (Public Health)
+
+**Status:** Planned
+
+**Implementation:**
+- **Connector:** To be implemented in `app/services/ingestion/health_owid.py`
+- **Source:** OWID datasets (https://github.com/owid/owid-datasets)
+- **Format:** CSV files with country-level aggregates
+- **Authentication:** None required
+- **Update Frequency:** Daily
+
+**Planned Indicators:**
+- **Infectious Disease Incidence:** Cases per 100k population
+- **Excess Mortality:** Percentage above baseline
+- **Vaccination Rates:** Percentage vaccinated
+- **Hospitalization Rates:** Hospitalizations per 100k
+
+**Output Schema:**
+- DataFrame with columns: `['timestamp', 'location', '<indicator_name>']`
+- Values normalized to [0.0, 1.0] where 1.0 = maximum health stress
+
+**Privacy:** Uses only coarse aggregates (country-level, no individual data)
+
+---
+
+### 10. GDELT Events (Global Event Signals)
+
+**Status:** Active and fully implemented
+
+**Implementation:**
+- **Connector:** `app/services/ingestion/gdelt_events.py` → `GDELTEventsFetcher`
+- **API:** GDELT Project API (https://api.gdeltproject.org/api/v2/)
+- **Authentication:** None required (public API)
+- **Rate Limits:** Generous free tier (no documented strict limits)
+- **Update Frequency:** Daily (real-time monitoring)
+- **Data Granularity:** Daily aggregated tone scores and event counts
+- **Output:** Normalized tone score (0.0-1.0) and event count indices
+
+**Usage:**
+```python
+from app.services.ingestion import GDELTEventsFetcher
+fetcher = GDELTEventsFetcher()
+tone_data = fetcher.fetch_event_tone(days_back=30)
+event_data = fetcher.fetch_event_count(days_back=30)
+```
+
+**Notes:**
+- Provides global media tone and event volume signals
+- Integrated into digital_attention sub-index
+- Returns empty DataFrame on API errors (graceful degradation)
+- Caches responses for 60 minutes by default
+- Appears in forecast explanations as "GDELT Tone" component when available
+- **Live Monitoring:** Participates in live monitoring event detection (digital_attention_spike flag)
+
+---
+
+### 11. Our World in Data (Public Health Indicators)
+
+**Status:** Active and fully implemented
+
+**Implementation:**
+- **Connector:** `app/services/ingestion/health_owid.py` → `OWIDHealthFetcher`
+- **Source:** OWID datasets (https://github.com/owid/owid-datasets)
+- **Format:** CSV files with country-level aggregates
+- **Authentication:** None required
+- **Update Frequency:** Daily
+- **Data Granularity:** Country-level daily aggregates
+- **Output:** Normalized health stress index (0.0-1.0)
+
+**Usage:**
+```python
+from app.services.ingestion import OWIDHealthFetcher
+fetcher = OWIDHealthFetcher()
+health_data = fetcher.fetch_health_stress_index(country="United States", days_back=90)
+excess_mortality = fetcher.fetch_excess_mortality(country="United States", days_back=90)
+```
+
+**Notes:**
+- Provides excess mortality and health stress indicators
+- Integrated into public_health_stress sub-index
+- Uses only coarse aggregates (country-level, no individual data)
+- Returns empty DataFrame on API errors (graceful degradation)
+- Caches responses for 24 hours by default
+- Appears in forecast explanations as "OWID Health Stress" component when available
+- **Live Monitoring:** Participates in live monitoring event detection (health_stress_elevated flag)
+
+---
+
+### 12. USGS Earthquake Feed (Environmental Hazards)
+
+**Status:** Active and fully implemented
+
+**Implementation:**
+- **Connector:** `app/services/ingestion/usgs_earthquakes.py` → `USGSEarthquakeFetcher`
+- **API:** USGS Earthquake API (https://earthquake.usgs.gov/fdsnws/event/1/)
+- **Authentication:** None required (public API)
+- **Rate Limits:** No documented limits
+- **Update Frequency:** Real-time
+- **Data Granularity:** Daily aggregated intensity scores
+- **Output:** Normalized earthquake intensity index (0.0-1.0)
+
+**Usage:**
+```python
+from app.services.ingestion import USGSEarthquakeFetcher
+fetcher = USGSEarthquakeFetcher()
+earthquake_data = fetcher.fetch_earthquake_intensity(days_back=30, min_magnitude=4.0)
+```
+
+**Notes:**
+- Provides global earthquake intensity signals
+- Integrated into environmental_stress sub-index
+- Aggregates earthquakes by date with magnitude-weighted intensity
+- Returns empty DataFrame on API errors (graceful degradation)
+- Caches responses for 60 minutes by default
+- Appears in forecast explanations as "Earthquake Intensity" component when available
+- **Live Monitoring:** Participates in live monitoring event detection (environmental_shock flag)
+
+---
+
+## Future Data Sources (Research Phase)
+
+### 13. Social Media Sentiment (Idea)
 - **Source:** Public sentiment APIs or aggregated social media data
 - **Status:** Research phase
-- **Considerations:** Privacy, licensing, rate limits
+- **Considerations:** Privacy, licensing, rate limits, data quality
 
-### 7. Economic Indicators (Extended) (Planned)
+### 14. Additional Economic Indicators (Idea)
 - **Source:** Additional market indices, commodity prices, currency exchange rates
 - **Status:** Research phase
 - **Considerations:** Data availability, relevance to behavioral forecasting
 
-### 8. News Headlines / Media Attention (Planned)
+### 15. News Headlines / Media Attention (Idea)
 - **Source:** News API aggregators with public access
 - **Status:** Research phase
 - **Considerations:** Licensing, rate limits, content filtering

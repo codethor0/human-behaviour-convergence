@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Integration tests for data connectors and harmonization pipeline."""
 from unittest.mock import Mock, patch
 

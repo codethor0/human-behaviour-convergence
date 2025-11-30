@@ -20,14 +20,14 @@ docker compose up -d
 ```
 
 This will start:
-- **Backend API** on http://localhost:8000
-- **Frontend UI** on http://localhost:3000
+- **Backend API** on http://localhost:8100
+- **Frontend UI** on http://localhost:3100
 
 ### Access the Application
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
+- Frontend: http://localhost:3100
+- Backend API: http://localhost:8100
+- API Documentation: http://localhost:8100/docs
 
 ### Stop Services
 
@@ -46,6 +46,7 @@ The backend service runs the FastAPI application.
 - `CACHE_TTL_MINUTES`: Cache TTL in minutes (default: 5)
 - `LOG_LEVEL`: Logging level (default: INFO)
 - `ALLOWED_ORIGINS`: CORS allowed origins (comma-separated)
+- `FRED_API_KEY`: Optional FRED API key for economic indicators (get free key at https://fred.stlouisfed.org/docs/api/api_key.html)
 - `MOBILITY_API_ENDPOINT`: Optional mobility API endpoint
 - `MOBILITY_API_KEY`: Optional mobility API key
 - `PUBLIC_HEALTH_API_ENDPOINT`: Optional public health API endpoint
@@ -160,19 +161,13 @@ docker compose build frontend
 
 ## Troubleshooting
 
-### Port Already in Use
+### Port Configuration
 
-If ports 8000 or 3000 are already in use, modify `docker-compose.yml` to use different ports:
+The default ports are configured to avoid conflicts:
+- Backend: 8001 (mapped from container port 8000)
+- Frontend: 3001 (mapped from container port 3000)
 
-```yaml
-services:
-  backend:
-    ports:
-      - "8001:8000"  # Change host port
-  frontend:
-    ports:
-      - "3001:3000"  # Change host port
-```
+If you need to use different ports, modify `docker-compose.yml` accordingly.
 
 ### Frontend Cannot Connect to Backend
 

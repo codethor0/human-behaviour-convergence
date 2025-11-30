@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Mobility data ingestion using public APIs for activity pattern analysis."""
 import os
 from datetime import datetime, timedelta

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Search trends data ingestion using public APIs for digital attention analysis."""
 import os
 from datetime import datetime, timedelta

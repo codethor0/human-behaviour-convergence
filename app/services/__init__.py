@@ -1,2 +1,2 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Services module for data ingestion and processing."""

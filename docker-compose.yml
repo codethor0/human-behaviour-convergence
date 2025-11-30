@@ -5,20 +5,23 @@ services:
       dockerfile: Dockerfile
       target: runtime
     ports:
-      - "8000:8000"
+      - "8100:8000"
     volumes:
       - .:/app
+      - ./data:/app/data
     environment:
       - CACHE_MAX_SIZE=100
       - CACHE_TTL_MINUTES=5
       - LOG_LEVEL=INFO
-      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://frontend:3000
+      - ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100,http://frontend:3000
+      - FRED_API_KEY=${FRED_API_KEY:-}
       - MOBILITY_API_ENDPOINT=${MOBILITY_API_ENDPOINT:-}
       - MOBILITY_API_KEY=${MOBILITY_API_KEY:-}
       - PUBLIC_HEALTH_API_ENDPOINT=${PUBLIC_HEALTH_API_ENDPOINT:-}
       - PUBLIC_HEALTH_API_KEY=${PUBLIC_HEALTH_API_KEY:-}
       - SEARCH_TRENDS_API_ENDPOINT=${SEARCH_TRENDS_API_ENDPOINT:-}
       - SEARCH_TRENDS_API_KEY=${SEARCH_TRENDS_API_KEY:-}
+      - HBC_DB_PATH=${HBC_DB_PATH:-/app/data/hbc.db}
     command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -32,14 +35,15 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "3000:3000"
+      - "3100:3000"
     environment:
-      - NEXT_PUBLIC_API_BASE=http://localhost:8000
+      - NEXT_PUBLIC_API_BASE=http://localhost:8100
     depends_on:
       backend:
         condition: service_healthy
     volumes:
       - ./app/frontend:/app/app/frontend
+      - ./data:/app/data
       - /app/app/frontend/node_modules
       - /app/app/frontend/.next
 

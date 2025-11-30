@@ -1,9 +1,11 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Data harmonization and merging for multi-vector behavioral forecasting."""
 from typing import Optional
 
 import pandas as pd
 import structlog
+
+from app.core.behavior_index import BehaviorIndexComputer
 
 logger = structlog.get_logger("ingestion.processor")
 
@@ -17,9 +19,17 @@ class DataHarmonizer:
     public health, and mobility data sources.
     """
 
-    def __init__(self):
-        """Initialize the data harmonizer."""
-        pass
+    def __init__(self, behavior_index_computer: Optional[BehaviorIndexComputer] = None):
+        """
+        Initialize the data harmonizer.
+
+        Args:
+            behavior_index_computer: Optional BehaviorIndexComputer instance.
+                If None, creates a new one with default weights.
+        """
+        self.behavior_index_computer = (
+            behavior_index_computer or BehaviorIndexComputer()
+        )
 
     def harmonize(
         self,
@@ -28,6 +38,12 @@ class DataHarmonizer:
         search_data: Optional[pd.DataFrame] = None,
         health_data: Optional[pd.DataFrame] = None,
         mobility_data: Optional[pd.DataFrame] = None,
+        fred_consumer_sentiment: Optional[pd.DataFrame] = None,
+        fred_unemployment: Optional[pd.DataFrame] = None,
+        fred_jobless_claims: Optional[pd.DataFrame] = None,
+        gdelt_tone: Optional[pd.DataFrame] = None,
+        owid_health: Optional[pd.DataFrame] = None,
+        usgs_earthquakes: Optional[pd.DataFrame] = None,
         forward_fill_days: int = 2,
     ) -> pd.DataFrame:
         """
@@ -46,19 +62,16 @@ class DataHarmonizer:
         Returns:
             Merged DataFrame with columns:
             ['timestamp', 'stress_index', 'discomfort_score', 'search_interest_score',
-             'health_risk_index', 'mobility_index', 'behavior_index']
+             'health_risk_index', 'mobility_index',
+             'economic_stress', 'environmental_stress', 'mobility_activity',
+             'digital_attention', 'public_health_stress', 'behavior_index']
 
-            behavior_index formula (weights sum to 1.0):
-            (inverse_stress * 0.25) + (comfort * 0.25) + (attention_score * 0.15) +
-            (inverse_health_burden * 0.15) + (mobility_activity * 0.10) + (seasonality * 0.10)
+            Behavior Index is computed using BehaviorIndexComputer which produces:
+            - Sub-indices: economic_stress, environmental_stress, mobility_activity,
+              digital_attention, public_health_stress
+            - Overall behavior_index: weighted combination of sub-indices
 
-            Where:
-            - inverse_stress = 1 - stress_index
-            - comfort = 1 - discomfort_score
-            - attention_score = search_interest_score (if available, else 0.5)
-            - inverse_health_burden = 1 - health_risk_index (if available, else 0.5)
-            - mobility_activity = mobility_index (if available, else 0.5)
-            - seasonality = day_of_year / 365.0
+            See docs/BEHAVIOR_INDEX.md for detailed formula and interpretation.
         """
         # Handle empty DataFrames
         if search_data is None:
@@ -67,6 +80,18 @@ class DataHarmonizer:
             health_data = pd.DataFrame()
         if mobility_data is None:
             mobility_data = pd.DataFrame()
+        if fred_consumer_sentiment is None:
+            fred_consumer_sentiment = pd.DataFrame()
+        if fred_unemployment is None:
+            fred_unemployment = pd.DataFrame()
+        if fred_jobless_claims is None:
+            fred_jobless_claims = pd.DataFrame()
+        if gdelt_tone is None:
+            gdelt_tone = pd.DataFrame()
+        if owid_health is None:
+            owid_health = pd.DataFrame()
+        if usgs_earthquakes is None:
+            usgs_earthquakes = pd.DataFrame()
 
         if (
             market_data.empty
@@ -74,6 +99,12 @@ class DataHarmonizer:
             and search_data.empty
             and health_data.empty
             and mobility_data.empty
+            and fred_consumer_sentiment.empty
+            and fred_unemployment.empty
+            and fred_jobless_claims.empty
+            and gdelt_tone.empty
+            and owid_health.empty
+            and usgs_earthquakes.empty
         ):
             logger.warning("All data sources are empty")
             return pd.DataFrame(
@@ -84,6 +115,11 @@ class DataHarmonizer:
                     "search_interest_score",
                     "health_risk_index",
                     "mobility_index",
+                    "economic_stress",
+                    "environmental_stress",
+                    "mobility_activity",
+                    "digital_attention",
+                    "public_health_stress",
                     "behavior_index",
                 ],
                 dtype=float,
@@ -157,6 +193,61 @@ class DataHarmonizer:
             dataframes.append(mobility_data)
             names.append("mobility")
 
+        # Add FRED data sources
+        if not fred_consumer_sentiment.empty:
+            fred_cs = fred_consumer_sentiment.copy()
+            fred_cs["timestamp"] = pd.to_datetime(fred_cs["timestamp"], utc=True)
+            if fred_cs["timestamp"].dt.tz is not None:
+                fred_cs["timestamp"] = fred_cs["timestamp"].dt.tz_localize(None)
+            fred_cs = fred_cs.set_index("timestamp").sort_index()
+            dataframes.append(fred_cs)
+            names.append("fred_consumer_sentiment")
+
+        if not fred_unemployment.empty:
+            fred_unemp = fred_unemployment.copy()
+            fred_unemp["timestamp"] = pd.to_datetime(fred_unemp["timestamp"], utc=True)
+            if fred_unemp["timestamp"].dt.tz is not None:
+                fred_unemp["timestamp"] = fred_unemp["timestamp"].dt.tz_localize(None)
+            fred_unemp = fred_unemp.set_index("timestamp").sort_index()
+            dataframes.append(fred_unemp)
+            names.append("fred_unemployment")
+
+        if not fred_jobless_claims.empty:
+            fred_jc = fred_jobless_claims.copy()
+            fred_jc["timestamp"] = pd.to_datetime(fred_jc["timestamp"], utc=True)
+            if fred_jc["timestamp"].dt.tz is not None:
+                fred_jc["timestamp"] = fred_jc["timestamp"].dt.tz_localize(None)
+            fred_jc = fred_jc.set_index("timestamp").sort_index()
+            dataframes.append(fred_jc)
+            names.append("fred_jobless_claims")
+
+        if not gdelt_tone.empty:
+            gdelt_df = gdelt_tone.copy()
+            gdelt_df["timestamp"] = pd.to_datetime(gdelt_df["timestamp"], utc=True)
+            if gdelt_df["timestamp"].dt.tz is not None:
+                gdelt_df["timestamp"] = gdelt_df["timestamp"].dt.tz_localize(None)
+            gdelt_df = gdelt_df.set_index("timestamp").sort_index()
+            dataframes.append(gdelt_df)
+            names.append("gdelt_tone")
+
+        if not owid_health.empty:
+            owid_df = owid_health.copy()
+            owid_df["timestamp"] = pd.to_datetime(owid_df["timestamp"], utc=True)
+            if owid_df["timestamp"].dt.tz is not None:
+                owid_df["timestamp"] = owid_df["timestamp"].dt.tz_localize(None)
+            owid_df = owid_df.set_index("timestamp").sort_index()
+            dataframes.append(owid_df)
+            names.append("owid_health")
+
+        if not usgs_earthquakes.empty:
+            usgs_df = usgs_earthquakes.copy()
+            usgs_df["timestamp"] = pd.to_datetime(usgs_df["timestamp"], utc=True)
+            if usgs_df["timestamp"].dt.tz is not None:
+                usgs_df["timestamp"] = usgs_df["timestamp"].dt.tz_localize(None)
+            usgs_df = usgs_df.set_index("timestamp").sort_index()
+            dataframes.append(usgs_df)
+            names.append("usgs_earthquakes")
+
         # Forward-fill market data for weekends (market is closed Sat/Sun)
         if not market_data.empty and forward_fill_days > 0:
             market_daily = market_data.resample("D").last()
@@ -172,22 +263,11 @@ class DataHarmonizer:
         start_date = None
         end_date = None
 
-        # Collect all date ranges from modified dataframes and original variables
+        # Collect all date ranges from indexed dataframes (all are already properly indexed)
         all_date_sources = []
-        if not market_data.empty:
-            all_date_sources.append((market_data.index.min(), market_data.index.max()))
-        if not weather_data.empty:
-            all_date_sources.append(
-                (weather_data.index.min(), weather_data.index.max())
-            )
-        if not search_data.empty:
-            all_date_sources.append((search_data.index.min(), search_data.index.max()))
-        if not health_data.empty:
-            all_date_sources.append((health_data.index.min(), health_data.index.max()))
-        if not mobility_data.empty:
-            all_date_sources.append(
-                (mobility_data.index.min(), mobility_data.index.max())
-            )
+        for df in dataframes:
+            if not df.empty and isinstance(df.index, pd.DatetimeIndex):
+                all_date_sources.append((df.index.min(), df.index.max()))
 
         if all_date_sources:
             start_date = min(ds[0] for ds in all_date_sources)
@@ -203,6 +283,11 @@ class DataHarmonizer:
                     "search_interest_score",
                     "health_risk_index",
                     "mobility_index",
+                    "economic_stress",
+                    "environmental_stress",
+                    "mobility_activity",
+                    "digital_attention",
+                    "public_health_stress",
                     "behavior_index",
                 ],
                 dtype=float,
@@ -242,6 +327,43 @@ class DataHarmonizer:
         else:
             mobility_aligned = pd.DataFrame(index=date_range)
 
+        if not fred_consumer_sentiment.empty:
+            fred_cs_aligned = fred_consumer_sentiment.reindex(date_range)
+        else:
+            fred_cs_aligned = pd.DataFrame(index=date_range)
+
+        if not fred_unemployment.empty:
+            fred_unemp_aligned = fred_unemployment.reindex(date_range)
+        else:
+            fred_unemp_aligned = pd.DataFrame(index=date_range)
+
+        if not fred_jobless_claims.empty:
+            fred_jc_aligned = fred_jobless_claims.reindex(date_range)
+        else:
+            fred_jc_aligned = pd.DataFrame(index=date_range)
+
+        # Reindex new data sources (use indexed versions from dataframes list)
+        if "gdelt_tone" in names:
+            gdelt_idx = names.index("gdelt_tone")
+            gdelt_df = dataframes[gdelt_idx]
+            gdelt_aligned = gdelt_df.reindex(date_range)
+        else:
+            gdelt_aligned = pd.DataFrame(index=date_range)
+
+        if "owid_health" in names:
+            owid_idx = names.index("owid_health")
+            owid_df = dataframes[owid_idx]
+            owid_aligned = owid_df.reindex(date_range)
+        else:
+            owid_aligned = pd.DataFrame(index=date_range)
+
+        if "usgs_earthquakes" in names:
+            usgs_idx = names.index("usgs_earthquakes")
+            usgs_df = dataframes[usgs_idx]
+            usgs_aligned = usgs_df.reindex(date_range)
+        else:
+            usgs_aligned = pd.DataFrame(index=date_range)
+
         # Extract key columns
         market_stress = market_aligned.get(
             "stress_index", pd.Series(index=date_range, dtype=float)
@@ -258,6 +380,24 @@ class DataHarmonizer:
         mobility_activity = mobility_aligned.get(
             "mobility_index", pd.Series(index=date_range, dtype=float)
         )
+        fred_consumer_sentiment_val = fred_cs_aligned.get(
+            "consumer_sentiment", pd.Series(index=date_range, dtype=float)
+        )
+        fred_unemployment_val = fred_unemp_aligned.get(
+            "unemployment_rate", pd.Series(index=date_range, dtype=float)
+        )
+        fred_jobless_claims_val = fred_jc_aligned.get(
+            "jobless_claims", pd.Series(index=date_range, dtype=float)
+        )
+        gdelt_tone_val = gdelt_aligned.get(
+            "tone_score", pd.Series(index=date_range, dtype=float)
+        )
+        owid_health_val = owid_aligned.get(
+            "health_stress_index", pd.Series(index=date_range, dtype=float)
+        )
+        usgs_earthquake_val = usgs_aligned.get(
+            "earthquake_intensity", pd.Series(index=date_range, dtype=float)
+        )
 
         # Create merged DataFrame
         merged = pd.DataFrame(
@@ -268,6 +408,12 @@ class DataHarmonizer:
                 "search_interest_score": search_interest.values,
                 "health_risk_index": health_risk.values,
                 "mobility_index": mobility_activity.values,
+                "fred_consumer_sentiment": fred_consumer_sentiment_val.values,
+                "fred_unemployment": fred_unemployment_val.values,
+                "fred_jobless_claims": fred_jobless_claims_val.values,
+                "gdelt_tone_score": gdelt_tone_val.values,
+                "owid_health_stress": owid_health_val.values,
+                "usgs_earthquake_intensity": usgs_earthquake_val.values,
             }
         )
 
@@ -287,43 +433,27 @@ class DataHarmonizer:
         merged["mobility_index"] = merged["mobility_index"].interpolate(
             method="linear", limit_direction="both"
         )
-
-        # Calculate derived features for behavior_index
-        # Inverse of stress (low stress = high activity)
-        stress_inv = 1.0 - merged["stress_index"].fillna(0.5)
-
-        # Comfort = 1 - discomfort (low discomfort = high comfort)
-        comfort = 1.0 - merged["discomfort_score"].fillna(0.5)
-
-        # Attention score from search trends (already normalized)
-        attention_score = merged["search_interest_score"].fillna(0.5)
-
-        # Inverse health burden (low risk = high activity)
-        inverse_health_burden = 1.0 - merged["health_risk_index"].fillna(0.5)
-
-        # Mobility activity (already normalized)
-        mobility_activity = merged["mobility_index"].fillna(0.5)
-
-        # Seasonality component (day of year normalized to 0-1)
-        merged["day_of_year"] = pd.to_datetime(merged["timestamp"]).dt.dayofyear
-        seasonality = (merged["day_of_year"] / 365.0).values
-
-        # Calculate behavior_index with updated formula
-        # Weights: stress_inv=0.25, comfort=0.25, attention=0.15, health=0.15, mobility=0.10, seasonality=0.10
-        behavior_index = (
-            (stress_inv * 0.25)
-            + (comfort * 0.25)
-            + (attention_score * 0.15)
-            + (inverse_health_burden * 0.15)
-            + (mobility_activity * 0.10)
-            + (seasonality * 0.10)
+        # FRED indicators are monthly/weekly, so forward-fill is more appropriate
+        merged["fred_consumer_sentiment"] = merged["fred_consumer_sentiment"].ffill(
+            limit=90
+        )  # Forward-fill up to 90 days
+        merged["fred_unemployment"] = merged["fred_unemployment"].ffill(limit=90)
+        merged["fred_jobless_claims"] = merged["fred_jobless_claims"].ffill(
+            limit=30
+        )  # Weekly data
+        # New data sources: interpolate continuous signals
+        merged["gdelt_tone_score"] = merged["gdelt_tone_score"].interpolate(
+            method="linear", limit_direction="both"
         )
+        merged["owid_health_stress"] = merged["owid_health_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["usgs_earthquake_intensity"] = merged[
+            "usgs_earthquake_intensity"
+        ].interpolate(method="linear", limit_direction="both")
 
-        # Clip to valid range [0.0, 1.0]
-        merged["behavior_index"] = behavior_index.clip(0.0, 1.0)
-
-        # Drop intermediate columns
-        merged = merged.drop(columns=["day_of_year"])
+        # Compute behavior index and sub-indices using BehaviorIndexComputer
+        merged = self.behavior_index_computer.compute_behavior_index(merged)
 
         # Reset index
         merged = merged.reset_index(drop=True)

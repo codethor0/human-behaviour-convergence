@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Public health data ingestion using public APIs for health indicator analysis."""
 import os
 from datetime import datetime, timedelta

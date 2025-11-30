@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """API routers for Behavior Convergence API."""
 from . import forecasting, public
 

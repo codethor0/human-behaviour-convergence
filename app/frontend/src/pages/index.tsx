@@ -11,13 +11,20 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
+    const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
     Promise.all([
-      fetch(`${base}/api/forecasts`).then((r) => r.json()),
-      fetch(`${base}/api/metrics`).then((r) => r.json()),
+      fetch(`${base}/api/forecasting/history?limit=10`).then((r) => r.json()).catch(() => []),
+      fetch(`${base}/api/metrics`).then((r) => r.json()).catch(() => ({ data: [] })),
     ])
       .then(([f, m]) => {
-        setForecasts(f.data || []);
+        // Transform historical forecasts to table format
+        const forecastRows = f.map((forecast: any) => ({
+          timestamp: forecast.forecast_date || forecast.timestamp,
+          region: forecast.region_name,
+          behavior_index: forecast.behavior_index?.toFixed(3) || 'N/A',
+          model: forecast.model_type,
+        }));
+        setForecasts(forecastRows);
         setMetrics(m.data || []);
       })
       .catch((e) => setError(String(e)));
@@ -38,6 +45,12 @@ export default function HomePage() {
         <nav style={{ marginBottom: 32, display: 'flex', gap: 16 }}>
           <Link href="/forecast" style={{ textDecoration: 'underline', color: '#0070f3' }}>
             Generate Forecast
+          </Link>
+          <Link href="/playground" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+            Live Playground
+          </Link>
+          <Link href="/live" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+            Live Monitoring
           </Link>
           <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
             Results Dashboard

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Forecasting endpoints for behavioral prediction."""
 import os
 from typing import Any, Dict, List, Optional
@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from app.core.regions import get_all_regions
 
 router = APIRouter(prefix="/api/forecasting", tags=["forecasting"])
 
@@ -28,6 +29,18 @@ class ModelInfo(BaseModel):
     type: str
     parameters: Dict[str, str]
     default_parameters: Dict[str, Any]
+
+
+class RegionInfo(BaseModel):
+    """Information about an available region."""
+
+    id: str
+    name: str
+    country: str
+    region_type: str
+    latitude: float
+    longitude: float
+    region_group: Optional[str] = None
 
 
 @router.get("/data-sources", response_model=List[DataSourceInfo])
@@ -98,6 +111,29 @@ def get_data_sources() -> List[DataSourceInfo]:
                 "refresh_rate": "60 minutes",
             },
         ),
+    ]
+
+
+@router.get("/regions", response_model=List[RegionInfo])
+def get_regions() -> List[RegionInfo]:
+    """
+    List all available regions for forecasting.
+
+    Returns:
+        List of region information including global cities and US states.
+    """
+    regions = get_all_regions()
+    return [
+        RegionInfo(
+            id=region.id,
+            name=region.name,
+            country=region.country,
+            region_type=region.region_type,
+            latitude=region.latitude,
+            longitude=region.longitude,
+            region_group=region.region_group,
+        )
+        for region in regions
     ]
 
 
@@ -209,7 +245,32 @@ def get_forecast_history(
         List of historical forecast entries with metadata and accuracy scores
 
     Note:
-        This endpoint currently returns an empty list as historical tracking
-        is not yet implemented. Future versions will store forecasts in a database.
+        Forecasts are stored in SQLite database. Returns empty list if database
+        is not available or contains no forecasts.
     """
-    return []
+    try:
+        from app.storage import ForecastDB
+
+        db = ForecastDB()
+        forecasts = db.get_forecasts(region_name=region_name, limit=limit)
+
+        result = []
+        for f in forecasts:
+            result.append(
+                HistoricalForecastItem(
+                    forecast_id=str(f.get("id", "")),
+                    region_name=f.get("region_name", ""),
+                    latitude=f.get("latitude", 0.0),
+                    longitude=f.get("longitude", 0.0),
+                    forecast_date=f.get("timestamp", ""),
+                    forecast_horizon=f.get("metadata", {}).get("forecast_horizon", 7),
+                    model_type=f.get("model_name", "Unknown"),
+                    sources=f.get("metadata", {}).get("sources", []),
+                    accuracy_score=None,  # TODO: Compute from metrics table
+                )
+            )
+
+        return result
+    except Exception:
+        # Database is optional, return empty list on error
+        return []

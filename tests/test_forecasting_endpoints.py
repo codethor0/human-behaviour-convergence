@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Tests for forecasting API endpoints."""
 from unittest.mock import MagicMock, patch
 

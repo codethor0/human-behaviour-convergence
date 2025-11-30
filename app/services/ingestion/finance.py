@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Economic data ingestion using yfinance for market sentiment analysis."""
 from datetime import datetime, timedelta
 from typing import Optional

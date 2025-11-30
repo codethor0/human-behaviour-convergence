@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Tests for public data API endpoints."""
 import sys
 from pathlib import Path

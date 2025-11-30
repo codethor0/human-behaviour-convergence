@@ -1,6 +1,7 @@
-# SPDX-License-Identifier: MIT-0
-"""Forecasting core for behavioral prediction models."""
+# SPDX-License-Identifier: PROPRIETARY
+"""Core forecasting and behavior index computation."""
 
+from .behavior_index import BehaviorIndexComputer
 from .prediction import BehavioralForecaster
 
-__all__ = ["BehavioralForecaster"]
+__all__ = ["BehavioralForecaster", "BehaviorIndexComputer"]

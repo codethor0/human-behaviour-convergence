@@ -2,7 +2,7 @@
 > Public-data-driven behavioral forecasting for population-scale analysis and planning.
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/codethor0/human-behaviour-convergence)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/codethor0/human-behaviour-convergence)
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
@@ -15,10 +15,14 @@
 
 This project is a **public-data-driven behavioral forecasting application** that uses free, publicly available data sources to predict human behavioral patterns at population scale. The system combines economic indicators, environmental signals, and other public time-series data to produce behavioral forecasts that support research, planning, and policy scenario exploration.
 
-**Status:** Active development (v0.1) — transitioning from proof-of-concept to production-ready forecasting engine
+**Status:** Production-ready for current feature set — zero-known-bug state within test coverage
+**License:** Proprietary / All Rights Reserved — repository is public for viewing and educational purposes only
 **Data:** Public sources only — no individual user data, no proprietary datasets, fully aggregated
 **Ethics:** Strict privacy-first approach — see [ETHICS.md](./ETHICS.md) for details
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
+**Interpretability:** Forecast explanations available — see [BEHAVIOR_INDEX.md](./docs/BEHAVIOR_INDEX.md) for details
+**Playground:** Interactive multi-region comparison and scenario exploration — see `/playground` route in the web UI
+**Live Monitoring:** Near real-time behavior index tracking with automatic event detection — see `/live` route in the web UI
 
 ### Three-Layer Architecture
 
@@ -83,10 +87,10 @@ This project is a **public-data-driven behavioral forecasting application** that
 
    # Start the API server
    python -m app.backend.app.main
-   # Server runs on http://localhost:8000
+   # Server runs on http://localhost:8000 (or 8100 in Docker)
 
    # Make a forecast request
-   curl -X POST "http://localhost:8000/api/forecast" \
+   curl -X POST "http://localhost:8100/api/forecast" \
      -H "Content-Type: application/json" \
      -d '{
        "latitude": 40.7128,
@@ -97,10 +101,10 @@ This project is a **public-data-driven behavioral forecasting application** that
      }'
 
    # Check available data sources
-   curl "http://localhost:8000/api/forecasting/data-sources"
+   curl "http://localhost:8100/api/forecasting/data-sources"
 
    # Check available models
-   curl "http://localhost:8000/api/forecasting/models"
+   curl "http://localhost:8100/api/forecasting/models"
    ```
 
 3. **Use the web interface:**
@@ -109,8 +113,8 @@ This project is a **public-data-driven behavioral forecasting application** that
    cd app/frontend
    npm install
    npm run dev
-   # Frontend runs on http://localhost:3000
-   # Navigate to http://localhost:3000/forecast to generate forecasts interactively
+   # Frontend runs on http://localhost:3000 (or 3100 in Docker)
+   # Navigate to http://localhost:3100/forecast to generate forecasts interactively
    ```
 
 4. **Contribute:**
@@ -160,7 +164,29 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 
 4. **API & UI**: FastAPI endpoints expose forecasts programmatically, while a Next.js dashboard provides interactive exploration of historical data, forecasts, and model metadata.
 
-Contributions welcome! Open an issue with the label `app` to collaborate on frontend, backend, or UX tasks.
+## Project Status
+
+The application is **production-ready** for its current feature set with:
+- 129 tests passing (85% code coverage)
+- 62 supported regions (51 US states + District of Columbia + 11 global cities)
+- Behavior Index v2.5 with 5 sub-indices (economic, environmental, mobility, digital attention, public health)
+- Complete location normalization system handling edge cases (Washington D.C. vs Washington state, incident location prioritization, city vs state disambiguation)
+- Full-stack implementation: FastAPI backend, Next.js frontend, Docker deployment
+- Zero-known-bug state within test coverage
+
+**Note:** This project is proprietary. The repository is public for viewing and educational purposes only. See [License and Usage](#license-and-usage) for restrictions.
+
+## What's Next
+
+Planned enhancements (subject to development priorities):
+- Additional data source integrations (GDELT, OWID health data)
+- Advanced forecasting models (ARIMA, Prophet)
+- Multi-region batch processing
+- Forecast comparison tools
+- Frontend visualizations (time-series charts, forecast confidence bands)
+- Forecast accuracy tracking and historical accuracy metrics
+
+For detailed roadmap milestones (Transparency Drop, Live Playground, Community Rails), see the [Roadmap](docs/ROADMAP.md).
 
 ## Citation
 
@@ -184,9 +210,13 @@ To publish the rendered SVG as a static page, enable GitHub Pages in your repo s
 
 ---
 
-## License
+## License and Usage
 
-MIT
+This project is proprietary and all rights are reserved by the author (Thor Thor).
+
+The repository is public so that others can view and study the code for educational and evaluation purposes. No permission is granted to copy, modify, redistribute, or use this code in any commercial product, service, or production environment without explicit written consent from the author.
+
+See the [LICENSE](LICENSE) file for full terms.
 
 ## Maintainer
 

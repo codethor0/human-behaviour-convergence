@@ -7,7 +7,7 @@ name = "hbc"
 version = "0.1.0"
 description = "Synthetic, population-scale behavioral forecasting explorer."
 readme = "README.md"
-license = {file = "LICENSE"}
+license = {text = "Proprietary - All Rights Reserved"}
 requires-python = ">=3.10"
 authors = [{name = "codethor", email = "codethor0@users.noreply.github.com"}]
 dependencies = [

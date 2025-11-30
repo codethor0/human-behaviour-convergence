@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Tests for MobilityFetcher connector."""
 from unittest.mock import Mock, patch
 

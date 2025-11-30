@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: PROPRIETARY
 """Behavioral forecasting engine using real-world public data."""
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
@@ -17,10 +17,14 @@ except ImportError:
 from app.services.ingestion import (
     DataHarmonizer,
     EnvironmentalImpactFetcher,
+    FREDEconomicFetcher,
+    GDELTEventsFetcher,
     MarketSentimentFetcher,
     MobilityFetcher,
+    OWIDHealthFetcher,
     PublicHealthFetcher,
     SearchTrendsFetcher,
+    USGSEarthquakeFetcher,
 )
 
 logger = structlog.get_logger("core.prediction")
@@ -38,10 +42,14 @@ class BehavioralForecaster:
     def __init__(
         self,
         market_fetcher: Optional[MarketSentimentFetcher] = None,
+        fred_fetcher: Optional[FREDEconomicFetcher] = None,
         weather_fetcher: Optional[EnvironmentalImpactFetcher] = None,
         search_fetcher: Optional[SearchTrendsFetcher] = None,
         health_fetcher: Optional[PublicHealthFetcher] = None,
         mobility_fetcher: Optional[MobilityFetcher] = None,
+        gdelt_fetcher: Optional[GDELTEventsFetcher] = None,
+        owid_fetcher: Optional[OWIDHealthFetcher] = None,
+        usgs_fetcher: Optional[USGSEarthquakeFetcher] = None,
         harmonizer: Optional[DataHarmonizer] = None,
     ):
         """
@@ -49,17 +57,25 @@ class BehavioralForecaster:
 
         Args:
             market_fetcher: Market sentiment fetcher instance (creates new if None)
+            fred_fetcher: FRED economic indicators fetcher instance (creates new if None)
             weather_fetcher: Environmental impact fetcher instance (creates new if None)
             search_fetcher: Search trends fetcher instance (creates new if None)
             health_fetcher: Public health fetcher instance (creates new if None)
             mobility_fetcher: Mobility fetcher instance (creates new if None)
+            gdelt_fetcher: GDELT events fetcher instance (creates new if None)
+            owid_fetcher: OWID health fetcher instance (creates new if None)
+            usgs_fetcher: USGS earthquake fetcher instance (creates new if None)
             harmonizer: Data harmonizer instance (creates new if None)
         """
         self.market_fetcher = market_fetcher or MarketSentimentFetcher()
+        self.fred_fetcher = fred_fetcher or FREDEconomicFetcher()
         self.weather_fetcher = weather_fetcher or EnvironmentalImpactFetcher()
         self.search_fetcher = search_fetcher or SearchTrendsFetcher()
         self.health_fetcher = health_fetcher or PublicHealthFetcher()
         self.mobility_fetcher = mobility_fetcher or MobilityFetcher()
+        self.gdelt_fetcher = gdelt_fetcher or GDELTEventsFetcher()
+        self.owid_fetcher = owid_fetcher or OWIDHealthFetcher()
+        self.usgs_fetcher = usgs_fetcher or USGSEarthquakeFetcher()
         self.harmonizer = harmonizer or DataHarmonizer()
         self._cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, Dict]] = {}
 
@@ -105,6 +121,7 @@ class BehavioralForecaster:
                 forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
                     "%Y-%m-%dT%H:%M:%S"
                 )
+            # Preserve harmonized_df in metadata for component extraction (will be removed in API layer)
             return {
                 "history": history_dict.to_dict("records") if not history.empty else [],
                 "forecast": (
@@ -130,6 +147,23 @@ class BehavioralForecaster:
             market_data = self.market_fetcher.fetch_stress_index(days_back=days_back)
             if not market_data.empty:
                 sources.append("yfinance (VIX/SPY)")
+
+            # Fetch FRED economic indicators (if API key available)
+            fred_consumer_sentiment = self.fred_fetcher.fetch_consumer_sentiment(
+                days_back=days_back
+            )
+            fred_unemployment = self.fred_fetcher.fetch_unemployment_rate(
+                days_back=days_back
+            )
+            fred_jobless_claims = self.fred_fetcher.fetch_jobless_claims(
+                days_back=days_back
+            )
+            if (
+                not fred_consumer_sentiment.empty
+                or not fred_unemployment.empty
+                or not fred_jobless_claims.empty
+            ):
+                sources.append("FRED (Economic Indicators)")
 
             # Fetch weather data
             weather_data = self.weather_fetcher.fetch_regional_comfort(
@@ -160,6 +194,31 @@ class BehavioralForecaster:
             if not mobility_data.empty:
                 sources.append("mobility API")
 
+            # Fetch GDELT events data (digital attention)
+            gdelt_tone = self.gdelt_fetcher.fetch_event_tone(days_back=days_back)
+            if not gdelt_tone.empty:
+                sources.append("GDELT (Global Events)")
+
+            # Fetch OWID health data
+            # Try to map region to country (simplified: use region_name if it's a country)
+            country_name = (
+                region_name
+                if region_name in ["United States", "USA"]
+                else "United States"
+            )
+            owid_health = self.owid_fetcher.fetch_health_stress_index(
+                country=country_name, days_back=days_back
+            )
+            if not owid_health.empty:
+                sources.append("OWID (Public Health)")
+
+            # Fetch USGS earthquake data (environmental hazard)
+            usgs_earthquakes = self.usgs_fetcher.fetch_earthquake_intensity(
+                days_back=days_back
+            )
+            if not usgs_earthquakes.empty:
+                sources.append("USGS (Earthquakes)")
+
             # Harmonize data
             if (
                 market_data.empty
@@ -167,6 +226,12 @@ class BehavioralForecaster:
                 and search_data.empty
                 and health_data.empty
                 and mobility_data.empty
+                and fred_consumer_sentiment.empty
+                and fred_unemployment.empty
+                and fred_jobless_claims.empty
+                and gdelt_tone.empty
+                and owid_health.empty
+                and usgs_earthquakes.empty
             ):
                 logger.warning("No data available for forecast")
                 return {
@@ -183,10 +248,16 @@ class BehavioralForecaster:
 
             harmonized = self.harmonizer.harmonize(
                 market_data=market_data,
+                fred_consumer_sentiment=fred_consumer_sentiment,
+                fred_unemployment=fred_unemployment,
+                fred_jobless_claims=fred_jobless_claims,
                 weather_data=weather_data,
                 search_data=search_data,
                 health_data=health_data,
                 mobility_data=mobility_data,
+                gdelt_tone=gdelt_tone,
+                owid_health=owid_health,
+                usgs_earthquakes=usgs_earthquakes,
             )
 
             if harmonized.empty or "behavior_index" not in harmonized.columns:
@@ -203,8 +274,24 @@ class BehavioralForecaster:
                     },
                 }
 
-            # Prepare history data
-            history = harmonized[["timestamp", "behavior_index"]].copy()
+            # Prepare history data with sub-indices
+            # Keep the full harmonized DataFrame for component extraction (store in metadata)
+            # But extract only needed columns for history
+            sub_index_cols = [
+                "economic_stress",
+                "environmental_stress",
+                "mobility_activity",
+                "digital_attention",
+                "public_health_stress",
+            ]
+            history_cols = ["timestamp", "behavior_index"] + [
+                col for col in sub_index_cols if col in harmonized.columns
+            ]
+            history = harmonized[history_cols].copy()
+
+            # Preserve the full harmonized DataFrame (with component metadata in attrs) for API extraction
+            # We'll attach it to metadata temporarily
+            harmonized_for_details = harmonized.copy()
             # Normalize timestamps to timezone-naive UTC
             history["timestamp"] = pd.to_datetime(history["timestamp"], utc=True)
             if history["timestamp"].dt.tz is not None:
@@ -344,6 +431,7 @@ class BehavioralForecaster:
                     "model_type": model_type,
                     "confidence_level": 0.95,
                     "sources": sources,
+                    "_harmonized_df": harmonized_for_details,  # Store for component extraction
                 }
 
                 # Cache result
@@ -368,6 +456,11 @@ class BehavioralForecaster:
                 forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
                     "%Y-%m-%dT%H:%M:%S"
                 )
+
+                # Store the harmonized DataFrame (with component metadata) for later extraction
+                # We'll attach it to the metadata so the API can extract component details
+                # Note: This will be removed in the API layer before JSON serialization
+                metadata["_harmonized_df"] = harmonized_for_details
 
                 return {
                     "history": history_dict.to_dict("records"),
