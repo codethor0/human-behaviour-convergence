@@ -74,7 +74,11 @@ class GDELTEventsFetcher:
         try:
             # GDELT query for average tone by date
             # Using GDELT 2.0 API format
-            query = f"mode=timelinetone&format=json&timespan=1d&startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+            query = (
+                f"mode=timelinetone&format=json&timespan=1d&"
+                f"startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&"
+                f"enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+            )
 
             logger.info("Fetching GDELT tone data", days_back=days_back)
             url = f"{GDELT_API_BASE}?{query}"
@@ -204,7 +208,11 @@ class GDELTEventsFetcher:
         try:
             # GDELT query for event counts by date
             # Using simplified query (GDELT API can be complex)
-            query = f"mode=timelinevol&format=json&timespan=1d&startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+            query = (
+                f"mode=timelinevol&format=json&timespan=1d&"
+                f"startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&"
+                f"enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+            )
 
             logger.info(
                 "Fetching GDELT event count data",

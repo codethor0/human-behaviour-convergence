@@ -26,7 +26,8 @@ class HeatmapEngine:
 
         Args:
             state_data: Dictionary mapping state names to their latest index values
-                       Format: {"Minnesota": {"political_stress": 0.44, "crime_stress": 0.39, ...}, ...}
+                       Format: {"Minnesota": {"political_stress": 0.44,
+                       "crime_stress": 0.39, ...}, ...}
             indices: List of index names to include (default: all 9 indices)
 
         Returns:

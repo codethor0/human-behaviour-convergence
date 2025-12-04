@@ -48,7 +48,8 @@ class _BackendProxyModule(ModuleType):
             if backend_class is not ModuleType and hasattr(
                 backend_class, "__setattr__"
             ):
-                # Backend has custom __setattr__ (likely _MainModule), use object methods to avoid recursion
+                # Backend has custom __setattr__ (likely _MainModule),
+                # use object methods to avoid recursion
                 # Store the value directly in the module's __dict__ to bypass __setattr__
                 _backend_module.__dict__[name] = value
                 # Manually trigger hooks if needed (for RESULTS_DIR and MAX_CACHE_SIZE)

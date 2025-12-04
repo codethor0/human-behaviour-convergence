@@ -25,7 +25,8 @@ class PublicHealthFetcher:
         Initialize the public health fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 1440 minutes = 24 hours)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 1440 minutes = 24 hours)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Optional[pd.DataFrame] = None

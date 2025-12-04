@@ -130,7 +130,10 @@ class SocialCohesionStressFetcher:
     def _fetch_civic_participation(
         self, region_name: str, start_date: datetime, end_date: datetime
     ) -> pd.DataFrame:
-        """Fetch civic participation rate indicators (inverse: lower participation = higher stress)."""
+        """Fetch civic participation rate indicators.
+
+        Inverse: lower participation = higher stress.
+        """
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
         base_cpr = 0.25
         cpr = base_cpr + (pd.Series(range(len(dates))) % 7) * 0.03

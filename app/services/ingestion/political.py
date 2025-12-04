@@ -119,7 +119,8 @@ class PoliticalStressFetcher:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=days_back)
 
-        # 1. Legislative Volatility Index (LVI) - Synthetic for now, can be enhanced with OpenStates API
+        # 1. Legislative Volatility Index (LVI) - Synthetic for now,
+        #    can be enhanced with OpenStates API
         lvi_data = self._fetch_legislative_volatility(state_name, start_date, end_date)
         sources["legislative_volatility"] = lvi_data
 

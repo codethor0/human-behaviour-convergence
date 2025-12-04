@@ -55,7 +55,8 @@ class EnvironmentalImpactFetcher:
             use_cache: Whether to use cached data if available (default: True)
 
         Returns:
-            DataFrame with columns: ['timestamp', 'temperature', 'precipitation', 'windspeed', 'discomfort_score']
+            DataFrame with columns: ['timestamp', 'temperature', 'precipitation',
+                'windspeed', 'discomfort_score']
             discomfort_score is normalized to 0.0-1.0 where 1.0 = maximum discomfort
         """
         # Validate coordinates

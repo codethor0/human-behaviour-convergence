@@ -249,7 +249,10 @@ class ConvergenceEngine:
                             "social_cohesion_stress",
                         ],
                         "score": float(pattern_score),
-                        "description": "Political stress, misinformation, and social cohesion decline indicate potential unrest risk",
+                        "description": (
+                            "Political stress, misinformation, and social cohesion "
+                            "decline indicate potential unrest risk"
+                        ),
                     }
                 )
 
@@ -266,7 +269,10 @@ class ConvergenceEngine:
                         "type": "consumer_shift",
                         "indices": ["economic_stress", "public_health_stress"],
                         "score": float(pattern_score),
-                        "description": "Economic and public health stress indicate potential consumer behavior shift",
+                        "description": (
+                            "Economic and public health stress indicate potential "
+                            "consumer behavior shift"
+                        ),
                     }
                 )
 
@@ -281,7 +287,10 @@ class ConvergenceEngine:
                         "type": "local_instability",
                         "indices": ["crime_stress", "social_cohesion_stress"],
                         "score": float(pattern_score),
-                        "description": "Crime spike and social cohesion decline indicate local instability",
+                        "description": (
+                            "Crime spike and social cohesion decline indicate "
+                            "local instability"
+                        ),
                     }
                 )
 
