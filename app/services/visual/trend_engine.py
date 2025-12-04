@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Trendline & Slope Engine for trend analysis."""
-from datetime import datetime
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -156,6 +155,7 @@ class TrendEngine:
             elif isinstance(series.index, pd.DatetimeIndex):
                 return str(latest_breakout_idx)
             else:
+                from datetime import datetime
                 return datetime.now().isoformat()
 
         return None
