@@ -314,7 +314,8 @@ def prepare_forecast_config(
 
     Example:
         >>> config = prepare_forecast_config(
-        ...     "Two West Virginia National Guardsmen were shot near the White House in Washington, D.C."
+        ...     "Two West Virginia National Guardsmen were shot near the "
+        ...     "White House in Washington, D.C."
         ... )
         >>> config["normalized_location"]["region_id"]
         'us_dc'

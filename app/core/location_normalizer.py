@@ -569,7 +569,8 @@ class LocationNormalizer:
 
         # Pattern: "in [location]" or "near [location]" - improved to handle commas and multi-word locations
         patterns = [
-            r"in\s+([A-Z][a-zA-Z\s,]+?)(?:\s|,|\.|$)",  # "in Washington, D.C." or "in Seattle, Washington"
+            r"in\s+([A-Z][a-zA-Z\s,]+?)(?:\s|,|\.|$)",  # "in Washington, D.C."
+            # or "in Seattle, Washington"
             r"near\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "near the White House"
             # or "near Washington"
             r"at\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "at the Capitol"
