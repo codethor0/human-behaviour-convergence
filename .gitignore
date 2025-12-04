@@ -43,6 +43,8 @@ out/
 .ruff_cache/
 .mypy_cache/
 .cache/
+*.sqlite
+# Note: data/hbc.db is tracked for demo purposes, but other .db files should be ignored
 
 # Env and secrets
 .env
@@ -56,9 +58,12 @@ out/
 coverage/
 reports/
 
-# Internal artifacts
-*_REPORT.md
-*_AUDIT.md
-*_SUMMARY.md
-*master_prompt*.md
-*MASTER_PROMPT*.md
+# Internal artifacts (moved to docs/reports/)
+# *_REPORT.md
+# *_AUDIT.md
+# *_SUMMARY.md
+# *master_prompt*.md
+# *MASTER_PROMPT*.md
+
+# Archive files
+docs/archive/

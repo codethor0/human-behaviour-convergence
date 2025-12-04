@@ -206,11 +206,15 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
             results_marker = str(active_results_dir)
 
     if os.getenv("CACHE_DEBUG") == "1":
-        print(
-            f"[cache-debug] pre-ensure name={name} limit={limit} "
-            f"marker={results_marker} context={_cache_context_marker} "
-            f"cache_keys={list(_cache.keys())} max_cache={MAX_CACHE_SIZE} "
-            f"id={id(globals())}"
+        logger.debug(
+            "cache-debug pre-ensure",
+            name=name,
+            limit=limit,
+            marker=results_marker,
+            context=_cache_context_marker,
+            cache_keys=list(_cache.keys()),
+            max_cache=MAX_CACHE_SIZE,
+            globals_id=id(globals()),
         )
 
     _ensure_cache_context(results_marker)
@@ -252,10 +256,12 @@ def _read_csv(name: str, limit: int = 1000) -> List[Dict]:
         if cache_key not in _cache or now >= _cache_ttl.get(cache_key, datetime.min):
             _enforce_cache_limit()
             if os.getenv("CACHE_DEBUG") == "1":
-                print(
-                    f"[cache-debug] inserting key={cache_key} "
-                    f"size_before={len(_cache)} limit={MAX_CACHE_SIZE} "
-                    f"globals_id={id(globals())}"
+                logger.debug(
+                    "cache-debug inserting",
+                    key=cache_key,
+                    size_before=len(_cache),
+                    limit=MAX_CACHE_SIZE,
+                    globals_id=id(globals()),
                 )
             _cache[cache_key] = result
             _cache_ttl[cache_key] = now + CACHE_DURATION
@@ -337,7 +343,7 @@ def _on_results_dir_updated(value: Optional[Path]) -> None:
         _cache_ttl.clear()
         _cache_context_marker = None
     if os.getenv("CACHE_DEBUG") == "1":
-        print(f"[cache-debug] RESULTS_DIR updated -> {value}")
+        logger.debug("cache-debug RESULTS_DIR updated", value=value)
 
 
 def _on_cache_size_updated(value: int) -> None:
@@ -350,7 +356,9 @@ def _on_cache_size_updated(value: int) -> None:
     with _cache_lock:
         _enforce_cache_limit()
     if os.getenv("CACHE_DEBUG") == "1":
-        print(f"[cache-debug] MAX_CACHE_SIZE updated -> {MAX_CACHE_SIZE}")
+        logger.debug(
+            "cache-debug MAX_CACHE_SIZE updated", max_cache_size=MAX_CACHE_SIZE
+        )
 
 
 class _MainModule(ModuleType):
@@ -601,6 +609,12 @@ class SubIndices(BaseModel):
     mobility_activity: float
     digital_attention: float
     public_health_stress: float
+    political_stress: Optional[float] = None  # Optional for backward compatibility
+    crime_stress: Optional[float] = None  # Optional for backward compatibility
+    misinformation_stress: Optional[float] = None  # Optional for backward compatibility
+    social_cohesion_stress: Optional[float] = (
+        None  # Optional for backward compatibility
+    )
 
 
 class SubIndexContribution(BaseModel):
@@ -619,6 +633,18 @@ class SubIndexContributions(BaseModel):
     mobility_activity: SubIndexContribution
     digital_attention: SubIndexContribution
     public_health_stress: SubIndexContribution
+    political_stress: Optional[SubIndexContribution] = (
+        None  # Optional for backward compatibility
+    )
+    crime_stress: Optional[SubIndexContribution] = (
+        None  # Optional for backward compatibility
+    )
+    misinformation_stress: Optional[SubIndexContribution] = (
+        None  # Optional for backward compatibility
+    )
+    social_cohesion_stress: Optional[SubIndexContribution] = (
+        None  # Optional for backward compatibility
+    )
 
 
 class SubIndexComponent(BaseModel):
@@ -646,6 +672,18 @@ class SubIndexDetails(BaseModel):
     mobility_activity: SubIndexDetailsItem
     digital_attention: SubIndexDetailsItem
     public_health_stress: SubIndexDetailsItem
+    political_stress: Optional[SubIndexDetailsItem] = (
+        None  # Optional for backward compatibility
+    )
+    crime_stress: Optional[SubIndexDetailsItem] = (
+        None  # Optional for backward compatibility
+    )
+    misinformation_stress: Optional[SubIndexDetailsItem] = (
+        None  # Optional for backward compatibility
+    )
+    social_cohesion_stress: Optional[SubIndexDetailsItem] = (
+        None  # Optional for backward compatibility
+    )
 
 
 class ForecastHistoryItem(BaseModel):
@@ -691,12 +729,103 @@ class Explanations(BaseModel):
     subindices: Dict[str, SubIndexExplanation]
 
 
+class ShockEvent(BaseModel):
+    """Shock event detected in an index."""
+
+    index: str
+    severity: str  # "mild", "moderate", "high", "severe"
+    delta: float
+    timestamp: str
+    method: Optional[str] = None
+    value: Optional[float] = None
+
+
+class ConvergenceAnalysis(BaseModel):
+    """Cross-index convergence analysis."""
+
+    score: float  # 0-100
+    reinforcing_signals: List[
+        List
+    ]  # List of [index1, index2, correlation] where correlation is float
+    conflicting_signals: List[
+        List
+    ]  # List of [index1, index2, correlation] where correlation is float
+    patterns: Optional[List[Dict]] = None
+
+
+class RiskClassification(BaseModel):
+    """Risk tier classification."""
+
+    tier: str  # "stable", "watchlist", "elevated", "high", "critical"
+    risk_score: float
+    base_risk: float
+    shock_adjustment: float
+    convergence_adjustment: float
+    trend_adjustment: float
+    contributing_factors: List[str]
+
+
+class ForecastConfidence(BaseModel):
+    """Forecast confidence scores per index."""
+
+    economic_stress: Optional[float] = None
+    environmental_stress: Optional[float] = None
+    mobility_activity: Optional[float] = None
+    digital_attention: Optional[float] = None
+    public_health_stress: Optional[float] = None
+    political_stress: Optional[float] = None
+    crime_stress: Optional[float] = None
+    misinformation_stress: Optional[float] = None
+    social_cohesion_stress: Optional[float] = None
+
+
+class ModelDrift(BaseModel):
+    """Model drift scores per index."""
+
+    economic_stress: Optional[float] = None
+    environmental_stress: Optional[float] = None
+    mobility_activity: Optional[float] = None
+    digital_attention: Optional[float] = None
+    public_health_stress: Optional[float] = None
+    political_stress: Optional[float] = None
+    crime_stress: Optional[float] = None
+    misinformation_stress: Optional[float] = None
+    social_cohesion_stress: Optional[float] = None
+
+
+class CorrelationRelationship(BaseModel):
+    """Correlation relationship between two indices."""
+
+    index1: str
+    index2: str
+    correlation: float
+    strength: str  # "weak", "moderate", "strong"
+    direction: str  # "positive", "negative"
+
+
+class CorrelationAnalysis(BaseModel):
+    """Correlation analysis results."""
+
+    correlations: Dict[
+        str, Dict[str, float]
+    ]  # Nested dict: {index1: {index2: correlation}}
+    relationships: List[CorrelationRelationship]
+    indices_analyzed: List[str]
+
+
 class ForecastResult(BaseModel):
     history: List[ForecastHistoryItem]
     forecast: List[ForecastItem]
     sources: List[str]
     metadata: Dict[str, Any]
     explanation: Optional[str] = None
+    # Intelligence Layer fields
+    shock_events: Optional[List[ShockEvent]] = None
+    convergence: Optional[ConvergenceAnalysis] = None
+    risk_tier: Optional[RiskClassification] = None
+    forecast_confidence: Optional[ForecastConfidence] = None
+    model_drift: Optional[ModelDrift] = None
+    correlations: Optional[CorrelationAnalysis] = None
     explanations: Optional[Explanations] = None
 
 
@@ -804,6 +933,20 @@ def _generate_explanation(
             drivers.append("high digital attention")
         if sub_indices.public_health_stress > 0.6:
             drivers.append("public health stress")
+        political_stress_val = getattr(sub_indices, "political_stress", None)
+        if political_stress_val is not None and political_stress_val > 0.6:
+            drivers.append("political stress")
+        crime_stress_val = getattr(sub_indices, "crime_stress", None)
+        if crime_stress_val is not None and crime_stress_val > 0.6:
+            drivers.append("crime & public safety stress")
+        misinformation_stress_val = getattr(sub_indices, "misinformation_stress", None)
+        if misinformation_stress_val is not None and misinformation_stress_val > 0.6:
+            drivers.append("misinformation stress")
+        social_cohesion_stress_val = getattr(
+            sub_indices, "social_cohesion_stress", None
+        )
+        if social_cohesion_stress_val is not None and social_cohesion_stress_val > 0.6:
+            drivers.append("social cohesion stress")
 
         if drivers:
             explanation += f" Primary drivers: {', '.join(drivers)}."
@@ -825,13 +968,38 @@ def _extract_sub_indices(record: Dict[str, Any]) -> Optional[SubIndices]:
         "digital_attention",
         "public_health_stress",
     ]
-    if all(key in record for key in sub_index_keys):
+    # Check required keys (first 5 are required, rest are optional)
+    required_keys = sub_index_keys[:5]
+    if all(key in record for key in required_keys):
+        import math
+
+        def safe_float(val):
+            """Safely convert value to float, handling NaN and None."""
+            if val is None:
+                return None
+            try:
+                fval = float(val)
+                if math.isnan(fval):
+                    return None
+                return fval
+            except (ValueError, TypeError):
+                return None
+
+        political_stress = safe_float(record.get("political_stress"))
+        crime_stress = safe_float(record.get("crime_stress"))
+        misinformation_stress = safe_float(record.get("misinformation_stress"))
+        social_cohesion_stress = safe_float(record.get("social_cohesion_stress"))
+
         return SubIndices(
             economic_stress=float(record["economic_stress"]),
             environmental_stress=float(record["environmental_stress"]),
             mobility_activity=float(record["mobility_activity"]),
             digital_attention=float(record["digital_attention"]),
             public_health_stress=float(record["public_health_stress"]),
+            political_stress=political_stress,
+            crime_stress=crime_stress,
+            misinformation_stress=misinformation_stress,
+            social_cohesion_stress=social_cohesion_stress,
         )
     return None
 
@@ -872,17 +1040,104 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             detail="Either region_id or both latitude and longitude must be provided",
         )
 
-    forecaster = BehavioralForecaster()
-    result = forecaster.forecast(
-        latitude=latitude,
-        longitude=longitude,
-        region_name=payload.region_name,
-        days_back=payload.days_back,
-        forecast_horizon=payload.forecast_horizon,
-    )
+    # Validate inputs
+    try:
+        latitude = float(latitude)
+        longitude = float(longitude)
+        if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid coordinates: latitude must be -90 to 90, longitude must be -180 to 180",
+            )
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid coordinate values")
+
+    try:
+        days_back = int(payload.days_back)
+        forecast_horizon = int(payload.forecast_horizon)
+        if days_back < 1 or days_back > 365:
+            raise HTTPException(
+                status_code=400, detail="days_back must be between 1 and 365"
+            )
+        if forecast_horizon < 1 or forecast_horizon > 30:
+            raise HTTPException(
+                status_code=400, detail="forecast_horizon must be between 1 and 30"
+            )
+    except (TypeError, ValueError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid parameter: {str(e)}")
+
+    try:
+        forecaster = BehavioralForecaster()
+        result = forecaster.forecast(
+            latitude=latitude,
+            longitude=longitude,
+            region_name=payload.region_name or "Unknown",
+            days_back=days_back,
+            forecast_horizon=forecast_horizon,
+        )
+    except Exception as e:
+        logger.error("Forecast generation failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Forecast generation failed: {str(e)}"
+        )
+
+    # Validate result structure
+    if not isinstance(result, dict):
+        logger.error("Forecast returned invalid result type", result_type=type(result))
+        raise HTTPException(status_code=500, detail="Invalid forecast result")
+
+    # Ensure required fields exist
+    if "history" not in result:
+        result["history"] = []
+    if "forecast" not in result:
+        result["forecast"] = []
+    if "sources" not in result:
+        result["sources"] = []
+    if "metadata" not in result:
+        result["metadata"] = {}
 
     # Get behavior index computer for contribution analysis and component details
-    index_computer = BehaviorIndexComputer()
+    # Check if new indices data is present in the result to determine weights
+    has_political = False
+    has_crime = False
+    has_misinformation = False
+    has_social_cohesion = False
+
+    if "history" in result and result["history"]:
+        # Check if any history record has new stress indices
+        for record in result["history"]:
+            if "political_stress" in record and record["political_stress"] is not None:
+                has_political = True
+            if "crime_stress" in record and record["crime_stress"] is not None:
+                has_crime = True
+            if (
+                "misinformation_stress" in record
+                and record["misinformation_stress"] is not None
+            ):
+                has_misinformation = True
+            if (
+                "social_cohesion_stress" in record
+                and record["social_cohesion_stress"] is not None
+            ):
+                has_social_cohesion = True
+            if (
+                has_political
+                and has_crime
+                and has_misinformation
+                and has_social_cohesion
+            ):
+                break
+
+    # Initialize with appropriate weights if new data is present
+    if has_political or has_crime or has_misinformation or has_social_cohesion:
+        index_computer = BehaviorIndexComputer(
+            political_weight=0.15 if has_political else 0.0,
+            crime_weight=0.15 if has_crime else 0.0,
+            misinformation_weight=0.10 if has_misinformation else 0.0,
+            social_cohesion_weight=0.15 if has_social_cohesion else 0.0,
+        )
+    else:
+        index_computer = BehaviorIndexComputer()
 
     # Get harmonized DataFrame from metadata if available (for component extraction)
     harmonized_df = None
@@ -902,24 +1157,123 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
     latest_sub_indices = None
 
     for idx, record in enumerate(result.get("history", [])):
-        sub_indices = _extract_sub_indices(record)
+        if not record or not isinstance(record, dict):
+            continue
+
+        try:
+            sub_indices = _extract_sub_indices(record)
+        except Exception as e:
+            logger.warning(
+                f"Failed to extract sub-indices for record {idx}", error=str(e)
+            )
+            sub_indices = None
+
         # Compute contributions if we have sub-indices
         contributions = None
         subindex_details = None
         if sub_indices:
             import pandas as pd
 
-            row = pd.Series(
-                {
-                    "behavior_index": float(record["behavior_index"]),
-                    "economic_stress": sub_indices.economic_stress,
-                    "environmental_stress": sub_indices.environmental_stress,
-                    "mobility_activity": sub_indices.mobility_activity,
-                    "digital_attention": sub_indices.digital_attention,
-                    "public_health_stress": sub_indices.public_health_stress,
+            try:
+                behavior_index_val = record.get("behavior_index", 0.5)
+                if not isinstance(behavior_index_val, (int, float)) or pd.isna(
+                    behavior_index_val
+                ):
+                    behavior_index_val = 0.5
+                behavior_index_val = max(0.0, min(1.0, float(behavior_index_val)))
+
+                row_data = {
+                    "behavior_index": behavior_index_val,
+                    "economic_stress": (
+                        sub_indices.economic_stress
+                        if sub_indices.economic_stress is not None
+                        else 0.5
+                    ),
+                    "environmental_stress": (
+                        sub_indices.environmental_stress
+                        if sub_indices.environmental_stress is not None
+                        else 0.5
+                    ),
+                    "mobility_activity": (
+                        sub_indices.mobility_activity
+                        if sub_indices.mobility_activity is not None
+                        else 0.5
+                    ),
+                    "digital_attention": (
+                        sub_indices.digital_attention
+                        if sub_indices.digital_attention is not None
+                        else 0.5
+                    ),
+                    "public_health_stress": (
+                        sub_indices.public_health_stress
+                        if sub_indices.public_health_stress is not None
+                        else 0.5
+                    ),
                 }
-            )
-            contrib_dict = index_computer.get_contribution_analysis(row)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to prepare row_data for record {idx}", error=str(e)
+                )
+                continue
+            # Check if new stress indices exist (they're optional in the model)
+            try:
+                political_stress_val = getattr(sub_indices, "political_stress", None)
+                if (
+                    political_stress_val is not None
+                    and isinstance(political_stress_val, (int, float))
+                    and not pd.isna(political_stress_val)
+                ):
+                    row_data["political_stress"] = max(
+                        0.0, min(1.0, float(political_stress_val))
+                    )
+
+                crime_stress_val = getattr(sub_indices, "crime_stress", None)
+                if (
+                    crime_stress_val is not None
+                    and isinstance(crime_stress_val, (int, float))
+                    and not pd.isna(crime_stress_val)
+                ):
+                    row_data["crime_stress"] = max(
+                        0.0, min(1.0, float(crime_stress_val))
+                    )
+
+                misinformation_stress_val = getattr(
+                    sub_indices, "misinformation_stress", None
+                )
+                if (
+                    misinformation_stress_val is not None
+                    and isinstance(misinformation_stress_val, (int, float))
+                    and not pd.isna(misinformation_stress_val)
+                ):
+                    row_data["misinformation_stress"] = max(
+                        0.0, min(1.0, float(misinformation_stress_val))
+                    )
+
+                social_cohesion_stress_val = getattr(
+                    sub_indices, "social_cohesion_stress", None
+                )
+                if (
+                    social_cohesion_stress_val is not None
+                    and isinstance(social_cohesion_stress_val, (int, float))
+                    and not pd.isna(social_cohesion_stress_val)
+                ):
+                    row_data["social_cohesion_stress"] = max(
+                        0.0, min(1.0, float(social_cohesion_stress_val))
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to process new stress indices for record {idx}",
+                    error=str(e),
+                )
+
+            try:
+                row = pd.Series(row_data)
+                contrib_dict = index_computer.get_contribution_analysis(row)
+            except Exception as e:
+                logger.warning(
+                    f"Failed to compute contributions for record {idx}", error=str(e)
+                )
+                contrib_dict = {}
             contributions = SubIndexContributions(
                 economic_stress=SubIndexContribution(**contrib_dict["economic_stress"]),
                 environmental_stress=SubIndexContribution(
@@ -934,16 +1288,44 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 public_health_stress=SubIndexContribution(
                     **contrib_dict["public_health_stress"]
                 ),
+                political_stress=(
+                    SubIndexContribution(**contrib_dict["political_stress"])
+                    if "political_stress" in contrib_dict
+                    and contrib_dict.get("political_stress") is not None
+                    else None
+                ),
+                crime_stress=(
+                    SubIndexContribution(**contrib_dict["crime_stress"])
+                    if "crime_stress" in contrib_dict
+                    and contrib_dict.get("crime_stress") is not None
+                    else None
+                ),
+                misinformation_stress=(
+                    SubIndexContribution(**contrib_dict["misinformation_stress"])
+                    if "misinformation_stress" in contrib_dict
+                    and contrib_dict.get("misinformation_stress") is not None
+                    else None
+                ),
+                social_cohesion_stress=(
+                    SubIndexContribution(**contrib_dict["social_cohesion_stress"])
+                    if "social_cohesion_stress" in contrib_dict
+                    and contrib_dict.get("social_cohesion_stress") is not None
+                    else None
+                ),
             )
 
             # Extract component details if harmonized DataFrame is available
-            if harmonized_df is not None and len(harmonized_df) > idx:
+            if (
+                harmonized_df is not None
+                and len(harmonized_df) > 0
+                and idx < len(harmonized_df)
+            ):
                 try:
                     details_dict = index_computer.get_subindex_details(
                         harmonized_df, idx
                     )
-                    subindex_details = SubIndexDetails(
-                        economic_stress=SubIndexDetailsItem(
+                    subindex_details_dict = {
+                        "economic_stress": SubIndexDetailsItem(
                             value=details_dict["economic_stress"]["value"],
                             components=[
                                 SubIndexComponent(**comp)
@@ -952,7 +1334,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                                 ]
                             ],
                         ),
-                        environmental_stress=SubIndexDetailsItem(
+                        "environmental_stress": SubIndexDetailsItem(
                             value=details_dict["environmental_stress"]["value"],
                             components=[
                                 SubIndexComponent(**comp)
@@ -961,7 +1343,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                                 ]
                             ],
                         ),
-                        mobility_activity=SubIndexDetailsItem(
+                        "mobility_activity": SubIndexDetailsItem(
                             value=details_dict["mobility_activity"]["value"],
                             components=[
                                 SubIndexComponent(**comp)
@@ -970,7 +1352,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                                 ]
                             ],
                         ),
-                        digital_attention=SubIndexDetailsItem(
+                        "digital_attention": SubIndexDetailsItem(
                             value=details_dict["digital_attention"]["value"],
                             components=[
                                 SubIndexComponent(**comp)
@@ -979,7 +1361,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                                 ]
                             ],
                         ),
-                        public_health_stress=SubIndexDetailsItem(
+                        "public_health_stress": SubIndexDetailsItem(
                             value=details_dict["public_health_stress"]["value"],
                             components=[
                                 SubIndexComponent(**comp)
@@ -988,6 +1370,68 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                                 ]
                             ],
                         ),
+                    }
+                    # Add new stress indices if available
+                    political_stress_item = None
+                    if "political_stress" in details_dict:
+                        political_stress_item = SubIndexDetailsItem(
+                            value=details_dict["political_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["political_stress"][
+                                    "components"
+                                ]
+                            ],
+                        )
+
+                    crime_stress_item = None
+                    if "crime_stress" in details_dict:
+                        crime_stress_item = SubIndexDetailsItem(
+                            value=details_dict["crime_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["crime_stress"]["components"]
+                            ],
+                        )
+
+                    misinformation_stress_item = None
+                    if "misinformation_stress" in details_dict:
+                        misinformation_stress_item = SubIndexDetailsItem(
+                            value=details_dict["misinformation_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["misinformation_stress"][
+                                    "components"
+                                ]
+                            ],
+                        )
+
+                    social_cohesion_stress_item = None
+                    if "social_cohesion_stress" in details_dict:
+                        social_cohesion_stress_item = SubIndexDetailsItem(
+                            value=details_dict["social_cohesion_stress"]["value"],
+                            components=[
+                                SubIndexComponent(**comp)
+                                for comp in details_dict["social_cohesion_stress"][
+                                    "components"
+                                ]
+                            ],
+                        )
+
+                    subindex_details = SubIndexDetails(
+                        economic_stress=subindex_details_dict["economic_stress"],
+                        environmental_stress=subindex_details_dict[
+                            "environmental_stress"
+                        ],
+                        mobility_activity=subindex_details_dict["mobility_activity"],
+                        digital_attention=subindex_details_dict["digital_attention"],
+                        public_health_stress=subindex_details_dict[
+                            "public_health_stress"
+                        ],
+                        political_stress=political_stress_item,
+                        crime_stress=crime_stress_item,
+                        misinformation_stress=misinformation_stress_item,
+                        social_cohesion_stress=social_cohesion_stress_item,
                     )
                 except (IndexError, KeyError, AttributeError) as e:
                     # If extraction fails, log but don't break the response
@@ -1014,18 +1458,21 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             import pandas as pd
 
             # Use prediction as behavior_index for forecast items
-            row = pd.Series(
-                {
-                    "behavior_index": float(
-                        record.get("prediction", record.get("behavior_index", 0.5))
-                    ),
-                    "economic_stress": sub_indices.economic_stress,
-                    "environmental_stress": sub_indices.environmental_stress,
-                    "mobility_activity": sub_indices.mobility_activity,
-                    "digital_attention": sub_indices.digital_attention,
-                    "public_health_stress": sub_indices.public_health_stress,
-                }
-            )
+            row_data = {
+                "behavior_index": float(
+                    record.get("prediction", record.get("behavior_index", 0.5))
+                ),
+                "economic_stress": sub_indices.economic_stress,
+                "environmental_stress": sub_indices.environmental_stress,
+                "mobility_activity": sub_indices.mobility_activity,
+                "digital_attention": sub_indices.digital_attention,
+                "public_health_stress": sub_indices.public_health_stress,
+            }
+            # Check if political_stress exists (it's optional in the model)
+            political_stress_val = getattr(sub_indices, "political_stress", None)
+            if political_stress_val is not None:
+                row_data["political_stress"] = political_stress_val
+            row = pd.Series(row_data)
             contrib_dict = index_computer.get_contribution_analysis(row)
             contributions = SubIndexContributions(
                 economic_stress=SubIndexContribution(**contrib_dict["economic_stress"]),
@@ -1040,6 +1487,11 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 ),
                 public_health_stress=SubIndexContribution(
                     **contrib_dict["public_health_stress"]
+                ),
+                political_stress=(
+                    SubIndexContribution(**contrib_dict["political_stress"])
+                    if "political_stress" in contrib_dict
+                    else None
                 ),
             )
 
@@ -1199,6 +1651,71 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         # Database is optional, log but don't fail
         logger.warning("Failed to save forecast to database", error=str(e))
 
+    # Extract intelligence layer data from result
+    shock_events = (
+        [ShockEvent(**event) for event in result.get("shock_events", [])]
+        if result.get("shock_events")
+        else None
+    )
+
+    convergence_data = result.get("convergence")
+    convergence = None
+    if convergence_data:
+        # Convert tuples to lists for JSON serialization
+        reinforcing = convergence_data.get("reinforcing_signals", [])
+        if reinforcing and isinstance(reinforcing[0], tuple):
+            reinforcing = [list(sig) for sig in reinforcing]
+
+        conflicting = convergence_data.get("conflicting_signals", [])
+        if conflicting and isinstance(conflicting[0], tuple):
+            conflicting = [list(sig) for sig in conflicting]
+
+        convergence = ConvergenceAnalysis(
+            score=convergence_data.get("score", 0.0),
+            reinforcing_signals=reinforcing,
+            conflicting_signals=conflicting,
+            patterns=convergence_data.get("patterns"),
+        )
+
+    risk_tier_data = result.get("risk_tier")
+    risk_tier = None
+    if risk_tier_data:
+        risk_tier = RiskClassification(**risk_tier_data)
+
+    confidence_data = result.get("forecast_confidence", {})
+    forecast_confidence = (
+        ForecastConfidence(**confidence_data) if confidence_data else None
+    )
+
+    drift_data = result.get("model_drift", {})
+    model_drift = ModelDrift(**drift_data) if drift_data else None
+
+    correlations_data = result.get("correlations", {})
+    correlations = None
+    if correlations_data:
+        try:
+            relationships = []
+            for rel in correlations_data.get("relationships", []):
+                try:
+                    relationships.append(CorrelationRelationship(**rel))
+                except Exception as e:
+                    logger.warning(
+                        "Failed to create relationship", error=str(e), rel=rel
+                    )
+                    continue
+
+            if relationships or correlations_data.get("correlations"):
+                correlations = CorrelationAnalysis(
+                    correlations=correlations_data.get("correlations", {}),
+                    relationships=relationships,
+                    indices_analyzed=correlations_data.get("indices_analyzed", []),
+                )
+        except Exception as e:
+            logger.warning(
+                "Failed to create correlation analysis", error=str(e), exc_info=True
+            )
+            correlations = None
+
     return ForecastResult(
         history=history_records,
         forecast=forecast_records,
@@ -1206,6 +1723,548 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         metadata=metadata,
         explanation=explanation,
         explanations=explanations_obj,
+        shock_events=shock_events,
+        convergence=convergence,
+        risk_tier=risk_tier,
+        forecast_confidence=forecast_confidence,
+        model_drift=model_drift,
+        correlations=correlations,
+    )
+
+
+# ============================================================================
+# VISUALIZATION ENDPOINTS
+# ============================================================================
+
+
+class HeatmapResponse(BaseModel):
+    """Heatmap data response."""
+
+    heatmap: Dict[str, Any]  # Can contain _metadata key
+    metadata: Dict[str, Any]
+
+
+class TrendResponse(BaseModel):
+    """Trend data response."""
+
+    trends: Dict[str, Dict[str, Any]]
+    metadata: Dict[str, Any]
+
+
+class RadarResponse(BaseModel):
+    """Radar chart data response."""
+
+    radar: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class ConvergenceGraphResponse(BaseModel):
+    """Convergence graph data response."""
+
+    graph: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class RiskGaugeResponse(BaseModel):
+    """Risk gauge data response."""
+
+    gauge: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class ShockTimelineResponse(BaseModel):
+    """Shock timeline data response."""
+
+    timeline: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class CorrelationMatrixResponse(BaseModel):
+    """Correlation matrix data response."""
+
+    matrix: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+class StateComparisonResponse(BaseModel):
+    """State comparison data response."""
+
+    comparison: Dict[str, Any]
+    metadata: Dict[str, Any]
+
+
+@app.get("/api/visual/heatmap", response_model=HeatmapResponse, tags=["visualization"])
+def get_heatmap(
+    region_name: Optional[str] = Query(None, description="Specific region to include"),
+    include_forecast: bool = Query(False, description="Include forecast data"),
+) -> HeatmapResponse:
+    """
+    Get heatmap data for all states and indices.
+
+    Returns visualization-ready data for heatmap rendering.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.heatmap_engine import HeatmapEngine
+
+    heatmap_engine = HeatmapEngine()
+    forecaster = BehavioralForecaster()
+
+    # Get data for all US states (simplified - in production, cache this)
+    # For now, generate for a few key states
+    key_states = [
+        ("Minnesota", 46.7296, -94.6859),
+        ("California", 36.7783, -119.4179),
+        ("Texas", 31.9686, -99.9018),
+        ("New York", 42.1657, -74.9481),
+        ("Florida", 27.7663, -81.6868),
+    ]
+
+    state_data = {}
+    for state_name, lat, lon in key_states:
+        if region_name and state_name != region_name:
+            continue
+
+        try:
+            result = forecaster.forecast(
+                latitude=lat,
+                longitude=lon,
+                region_name=state_name,
+                days_back=30,
+                forecast_horizon=7,
+            )
+
+            if result.get("history"):
+                latest = result["history"][-1]
+                state_indices = {
+                    "behavior_index": latest.get("behavior_index", 0.5),
+                    "economic_stress": latest.get("economic_stress", 0.5),
+                    "environmental_stress": latest.get("environmental_stress", 0.5),
+                    "mobility_activity": latest.get("mobility_activity", 0.5),
+                    "digital_attention": latest.get("digital_attention", 0.5),
+                    "public_health_stress": latest.get("public_health_stress", 0.5),
+                    "political_stress": latest.get("political_stress"),
+                    "crime_stress": latest.get("crime_stress"),
+                    "misinformation_stress": latest.get("misinformation_stress"),
+                    "social_cohesion_stress": latest.get("social_cohesion_stress"),
+                }
+                state_data[state_name] = state_indices
+        except Exception as e:
+            logger.warning(f"Failed to get data for {state_name}", error=str(e))
+            continue
+
+    if not state_data:
+        raise HTTPException(status_code=404, detail="No state data available")
+
+    heatmap_data = heatmap_engine.generate_heatmap(state_data)
+
+    # Extract metadata from heatmap_data if present
+    heatmap_metadata = heatmap_data.pop("_metadata", {})
+
+    # Merge with response metadata
+    response_metadata = {
+        "states_count": len(state_data),
+        "timestamp": datetime.now().isoformat(),
+        **heatmap_metadata,
+    }
+
+    return HeatmapResponse(
+        heatmap=heatmap_data,
+        metadata=response_metadata,
+    )
+
+
+@app.get("/api/visual/trends", response_model=TrendResponse, tags=["visualization"])
+def get_trends(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+    days_back: int = Query(30, ge=7, le=365, description="Days of historical data"),
+) -> TrendResponse:
+    """
+    Get trendline data for a region.
+
+    Returns slope, direction, and breakout detection data.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.trend_engine import TrendEngine
+
+    trend_engine = TrendEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=days_back,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    # Convert history to DataFrame
+    history_df = pd.DataFrame(result["history"])
+    if "timestamp" in history_df.columns:
+        history_df["timestamp"] = pd.to_datetime(history_df["timestamp"])
+
+    trends = trend_engine.calculate_trends(history_df)
+
+    return TrendResponse(
+        trends=trends,
+        metadata={
+            "region_name": region_name,
+            "days_back": days_back,
+            "timestamp": datetime.now().isoformat(),
+        },
+    )
+
+
+@app.get("/api/visual/radar", response_model=RadarResponse, tags=["visualization"])
+def get_radar(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+) -> RadarResponse:
+    """
+    Get radar/spider chart data for a region.
+
+    Returns behavioral fingerprint data for visualization.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.radar_engine import RadarEngine
+
+    radar_engine = RadarEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    latest = result["history"][-1]
+    state_indices = {
+        "economic_stress": latest.get("economic_stress", 0.5),
+        "environmental_stress": latest.get("environmental_stress", 0.5),
+        "mobility_activity": latest.get("mobility_activity", 0.5),
+        "digital_attention": latest.get("digital_attention", 0.5),
+        "public_health_stress": latest.get("public_health_stress", 0.5),
+        "political_stress": latest.get("political_stress", 0.5),
+        "crime_stress": latest.get("crime_stress", 0.5),
+        "misinformation_stress": latest.get("misinformation_stress", 0.5),
+        "social_cohesion_stress": latest.get("social_cohesion_stress", 0.5),
+    }
+
+    radar_data = radar_engine.generate_radar_data(state_indices)
+
+    return RadarResponse(
+        radar=radar_data,
+        metadata={"region_name": region_name, "timestamp": datetime.now().isoformat()},
+    )
+
+
+@app.get(
+    "/api/visual/convergence-graph",
+    response_model=ConvergenceGraphResponse,
+    tags=["visualization"],
+)
+def get_convergence_graph(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+) -> ConvergenceGraphResponse:
+    """
+    Get convergence graph data for network visualization.
+
+    Returns node and edge data for graph rendering.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.convergence_graph import ConvergenceGraphEngine
+
+    graph_engine = ConvergenceGraphEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    # Get correlation data from intelligence layer
+    correlations_data = result.get("correlations", {})
+    correlation_matrix = correlations_data.get("correlations", {})
+
+    # Get convergence data
+    convergence_data = result.get("convergence", {})
+
+    graph_data = graph_engine.generate_graph(correlation_matrix, convergence_data)
+
+    return ConvergenceGraphResponse(
+        graph=graph_data,
+        metadata={"region_name": region_name, "timestamp": datetime.now().isoformat()},
+    )
+
+
+@app.get(
+    "/api/visual/risk-gauge", response_model=RiskGaugeResponse, tags=["visualization"]
+)
+def get_risk_gauge(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+) -> RiskGaugeResponse:
+    """
+    Get risk gauge data for dial/meter visualization.
+
+    Returns gauge pointer position, zones, and colors.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.risk_gauge import RiskGaugeEngine
+
+    gauge_engine = RiskGaugeEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    # Get risk tier from intelligence layer
+    risk_tier_data = result.get("risk_tier", {})
+    risk_score = (
+        risk_tier_data.get("risk_score", 0.5)
+        if isinstance(risk_tier_data, dict)
+        else 0.5
+    )
+    risk_tier = (
+        risk_tier_data.get("tier", "stable")
+        if isinstance(risk_tier_data, dict)
+        else "stable"
+    )
+
+    gauge_data = gauge_engine.generate_gauge_data(risk_score, risk_tier)
+
+    return RiskGaugeResponse(
+        gauge=gauge_data,
+        metadata={"region_name": region_name, "timestamp": datetime.now().isoformat()},
+    )
+
+
+@app.get(
+    "/api/visual/shock-timeline",
+    response_model=ShockTimelineResponse,
+    tags=["visualization"],
+)
+def get_shock_timeline(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+) -> ShockTimelineResponse:
+    """
+    Get shock timeline data for chronological visualization.
+
+    Returns timeline events with severity and colors.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.shock_timeline import ShockTimelineEngine
+
+    timeline_engine = ShockTimelineEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    shock_events = result.get("shock_events", [])
+
+    timeline_data = timeline_engine.generate_timeline(shock_events)
+
+    return ShockTimelineResponse(
+        timeline=timeline_data,
+        metadata={"region_name": region_name, "timestamp": datetime.now().isoformat()},
+    )
+
+
+@app.get(
+    "/api/visual/correlation-matrix",
+    response_model=CorrelationMatrixResponse,
+    tags=["visualization"],
+)
+def get_correlation_matrix(
+    region_name: str = Query(..., description="Region name"),
+    latitude: float = Query(..., description="Latitude"),
+    longitude: float = Query(..., description="Longitude"),
+) -> CorrelationMatrixResponse:
+    """
+    Get correlation matrix data for heatmap visualization.
+
+    Returns 9x9 matrix with color coding metadata.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.visual.correlation_matrix import CorrelationMatrixEngine
+
+    matrix_engine = CorrelationMatrixEngine()
+    forecaster = BehavioralForecaster()
+
+    result = forecaster.forecast(
+        latitude=latitude,
+        longitude=longitude,
+        region_name=region_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result.get("history"):
+        raise HTTPException(status_code=404, detail="No historical data available")
+
+    # Get correlation data from intelligence layer
+    correlations_data = result.get("correlations", {})
+    correlation_matrix = correlations_data.get("correlations", {})
+
+    # Use Pearson if available
+    if "pearson" in correlation_matrix:
+        matrix_data = matrix_engine.generate_matrix(
+            correlation_matrix["pearson"], "pearson"
+        )
+    elif correlation_matrix:
+        # Use first available method
+        first_method = list(correlation_matrix.keys())[0]
+        matrix_data = matrix_engine.generate_matrix(
+            correlation_matrix[first_method], first_method
+        )
+    else:
+        # Return empty matrix
+        matrix_data = matrix_engine.generate_matrix({}, "pearson")
+
+    return CorrelationMatrixResponse(
+        matrix=matrix_data,
+        metadata={"region_name": region_name, "timestamp": datetime.now().isoformat()},
+    )
+
+
+@app.get(
+    "/api/visual/state-comparison",
+    response_model=StateComparisonResponse,
+    tags=["visualization"],
+)
+def get_state_comparison(
+    state_a_name: str = Query(..., description="First state name"),
+    state_a_lat: float = Query(..., description="First state latitude"),
+    state_a_lon: float = Query(..., description="First state longitude"),
+    state_b_name: str = Query(..., description="Second state name"),
+    state_b_lat: float = Query(..., description="Second state latitude"),
+    state_b_lon: float = Query(..., description="Second state longitude"),
+) -> StateComparisonResponse:
+    """
+    Compare two states across all metrics.
+
+    Returns comprehensive comparison data including radar charts, trends, and winners.
+    """
+    from app.core.prediction import BehavioralForecaster
+    from app.services.comparison.state_compare import StateComparisonEngine
+
+    comparison_engine = StateComparisonEngine()
+    forecaster = BehavioralForecaster()
+
+    # Get data for state A
+    result_a = forecaster.forecast(
+        latitude=state_a_lat,
+        longitude=state_a_lon,
+        region_name=state_a_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    # Get data for state B
+    result_b = forecaster.forecast(
+        latitude=state_b_lat,
+        longitude=state_b_lon,
+        region_name=state_b_name,
+        days_back=30,
+        forecast_horizon=7,
+    )
+
+    if not result_a.get("history") or not result_b.get("history"):
+        raise HTTPException(
+            status_code=404,
+            detail="Historical data not available for one or both states",
+        )
+
+    # Extract latest data
+    latest_a = result_a["history"][-1]
+    latest_b = result_b["history"][-1]
+
+    state_a_data = {
+        "behavior_index": latest_a.get("behavior_index", 0.5),
+        "economic_stress": latest_a.get("economic_stress", 0.5),
+        "environmental_stress": latest_a.get("environmental_stress", 0.5),
+        "mobility_activity": latest_a.get("mobility_activity", 0.5),
+        "digital_attention": latest_a.get("digital_attention", 0.5),
+        "public_health_stress": latest_a.get("public_health_stress", 0.5),
+        "political_stress": latest_a.get("political_stress", 0.5),
+        "crime_stress": latest_a.get("crime_stress", 0.5),
+        "misinformation_stress": latest_a.get("misinformation_stress", 0.5),
+        "social_cohesion_stress": latest_a.get("social_cohesion_stress", 0.5),
+        "risk_tier": result_a.get("risk_tier", {}),
+    }
+
+    state_b_data = {
+        "behavior_index": latest_b.get("behavior_index", 0.5),
+        "economic_stress": latest_b.get("economic_stress", 0.5),
+        "environmental_stress": latest_b.get("environmental_stress", 0.5),
+        "mobility_activity": latest_b.get("mobility_activity", 0.5),
+        "digital_attention": latest_b.get("digital_attention", 0.5),
+        "public_health_stress": latest_b.get("public_health_stress", 0.5),
+        "political_stress": latest_b.get("political_stress", 0.5),
+        "crime_stress": latest_b.get("crime_stress", 0.5),
+        "misinformation_stress": latest_b.get("misinformation_stress", 0.5),
+        "social_cohesion_stress": latest_b.get("social_cohesion_stress", 0.5),
+        "risk_tier": result_b.get("risk_tier", {}),
+    }
+
+    # Convert history to DataFrames
+    history_a = pd.DataFrame(result_a["history"]) if result_a.get("history") else None
+    history_b = pd.DataFrame(result_b["history"]) if result_b.get("history") else None
+
+    comparison_data = comparison_engine.compare_states(
+        state_a_data=state_a_data,
+        state_b_data=state_b_data,
+        state_a_name=state_a_name,
+        state_b_name=state_b_name,
+        state_a_history=history_a,
+        state_b_history=history_b,
+    )
+
+    return StateComparisonResponse(
+        comparison=comparison_data,
+        metadata={
+            "state_a": state_a_name,
+            "state_b": state_b_name,
+            "timestamp": datetime.now().isoformat(),
+        },
     )
 
 

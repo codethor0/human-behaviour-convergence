@@ -13,18 +13,18 @@ interface Region {
 }
 
 interface ForecastResponse {
-  history: any[];
-  forecast: any[];
+  history: Array<Record<string, unknown>>;
+  forecast: Array<Record<string, unknown>>;
   sources: string[];
-  metadata: Record<string, any>;
-  explanations?: any;
+  metadata: Record<string, unknown>;
+  explanations?: Record<string, unknown>;
 }
 
 interface PlaygroundResult {
   region_id: string;
   region_name: string;
   forecast: ForecastResponse;
-  explanations?: any;
+  explanations?: Record<string, unknown>;
   scenario_applied?: boolean;
   scenario_description?: string;
 }
@@ -88,7 +88,13 @@ export default function PlaygroundPage() {
 
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const request: any = {
+      const request: {
+        regions: string[];
+        historical_days: number;
+        forecast_horizon_days: number;
+        include_explanations: boolean;
+        scenario?: Record<string, number>;
+      } = {
         regions: selectedRegions,
         historical_days: daysBack,
         forecast_horizon_days: forecastHorizon,
@@ -112,8 +118,8 @@ export default function PlaygroundPage() {
 
       const data: PlaygroundResponse = await response.json();
       setPlaygroundData(data);
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate comparison');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to generate comparison');
     } finally {
       setLoading(false);
     }
@@ -364,7 +370,7 @@ export default function PlaygroundPage() {
                 <strong>Errors:</strong>
                 <ul style={{ marginTop: 8 }}>
                   {playgroundData.errors.map((err, idx) => (
-                    <li key={idx}>{err.region_id}: {err.error}</li>
+                    <li key={`error-${err.region_id}-${idx}`}>{err.region_id}: {err.error}</li>
                   ))}
                 </ul>
               </div>
@@ -375,7 +381,9 @@ export default function PlaygroundPage() {
                 const latestHistory = result.forecast.history && result.forecast.history.length > 0
                   ? result.forecast.history[result.forecast.history.length - 1]
                   : null;
-                const behaviorIndex = latestHistory?.behavior_index || 0.5;
+                const behaviorIndex = typeof latestHistory?.behavior_index === 'number'
+                  ? latestHistory.behavior_index
+                  : 0.5;
                 const subIndices = latestHistory?.sub_indices;
 
                 return (
@@ -393,7 +401,7 @@ export default function PlaygroundPage() {
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                         <span style={{ fontWeight: 'bold', fontSize: 18 }}>
-                          Behavior Index: {behaviorIndex.toFixed(3)}
+                          Behavior Index: {typeof behaviorIndex === 'number' ? behaviorIndex.toFixed(3) : String(behaviorIndex || 'N/A')}
                         </span>
                         <span
                           style={{
@@ -410,7 +418,7 @@ export default function PlaygroundPage() {
                       </div>
                     </div>
 
-                    {subIndices && (
+                    {(subIndices && typeof subIndices === 'object' && subIndices !== null) ? (
                       <div style={{ marginBottom: 16 }}>
                         <h4 style={{ fontSize: 14, marginBottom: 8 }}>Sub-Indices:</h4>
                         <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
@@ -418,43 +426,55 @@ export default function PlaygroundPage() {
                             <tr>
                               <td style={{ padding: 4 }}>Economic Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {subIndices.economic_stress?.toFixed(3) || 'N/A'}
+                                {typeof (subIndices as Record<string, unknown>).economic_stress === 'number'
+                                  ? (subIndices as Record<string, number>).economic_stress.toFixed(3)
+                                  : 'N/A'}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Environmental Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {subIndices.environmental_stress?.toFixed(3) || 'N/A'}
+                                {typeof (subIndices as Record<string, unknown>).environmental_stress === 'number'
+                                  ? (subIndices as Record<string, number>).environmental_stress.toFixed(3)
+                                  : 'N/A'}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Mobility Activity:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {subIndices.mobility_activity?.toFixed(3) || 'N/A'}
+                                {typeof (subIndices as Record<string, unknown>).mobility_activity === 'number'
+                                  ? (subIndices as Record<string, number>).mobility_activity.toFixed(3)
+                                  : 'N/A'}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Digital Attention:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {subIndices.digital_attention?.toFixed(3) || 'N/A'}
+                                {typeof (subIndices as Record<string, unknown>).digital_attention === 'number'
+                                  ? (subIndices as Record<string, number>).digital_attention.toFixed(3)
+                                  : 'N/A'}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Public Health Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {subIndices.public_health_stress?.toFixed(3) || 'N/A'}
+                                {typeof (subIndices as Record<string, unknown>).public_health_stress === 'number'
+                                  ? (subIndices as Record<string, number>).public_health_stress.toFixed(3)
+                                  : 'N/A'}
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
-                    )}
+                    ) : null}
 
-                    {result.explanations && (
+                    {result.explanations && typeof result.explanations === 'object' && result.explanations !== null && (
                       <div style={{ marginTop: 16, padding: 12, backgroundColor: '#e7f3ff', borderRadius: 4 }}>
                         <h4 style={{ fontSize: 14, marginTop: 0, marginBottom: 8 }}>Explanation:</h4>
                         <p style={{ fontSize: 12, margin: 0, color: '#555' }}>
-                          {result.explanations.summary}
+                          {typeof (result.explanations as Record<string, unknown>).summary === 'string'
+                            ? (result.explanations as Record<string, string>).summary
+                            : 'No explanation available'}
                         </p>
                       </div>
                     )}

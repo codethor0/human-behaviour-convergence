@@ -18,10 +18,12 @@ export default function HomePage() {
     ])
       .then(([f, m]) => {
         // Transform historical forecasts to table format
-        const forecastRows = f.map((forecast: any) => ({
+        const forecastRows = f.map((forecast: Record<string, unknown>) => ({
           timestamp: forecast.forecast_date || forecast.timestamp,
           region: forecast.region_name,
-          behavior_index: forecast.behavior_index?.toFixed(3) || 'N/A',
+          behavior_index: typeof forecast.behavior_index === 'number'
+            ? forecast.behavior_index.toFixed(3)
+            : (forecast.behavior_index ? String(forecast.behavior_index) : 'N/A'),
           model: forecast.model_type,
         }));
         setForecasts(forecastRows);
@@ -98,9 +100,9 @@ function DataTable({ rows, emptyMessage }: { rows: Record<string, any>[]; emptyM
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i}>
+            <tr key={`row-${i}-${r.timestamp || r.region || i}`}>
               {columns.map((c) => (
-                <td key={c} style={{ borderBottom: '1px solid #f0f0f0', padding: '6px 8px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' }}>
+                <td key={`${i}-${c}`} style={{ borderBottom: '1px solid #f0f0f0', padding: '6px 8px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' }}>
                   {String(r[c] ?? '')}
                 </td>
               ))}

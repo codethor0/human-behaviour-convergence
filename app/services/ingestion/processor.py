@@ -19,17 +19,38 @@ class DataHarmonizer:
     public health, and mobility data sources.
     """
 
-    def __init__(self, behavior_index_computer: Optional[BehaviorIndexComputer] = None):
+    def __init__(
+        self,
+        behavior_index_computer: Optional[BehaviorIndexComputer] = None,
+        include_political: bool = False,
+    ):
         """
         Initialize the data harmonizer.
 
         Args:
             behavior_index_computer: Optional BehaviorIndexComputer instance.
                 If None, creates a new one with default weights.
+            include_political: Whether to include political stress in index calculation.
+                If True, adjusts weights to include political_weight=0.15.
         """
-        self.behavior_index_computer = (
-            behavior_index_computer or BehaviorIndexComputer()
-        )
+        if behavior_index_computer is None:
+            if include_political:
+                # Adjust weights to include political stress (reduce others proportionally)
+                # Original: 0.25, 0.25, 0.20, 0.15, 0.15 = 1.0
+                # With political (0.15): need to reduce others to sum to 0.85
+                # Scale factor: 0.85/1.0 = 0.85
+                self.behavior_index_computer = BehaviorIndexComputer(
+                    economic_weight=0.25 * 0.85,
+                    environmental_weight=0.25 * 0.85,
+                    mobility_weight=0.20 * 0.85,
+                    digital_attention_weight=0.15 * 0.85,
+                    health_weight=0.15 * 0.85,
+                    political_weight=0.15,
+                )
+            else:
+                self.behavior_index_computer = BehaviorIndexComputer()
+        else:
+            self.behavior_index_computer = behavior_index_computer
 
     def harmonize(
         self,
@@ -44,6 +65,10 @@ class DataHarmonizer:
         gdelt_tone: Optional[pd.DataFrame] = None,
         owid_health: Optional[pd.DataFrame] = None,
         usgs_earthquakes: Optional[pd.DataFrame] = None,
+        political_data: Optional[pd.DataFrame] = None,
+        crime_data: Optional[pd.DataFrame] = None,
+        misinformation_data: Optional[pd.DataFrame] = None,
+        social_cohesion_data: Optional[pd.DataFrame] = None,
         forward_fill_days: int = 2,
     ) -> pd.DataFrame:
         """
@@ -92,6 +117,14 @@ class DataHarmonizer:
             owid_health = pd.DataFrame()
         if usgs_earthquakes is None:
             usgs_earthquakes = pd.DataFrame()
+        if political_data is None:
+            political_data = pd.DataFrame()
+        if crime_data is None:
+            crime_data = pd.DataFrame()
+        if misinformation_data is None:
+            misinformation_data = pd.DataFrame()
+        if social_cohesion_data is None:
+            social_cohesion_data = pd.DataFrame()
 
         if (
             market_data.empty
@@ -105,6 +138,10 @@ class DataHarmonizer:
             and gdelt_tone.empty
             and owid_health.empty
             and usgs_earthquakes.empty
+            and political_data.empty
+            and crime_data.empty
+            and misinformation_data.empty
+            and social_cohesion_data.empty
         ):
             logger.warning("All data sources are empty")
             return pd.DataFrame(
@@ -248,6 +285,54 @@ class DataHarmonizer:
             dataframes.append(usgs_df)
             names.append("usgs_earthquakes")
 
+        if not political_data.empty:
+            political_df = political_data.copy()
+            political_df["timestamp"] = pd.to_datetime(
+                political_df["timestamp"], utc=True
+            )
+            if political_df["timestamp"].dt.tz is not None:
+                political_df["timestamp"] = political_df["timestamp"].dt.tz_localize(
+                    None
+                )
+            political_df = political_df.set_index("timestamp").sort_index()
+            dataframes.append(political_df)
+            names.append("political")
+
+        if not crime_data.empty:
+            crime_df = crime_data.copy()
+            crime_df["timestamp"] = pd.to_datetime(crime_df["timestamp"], utc=True)
+            if crime_df["timestamp"].dt.tz is not None:
+                crime_df["timestamp"] = crime_df["timestamp"].dt.tz_localize(None)
+            crime_df = crime_df.set_index("timestamp").sort_index()
+            dataframes.append(crime_df)
+            names.append("crime")
+
+        if not misinformation_data.empty:
+            misinformation_df = misinformation_data.copy()
+            misinformation_df["timestamp"] = pd.to_datetime(
+                misinformation_df["timestamp"], utc=True
+            )
+            if misinformation_df["timestamp"].dt.tz is not None:
+                misinformation_df["timestamp"] = misinformation_df[
+                    "timestamp"
+                ].dt.tz_localize(None)
+            misinformation_df = misinformation_df.set_index("timestamp").sort_index()
+            dataframes.append(misinformation_df)
+            names.append("misinformation")
+
+        if not social_cohesion_data.empty:
+            social_cohesion_df = social_cohesion_data.copy()
+            social_cohesion_df["timestamp"] = pd.to_datetime(
+                social_cohesion_df["timestamp"], utc=True
+            )
+            if social_cohesion_df["timestamp"].dt.tz is not None:
+                social_cohesion_df["timestamp"] = social_cohesion_df[
+                    "timestamp"
+                ].dt.tz_localize(None)
+            social_cohesion_df = social_cohesion_df.set_index("timestamp").sort_index()
+            dataframes.append(social_cohesion_df)
+            names.append("social_cohesion")
+
         # Forward-fill market data for weekends (market is closed Sat/Sun)
         if not market_data.empty and forward_fill_days > 0:
             market_daily = market_data.resample("D").last()
@@ -364,6 +449,34 @@ class DataHarmonizer:
         else:
             usgs_aligned = pd.DataFrame(index=date_range)
 
+        if "political" in names:
+            political_idx = names.index("political")
+            political_df = dataframes[political_idx]
+            political_aligned = political_df.reindex(date_range)
+        else:
+            political_aligned = pd.DataFrame(index=date_range)
+
+        if "crime" in names:
+            crime_idx = names.index("crime")
+            crime_df = dataframes[crime_idx]
+            crime_aligned = crime_df.reindex(date_range)
+        else:
+            crime_aligned = pd.DataFrame(index=date_range)
+
+        if "misinformation" in names:
+            misinformation_idx = names.index("misinformation")
+            misinformation_df = dataframes[misinformation_idx]
+            misinformation_aligned = misinformation_df.reindex(date_range)
+        else:
+            misinformation_aligned = pd.DataFrame(index=date_range)
+
+        if "social_cohesion" in names:
+            social_cohesion_idx = names.index("social_cohesion")
+            social_cohesion_df = dataframes[social_cohesion_idx]
+            social_cohesion_aligned = social_cohesion_df.reindex(date_range)
+        else:
+            social_cohesion_aligned = pd.DataFrame(index=date_range)
+
         # Extract key columns
         market_stress = market_aligned.get(
             "stress_index", pd.Series(index=date_range, dtype=float)
@@ -398,6 +511,66 @@ class DataHarmonizer:
         usgs_earthquake_val = usgs_aligned.get(
             "earthquake_intensity", pd.Series(index=date_range, dtype=float)
         )
+        political_stress_val = political_aligned.get(
+            "political_stress", pd.Series(index=date_range, dtype=float)
+        )
+        crime_stress_val = crime_aligned.get(
+            "crime_stress", pd.Series(index=date_range, dtype=float)
+        )
+        misinformation_stress_val = misinformation_aligned.get(
+            "misinformation_stress", pd.Series(index=date_range, dtype=float)
+        )
+        social_cohesion_stress_val = social_cohesion_aligned.get(
+            "social_cohesion_stress", pd.Series(index=date_range, dtype=float)
+        )
+
+        # Check if new data is present to adjust BehaviorIndexComputer weights
+        has_political_data = (
+            not political_aligned.empty and political_stress_val.notna().any()
+        )
+        has_crime_data = not crime_aligned.empty and crime_stress_val.notna().any()
+        has_misinformation_data = (
+            not misinformation_aligned.empty and misinformation_stress_val.notna().any()
+        )
+        has_social_cohesion_data = (
+            not social_cohesion_aligned.empty
+            and social_cohesion_stress_val.notna().any()
+        )
+
+        # Calculate total weight of new indices
+        new_weight_total = 0.0
+        if has_political_data and self.behavior_index_computer.political_weight == 0:
+            new_weight_total += 0.15
+        if has_crime_data and self.behavior_index_computer.crime_weight == 0:
+            new_weight_total += 0.15
+        if (
+            has_misinformation_data
+            and self.behavior_index_computer.misinformation_weight == 0
+        ):
+            new_weight_total += 0.10
+        if (
+            has_social_cohesion_data
+            and self.behavior_index_computer.social_cohesion_weight == 0
+        ):
+            new_weight_total += 0.15
+
+        if new_weight_total > 0:
+            # Scale existing weights to make room for new indices
+            scale = 1.0 - new_weight_total
+            self.behavior_index_computer.economic_weight *= scale
+            self.behavior_index_computer.environmental_weight *= scale
+            self.behavior_index_computer.mobility_weight *= scale
+            self.behavior_index_computer.digital_attention_weight *= scale
+            self.behavior_index_computer.health_weight *= scale
+
+            if has_political_data:
+                self.behavior_index_computer.political_weight = 0.15
+            if has_crime_data:
+                self.behavior_index_computer.crime_weight = 0.15
+            if has_misinformation_data:
+                self.behavior_index_computer.misinformation_weight = 0.10
+            if has_social_cohesion_data:
+                self.behavior_index_computer.social_cohesion_weight = 0.15
 
         # Create merged DataFrame
         merged = pd.DataFrame(
@@ -414,6 +587,10 @@ class DataHarmonizer:
                 "gdelt_tone_score": gdelt_tone_val.values,
                 "owid_health_stress": owid_health_val.values,
                 "usgs_earthquake_intensity": usgs_earthquake_val.values,
+                "political_stress": political_stress_val.values,
+                "crime_stress": crime_stress_val.values,
+                "misinformation_stress": misinformation_stress_val.values,
+                "social_cohesion_stress": social_cohesion_stress_val.values,
             }
         )
 
@@ -451,6 +628,18 @@ class DataHarmonizer:
         merged["usgs_earthquake_intensity"] = merged[
             "usgs_earthquake_intensity"
         ].interpolate(method="linear", limit_direction="both")
+        merged["political_stress"] = merged["political_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["crime_stress"] = merged["crime_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["misinformation_stress"] = merged["misinformation_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["social_cohesion_stress"] = merged["social_cohesion_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
 
         # Compute behavior index and sub-indices using BehaviorIndexComputer
         merged = self.behavior_index_computer.compute_behavior_index(merged)

@@ -93,31 +93,97 @@ class MarketSentimentFetcher:
             vix_close = vix_data["Close"].rename("vix")
             spy_close = spy_data["Close"].rename("spy")
 
-            # Merge on date index
+            # Merge on date index using outer join to preserve all dates
+            # Then forward-fill missing values within a small window (2 days)
             merged = pd.DataFrame({"vix": vix_close, "spy": spy_close})
-            merged = merged.dropna()
+
+            # Sort by date
+            merged = merged.sort_index()
+
+            # Forward fill missing values within 2 days (to handle minor date misalignments)
+            merged = merged.ffill(limit=2)
+
+            # Drop rows where both are still NaN (no data available)
+            merged = merged.dropna(how="all")
+
+            # For rows with only one value, use a default for the missing one
+            # This allows us to still compute stress index even if one ticker is missing
+            if not merged.empty:
+                # If VIX is missing but SPY exists, use median VIX value
+                if merged["vix"].isna().any():
+                    vix_median = merged["vix"].median()
+                    if pd.isna(vix_median):
+                        vix_median = 20.0  # Default VIX value
+                    merged["vix"] = merged["vix"].fillna(vix_median)
+
+                # If SPY is missing but VIX exists, use median SPY value
+                if merged["spy"].isna().any():
+                    spy_median = merged["spy"].median()
+                    if pd.isna(spy_median):
+                        spy_median = 400.0  # Default SPY value
+                    merged["spy"] = merged["spy"].fillna(spy_median)
 
             if merged.empty:
-                logger.warning("No overlapping dates between VIX and SPY data")
+                logger.warning(
+                    "No market data available after merge",
+                    vix_rows=len(vix_close),
+                    spy_rows=len(spy_close),
+                )
                 return pd.DataFrame(
                     columns=["timestamp", "vix", "spy", "stress_index"],
                     dtype=float,
                 )
 
             # Calculate stress index
-            # VIX normalization: historical range roughly 10-80, normalize to 0-1
-            vix_min, vix_max = merged["vix"].min(), merged["vix"].max()
-            if vix_max > vix_min:
-                vix_norm = (merged["vix"] - vix_min) / (vix_max - vix_min)
-            else:
-                vix_norm = pd.Series([0.5] * len(merged), index=merged.index)
+            # VIX normalization: Use absolute thresholds based on historical VIX ranges
+            # VIX typically ranges 10-80, with:
+            #   < 15: Very low stress (0.0-0.2)
+            #   15-20: Low stress (0.2-0.4)
+            #   20-30: Moderate stress (0.4-0.6)
+            #   30-40: High stress (0.6-0.8)
+            #   > 40: Very high stress (0.8-1.0)
+            # Use a sigmoid-like function for smooth transitions
+            def normalize_vix(vix_value):
+                # Clamp to reasonable range (10-80)
+                vix_clamped = max(10.0, min(80.0, vix_value))
+                # Normalize: 10 -> 0.0, 20 -> 0.4, 30 -> 0.6, 40 -> 0.8, 80 -> 1.0
+                if vix_clamped <= 15:
+                    return 0.1 + (vix_clamped - 10) / 5 * 0.1  # 10->0.1, 15->0.2
+                elif vix_clamped <= 20:
+                    return 0.2 + (vix_clamped - 15) / 5 * 0.2  # 15->0.2, 20->0.4
+                elif vix_clamped <= 30:
+                    return 0.4 + (vix_clamped - 20) / 10 * 0.2  # 20->0.4, 30->0.6
+                elif vix_clamped <= 40:
+                    return 0.6 + (vix_clamped - 30) / 10 * 0.2  # 30->0.6, 40->0.8
+                else:
+                    return 0.8 + min(
+                        0.2, (vix_clamped - 40) / 40 * 0.2
+                    )  # 40->0.8, 80->1.0
 
-            # SPY normalization: inverse relationship (lower SPY = higher stress)
-            spy_min, spy_max = merged["spy"].min(), merged["spy"].max()
-            if spy_max > spy_min:
-                spy_norm_inv = 1.0 - ((merged["spy"] - spy_min) / (spy_max - spy_min))
+            vix_norm = merged["vix"].apply(normalize_vix)
+
+            # SPY normalization: Use percentile-based approach with absolute context
+            # SPY has been in range ~300-700 in recent years
+            # Use rolling percentile but with absolute floor/ceiling
+            spy_min_window = merged["spy"].min()
+            spy_max_window = merged["spy"].max()
+            spy_range = spy_max_window - spy_min_window
+
+            # If window range is too small, use absolute range (300-700)
+            if spy_range < 50:
+                spy_min_abs = 300.0
+                spy_max_abs = 700.0
+                spy_range_abs = 400.0
             else:
-                spy_norm_inv = pd.Series([0.5] * len(merged), index=merged.index)
+                # Use window range but expand slightly for stability
+                spy_min_abs = spy_min_window - 20
+                spy_max_abs = spy_max_window + 20
+                spy_range_abs = spy_max_abs - spy_min_abs
+
+            # Inverse relationship: lower SPY = higher stress
+            spy_norm_inv = 1.0 - ((merged["spy"] - spy_min_abs) / spy_range_abs).clip(
+                0.0, 1.0
+            )
 
             # Combined stress index: weighted average (VIX weighted more heavily)
             stress_index = (vix_norm * 0.6) + (spy_norm_inv * 0.4)

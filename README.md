@@ -32,6 +32,10 @@ This project is a **public-data-driven behavioral forecasting application** that
    - Search interest trends (aggregated public data)
    - Public health signals (aggregated statistics)
    - Mobility and activity patterns (aggregated public data)
+   - Political stress indicators (legislative volatility, executive sentiment, election proximity)
+   - Crime & public safety signals (violent crime volatility, property crime rates, gun violence pressure)
+   - Information integrity metrics (misinformation spread, sentiment volatility, narrative fragmentation)
+   - Social cohesion indicators (community trust, mental health trends, intergroup tension)
 
 2. **Feature Layer** — Transforms signals into unified behavioral features:
    - Time-series feature engineering (lags, moving averages, normalization)
@@ -42,6 +46,19 @@ This project is a **public-data-driven behavioral forecasting application** that
    - Classical time-series models (exponential smoothing, ARIMA)
    - Forecast outputs over configurable time horizons
    - Confidence intervals and quality indicators
+
+### Intelligence Layer (NEW)
+
+Advanced analytics and insights layer providing:
+
+- **Real-Time Event Shock Detection** — Detects sudden spikes and structural breaks across all indices using Z-score, delta, and EWMA methods
+- **Cross-Index Convergence Analysis** — Analyzes interactions between indices to detect reinforcing/conflicting signals and convergence patterns
+- **Risk Tier Classification** — Automatically classifies regions into risk tiers (Stable, Watchlist, Elevated, High, Critical)
+- **Forecast Confidence Monitoring** — Per-index confidence scores and model drift detection
+- **Correlation Analytics** — Computes relationships between indices using Pearson, Spearman, and Mutual Information
+- **Scenario Simulation** — Allows hypothetical scenario testing by modifying index values
+
+See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md) for detailed documentation.
 
 ---
 
@@ -105,6 +122,12 @@ This project is a **public-data-driven behavioral forecasting application** that
 
    # Check available models
    curl "http://localhost:8100/api/forecasting/models"
+
+   # Get visualization data
+   curl "http://localhost:8100/api/visual/heatmap?region_name=Minnesota"
+   curl "http://localhost:8100/api/visual/trends?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
+   curl "http://localhost:8100/api/visual/radar?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
+   curl "http://localhost:8100/api/visual/state-comparison?state_a_name=Minnesota&state_a_lat=46.7296&state_a_lon=-94.6859&state_b_name=Wisconsin&state_b_lat=44.2685&state_b_lon=-89.6165"
    ```
 
 3. **Use the web interface:**
@@ -167,9 +190,10 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 ## Project Status
 
 The application is **production-ready** for its current feature set with:
-- 129 tests passing (85% code coverage)
+- 145+ tests passing (85% code coverage)
 - 62 supported regions (51 US states + District of Columbia + 11 global cities)
-- Behavior Index v2.5 with 5 sub-indices (economic, environmental, mobility, digital attention, public health)
+- Behavior Index v2.5 with 9 sub-indices (economic, environmental, mobility, digital attention, public health, political, crime, misinformation, social cohesion)
+- **Intelligence Layer** with 7 components (shock detection, convergence analysis, risk classification, confidence monitoring, drift detection, correlation analytics, scenario simulation)
 - Complete location normalization system handling edge cases (Washington D.C. vs Washington state, incident location prioritization, city vs state disambiguation)
 - Full-stack implementation: FastAPI backend, Next.js frontend, Docker deployment
 - Zero-known-bug state within test coverage

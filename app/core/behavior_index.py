@@ -4,7 +4,8 @@
 This module computes a composite Behavior Index from multiple human behavior
 dimensions, each represented by a normalized sub-index.
 """
-from typing import Dict
+import math
+from typing import Any, Dict
 
 import pandas as pd
 import structlog
@@ -35,6 +36,10 @@ class BehaviorIndexComputer:
         mobility_weight: float = 0.20,
         digital_attention_weight: float = 0.15,
         health_weight: float = 0.15,
+        political_weight: float = 0.15,
+        crime_weight: float = 0.15,
+        misinformation_weight: float = 0.10,
+        social_cohesion_weight: float = 0.15,
     ):
         """
         Initialize the Behavior Index computer.
@@ -45,9 +50,25 @@ class BehaviorIndexComputer:
             mobility_weight: Weight for mobility activity sub-index (default: 0.20)
             digital_attention_weight: Weight for digital attention sub-index (default: 0.15)
             health_weight: Weight for public health stress sub-index (default: 0.15)
+            political_weight: Weight for political stress sub-index (default: 0.15)
 
         Note: Weights should sum to 1.0. If they don't, they will be normalized.
+        When new weights are 0.0, they are excluded (backward compatible).
         """
+        # Store original weights
+        self._original_weights = {
+            "economic": economic_weight,
+            "environmental": environmental_weight,
+            "mobility": mobility_weight,
+            "digital_attention": digital_attention_weight,
+            "health": health_weight,
+            "political": political_weight,
+            "crime": crime_weight,
+            "misinformation": misinformation_weight,
+            "social_cohesion": social_cohesion_weight,
+        }
+
+        # Calculate total weight (only include non-zero weights for backward compatibility)
         total_weight = (
             economic_weight
             + environmental_weight
@@ -55,29 +76,66 @@ class BehaviorIndexComputer:
             + digital_attention_weight
             + health_weight
         )
+
+        if political_weight > 0:
+            total_weight += political_weight
+        if crime_weight > 0:
+            total_weight += crime_weight
+        if misinformation_weight > 0:
+            total_weight += misinformation_weight
+        if social_cohesion_weight > 0:
+            total_weight += social_cohesion_weight
+
         if abs(total_weight - 1.0) > 0.01:  # Allow small floating point differences
-            logger.warning(
-                "Weights do not sum to 1.0, normalizing",
-                total=total_weight,
-                weights={
-                    "economic": economic_weight,
-                    "environmental": environmental_weight,
-                    "mobility": mobility_weight,
-                    "digital_attention": digital_attention_weight,
-                    "health": health_weight,
-                },
-            )
-            self.economic_weight = economic_weight / total_weight
-            self.environmental_weight = environmental_weight / total_weight
-            self.mobility_weight = mobility_weight / total_weight
-            self.digital_attention_weight = digital_attention_weight / total_weight
-            self.health_weight = health_weight / total_weight
+            if total_weight > 0:  # Prevent divide-by-zero
+                logger.warning(
+                    "Weights do not sum to 1.0, normalizing",
+                    total=total_weight,
+                    weights=self._original_weights,
+                )
+                self.economic_weight = economic_weight / total_weight
+                self.environmental_weight = environmental_weight / total_weight
+                self.mobility_weight = mobility_weight / total_weight
+                self.digital_attention_weight = digital_attention_weight / total_weight
+                self.health_weight = health_weight / total_weight
+                self.political_weight = (
+                    political_weight / total_weight if political_weight > 0 else 0.0
+                )
+                self.crime_weight = (
+                    crime_weight / total_weight if crime_weight > 0 else 0.0
+                )
+                self.misinformation_weight = (
+                    misinformation_weight / total_weight
+                    if misinformation_weight > 0
+                    else 0.0
+                )
+                self.social_cohesion_weight = (
+                    social_cohesion_weight / total_weight
+                    if social_cohesion_weight > 0
+                    else 0.0
+                )
+            else:
+                logger.error("Total weight is zero or negative, using default weights")
+                # Fallback to default weights if total_weight is invalid
+                self.economic_weight = 0.25
+                self.environmental_weight = 0.25
+                self.mobility_weight = 0.20
+                self.digital_attention_weight = 0.15
+                self.health_weight = 0.15
+                self.political_weight = 0.0
+                self.crime_weight = 0.0
+                self.misinformation_weight = 0.0
+                self.social_cohesion_weight = 0.0
         else:
             self.economic_weight = economic_weight
             self.environmental_weight = environmental_weight
             self.mobility_weight = mobility_weight
             self.digital_attention_weight = digital_attention_weight
             self.health_weight = health_weight
+            self.political_weight = political_weight
+            self.crime_weight = crime_weight
+            self.misinformation_weight = misinformation_weight
+            self.social_cohesion_weight = social_cohesion_weight
 
     def compute_sub_indices(
         self,
@@ -168,12 +226,31 @@ class BehaviorIndexComputer:
         total_weight = sum(weights)
         if total_weight > 0:
             weights = [w / total_weight for w in weights]
+        else:
+            # Fallback: equal weights if total_weight is zero
+            weights = (
+                [1.0 / len(economic_components)] * len(economic_components)
+                if len(economic_components) > 0
+                else [1.0]
+            )
 
-        # Compute weighted average
-        df["economic_stress"] = sum(
-            comp * weight for comp, weight in zip(economic_components, weights)
-        )
+        # Compute weighted average with safety checks
+        if len(economic_components) == len(weights) and len(economic_components) > 0:
+            df["economic_stress"] = sum(
+                comp * weight for comp, weight in zip(economic_components, weights)
+            )
+        else:
+            # Fallback: use first component or default
+            df["economic_stress"] = (
+                economic_components[0]
+                if len(economic_components) > 0
+                else pd.Series([0.5] * len(df))
+            )
 
+        # Ensure all values are valid numbers and in range
+        df["economic_stress"] = pd.to_numeric(
+            df["economic_stress"], errors="coerce"
+        ).fillna(0.5)
         df["economic_stress"] = df["economic_stress"].clip(0.0, 1.0)
 
         # Store component metadata for breakdown (store component info in DataFrame for later extraction)
@@ -321,6 +398,78 @@ class BehaviorIndexComputer:
             df.attrs["_health_component_weights"] = [1.0]
             df.attrs["_health_component_sources"] = ["default"]
 
+        # POLITICAL_STRESS: Direct mapping from political_stress index
+        # political_stress is already normalized 0.0-1.0 (higher = more stress)
+        political_stress = df.get("political_stress", pd.Series([None] * len(df)))
+        has_political_data = political_stress.notna().any()
+
+        if has_political_data:
+            df["political_stress"] = political_stress.fillna(0.5).clip(0.0, 1.0)
+            df.attrs["_political_component_names"] = ["political_stress"]
+            df.attrs["_political_component_weights"] = [1.0]
+            df.attrs["_political_component_sources"] = ["political_ingestion"]
+        else:
+            # Default fallback (backward compatible - no political stress)
+            df["political_stress"] = pd.Series([0.5] * len(df))
+            df.attrs["_political_component_names"] = ["default"]
+            df.attrs["_political_component_weights"] = [1.0]
+            df.attrs["_political_component_sources"] = ["default"]
+
+        # CRIME_STRESS: Direct mapping from crime_stress index
+        crime_stress = df.get("crime_stress", pd.Series([None] * len(df)))
+        has_crime_data = crime_stress.notna().any()
+
+        if has_crime_data:
+            df["crime_stress"] = crime_stress.fillna(0.5).clip(0.0, 1.0)
+            df.attrs["_crime_component_names"] = ["crime_stress"]
+            df.attrs["_crime_component_weights"] = [1.0]
+            df.attrs["_crime_component_sources"] = ["crime_ingestion"]
+        else:
+            df["crime_stress"] = pd.Series([0.5] * len(df))
+            df.attrs["_crime_component_names"] = ["default"]
+            df.attrs["_crime_component_weights"] = [1.0]
+            df.attrs["_crime_component_sources"] = ["default"]
+
+        # MISINFORMATION_STRESS: Direct mapping from misinformation_stress index
+        misinformation_stress = df.get(
+            "misinformation_stress", pd.Series([None] * len(df))
+        )
+        has_misinformation_data = misinformation_stress.notna().any()
+
+        if has_misinformation_data:
+            df["misinformation_stress"] = misinformation_stress.fillna(0.5).clip(
+                0.0, 1.0
+            )
+            df.attrs["_misinformation_component_names"] = ["misinformation_stress"]
+            df.attrs["_misinformation_component_weights"] = [1.0]
+            df.attrs["_misinformation_component_sources"] = ["misinformation_ingestion"]
+        else:
+            df["misinformation_stress"] = pd.Series([0.5] * len(df))
+            df.attrs["_misinformation_component_names"] = ["default"]
+            df.attrs["_misinformation_component_weights"] = [1.0]
+            df.attrs["_misinformation_component_sources"] = ["default"]
+
+        # SOCIAL_COHESION_STRESS: Direct mapping from social_cohesion_stress index
+        social_cohesion_stress = df.get(
+            "social_cohesion_stress", pd.Series([None] * len(df))
+        )
+        has_social_cohesion_data = social_cohesion_stress.notna().any()
+
+        if has_social_cohesion_data:
+            df["social_cohesion_stress"] = social_cohesion_stress.fillna(0.5).clip(
+                0.0, 1.0
+            )
+            df.attrs["_social_cohesion_component_names"] = ["social_cohesion_stress"]
+            df.attrs["_social_cohesion_component_weights"] = [1.0]
+            df.attrs["_social_cohesion_component_sources"] = [
+                "social_cohesion_ingestion"
+            ]
+        else:
+            df["social_cohesion_stress"] = pd.Series([0.5] * len(df))
+            df.attrs["_social_cohesion_component_names"] = ["default"]
+            df.attrs["_social_cohesion_component_weights"] = [1.0]
+            df.attrs["_social_cohesion_component_sources"] = ["default"]
+
         logger.info(
             "Sub-indices computed",
             economic_stress_range=(
@@ -342,6 +491,38 @@ class BehaviorIndexComputer:
             public_health_stress_range=(
                 df["public_health_stress"].min(),
                 df["public_health_stress"].max(),
+            ),
+            political_stress_range=(
+                (
+                    df["political_stress"].min(),
+                    df["political_stress"].max(),
+                )
+                if has_political_data
+                else None
+            ),
+            crime_stress_range=(
+                (
+                    df["crime_stress"].min(),
+                    df["crime_stress"].max(),
+                )
+                if has_crime_data
+                else None
+            ),
+            misinformation_stress_range=(
+                (
+                    df["misinformation_stress"].min(),
+                    df["misinformation_stress"].max(),
+                )
+                if has_misinformation_data
+                else None
+            ),
+            social_cohesion_stress_range=(
+                (
+                    df["social_cohesion_stress"].min(),
+                    df["social_cohesion_stress"].max(),
+                )
+                if has_social_cohesion_data
+                else None
             ),
         )
 
@@ -391,6 +572,22 @@ class BehaviorIndexComputer:
             + (df["public_health_stress"] * self.health_weight)
         )
 
+        # Add new stress indices if weights > 0 (backward compatible)
+        if self.political_weight > 0:
+            behavior_index = behavior_index + (
+                df["political_stress"] * self.political_weight
+            )
+        if self.crime_weight > 0:
+            behavior_index = behavior_index + (df["crime_stress"] * self.crime_weight)
+        if self.misinformation_weight > 0:
+            behavior_index = behavior_index + (
+                df["misinformation_stress"] * self.misinformation_weight
+            )
+        if self.social_cohesion_weight > 0:
+            behavior_index = behavior_index + (
+                df["social_cohesion_stress"] * self.social_cohesion_weight
+            )
+
         # Clip to valid range
         df["behavior_index"] = behavior_index.clip(0.0, 1.0)
 
@@ -416,13 +613,27 @@ class BehaviorIndexComputer:
         Returns:
             Dictionary mapping dimension names to sub-index values
         """
-        return {
+        result = {
             "economic_stress": float(row.get("economic_stress", 0.5)),
             "environmental_stress": float(row.get("environmental_stress", 0.5)),
             "mobility_activity": float(row.get("mobility_activity", 0.5)),
             "digital_attention": float(row.get("digital_attention", 0.5)),
             "public_health_stress": float(row.get("public_health_stress", 0.5)),
         }
+        # Add new stress indices if weights > 0
+        if self.political_weight > 0:
+            result["political_stress"] = float(row.get("political_stress", 0.5))
+        if self.crime_weight > 0:
+            result["crime_stress"] = float(row.get("crime_stress", 0.5))
+        if self.misinformation_weight > 0:
+            result["misinformation_stress"] = float(
+                row.get("misinformation_stress", 0.5)
+            )
+        if self.social_cohesion_weight > 0:
+            result["social_cohesion_stress"] = float(
+                row.get("social_cohesion_stress", 0.5)
+            )
+        return result
 
     def get_contribution_analysis(self, row: pd.Series) -> Dict[str, Dict[str, float]]:
         """
@@ -473,11 +684,45 @@ class BehaviorIndexComputer:
             },
         }
 
+        # Add new stress indices contributions if weights > 0
+        if self.political_weight > 0:
+            political_value = float(row.get("political_stress", 0.5))
+            contributions["political_stress"] = {
+                "value": political_value,
+                "weight": self.political_weight,
+                "contribution": float(political_value * self.political_weight),
+            }
+        if self.crime_weight > 0:
+            crime_value = float(row.get("crime_stress", 0.5))
+            contributions["crime_stress"] = {
+                "value": crime_value,
+                "weight": self.crime_weight,
+                "contribution": float(crime_value * self.crime_weight),
+            }
+        if self.misinformation_weight > 0:
+            misinformation_value = float(row.get("misinformation_stress", 0.5))
+            contributions["misinformation_stress"] = {
+                "value": misinformation_value,
+                "weight": self.misinformation_weight,
+                "contribution": float(
+                    misinformation_value * self.misinformation_weight
+                ),
+            }
+        if self.social_cohesion_weight > 0:
+            social_cohesion_value = float(row.get("social_cohesion_stress", 0.5))
+            contributions["social_cohesion_stress"] = {
+                "value": social_cohesion_value,
+                "weight": self.social_cohesion_weight,
+                "contribution": float(
+                    social_cohesion_value * self.social_cohesion_weight
+                ),
+            }
+
         return contributions
 
     def get_subindex_details(
         self, df: pd.DataFrame, row_idx: int
-    ) -> Dict[str, Dict[str, any]]:
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Extract component-level details for each sub-index from a DataFrame row.
 
@@ -498,8 +743,6 @@ class BehaviorIndexComputer:
             component_sources = df.attrs["_economic_component_sources"]
 
             # Extract component values from the row (handle NaN/inf)
-            import math
-
             component_values = []
             if "market_volatility" in component_names:
                 val = row.get("stress_index", 0.5)
@@ -517,8 +760,6 @@ class BehaviorIndexComputer:
                 val = row.get("fred_jobless_claims", 0.5)
                 val_float = float(val) if pd.notna(val) else 0.5
                 component_values.append(val_float if math.isfinite(val_float) else 0.5)
-
-            import math
 
             economic_val = float(row.get("economic_stress", 0.5))
             economic_val = economic_val if math.isfinite(economic_val) else 0.5
@@ -562,8 +803,6 @@ class BehaviorIndexComputer:
             component_names = df.attrs["_environmental_component_names"]
             component_weights = df.attrs["_environmental_component_weights"]
             component_sources = df.attrs["_environmental_component_sources"]
-
-            import math
 
             discomfort_val = row.get("discomfort_score", 0.5)
             discomfort_float = (
@@ -611,8 +850,6 @@ class BehaviorIndexComputer:
             component_weights = df.attrs["_mobility_component_weights"]
             component_sources = df.attrs["_mobility_component_sources"]
 
-            import math
-
             mobility_val = row.get("mobility_index", 0.5)
             mobility_float = float(mobility_val) if pd.notna(mobility_val) else 0.5
             mobility_float = mobility_float if math.isfinite(mobility_float) else 0.5
@@ -654,8 +891,6 @@ class BehaviorIndexComputer:
             component_names = df.attrs["_digital_component_names"]
             component_weights = df.attrs["_digital_component_weights"]
             component_sources = df.attrs["_digital_component_sources"]
-
-            import math
 
             search_val = row.get("search_interest_score", 0.5)
             search_float = float(search_val) if pd.notna(search_val) else 0.5
@@ -699,8 +934,6 @@ class BehaviorIndexComputer:
             component_weights = df.attrs["_health_component_weights"]
             component_sources = df.attrs["_health_component_sources"]
 
-            import math
-
             health_val = row.get("health_risk_index", 0.5)
             health_float = float(health_val) if pd.notna(health_val) else 0.5
             health_float = health_float if math.isfinite(health_float) else 0.5
@@ -731,6 +964,182 @@ class BehaviorIndexComputer:
                         "id": "health_risk_index",
                         "label": "Health Risk Index",
                         "value": float(row.get("health_risk_index", 0.5)),
+                        "weight": 1.0,
+                        "source": "default",
+                    }
+                ],
+            }
+
+        # Political stress components
+        if "_political_component_names" in df.attrs:
+            component_names = df.attrs["_political_component_names"]
+            component_weights = df.attrs["_political_component_weights"]
+            component_sources = df.attrs["_political_component_sources"]
+
+            political_val = row.get("political_stress", 0.5)
+            political_float = float(political_val) if pd.notna(political_val) else 0.5
+            political_float = political_float if math.isfinite(political_float) else 0.5
+            details["political_stress"] = {
+                "value": (
+                    float(row.get("political_stress", 0.5))
+                    if math.isfinite(float(row.get("political_stress", 0.5)))
+                    else 0.5
+                ),
+                "components": [
+                    {
+                        "id": name,
+                        "label": name.replace("_", " ").title(),
+                        "value": political_float,
+                        "weight": float(weight),
+                        "source": source,
+                    }
+                    for name, weight, source in zip(
+                        component_names, component_weights, component_sources
+                    )
+                ],
+            }
+        else:
+            details["political_stress"] = {
+                "value": float(row.get("political_stress", 0.5)),
+                "components": [
+                    {
+                        "id": "political_stress",
+                        "label": "Political Stress",
+                        "value": float(row.get("political_stress", 0.5)),
+                        "weight": 1.0,
+                        "source": "default",
+                    }
+                ],
+            }
+
+        # Crime stress components
+        if "_crime_component_names" in df.attrs:
+            component_names = df.attrs["_crime_component_names"]
+            component_weights = df.attrs["_crime_component_weights"]
+            component_sources = df.attrs["_crime_component_sources"]
+
+            crime_val = row.get("crime_stress", 0.5)
+            crime_float = float(crime_val) if pd.notna(crime_val) else 0.5
+            crime_float = crime_float if math.isfinite(crime_float) else 0.5
+            details["crime_stress"] = {
+                "value": (
+                    float(row.get("crime_stress", 0.5))
+                    if math.isfinite(float(row.get("crime_stress", 0.5)))
+                    else 0.5
+                ),
+                "components": [
+                    {
+                        "id": name,
+                        "label": name.replace("_", " ").title(),
+                        "value": crime_float,
+                        "weight": float(weight),
+                        "source": source,
+                    }
+                    for name, weight, source in zip(
+                        component_names, component_weights, component_sources
+                    )
+                ],
+            }
+        else:
+            details["crime_stress"] = {
+                "value": float(row.get("crime_stress", 0.5)),
+                "components": [
+                    {
+                        "id": "crime_stress",
+                        "label": "Crime Stress",
+                        "value": float(row.get("crime_stress", 0.5)),
+                        "weight": 1.0,
+                        "source": "default",
+                    }
+                ],
+            }
+
+        # Misinformation stress components
+        if "_misinformation_component_names" in df.attrs:
+            component_names = df.attrs["_misinformation_component_names"]
+            component_weights = df.attrs["_misinformation_component_weights"]
+            component_sources = df.attrs["_misinformation_component_sources"]
+
+            misinformation_val = row.get("misinformation_stress", 0.5)
+            misinformation_float = (
+                float(misinformation_val) if pd.notna(misinformation_val) else 0.5
+            )
+            misinformation_float = (
+                misinformation_float if math.isfinite(misinformation_float) else 0.5
+            )
+            details["misinformation_stress"] = {
+                "value": (
+                    float(row.get("misinformation_stress", 0.5))
+                    if math.isfinite(float(row.get("misinformation_stress", 0.5)))
+                    else 0.5
+                ),
+                "components": [
+                    {
+                        "id": name,
+                        "label": name.replace("_", " ").title(),
+                        "value": misinformation_float,
+                        "weight": float(weight),
+                        "source": source,
+                    }
+                    for name, weight, source in zip(
+                        component_names, component_weights, component_sources
+                    )
+                ],
+            }
+        else:
+            details["misinformation_stress"] = {
+                "value": float(row.get("misinformation_stress", 0.5)),
+                "components": [
+                    {
+                        "id": "misinformation_stress",
+                        "label": "Misinformation Stress",
+                        "value": float(row.get("misinformation_stress", 0.5)),
+                        "weight": 1.0,
+                        "source": "default",
+                    }
+                ],
+            }
+
+        # Social cohesion stress components
+        if "_social_cohesion_component_names" in df.attrs:
+            component_names = df.attrs["_social_cohesion_component_names"]
+            component_weights = df.attrs["_social_cohesion_component_weights"]
+            component_sources = df.attrs["_social_cohesion_component_sources"]
+
+            social_cohesion_val = row.get("social_cohesion_stress", 0.5)
+            social_cohesion_float = (
+                float(social_cohesion_val) if pd.notna(social_cohesion_val) else 0.5
+            )
+            social_cohesion_float = (
+                social_cohesion_float if math.isfinite(social_cohesion_float) else 0.5
+            )
+            details["social_cohesion_stress"] = {
+                "value": (
+                    float(row.get("social_cohesion_stress", 0.5))
+                    if math.isfinite(float(row.get("social_cohesion_stress", 0.5)))
+                    else 0.5
+                ),
+                "components": [
+                    {
+                        "id": name,
+                        "label": name.replace("_", " ").title(),
+                        "value": social_cohesion_float,
+                        "weight": float(weight),
+                        "source": source,
+                    }
+                    for name, weight, source in zip(
+                        component_names, component_weights, component_sources
+                    )
+                ],
+            }
+        else:
+            details["social_cohesion_stress"] = {
+                "value": float(row.get("social_cohesion_stress", 0.5)),
+                "components": [
+                    {
+                        "id": "social_cohesion_stress",
+                        "label": "Social Cohesion Stress",
+                        "value": float(row.get("social_cohesion_stress", 0.5)),
                         "weight": 1.0,
                         "source": "default",
                     }

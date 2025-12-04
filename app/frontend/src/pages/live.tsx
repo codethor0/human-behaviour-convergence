@@ -92,8 +92,8 @@ export default function LivePage() {
 
       const data: LiveSummaryResponse = await response.json();
       setLiveData(data);
-    } catch (e: any) {
-      setError(e.message || 'Failed to fetch live data');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch live data');
     } finally {
       setLoading(false);
     }
@@ -121,8 +121,8 @@ export default function LivePage() {
       setTimeout(() => {
         fetchLiveData();
       }, 2000);
-    } catch (e: any) {
-      setError(e.message || 'Failed to trigger refresh');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to trigger refresh');
     }
   };
 
