@@ -42,11 +42,11 @@ All 9 ingestion modules validated:
 | Misinformation | verified | 31 | 0.3655 - 0.7235 | verified |
 | Social Cohesion | verified | 31 | 0.3085 - 0.6580 | verified |
 | Political Stress | verified | 31 | 0.3025 - 0.5290 | verified |
-| Economic (FRED) | ⚠️ | 0 | N/A | N/A (API key not set) |
+| Economic (FRED) | WARNING | 0 | N/A | N/A (API key not set) |
 | Environmental | verified | Working | - | verified |
-| Mobility | ⚠️ | 0 | N/A | N/A (API not configured) |
-| Digital Attention | ⚠️ | 0 | N/A | N/A (API not configured) |
-| Public Health | ⚠️ | 0 | N/A | N/A (API not configured) |
+| Mobility | WARNING | 0 | N/A | N/A (API not configured) |
+| Digital Attention | WARNING | 0 | N/A | N/A (API not configured) |
+| Public Health | WARNING | 0 | N/A | N/A (API not configured) |
 
 **Note:** Some modules require API keys/configuration but have proper fallback handling.
 
