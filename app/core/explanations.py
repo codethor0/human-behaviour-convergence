@@ -102,7 +102,10 @@ def _explain_economic_stress(
             c.get("id", "") for c in components
         ]:
             if level == "high":
-                reason = "Market volatility is elevated, indicating significant economic uncertainty."
+                reason = (
+                    "Market volatility is elevated, indicating significant "
+                    "economic uncertainty."
+                )
             elif level == "moderate":
                 reason = "Market volatility is moderate, with some economic uncertainty present."
             else:
@@ -140,16 +143,28 @@ def _explain_economic_stress(
             # Generate component-specific explanation
             if comp_id == "market_volatility":
                 if direction == "up":
-                    explanation = "Market volatility index is above typical levels, indicating increased uncertainty."
+                    explanation = (
+                        "Market volatility index is above typical levels, "
+                        "indicating increased uncertainty."
+                    )
                 elif direction == "down":
-                    explanation = "Market volatility index is below typical levels, indicating relative stability."
+                    explanation = (
+                        "Market volatility index is below typical levels, "
+                        "indicating relative stability."
+                    )
                 else:
                     explanation = "Market volatility index is within typical range."
             elif comp_id == "consumer_sentiment":
                 if direction == "up":
-                    explanation = "Consumer sentiment is below average, indicating reduced confidence."
+                    explanation = (
+                        "Consumer sentiment is below average, indicating "
+                        "reduced confidence."
+                    )
                 elif direction == "down":
-                    explanation = "Consumer sentiment is above average, indicating strong confidence."
+                    explanation = (
+                        "Consumer sentiment is above average, indicating "
+                        "strong confidence."
+                    )
                 else:
                     explanation = "Consumer sentiment is near average levels."
             elif comp_id == "unemployment_rate":
@@ -165,9 +180,15 @@ def _explain_economic_stress(
                     explanation = "Unemployment rate is within typical range."
             elif comp_id == "jobless_claims":
                 if direction == "up":
-                    explanation = "Jobless claims are elevated, indicating increased labor market disruption."
+                    explanation = (
+                        "Jobless claims are elevated, indicating increased "
+                        "labor market disruption."
+                    )
                 elif direction == "down":
-                    explanation = "Jobless claims are low, indicating stable labor market conditions."
+                    explanation = (
+                        "Jobless claims are low, indicating stable labor "
+                        "market conditions."
+                    )
                 else:
                     explanation = "Jobless claims are within typical range."
             else:
@@ -230,18 +251,30 @@ def _explain_environmental_stress(
     if has_earthquake:
         if level == "high":
             if earthquake_value > 0.5:
-                reason = "Environmental stress is elevated due to both weather conditions and earthquake activity."
+                reason = (
+                    "Environmental stress is elevated due to both weather "
+                    "conditions and earthquake activity."
+                )
             else:
                 reason = "Environmental stress is elevated primarily due to weather conditions."
         elif level == "moderate":
-            reason = "Environmental stress is moderate, with weather and earthquake activity within typical ranges."
+            reason = (
+                "Environmental stress is moderate, with weather and "
+                "earthquake activity within typical ranges."
+            )
         else:
-            reason = "Environmental stress is low; weather is mild and earthquake activity is minimal."
+            reason = (
+                "Environmental stress is low; weather is mild and "
+                "earthquake activity is minimal."
+            )
     else:
         if level == "high":
             reason = "Environmental stress is elevated due to weather conditions."
         elif level == "moderate":
-            reason = "Environmental stress is moderate, with weather conditions within typical range."
+            reason = (
+                "Environmental stress is moderate, with weather conditions "
+                "within typical range."
+            )
         else:
             reason = "Environmental stress is low; weather conditions are mild."
 
@@ -259,7 +292,10 @@ def _explain_environmental_stress(
 
             if comp_id == "weather_discomfort":
                 if direction == "up":
-                    explanation = "Temperature, precipitation, or wind conditions are causing elevated discomfort."
+                    explanation = (
+                        "Temperature, precipitation, or wind conditions are "
+                        "causing elevated discomfort."
+                    )
                 elif direction == "down":
                     explanation = "Weather conditions are mild and comfortable."
                 else:
@@ -268,7 +304,10 @@ def _explain_environmental_stress(
                     )
             elif comp_id == "earthquake_intensity":
                 if direction == "up":
-                    explanation = "USGS reports significant earthquake activity in the region recently."
+                    explanation = (
+                        "USGS reports significant earthquake activity in the "
+                        "region recently."
+                    )
                 elif direction == "down":
                     explanation = "USGS reports no significant earthquakes in the region recently."
                 else:
@@ -400,16 +439,28 @@ def _explain_digital_attention(
     if has_gdelt:
         if level == "high":
             if gdelt_value > 0.5:
-                reason = "Digital attention is elevated, with recent global news events suggesting increased information-seeking behavior."
+                reason = (
+                    "Digital attention is elevated, with recent global news "
+                    "events suggesting increased information-seeking behavior."
+                )
             else:
-                reason = "Digital attention is elevated, with increased search interest and information-seeking behavior."
+                reason = (
+                    "Digital attention is elevated, with increased search "
+                    "interest and information-seeking behavior."
+                )
         elif level == "moderate":
-            reason = "Digital attention is moderate, with normal levels of search interest and media coverage."
+            reason = (
+                "Digital attention is moderate, with normal levels of search "
+                "interest and media coverage."
+            )
         else:
             reason = "Digital attention is low, with minimal search interest and media coverage."
     else:
         if level == "high":
-            reason = "Digital attention is elevated, indicating increased information-seeking behavior."
+            reason = (
+                "Digital attention is elevated, indicating increased "
+                "information-seeking behavior."
+            )
         elif level == "moderate":
             reason = (
                 "Digital attention is moderate, with normal levels of search interest."
@@ -431,16 +482,25 @@ def _explain_digital_attention(
 
             if comp_id == "gdelt_tone" or "gdelt" in comp_id.lower():
                 if direction == "up":
-                    explanation = "Recent global news events suggest elevated digital attention and crisis awareness."
+                    explanation = (
+                        "Recent global news events suggest elevated digital "
+                        "attention and crisis awareness."
+                    )
                 elif direction == "down":
-                    explanation = "Global news coverage suggests low digital attention and minimal crisis awareness."
+                    explanation = (
+                        "Global news coverage suggests low digital attention "
+                        "and minimal crisis awareness."
+                    )
                 else:
                     explanation = "Global news coverage suggests moderate digital attention levels."
             elif comp_id == "search_interest":
                 if direction == "up":
                     explanation = "Search interest is elevated, indicating increased information-seeking behavior."
                 elif direction == "down":
-                    explanation = "Search interest is low, indicating minimal information-seeking behavior."
+                    explanation = (
+                        "Search interest is low, indicating minimal "
+                        "information-seeking behavior."
+                    )
                 else:
                     explanation = "Search interest is within typical range."
             else:
@@ -499,16 +559,25 @@ def _explain_public_health_stress(
     if has_owid:
         if level == "high":
             if owid_value > 0.5:
-                reason = "Public health stress is elevated, with OWID data showing increased health burden and excess mortality."
+                reason = (
+                    "Public health stress is elevated, with OWID data showing "
+                    "increased health burden and excess mortality."
+                )
             else:
-                reason = "Public health stress is elevated, with health indicators showing increased burden."
+                reason = (
+                    "Public health stress is elevated, with health indicators "
+                    "showing increased burden."
+                )
         elif level == "moderate":
             reason = "Public health stress is moderate, with health indicators within typical range."
         else:
             reason = "Public health stress is low, with health indicators showing minimal burden."
     else:
         if level == "high":
-            reason = "Public health stress is elevated, with health indicators showing increased burden."
+            reason = (
+                "Public health stress is elevated, with health indicators "
+                "showing increased burden."
+            )
         elif level == "moderate":
             reason = "Public health stress is moderate, with health indicators within typical range."
         else:
@@ -528,9 +597,15 @@ def _explain_public_health_stress(
 
             if "owid" in comp_id.lower():
                 if direction == "up":
-                    explanation = "OWID health data shows elevated excess mortality or health burden."
+                    explanation = (
+                        "OWID health data shows elevated excess mortality or "
+                        "health burden."
+                    )
                 elif direction == "down":
-                    explanation = "OWID health data shows low excess mortality and minimal health burden."
+                    explanation = (
+                        "OWID health data shows low excess mortality and "
+                        "minimal health burden."
+                    )
                 else:
                     explanation = (
                         "OWID health data shows health indicators within typical range."

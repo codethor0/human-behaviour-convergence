@@ -223,7 +223,11 @@ def compare_regions(
                                 latest_history["sub_indices"][key] = value
 
                 scenario_applied = True
-                scenario_description = "Hypothetical what-if adjustment applied to sub-indices for exploration purposes. This is not a forecast change but a scenario exploration."
+                scenario_description = (
+                    "Hypothetical what-if adjustment applied to sub-indices "
+                    "for exploration purposes. This is not a forecast change "
+                    "but a scenario exploration."
+                )
 
             # Remove non-serializable DataFrames from metadata before returning
             # The _harmonized_df is used internally but should not be serialized
