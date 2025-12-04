@@ -156,6 +156,7 @@ class TrendEngine:
                 return str(latest_breakout_idx)
             else:
                 from datetime import datetime
+
                 return datetime.now().isoformat()
 
         return None
