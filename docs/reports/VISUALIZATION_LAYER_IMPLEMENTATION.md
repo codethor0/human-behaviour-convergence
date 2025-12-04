@@ -376,7 +376,7 @@ curl "http://localhost:8100/api/visual/state-comparison?state_a_name=Minnesota&s
 
 ## Status
 
-🎉 **VISUALIZATION LAYER FULLY OPERATIONAL**
+**VISUALIZATION LAYER FULLY OPERATIONAL**
 
 The system now provides:
 - Heatmap data for all states and indices
