@@ -572,7 +572,10 @@ def _explain_public_health_stress(
                     "showing increased burden."
                 )
         elif level == "moderate":
-            reason = "Public health stress is moderate, with health indicators within typical range."
+            reason = (
+                "Public health stress is moderate, with health indicators "
+                "within typical range."
+            )
         else:
             reason = "Public health stress is low, with health indicators showing minimal burden."
     else:
@@ -582,7 +585,10 @@ def _explain_public_health_stress(
                 "showing increased burden."
             )
         elif level == "moderate":
-            reason = "Public health stress is moderate, with health indicators within typical range."
+            reason = (
+                "Public health stress is moderate, with health indicators "
+                "within typical range."
+            )
         else:
             reason = "Public health stress is low, with health indicators showing minimal burden."
 

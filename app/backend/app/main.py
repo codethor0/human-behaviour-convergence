@@ -591,7 +591,10 @@ class ForecastRequest(BaseModel):
     region_name: str = Field(..., description="Human-readable region name")
     region_id: Optional[str] = Field(
         None,
-        description="Region identifier (e.g., 'us_mn', 'city_nyc'). If provided, overrides latitude/longitude.",
+        description=(
+            "Region identifier (e.g., 'us_mn', 'city_nyc'). "
+            "If provided, overrides latitude/longitude."
+        ),
     )
     days_back: int = Field(
         default=30, ge=7, le=365, description="Number of historical days to use"
@@ -1047,7 +1050,10 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         if not (-90 <= latitude <= 90) or not (-180 <= longitude <= 180):
             raise HTTPException(
                 status_code=400,
-                detail="Invalid coordinates: latitude must be -90 to 90, longitude must be -180 to 180",
+                detail=(
+                    "Invalid coordinates: latitude must be -90 to 90, "
+                    "longitude must be -180 to 180"
+                ),
             )
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid coordinate values")

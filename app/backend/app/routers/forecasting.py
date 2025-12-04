@@ -54,7 +54,10 @@ def get_data_sources() -> List[DataSourceInfo]:
     return [
         DataSourceInfo(
             name="economic_indicators",
-            description="Market sentiment indicators from public financial data (volatility index, market indices)",
+            description=(
+                "Market sentiment indicators from public financial data "
+                "(volatility index, market indices)"
+            ),
             status="active",
             available=True,
             parameters={
@@ -65,7 +68,10 @@ def get_data_sources() -> List[DataSourceInfo]:
         ),
         DataSourceInfo(
             name="weather_patterns",
-            description="Environmental data including temperature, precipitation, and wind patterns",
+            description=(
+                "Environmental data including temperature, precipitation, "
+                "and wind patterns"
+            ),
             status="active",
             available=True,
             parameters={
@@ -77,7 +83,10 @@ def get_data_sources() -> List[DataSourceInfo]:
         ),
         DataSourceInfo(
             name="search_trends",
-            description="Digital attention signals from search interest trends (requires API configuration)",
+            description=(
+                "Digital attention signals from search interest trends "
+                "(requires API configuration)"
+            ),
             status="active",
             available=False,
             parameters={
@@ -89,7 +98,10 @@ def get_data_sources() -> List[DataSourceInfo]:
         ),
         DataSourceInfo(
             name="public_health",
-            description="Public health indicators from aggregated health statistics (requires API configuration)",
+            description=(
+                "Public health indicators from aggregated health statistics "
+                "(requires API configuration)"
+            ),
             status="active",
             available=False,
             parameters={
@@ -101,7 +113,10 @@ def get_data_sources() -> List[DataSourceInfo]:
         ),
         DataSourceInfo(
             name="mobility_patterns",
-            description="Mobility and activity pattern data from public APIs (requires API configuration)",
+            description=(
+                "Mobility and activity pattern data from public APIs "
+                "(requires API configuration)"
+            ),
             status="active",
             available=False,
             parameters={
@@ -148,7 +163,10 @@ def get_models() -> List[ModelInfo]:
     models = [
         ModelInfo(
             name="exponential_smoothing",
-            description="Exponential smoothing (Holt-Winters) for time series forecasting with trend and seasonality",
+            description=(
+                "Exponential smoothing (Holt-Winters) for time series "
+                "forecasting with trend and seasonality"
+            ),
             type="time_series",
             parameters={
                 "trend": "additive or multiplicative",
@@ -163,7 +181,10 @@ def get_models() -> List[ModelInfo]:
         ),
         ModelInfo(
             name="moving_average",
-            description="Simple moving average with trend extension (fallback when advanced models unavailable)",
+            description=(
+                "Simple moving average with trend extension "
+                "(fallback when advanced models unavailable)"
+            ),
             type="time_series",
             parameters={
                 "window_size": "integer (default: 7)",

@@ -262,7 +262,10 @@ class LocationNormalizer:
                 result.normalized_location = NormalizedLocation(
                     region_id=region.id,
                     region_label=region.name,
-                    reason="Description contains federal building/landmark keywords or explicitly mentions Washington, D.C.",
+                    reason=(
+                        "Description contains federal building/landmark keywords "
+                        "or explicitly mentions Washington, D.C."
+                    ),
                     alternatives=[],
                     notes=[
                         "Washington D.C. (us_dc) is distinct from Washington state (us_wa).",
@@ -301,7 +304,10 @@ class LocationNormalizer:
                         result.normalized_location = NormalizedLocation(
                             region_id=region.id,
                             region_label=region.name,
-                            reason=f"Matched Washington state from city context: {city_name}, Washington",
+                            reason=(
+                                f"Matched Washington state from city context: "
+                                f"{city_name}, Washington"
+                            ),
                             alternatives=["us_dc"],
                             notes=[],
                         )
@@ -369,10 +375,14 @@ class LocationNormalizer:
                         result.normalized_location = NormalizedLocation(
                             region_id=region.id,
                             region_label=region.name,
-                            reason="Extracted incident location: Washington (state context from description)",
+                            reason=(
+                                "Extracted incident location: Washington "
+                                "(state context from description)"
+                            ),
                             alternatives=["us_dc"],
                             notes=[
-                                "Washington could refer to state or D.C.; state context detected (e.g., Seattle)."
+                                "Washington could refer to state or D.C.; "
+                                "state context detected (e.g., Seattle)."
                             ],
                         )
                         return result
@@ -556,8 +566,10 @@ class LocationNormalizer:
         # Pattern: "in [location]" or "near [location]" - improved to handle commas and multi-word locations
         patterns = [
             r"in\s+([A-Z][a-zA-Z\s,]+?)(?:\s|,|\.|$)",  # "in Washington, D.C." or "in Seattle, Washington"
-            r"near\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "near the White House" or "near Washington"
-            r"at\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "at the Capitol" or "at Washington"
+            r"near\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "near the White House"
+            # or "near Washington"
+            r"at\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "at the Capitol"
+            # or "at Washington"
         ]
 
         for pattern in patterns:

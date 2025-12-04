@@ -22,7 +22,10 @@ class LiveSummaryResponse(BaseModel):
 def get_live_summary(
     regions: Optional[List[str]] = Query(
         None,
-        description="Optional list of region IDs to include. If not provided, returns all available regions.",
+        description=(
+            "Optional list of region IDs to include. "
+            "If not provided, returns all available regions."
+        ),
     ),
     time_window_minutes: int = Query(
         default=60,
@@ -65,7 +68,10 @@ def get_live_summary(
 def trigger_refresh(
     regions: Optional[List[str]] = Query(
         None,
-        description="Optional list of region IDs to refresh. If not provided, refreshes all regions.",
+        description=(
+            "Optional list of region IDs to refresh. "
+            "If not provided, refreshes all regions."
+        ),
     ),
 ) -> dict:
     """

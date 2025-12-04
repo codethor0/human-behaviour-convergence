@@ -704,7 +704,8 @@ class BehavioralForecaster:
                 # Ensure forecast_result has correct length
                 if len(forecast_result) != forecast_horizon:
                     logger.warning(
-                        f"Forecast length mismatch: expected {forecast_horizon}, got {len(forecast_result)}"
+                        f"Forecast length mismatch: expected {forecast_horizon}, "
+                        f"got {len(forecast_result)}"
                     )
                     if len(forecast_result) > forecast_horizon:
                         forecast_result = forecast_result[:forecast_horizon]
