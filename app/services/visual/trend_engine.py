@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Trendline & Slope Engine for trend analysis."""
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 import numpy as np

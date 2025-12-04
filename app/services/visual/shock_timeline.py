@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Shock Timeline Engine for chronological shock visualization."""
-from datetime import datetime
 from typing import Dict, List, Optional
 
 import pandas as pd
