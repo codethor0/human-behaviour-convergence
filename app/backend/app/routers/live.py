@@ -32,7 +32,8 @@ def get_live_summary(
         ge=1,
         le=1440,
         description=(
-            "Time window in minutes for historical snapshots " "(1-1440, default: 60)"
+            "Time window in minutes for historical snapshots "
+            "(1-1440, default: 60)"
         ),
     ),
 ) -> LiveSummaryResponse:
