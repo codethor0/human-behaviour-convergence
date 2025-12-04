@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Heatmap Engine for generating visualization-ready heatmap data."""
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 import numpy as np
