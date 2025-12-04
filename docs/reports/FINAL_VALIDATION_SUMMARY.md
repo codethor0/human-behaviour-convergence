@@ -44,11 +44,11 @@ All validation checks completed successfully. The system demonstrates:
 | Misinformation | verified | Valid [0-1] | verified Correct | verified Robust |
 | Social Cohesion | verified | Valid [0-1] | verified Correct | verified Robust |
 | Political Stress | verified | Valid [0-1] | verified Correct | verified Robust |
-| Economic (FRED) | ⚠️ | N/A (API key) | N/A | verified Fallback |
+| Economic (FRED) | WARNING | N/A (API key) | N/A | verified Fallback |
 | Environmental | verified | Valid | verified Correct | verified Robust |
-| Mobility | ⚠️ | N/A (API) | N/A | verified Fallback |
-| Digital Attention | ⚠️ | N/A (API) | N/A | verified Fallback |
-| Public Health | ⚠️ | N/A (API) | N/A | verified Fallback |
+| Mobility | WARNING | N/A (API) | N/A | verified Fallback |
+| Digital Attention | WARNING | N/A (API) | N/A | verified Fallback |
+| Public Health | WARNING | N/A (API) | N/A | verified Fallback |
 
 **Formula Validation:**
 - verified Crime: `0.30 * VCV + 0.20 * PCR + 0.20 * PDT + 0.15 * SCD + 0.15 * GVP`
@@ -250,9 +250,9 @@ All validation checks completed successfully. The system demonstrates:
 3. verified **Safe float conversion** - Added safe_float helper function for None/NaN handling
 
 ### Pre-Existing Issues (Non-Blocking):
-1. ⚠️ **GDELT API errors** - Handled gracefully with fallback (pre-existing)
-2. ⚠️ **OWID dataset 404** - Handled gracefully with fallback (pre-existing)
-3. ⚠️ **Missing API keys** - Expected in dev environment, fallbacks work
+1. WARNING **GDELT API errors** - Handled gracefully with fallback (pre-existing)
+2. WARNING **OWID dataset 404** - Handled gracefully with fallback (pre-existing)
+3. WARNING **Missing API keys** - Expected in dev environment, fallbacks work
 
 ## Final Test Results
 

@@ -9,11 +9,11 @@ Complete system assurance sweep completed across all 12 phases. The Behavior Con
 ### Folder Structure Analysis:
 ```
 app/
-├── backend/          # API layer (FastAPI)
-├── core/             # Business logic (forecasting, behavior index)
-├── frontend/         # UI layer (Next.js/React)
-├── services/         # Service layer (ingestion, intelligence, visualization)
-└── storage/          # Data persistence
+|-- backend/          # API layer (FastAPI)
+|-- core/             # Business logic (forecasting, behavior index)
+|-- frontend/         # UI layer (Next.js/React)
+|-- services/         # Service layer (ingestion, intelligence, visualization)
+`-- storage/          # Data persistence
 ```
 
 ### Separation of Concerns:

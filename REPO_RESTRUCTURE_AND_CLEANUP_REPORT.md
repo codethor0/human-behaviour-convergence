@@ -88,12 +88,12 @@ This report documents a comprehensive repository cleanup and reorganization effo
 
 ```
 docs/
-  ├── reports/          # Validation and audit reports (NEW)
-  │   ├── README.md     # Reports directory documentation
-  │   └── [19 report files]
-  └── archive/          # Archived files (NEW)
-      ├── README.md     # Archive directory documentation
-      └── [3 archived files]
+  |-- reports/          # Validation and audit reports (NEW)
+  |   |-- README.md     # Reports directory documentation
+  |   `-- [19 report files]
+  `-- archive/          # Archived files (NEW)
+      |-- README.md     # Archive directory documentation
+      `-- [3 archived files]
 ```
 
 ### Files Moved
@@ -298,17 +298,17 @@ docs/
 ### Directory Structure (Final)
 ```
 .
-├── app/                    # Application code
-├── docs/
-│   ├── reports/           # Validation/audit reports (NEW)
-│   └── archive/           # Archived files (NEW)
-├── tests/                 # Test suite
-├── diagram/               # Mermaid diagrams
-├── connectors/            # Data connectors
-├── scripts/               # Utility scripts
-├── notebooks/            # Jupyter notebooks
-├── results/               # Forecast results
-└── [root documentation files]
+|-- app/                    # Application code
+|-- docs/
+|   |-- reports/           # Validation/audit reports (NEW)
+|   `-- archive/           # Archived files (NEW)
+|-- tests/                 # Test suite
+|-- diagram/               # Mermaid diagrams
+|-- connectors/            # Data connectors
+|-- scripts/               # Utility scripts
+|-- notebooks/            # Jupyter notebooks
+|-- results/               # Forecast results
+`-- [root documentation files]
 ```
 
 ### Verification Checklist

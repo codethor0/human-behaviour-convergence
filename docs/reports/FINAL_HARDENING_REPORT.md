@@ -39,11 +39,11 @@ All validation checks completed successfully with **zero blocking bugs**. The sy
 | **Misinformation** | verified | verified Correct | Valid [0-1] | verified Robust |
 | **Social Cohesion** | verified | verified Correct | Valid [0-1] | verified Robust |
 | **Political Stress** | verified | verified Correct | Valid [0-1] | verified Robust |
-| Economic (FRED) | ⚠️ | N/A | N/A (API key) | verified Fallback |
+| Economic (FRED) | WARNING | N/A | N/A (API key) | verified Fallback |
 | Environmental | verified | verified Correct | Valid | verified Robust |
-| Mobility | ⚠️ | N/A | N/A (API) | verified Fallback |
-| Digital Attention | ⚠️ | N/A | N/A (API) | verified Fallback |
-| Public Health | ⚠️ | N/A | N/A (API) | verified Fallback |
+| Mobility | WARNING | N/A | N/A (API) | verified Fallback |
+| Digital Attention | WARNING | N/A | N/A (API) | verified Fallback |
+| Public Health | WARNING | N/A | N/A (API) | verified Fallback |
 
 **Formula Validation:**
 - verified **Crime:** `0.30 * VCV + 0.20 * PCR + 0.20 * PDT + 0.15 * SCD + 0.15 * GVP`
@@ -295,10 +295,10 @@ Normalized Weights: 1.0
 5. verified **Missing details** - Added new indices to subindex_details extraction
 
 ### Pre-Existing Issues (Non-Blocking):
-1. ⚠️ **GDELT API errors** - Handled gracefully with fallback (pre-existing)
-2. ⚠️ **OWID dataset 404** - Handled gracefully with fallback (pre-existing)
-3. ⚠️ **Missing API keys** - Expected in dev environment, fallbacks work
-4. ⚠️ **/api/states endpoint 404** - Endpoint may not exist, not critical for core functionality
+1. WARNING **GDELT API errors** - Handled gracefully with fallback (pre-existing)
+2. WARNING **OWID dataset 404** - Handled gracefully with fallback (pre-existing)
+3. WARNING **Missing API keys** - Expected in dev environment, fallbacks work
+4. WARNING **/api/states endpoint 404** - Endpoint may not exist, not critical for core functionality
 
 ## Final Test Results
 
@@ -415,7 +415,7 @@ verified All fields populated correctly
 - [x] All 9 indices operational
 - [x] Contributions and details working
 
-### 🎯 Final Status
+###  Final Status
 
 **SYSTEM IS STABLE, CLEAN, AND READY FOR DEPLOYMENT**
 
