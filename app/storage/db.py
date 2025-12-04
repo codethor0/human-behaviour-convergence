@@ -99,13 +99,16 @@ class ForecastDB:
 
             # Create indexes
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_forecasts_timestamp ON forecasts(timestamp)"
+                "CREATE INDEX IF NOT EXISTS idx_forecasts_timestamp "
+                "ON forecasts(timestamp)"
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_forecasts_region ON forecasts(region_name)"
+                "CREATE INDEX IF NOT EXISTS idx_forecasts_region "
+                "ON forecasts(region_name)"
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_metrics_forecast_id ON metrics(forecast_id)"
+                "CREATE INDEX IF NOT EXISTS idx_metrics_forecast_id "
+                "ON metrics(forecast_id)"
             )
 
             conn.commit()

@@ -24,7 +24,8 @@ class EnvironmentalImpactFetcher:
         Initialize the environmental impact fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 30 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 30 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Optional[pd.DataFrame] = None

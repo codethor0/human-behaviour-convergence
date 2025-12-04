@@ -268,7 +268,7 @@ class LocationNormalizer:
                     ),
                     alternatives=[],
                     notes=[
-                        "Washington D.C. (us_dc) is distinct from Washington state (us_wa).",
+                        "Washington D.C. (us_dc) is distinct from Washington state (us_wa).",  # noqa: E501
                         "Federal buildings, White House, Capitol indicate D.C.",
                     ],
                 )
@@ -296,7 +296,7 @@ class LocationNormalizer:
                 )
                 return result
 
-            # If city not found but state is Washington, check for Washington state cities
+            # If city not found but state is Washington, check for WA state cities
             if state_name == "washington":
                 if city_name in self.WA_STATE_KEYWORDS:
                     region = get_region_by_id("us_wa")
@@ -361,14 +361,14 @@ class LocationNormalizer:
                         result.normalized_location = NormalizedLocation(
                             region_id=region.id,
                             region_label=region.name,
-                            reason="Extracted incident location: Washington (D.C. context)",
+                            reason="Extracted incident location: Washington (D.C. context)",  # noqa: E501
                             alternatives=["us_wa"],
                             notes=[
-                                "Washington could refer to state or D.C.; D.C. context detected."
+                                "Washington could refer to state or D.C.; D.C. context detected."  # noqa: E501
                             ],
                         )
                         return result
-                # Check for state context (check original description, not just extracted)
+                # Check for state context (check original description, not extracted)
                 elif any(kw in description.lower() for kw in self.WA_STATE_KEYWORDS):
                     region = get_region_by_id("us_wa")
                     if region:
@@ -391,11 +391,11 @@ class LocationNormalizer:
                 # For non-Washington locations, match normally but prefer exact matches
                 region = self._match_location(incident_location)
                 if region:
-                        # Double-check: if we extracted from a comma-separated
-                        # location like "Seattle, Washington",
+                    # Double-check: if we extracted from a comma-separated
+                    # location like "Seattle, Washington",
                     # make sure we're using the right part
                     if "," in description and incident_location.lower() == "washington":
-                        # Check if there's a city before the comma that suggests Washington state
+                        # Check if there's a city before comma suggesting WA state
                         import re
 
                         city_state_pattern = r"([A-Z][a-z]+),\s*Washington"
@@ -529,7 +529,8 @@ class LocationNormalizer:
             if re.search(pattern, text):
                 # Special handling for Washington
                 if region.id == "us_wa":
-                    # Only match if it's clearly the state (has state keywords or no D.C. context)
+                    # Only match if clearly the state (has state keywords or
+                    # no D.C. context)
                     if has_state_context or any(
                         kw in text for kw in self.WA_STATE_KEYWORDS
                     ):
@@ -540,7 +541,7 @@ class LocationNormalizer:
             # Check aliases with word boundaries
             aliases = self._generate_aliases(region)
             for alias in aliases:
-                # Skip single-letter or very short aliases that might cause false matches
+                # Skip single-letter or very short aliases that might cause false matches  # noqa: E501
                 if len(alias) <= 2:
                     continue
                 alias_pattern = r"\b" + re.escape(alias.lower()) + r"\b"
@@ -573,7 +574,7 @@ class LocationNormalizer:
         patterns = [
             r"in\s+([A-Z][a-zA-Z\s,]+?)(?:\s|,|\.|$)",  # "in Washington, D.C."
             # or "in Seattle, Washington"
-            r"near\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "near the White House"
+            r"near\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "near White House"  # noqa: E501
             # or "near Washington"
             r"at\s+(?:the\s+)?([A-Z][a-zA-Z\s]+?)(?:\s|,|\.|$)",  # "at the Capitol"
             # or "at Washington"
@@ -634,7 +635,7 @@ class LocationNormalizer:
             if re.search(pattern, region.name.lower()):
                 return region
             # Also try reverse (region name as complete word in location)
-            # But only if location is longer (to avoid "in" matching "Indiana" in "Washington")
+            # But only if location is longer (to avoid "in" matching "Indiana")
             if len(location_lower) >= len(region.name.lower()):
                 region_pattern = r"\b" + re.escape(region.name.lower()) + r"\b"
                 if re.search(region_pattern, location_lower):
@@ -666,7 +667,7 @@ class LocationNormalizer:
                 return (
                     "us_wa",
                     ["us_dc"],
-                    "Washington is ambiguous between state and D.C.; no further context provided.",
+                    "Washington is ambiguous between state and D.C.; no context provided.",  # noqa: E501
                 )
 
         # Default: return None with empty alternatives

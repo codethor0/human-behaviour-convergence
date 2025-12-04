@@ -71,7 +71,8 @@ class TestPlaygroundHelpers:
             "public_health_stress": 0.4,
         }
 
-        # Expected: (0.4 * 0.25) + (0.3 * 0.25) + ((1-0.7) * 0.20) + (0.5 * 0.15) + (0.4 * 0.15)
+        # Expected: (0.4 * 0.25) + (0.3 * 0.25) + ((1-0.7) * 0.20) +
+        # (0.5 * 0.15) + (0.4 * 0.15)
         # = 0.1 + 0.075 + 0.06 + 0.075 + 0.06 = 0.37
         result = recompute_behavior_index_from_sub_indices(sub_indices)
 

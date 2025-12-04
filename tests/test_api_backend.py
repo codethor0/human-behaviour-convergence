@@ -189,7 +189,7 @@ def test_api_error_handling_bad_csv(temp_results_dir, monkeypatch):
     client = TestClient(main.app)
     response = client.get("/api/forecasts")
 
-    # Should handle gracefully (may return 500 or empty data depending on implementation)
+    # Should handle gracefully (may return 500 or empty data depending on impl)
     assert response.status_code in [200, 500]
 
 

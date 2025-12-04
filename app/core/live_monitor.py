@@ -158,7 +158,7 @@ class LiveMonitor:
                 explanation_dict = generate_explanation(
                     behavior_index=behavior_index,
                     sub_indices=sub_indices_dict,
-                    subindex_details=None,  # We don't have component details in live monitoring
+                    subindex_details=None,  # No component details in live monitoring
                     region_name=region.name,
                 )
                 # Extract summary from the explanation dict

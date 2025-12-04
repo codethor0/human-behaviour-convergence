@@ -33,7 +33,8 @@ class GDELTEventsFetcher:
         Initialize GDELT events fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 60 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 60 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: dict[str, tuple[pd.DataFrame, datetime]] = {}
@@ -131,7 +132,8 @@ class GDELTEventsFetcher:
             max_tone = df["tone"].max()
 
             if max_tone > min_tone:
-                # Map tone to [0, 1] where -100 -> 1.0 (high stress), +100 -> 0.0 (low stress)
+                # Map tone to [0, 1] where -100 -> 1.0 (high stress),
+                # +100 -> 0.0 (low stress)
                 # Formula: 1.0 - ((tone - (-100)) / (100 - (-100)))
                 # This maps -100 to 1.0 and +100 to 0.0
                 df["tone_score"] = 1.0 - ((df["tone"] - (-100)) / (100 - (-100)))

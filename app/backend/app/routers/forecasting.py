@@ -49,7 +49,8 @@ def get_data_sources() -> List[DataSourceInfo]:
     List all available public data sources for forecasting.
 
     Returns:
-        List of data source information including name, description, status, and parameters
+        List of data source information including name, description, status,
+        and parameters
     """
     return [
         DataSourceInfo(
@@ -245,7 +246,7 @@ class HistoricalForecastItem(BaseModel):
     forecast_horizon: int
     model_type: str
     sources: List[str]
-    accuracy_score: float = None
+    accuracy_score: Optional[float] = None
 
 
 @router.get("/history", response_model=List[HistoricalForecastItem])
@@ -260,7 +261,8 @@ def get_forecast_history(
 
     Args:
         region_name: Optional filter by region name
-        limit: Maximum number of historical forecasts to return (default: 100, max: 1000)
+        limit: Maximum number of historical forecasts to return
+            (default: 100, max: 1000)
 
     Returns:
         List of historical forecast entries with metadata and accuracy scores
@@ -277,9 +279,26 @@ def get_forecast_history(
 
         result = []
         for f in forecasts:
+            forecast_id = f.get("id")
+            accuracy_score = None
+
+            # Compute accuracy_score from metrics table if available
+            if forecast_id is not None:
+                try:
+                    metrics = db.get_metrics(forecast_id)
+                    # Use RMSE as primary accuracy metric, fallback to MAE
+                    if "rmse" in metrics:
+                        accuracy_score = metrics["rmse"]
+                    elif "mae" in metrics:
+                        accuracy_score = metrics["mae"]
+                    # If neither available, accuracy_score remains None
+                except Exception:
+                    # If metrics retrieval fails, accuracy_score remains None
+                    pass
+
             result.append(
                 HistoricalForecastItem(
-                    forecast_id=str(f.get("id", "")),
+                    forecast_id=str(forecast_id) if forecast_id is not None else "",
                     region_name=f.get("region_name", ""),
                     latitude=f.get("latitude", 0.0),
                     longitude=f.get("longitude", 0.0),
@@ -287,7 +306,7 @@ def get_forecast_history(
                     forecast_horizon=f.get("metadata", {}).get("forecast_horizon", 7),
                     model_type=f.get("model_name", "Unknown"),
                     sources=f.get("metadata", {}).get("sources", []),
-                    accuracy_score=None,  # TODO: Compute from metrics table
+                    accuracy_score=accuracy_score,
                 )
             )
 

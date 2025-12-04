@@ -44,7 +44,8 @@ class ShockDetector:
 
         Args:
             history_df: DataFrame with timestamp and index columns
-            index_columns: List of index column names to monitor (default: all stress indices)
+            index_columns: List of index column names to monitor
+                (default: all stress indices)
 
         Returns:
             List of shock event dictionaries

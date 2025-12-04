@@ -11,7 +11,7 @@ class TestOWIDHealthFetcher:
     """Test OWID health fetcher."""
 
     def test_fetch_excess_mortality_returns_dataframe(self):
-        """Test that fetch_excess_mortality() returns a DataFrame with correct schema."""
+        """Test fetch_excess_mortality() returns DataFrame with correct schema."""
         fetcher = OWIDHealthFetcher()
         df = fetcher.fetch_excess_mortality(country="United States", days_back=30)
 
@@ -33,7 +33,7 @@ class TestOWIDHealthFetcher:
         assert "timestamp" in df.columns or df.empty
 
     def test_fetch_health_stress_index_returns_dataframe(self):
-        """Test that fetch_health_stress_index() returns a DataFrame with correct schema."""
+        """Test fetch_health_stress_index() returns DataFrame with correct schema."""
         fetcher = OWIDHealthFetcher()
         df = fetcher.fetch_health_stress_index(country="United States", days_back=30)
 

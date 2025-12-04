@@ -25,7 +25,7 @@ class TestRegionsAPI:
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
-        # Should have at least 62 regions (50 US states + DC + 3 original cities + 8 new cities)
+        # Should have at least 62 regions (50 US states + DC + 3 original + 8 new)
         assert len(data) >= 62
 
     def test_regions_contains_us_states(self):

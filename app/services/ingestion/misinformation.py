@@ -11,7 +11,8 @@ logger = structlog.get_logger("ingestion.misinformation")
 
 class MisinformationStressFetcher:
     """
-    Fetch and compute Information Integrity & Misinformation Index from multiple sources.
+    Fetch and compute Information Integrity & Misinformation Index
+    from multiple sources.
 
     Combines signals from:
     - Rumor Amplification Index (RAI)

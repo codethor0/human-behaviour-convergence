@@ -170,8 +170,9 @@ def compare_regions(
             )
 
             # Extract latest sub-indices for scenario adjustment if needed
-            # Note: forecast_result from BehavioralForecaster.forecast() returns raw dict
-            # The history contains dict records with behavior_index and optionally sub_indices
+            # Note: forecast_result from BehavioralForecaster.forecast()
+            # returns raw dict
+            # History contains dict records with behavior_index and optional sub_indices
             latest_sub_indices = None
             if forecast_result.get("history") and len(forecast_result["history"]) > 0:
                 latest_history = forecast_result["history"][-1]

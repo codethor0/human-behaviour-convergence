@@ -29,7 +29,8 @@ class PoliticalStressFetcher:
         Initialize the political stress fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 1440 = 24 hours)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 1440 = 24 hours)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Dict[str, Tuple[pd.DataFrame, datetime]] = {}
@@ -182,7 +183,8 @@ class PoliticalStressFetcher:
         """
         Fetch executive sentiment indicators (governor approval, executive orders).
 
-        For now, generates synthetic data. Can be enhanced with real governor approval APIs.
+        For now, generates synthetic data. Can be enhanced with real
+        governor approval APIs.
         """
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
 
@@ -234,7 +236,8 @@ class PoliticalStressFetcher:
         """
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
 
-        # Calculate days until next major election (simplified: Nov 2024, Nov 2026, etc.)
+        # Calculate days until next major election
+        # (simplified: Nov 2024, Nov 2026, etc.)
         current_year = datetime.now().year
         next_election = datetime(current_year, 11, 1)
         if next_election < datetime.now():
@@ -277,7 +280,8 @@ class PoliticalStressFetcher:
         """
         Fetch polarization and conflict indicators.
 
-        For now, generates synthetic data. Can be enhanced with MEDSL/FiveThirtyEight data.
+        For now, generates synthetic data. Can be enhanced with
+        MEDSL/FiveThirtyEight data.
         """
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
 
@@ -367,7 +371,8 @@ class PoliticalStressFetcher:
             use_cache: Whether to use cached data
 
         Returns:
-            DataFrame with columns: ['timestamp', 'political_stress', 'confidence_level']
+            DataFrame with columns: ['timestamp', 'political_stress',
+                'confidence_level']
         """
         sources = self.fetch_primary_sources(state_name, days_back, use_cache)
 
@@ -439,7 +444,8 @@ class PoliticalStressFetcher:
                     if hasattr(political_stress, "values")
                     else political_stress
                 ),
-                "confidence_level": "medium",  # Can be enhanced with actual confidence from sources
+                "confidence_level": "medium",  # Can be enhanced with actual
+                # confidence from sources
             }
         )
 

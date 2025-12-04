@@ -23,7 +23,8 @@ class MarketSentimentFetcher:
         Initialize the market sentiment fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 5 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 5 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Optional[pd.DataFrame] = None
@@ -100,7 +101,8 @@ class MarketSentimentFetcher:
             # Sort by date
             merged = merged.sort_index()
 
-            # Forward fill missing values within 2 days (to handle minor date misalignments)
+            # Forward fill missing values within 2 days
+            # (to handle minor date misalignments)
             merged = merged.ffill(limit=2)
 
             # Drop rows where both are still NaN (no data available)

@@ -11,7 +11,7 @@ class TestUSGSEarthquakeFetcher:
     """Test USGS earthquake fetcher."""
 
     def test_fetch_earthquake_intensity_returns_dataframe(self):
-        """Test that fetch_earthquake_intensity() returns a DataFrame with correct schema."""
+        """Test fetch_earthquake_intensity() returns DataFrame with correct schema."""
         fetcher = USGSEarthquakeFetcher()
         df = fetcher.fetch_earthquake_intensity(days_back=30)
 
@@ -63,7 +63,7 @@ class TestUSGSEarthquakeFetcher:
         assert len(df) >= 0  # May be empty if parsing fails, which is OK
 
     def test_fetch_earthquake_intensity_handles_empty_response(self):
-        """Test that fetch_earthquake_intensity() handles empty API response gracefully."""
+        """Test that fetch_earthquake_intensity() handles empty API response."""
         fetcher = USGSEarthquakeFetcher()
         # This will likely return empty due to API call, but should not crash
         df = fetcher.fetch_earthquake_intensity(days_back=1, min_magnitude=8.0)

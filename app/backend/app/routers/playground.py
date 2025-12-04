@@ -52,7 +52,7 @@ class PlaygroundCompareRequest(BaseModel):
         ...,
         min_length=1,
         max_length=10,
-        description="List of region IDs to compare (e.g., ['us_dc', 'us_mn', 'city_nyc'])",
+        description="List of region IDs to compare (e.g., ['us_dc', 'us_mn'])",
     )
     historical_days: int = Field(
         default=30,
@@ -72,7 +72,8 @@ class PlaygroundCompareRequest(BaseModel):
     )
     scenario: Optional[ScenarioConfig] = Field(
         default=None,
-        description="Optional scenario configuration for what-if adjustments (experimental)",
+        description="Optional scenario configuration for what-if adjustments "
+        "(experimental)",
     )
 
 
@@ -87,14 +88,16 @@ class PlaygroundCompareResponse(BaseModel):
 @router.post("/compare", response_model=PlaygroundCompareResponse, tags=["playground"])
 def compare_forecasts(payload: PlaygroundCompareRequest) -> PlaygroundCompareResponse:
     """
-    Compare behavioral forecasts across multiple regions with optional scenario adjustments.
+    Compare behavioral forecasts across multiple regions with optional
+    scenario adjustments.
 
     This is an experimental playground endpoint for exploring "what-if" scenarios
     and comparing forecasts across different regions. All scenario adjustments are
     post-processing transformations and do not affect the underlying forecasting model.
 
     Args:
-        payload: PlaygroundCompareRequest with regions, configuration, and optional scenario
+        payload: PlaygroundCompareRequest with regions, configuration,
+            and optional scenario
 
     Returns:
         PlaygroundCompareResponse with forecast results for each region

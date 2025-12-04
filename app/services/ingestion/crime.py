@@ -11,7 +11,8 @@ logger = structlog.get_logger("ingestion.crime")
 
 class CrimeSafetyStressFetcher:
     """
-    Fetch and compute Crime & Public Safety Stress Index from multiple public data sources.
+    Fetch and compute Crime & Public Safety Stress Index from
+    multiple public data sources.
 
     Combines signals from:
     - Violent Crime Volatility (VCV)
@@ -28,7 +29,8 @@ class CrimeSafetyStressFetcher:
         Initialize the crime safety stress fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 1440 = 24 hours)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 1440 = 24 hours)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Dict[str, Tuple[pd.DataFrame, datetime]] = {}

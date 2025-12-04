@@ -74,7 +74,8 @@ class StateComparisonEngine:
                 "percent_difference": float((diff / val_b * 100) if val_b > 0 else 0.0),
             }
 
-            # Determine winner (for stress indices, lower is better; for activity, higher is better)
+            # Determine winner (for stress indices, lower is better;
+            # for activity, higher is better)
             if "activity" in idx or "attention" in idx:
                 # Higher is better
                 winners[idx] = state_a_name if val_a > val_b else state_b_name

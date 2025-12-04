@@ -28,7 +28,8 @@ class USGSEarthquakeFetcher:
         Initialize USGS earthquake fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 60 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 60 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: dict[str, tuple[pd.DataFrame, datetime]] = {}

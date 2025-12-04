@@ -65,7 +65,8 @@ class BehavioralForecaster:
 
         Args:
             market_fetcher: Market sentiment fetcher instance (creates new if None)
-            fred_fetcher: FRED economic indicators fetcher instance (creates new if None)
+            fred_fetcher: FRED economic indicators fetcher instance
+                (creates new if None)
             weather_fetcher: Environmental impact fetcher instance (creates new if None)
             search_fetcher: Search trends fetcher instance (creates new if None)
             health_fetcher: Public health fetcher instance (creates new if None)
@@ -74,9 +75,12 @@ class BehavioralForecaster:
             owid_fetcher: OWID health fetcher instance (creates new if None)
             usgs_fetcher: USGS earthquake fetcher instance (creates new if None)
             political_fetcher: Political stress fetcher instance (creates new if None)
-            crime_fetcher: Crime & public safety stress fetcher instance (creates new if None)
-            misinformation_fetcher: Misinformation stress fetcher instance (creates new if None)
-            social_cohesion_fetcher: Social cohesion stress fetcher instance (creates new if None)
+            crime_fetcher: Crime & public safety stress fetcher instance
+                (creates new if None)
+            misinformation_fetcher: Misinformation stress fetcher instance
+                (creates new if None)
+            social_cohesion_fetcher: Social cohesion stress fetcher instance
+                (creates new if None)
             harmonizer: Data harmonizer instance (creates new if None)
         """
         self.market_fetcher = market_fetcher or MarketSentimentFetcher()
@@ -196,7 +200,10 @@ class BehavioralForecaster:
             - sources: List of public APIs used
             - metadata: Additional information about the forecast
         """
-        cache_key = f"{latitude:.4f},{longitude:.4f},{region_name},{days_back},{forecast_horizon}"
+        cache_key = (
+            f"{latitude:.4f},{longitude:.4f},{region_name},"
+            f"{days_back},{forecast_horizon}"
+        )
 
         # Check cache
         if cache_key in self._cache:
@@ -293,7 +300,8 @@ class BehavioralForecaster:
                 sources.append("GDELT (Global Events)")
 
             # Fetch OWID health data
-            # Try to map region to country (simplified: use region_name if it's a country)
+            # Try to map region to country (simplified: use region_name
+            # if it's a country)
             country_name = (
                 region_name
                 if region_name in ["United States", "USA"]
@@ -443,7 +451,8 @@ class BehavioralForecaster:
                 }
 
             # Prepare history data with sub-indices
-            # Keep the full harmonized DataFrame for component extraction (store in metadata)
+            # Keep full harmonized DataFrame for component extraction
+            # (store in metadata)
             # But extract only needed columns for history
             sub_index_cols = [
                 "economic_stress",
@@ -535,7 +544,7 @@ class BehavioralForecaster:
             try:
                 if not HAS_STATSMODELS:
                     logger.warning(
-                        "statsmodels not available, using simple moving average forecast"
+                        "statsmodels not available, using simple moving average"
                     )
                     # Fallback to simple moving average if statsmodels not available
                     window_size = min(7, len(behavior_ts) // 2)
@@ -767,7 +776,8 @@ class BehavioralForecaster:
                     .clip(0.0, 1.0)
                 )
 
-                # Ensure forecast is sorted by timestamp (invariant: forecast arrays always sorted)
+                # Ensure forecast is sorted by timestamp
+                # (invariant: forecast arrays always sorted)
                 forecast_df = forecast_df.sort_values("timestamp").reset_index(
                     drop=True
                 )
@@ -788,7 +798,7 @@ class BehavioralForecaster:
                     "model_type": model_type,
                     "confidence_level": 0.95,
                     "sources": sources,
-                    "_harmonized_df": harmonized_for_details,  # Store for component extraction
+                    "_harmonized_df": harmonized_for_details,  # Store for extraction
                 }
 
                 # Cache result
@@ -814,8 +824,8 @@ class BehavioralForecaster:
                     "%Y-%m-%dT%H:%M:%S"
                 )
 
-                # Store the harmonized DataFrame (with component metadata) for later extraction
-                # We'll attach it to the metadata so the API can extract component details
+                # Store harmonized DataFrame (with component metadata) for extraction
+                # Attach to metadata so API can extract component details
                 # Note: This will be removed in the API layer before JSON serialization
                 metadata["_harmonized_df"] = harmonized_for_details
 

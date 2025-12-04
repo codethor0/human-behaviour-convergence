@@ -37,7 +37,8 @@ class FREDEconomicFetcher:
 
         Args:
             api_key: FRED API key (defaults to FRED_API_KEY env var)
-            cache_duration_minutes: Cache duration for API responses (default: 60 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 60 minutes)
         """
         self.api_key = api_key or os.getenv("FRED_API_KEY")
         self.cache_duration_minutes = cache_duration_minutes
@@ -222,7 +223,8 @@ class FREDEconomicFetcher:
 
         Returns:
             DataFrame with columns: ['timestamp', 'unemployment_rate']
-            Values normalized to [0.0, 1.0] where 1.0 = maximum unemployment (high stress)
+            Values normalized to [0.0, 1.0] where 1.0 = maximum unemployment
+                (high stress)
         """
         df = self.fetch_series(FRED_SERIES["unemployment_rate"], days_back, use_cache)
 

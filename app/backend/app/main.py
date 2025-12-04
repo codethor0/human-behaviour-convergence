@@ -580,13 +580,17 @@ class ForecastRequest(BaseModel):
         None,
         ge=-90,
         le=90,
-        description="Latitude coordinate (-90 to 90). Required if region_id not provided.",
+        description=(
+            "Latitude coordinate (-90 to 90). Required if region_id not provided."
+        ),
     )
     longitude: Optional[float] = Field(
         None,
         ge=-180,
         le=180,
-        description="Longitude coordinate (-180 to 180). Required if region_id not provided.",
+        description=(
+            "Longitude coordinate (-180 to 180). Required if region_id not provided."
+        ),
     )
     region_name: str = Field(..., description="Human-readable region name")
     region_id: Optional[str] = Field(
@@ -921,7 +925,10 @@ def _generate_explanation(
         level = "high"
         interpretation = "significant behavioral stress or disruption"
 
-    explanation = f"Behavior Index is {level} ({behavior_index:.2f}), indicating {interpretation}."
+    explanation = (
+        f"Behavior Index is {level} ({behavior_index:.2f}), "
+        f"indicating {interpretation}."
+    )
 
     if sub_indices:
         # Identify primary drivers

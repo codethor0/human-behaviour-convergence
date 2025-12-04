@@ -25,7 +25,8 @@ class MobilityFetcher:
         Initialize the mobility fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 60 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 60 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Optional[pd.DataFrame] = None
@@ -50,7 +51,8 @@ class MobilityFetcher:
         Fetch mobility/activity index time-series data.
 
         Args:
-            region_code: Optional standardized region identifier (ISO country/region code)
+            region_code: Optional standardized region identifier
+                (ISO country/region code)
             latitude: Optional latitude coordinate for geographic region
             longitude: Optional longitude coordinate for geographic region
             days_back: Number of days of historical data to fetch (default: 30)
@@ -58,7 +60,8 @@ class MobilityFetcher:
 
         Returns:
             DataFrame with columns: ['timestamp', 'mobility_index']
-            mobility_index is normalized to 0.0-1.0 where 1.0 = maximum mobility/activity
+            mobility_index is normalized to 0.0-1.0 where 1.0 = maximum
+            mobility/activity
         """
         # Check cache validity
         cache_key = (
@@ -94,7 +97,8 @@ class MobilityFetcher:
             )
 
             # Placeholder implementation using public mobility API
-            # This is a generic abstraction that can be configured via environment variables
+            # This is a generic abstraction that can be configured via
+            # environment variables
             api_endpoint = os.getenv("MOBILITY_API_ENDPOINT", "")
             api_key = os.getenv("MOBILITY_API_KEY", "")
 

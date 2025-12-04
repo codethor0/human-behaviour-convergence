@@ -24,7 +24,8 @@ class SearchTrendsFetcher:
         Initialize the search trends fetcher.
 
         Args:
-            cache_duration_minutes: Cache duration for API responses (default: 60 minutes)
+            cache_duration_minutes: Cache duration for API responses
+                (default: 60 minutes)
         """
         self.cache_duration_minutes = cache_duration_minutes
         self._cache: Optional[pd.DataFrame] = None
@@ -82,7 +83,8 @@ class SearchTrendsFetcher:
             )
 
             # Placeholder implementation using public search trends API
-            # This is a generic abstraction that can be configured via environment variables
+            # This is a generic abstraction that can be configured via
+            # environment variables
             api_endpoint = os.getenv("SEARCH_TRENDS_API_ENDPOINT", "")
             api_key = os.getenv("SEARCH_TRENDS_API_KEY", "")
 

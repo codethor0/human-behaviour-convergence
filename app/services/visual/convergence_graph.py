@@ -30,7 +30,8 @@ class ConvergenceGraphEngine:
         Generate network graph structure from correlations.
 
         Args:
-            correlation_matrix: Nested dictionary of correlations {index1: {index2: corr}}
+            correlation_matrix: Nested dictionary of correlations
+                {index1: {index2: corr}}
             convergence_data: Optional convergence analysis data
 
         Returns:

@@ -23,4 +23,5 @@ pytest tests/ --cov=src --cov-report=html
 
 ## CI
 
-Tests are automatically run on every push via GitHub Actions. See `.github/workflows/test.yml`.
+Tests are automatically run on every push via GitHub Actions.
+See `.github/workflows/test.yml`.

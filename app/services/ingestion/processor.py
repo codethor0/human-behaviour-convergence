@@ -35,7 +35,8 @@ class DataHarmonizer:
         """
         if behavior_index_computer is None:
             if include_political:
-                # Adjust weights to include political stress (reduce others proportionally)
+                # Adjust weights to include political stress
+                # (reduce others proportionally)
                 # Original: 0.25, 0.25, 0.20, 0.15, 0.15 = 1.0
                 # With political (0.15): need to reduce others to sum to 0.85
                 # Scale factor: 0.85/1.0 = 0.85
@@ -79,10 +80,14 @@ class DataHarmonizer:
                 Must have 'timestamp' column as datetime
             weather_data: DataFrame with columns ['timestamp', 'discomfort_score', ...]
                 Must have 'timestamp' column as datetime
-            search_data: Optional DataFrame with columns ['timestamp', 'search_interest_score', ...]
-            health_data: Optional DataFrame with columns ['timestamp', 'health_risk_index', ...]
-            mobility_data: Optional DataFrame with columns ['timestamp', 'mobility_index', ...]
-            forward_fill_days: Number of days to forward-fill market data for weekends (default: 2)
+            search_data: Optional DataFrame with columns
+                ['timestamp', 'search_interest_score', ...]
+            health_data: Optional DataFrame with columns
+                ['timestamp', 'health_risk_index', ...]
+            mobility_data: Optional DataFrame with columns
+                ['timestamp', 'mobility_index', ...]
+            forward_fill_days: Number of days to forward-fill market data
+                for weekends (default: 2)
 
         Returns:
             Merged DataFrame with columns:
@@ -348,7 +353,8 @@ class DataHarmonizer:
         start_date = None
         end_date = None
 
-        # Collect all date ranges from indexed dataframes (all are already properly indexed)
+        # Collect all date ranges from indexed dataframes
+        # (all are already properly indexed)
         all_date_sources = []
         for df in dataframes:
             if not df.empty and isinstance(df.index, pd.DatetimeIndex):

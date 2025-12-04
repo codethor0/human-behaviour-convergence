@@ -19,12 +19,18 @@ class TestWikiPageviewsSync:
     def test_pull_returns_dataframe(self):
         """Test that pull() returns a DataFrame with correct schema."""
         # Mock HTTP response with gzipped content
-        raw_data = "en Wikipedia Main_Page 1000 5000000\nen.m Wikipedia Special:Search 500 2500000"
+        raw_data = (
+            "en Wikipedia Main_Page 1000 5000000\n"
+            "en.m Wikipedia Special:Search 500 2500000"
+        )
         gzipped_data = gzip.compress(raw_data.encode("utf-8"))
 
         responses.add(
             responses.GET,
-            "https://dumps.wikimedia.org/other/pageviews/2024/2024-11/pageviews-20241104-000000.gz",
+            (
+                "https://dumps.wikimedia.org/other/pageviews/"
+                "2024/2024-11/pageviews-20241104-000000.gz"
+            ),
             body=gzipped_data,
             status=200,
             content_type="application/gzip",
@@ -183,7 +189,10 @@ class TestFIRMSFiresSync:
 
         responses.add(
             responses.GET,
-            "https://firms.modaps.eosdis.nasa.gov/api/country/csv/TEST_KEY/MODIS_NRT/USA/1",
+            (
+                "https://firms.modaps.eosdis.nasa.gov/api/country/csv/"
+                "TEST_KEY/MODIS_NRT/USA/1"
+            ),
             body=csv_data,
             status=200,
         )

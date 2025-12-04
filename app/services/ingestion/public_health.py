@@ -49,7 +49,8 @@ class PublicHealthFetcher:
         Fetch public health risk index time-series data.
 
         Args:
-            region_code: Optional standardized region identifier (ISO country/region code)
+            region_code: Optional standardized region identifier
+                (ISO country/region code)
             days_back: Number of days of historical data to fetch (default: 30)
             use_cache: Whether to use cached data if available (default: True)
 
@@ -87,7 +88,8 @@ class PublicHealthFetcher:
             )
 
             # Placeholder implementation using public health API
-            # This is a generic abstraction that can be configured via environment variables
+            # This is a generic abstraction that can be configured via
+            # environment variables
             api_endpoint = os.getenv("PUBLIC_HEALTH_API_ENDPOINT", "")
             api_key = os.getenv("PUBLIC_HEALTH_API_KEY", "")
 

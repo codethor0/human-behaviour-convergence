@@ -107,7 +107,10 @@ def _explain_economic_stress(
                     "economic uncertainty."
                 )
             elif level == "moderate":
-                reason = "Market volatility is moderate, with some economic uncertainty present."
+                reason = (
+                    "Market volatility is moderate, with some economic "
+                    "uncertainty present."
+                )
             else:
                 reason = (
                     "Market volatility is low, suggesting relative economic stability."
@@ -256,7 +259,10 @@ def _explain_environmental_stress(
                     "conditions and earthquake activity."
                 )
             else:
-                reason = "Environmental stress is elevated primarily due to weather conditions."
+                reason = (
+                    "Environmental stress is elevated primarily due to "
+                    "weather conditions."
+                )
         elif level == "moderate":
             reason = (
                 "Environmental stress is moderate, with weather and "
@@ -309,7 +315,10 @@ def _explain_environmental_stress(
                         "region recently."
                     )
                 elif direction == "down":
-                    explanation = "USGS reports no significant earthquakes in the region recently."
+                    explanation = (
+                        "USGS reports no significant earthquakes in the region "
+                        "recently."
+                    )
                 else:
                     explanation = "Earthquake activity is within typical range."
             else:
@@ -361,7 +370,10 @@ def _explain_mobility_activity(
             "Mobility activity is moderate, with some reduction in movement patterns."
         )
     else:
-        reason = "Mobility activity is low, indicating reduced movement and potential disruption."
+        reason = (
+            "Mobility activity is low, indicating reduced movement and "
+            "potential disruption."
+        )
 
     component_explanations = []
     if components:
@@ -376,7 +388,10 @@ def _explain_mobility_activity(
 
             if comp_id == "mobility_index":
                 if direction == "up":
-                    explanation = "Mobility patterns show increased activity compared to baseline."
+                    explanation = (
+                        "Mobility patterns show increased activity compared to "
+                        "baseline."
+                    )
                 elif direction == "down":
                     explanation = (
                         "Mobility patterns show reduced activity compared to baseline."
@@ -454,7 +469,10 @@ def _explain_digital_attention(
                 "interest and media coverage."
             )
         else:
-            reason = "Digital attention is low, with minimal search interest and media coverage."
+            reason = (
+                "Digital attention is low, with minimal search interest and "
+                "media coverage."
+            )
     else:
         if level == "high":
             reason = (
@@ -492,7 +510,10 @@ def _explain_digital_attention(
                         "and minimal crisis awareness."
                     )
                 else:
-                    explanation = "Global news coverage suggests moderate digital attention levels."
+                    explanation = (
+                        "Global news coverage suggests moderate digital "
+                        "attention levels."
+                    )
             elif comp_id == "search_interest":
                 if direction == "up":
                     explanation = (
@@ -577,7 +598,10 @@ def _explain_public_health_stress(
                 "within typical range."
             )
         else:
-            reason = "Public health stress is low, with health indicators showing minimal burden."
+            reason = (
+                "Public health stress is low, with health indicators showing "
+                "minimal burden."
+            )
     else:
         if level == "high":
             reason = (
@@ -590,7 +614,10 @@ def _explain_public_health_stress(
                 "within typical range."
             )
         else:
-            reason = "Public health stress is low, with health indicators showing minimal burden."
+            reason = (
+                "Public health stress is low, with health indicators showing "
+                "minimal burden."
+            )
 
     # Build component explanations
     component_explanations = []
@@ -674,11 +701,20 @@ def generate_explanation(
 
     # Generate high-level summary
     if overall_level == "high":
-        summary = "Behavior Index indicates high disruption, with multiple stress factors elevated."
+        summary = (
+            "Behavior Index indicates high disruption, with multiple stress "
+            "factors elevated."
+        )
     elif overall_level == "moderate":
-        summary = "Behavior Index indicates moderate disruption, with some stress factors present."
+        summary = (
+            "Behavior Index indicates moderate disruption, with some stress "
+            "factors present."
+        )
     else:
-        summary = "Behavior Index indicates low disruption, with most indicators showing stability."
+        summary = (
+            "Behavior Index indicates low disruption, with most indicators "
+            "showing stability."
+        )
 
     # Add region context if available
     if region_name:

@@ -46,9 +46,11 @@ class BehaviorIndexComputer:
 
         Args:
             economic_weight: Weight for economic stress sub-index (default: 0.25)
-            environmental_weight: Weight for environmental stress sub-index (default: 0.25)
+            environmental_weight: Weight for environmental stress sub-index
+                (default: 0.25)
             mobility_weight: Weight for mobility activity sub-index (default: 0.20)
-            digital_attention_weight: Weight for digital attention sub-index (default: 0.15)
+            digital_attention_weight: Weight for digital attention sub-index
+                (default: 0.15)
             health_weight: Weight for public health stress sub-index (default: 0.15)
             political_weight: Weight for political stress sub-index (default: 0.15)
 
@@ -68,7 +70,8 @@ class BehaviorIndexComputer:
             "social_cohesion": social_cohesion_weight,
         }
 
-        # Calculate total weight (only include non-zero weights for backward compatibility)
+        # Calculate total weight (only include non-zero weights for
+        # backward compatibility)
         total_weight = (
             economic_weight
             + environmental_weight
@@ -274,7 +277,7 @@ class BehaviorIndexComputer:
         df.attrs["_economic_component_sources"] = component_sources
 
         # ENVIRONMENTAL_STRESS: Combine weather discomfort with earthquake intensity
-        # Weather discomfort_score is already normalized 0.0-1.0 (higher = more discomfort)
+        # Weather discomfort_score is normalized 0.0-1.0 (higher = more discomfort)
         discomfort_score = df.get(
             "discomfort_score", pd.Series([0.5] * len(df))
         ).fillna(0.5)
@@ -544,12 +547,14 @@ class BehaviorIndexComputer:
         The index is a weighted combination of stress and activity sub-indices:
         - Stress sub-indices (economic, environmental, health) contribute positively
         - Activity sub-indices (mobility) contribute negatively (inverse)
-        - Digital attention can indicate disruption (higher attention = potential disruption)
+        - Digital attention can indicate disruption
+            (higher attention = potential disruption)
 
         Args:
             harmonized_data: DataFrame with columns:
                 - timestamp (datetime)
-                - stress_index, discomfort_score, and optional mobility/search/health indices
+                - stress_index, discomfort_score, and optional
+                    mobility/search/health indices
 
         Returns:
             DataFrame with added columns:
@@ -561,7 +566,8 @@ class BehaviorIndexComputer:
 
         # Compute overall Behavior Index
         # Higher stress indices and lower activity indices = higher behavior index
-        # Formula: weighted combination where stress increases index, activity decreases it
+        # Formula: weighted combination where stress increases index,
+        # activity decreases it
         behavior_index = (
             (df["economic_stress"] * self.economic_weight)
             + (df["environmental_stress"] * self.environmental_weight)
@@ -645,7 +651,8 @@ class BehaviorIndexComputer:
             row: Pandas Series with behavior_index and sub-index columns
 
         Returns:
-            Dictionary mapping dimension names to dicts with value, weight, and contribution
+            Dictionary mapping dimension names to dicts with value, weight,
+            and contribution
         """
         economic_value = float(row.get("economic_stress", 0.5))
         environmental_value = float(row.get("environmental_stress", 0.5))

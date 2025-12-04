@@ -88,7 +88,8 @@ class HeatmapEngine:
             # Also try to compute from sub-indices if behavior_index not present
             elif all(idx in state_indices for idx in indices):
                 try:
-                    # Simple average as fallback (actual behavior index uses weighted sum)
+                    # Simple average as fallback
+                    # (actual behavior index uses weighted sum)
                     values = []
                     for idx in indices:
                         val = state_indices.get(idx)
@@ -138,7 +139,8 @@ class HeatmapEngine:
         Generate time-series heatmap data for animation.
 
         Args:
-            timeseries_data: Dictionary mapping state names to DataFrames with time-series data
+            timeseries_data: Dictionary mapping state names to DataFrames
+                with time-series data
             indices: List of index names to include
 
         Returns:

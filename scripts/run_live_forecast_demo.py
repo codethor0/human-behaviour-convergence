@@ -45,7 +45,7 @@ def sanitize_for_output(value: any) -> str:
         return str(value)
     if isinstance(value, str):
         # Basic sanitization: check for potential PII patterns
-        # Allow short strings (like region names, model types) but sanitize potential PII
+        # Allow short strings (like region names, model types) but sanitize PII
         sanitized = value
         if "@" in sanitized:
             sanitized = "[REDACTED-EMAIL]"
@@ -105,17 +105,16 @@ def main():
     print("Data Source Configuration:")
     print("  Market Sentiment (yfinance): Available")
     print("  Weather (Open-Meteo): Available")
-    print(
-        f"  Mobility: {'Configured' if optional_sources['mobility'] else 'Not configured'}"
+    mobility_status = "Configured" if optional_sources["mobility"] else "Not configured"
+    print(f"  Mobility: {mobility_status}")
+    health_status = (
+        "Configured" if optional_sources["public_health"] else "Not configured"
     )
-    print(
-        f"  Public Health: {'Configured' if optional_sources['public_health'] "
-        f"else 'Not configured'}"
+    print(f"  Public Health: {health_status}")
+    search_status = (
+        "Configured" if optional_sources["search_trends"] else "Not configured"
     )
-    print(
-        f"  Search Trends: {'Configured' if optional_sources['search_trends'] "
-        f"else 'Not configured'}"
-    )
+    print(f"  Search Trends: {search_status}")
     print()
 
     if not optional_sources["mobility"] and not optional_sources["public_health"]:
@@ -155,7 +154,7 @@ def main():
         print("=" * 60)
         print()
 
-        # Metadata - extract values first to avoid CodeQL alerts about dictionary access in f-strings
+        # Metadata - extract values first to avoid CodeQL alerts about dict access
         if "metadata" in result:
             meta = result["metadata"]
             region_name = sanitize_for_output(meta.get("region_name"))

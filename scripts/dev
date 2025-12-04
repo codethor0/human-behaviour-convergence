@@ -73,7 +73,8 @@ fi
 
 if [ -f "$DEV_REQ_FILE" ]; then
   info "Installing development requirements"
-  pip install -r "$DEV_REQ_FILE" >/dev/null || fail "failed to install requirements-dev.txt"
+  pip install -r "$DEV_REQ_FILE" >/dev/null || \
+    fail "failed to install requirements-dev.txt"
 fi
 
 info "Running test suite"

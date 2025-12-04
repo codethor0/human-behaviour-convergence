@@ -70,7 +70,8 @@ class SocialCohesionStressFetcher:
     def _fetch_community_trust(
         self, region_name: str, start_date: datetime, end_date: datetime
     ) -> pd.DataFrame:
-        """Fetch community trust level indicators (inverse: lower trust = higher stress)."""
+        """Fetch community trust level indicators
+        (inverse: lower trust = higher stress)."""
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
         base_ctl = 0.30  # Lower = higher trust, so lower stress
         ctl = base_ctl + (pd.Series(range(len(dates))) % 14) * 0.04
@@ -115,7 +116,8 @@ class SocialCohesionStressFetcher:
     def _fetch_social_capital(
         self, region_name: str, start_date: datetime, end_date: datetime
     ) -> pd.DataFrame:
-        """Fetch social capital density indicators (inverse: lower capital = higher stress)."""
+        """Fetch social capital density indicators
+        (inverse: lower capital = higher stress)."""
         dates = pd.date_range(start=start_date.date(), end=end_date.date(), freq="D")
         base_scd = 0.28
         scd = base_scd + (pd.Series(range(len(dates))) % 12) * 0.04
