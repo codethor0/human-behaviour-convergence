@@ -495,7 +495,10 @@ def _explain_digital_attention(
                     explanation = "Global news coverage suggests moderate digital attention levels."
             elif comp_id == "search_interest":
                 if direction == "up":
-                    explanation = "Search interest is elevated, indicating increased information-seeking behavior."
+                    explanation = (
+                        "Search interest is elevated, indicating increased "
+                        "information-seeking behavior."
+                    )
                 elif direction == "down":
                     explanation = (
                         "Search interest is low, indicating minimal "
