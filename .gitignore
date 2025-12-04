@@ -59,11 +59,9 @@ coverage/
 reports/
 
 # Internal artifacts (moved to docs/reports/)
+# Note: docs/reports/ and docs/archive/ are now tracked
 # *_REPORT.md
 # *_AUDIT.md
 # *_SUMMARY.md
 # *master_prompt*.md
 # *MASTER_PROMPT*.md
-
-# Archive files (keep README, but ignore other archive contents if needed)
-# Note: docs/archive/ is tracked for historical reference
