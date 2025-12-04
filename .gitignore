@@ -65,5 +65,5 @@ reports/
 # *master_prompt*.md
 # *MASTER_PROMPT*.md
 
-# Archive files
-docs/archive/
+# Archive files (keep README, but ignore other archive contents if needed)
+# Note: docs/archive/ is tracked for historical reference
