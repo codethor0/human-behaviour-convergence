@@ -391,7 +391,8 @@ class LocationNormalizer:
                 # For non-Washington locations, match normally but prefer exact matches
                 region = self._match_location(incident_location)
                 if region:
-                    # Double-check: if we extracted from a comma-separated location like "Seattle, Washington",
+                        # Double-check: if we extracted from a comma-separated
+                        # location like "Seattle, Washington",
                     # make sure we're using the right part
                     if "," in description and incident_location.lower() == "washington":
                         # Check if there's a city before the comma that suggests Washington state
@@ -567,7 +568,8 @@ class LocationNormalizer:
         # Look for "in [location]" pattern
         import re
 
-        # Pattern: "in [location]" or "near [location]" - improved to handle commas and multi-word locations
+        # Pattern: "in [location]" or "near [location]"
+        # - improved to handle commas and multi-word locations
         patterns = [
             r"in\s+([A-Z][a-zA-Z\s,]+?)(?:\s|,|\.|$)",  # "in Washington, D.C."
             # or "in Seattle, Washington"
@@ -582,7 +584,8 @@ class LocationNormalizer:
             if matches:
                 # Clean up the match and return the last one (most specific location)
                 location = matches[-1].strip().rstrip(".,")
-                # If it contains a comma, take the part after the comma (e.g., "Seattle, Washington" -> "Washington")
+                # If it contains a comma, take the part after the comma
+                # (e.g., "Seattle, Washington" -> "Washington")
                 if "," in location:
                     parts = [p.strip() for p in location.split(",")]
                     # Prefer the state/city name over the city if both present

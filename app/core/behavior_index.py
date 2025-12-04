@@ -175,7 +175,8 @@ class BehaviorIndexComputer:
         fred_jobless_claims = df.get("fred_jobless_claims", pd.Series([None] * len(df)))
 
         # Combine indicators with adaptive weights based on availability
-        # Target weights: market (40%), consumer sentiment (30%), unemployment (20%), jobless claims (10%)
+        # Target weights: market (40%), consumer sentiment (30%),
+        # unemployment (20%), jobless claims (10%)
         # If FRED data not available, use only market stress (weight = 1.0)
         economic_components = [market_stress]
         weights = []
@@ -253,7 +254,8 @@ class BehaviorIndexComputer:
         ).fillna(0.5)
         df["economic_stress"] = df["economic_stress"].clip(0.0, 1.0)
 
-        # Store component metadata for breakdown (store component info in DataFrame for later extraction)
+        # Store component metadata for breakdown
+        # (store component info in DataFrame for later extraction)
         component_names = ["market_volatility"]
         component_sources = ["yfinance"]
         if has_consumer:

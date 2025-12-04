@@ -213,7 +213,8 @@ class BehavioralForecaster:
                 forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
                     "%Y-%m-%dT%H:%M:%S"
                 )
-            # Preserve harmonized_df in metadata for component extraction (will be removed in API layer)
+            # Preserve harmonized_df in metadata for component extraction
+            # (will be removed in API layer)
             return {
                 "history": history_dict.to_dict("records") if not history.empty else [],
                 "forecast": (
@@ -460,7 +461,8 @@ class BehavioralForecaster:
             ]
             history = harmonized[history_cols].copy()
 
-            # Preserve the full harmonized DataFrame (with component metadata in attrs) for API extraction
+            # Preserve the full harmonized DataFrame
+            # (with component metadata in attrs) for API extraction
             # We'll attach it to metadata temporarily
             harmonized_for_details = harmonized.copy()
             # Normalize timestamps to timezone-naive UTC
@@ -662,7 +664,8 @@ class BehavioralForecaster:
                     ).fillna(0.5)
                     forecast_result = forecast_result.clip(0.0, 1.0)
 
-                    # Calculate confidence intervals (approximate using model's fitted values variance)
+                    # Calculate confidence intervals
+                    # (approximate using model's fitted values variance)
                     try:
                         fitted_values = model.fittedvalues
                         residuals = behavior_ts - fitted_values
