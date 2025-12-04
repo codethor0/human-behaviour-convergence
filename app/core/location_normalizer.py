@@ -407,7 +407,11 @@ class LocationNormalizer:
                                     result.normalized_location = NormalizedLocation(
                                         region_id=region.id,
                                         region_label=region.name,
-                                        reason=f"Extracted incident location: Washington (state, from '{city}, Washington')",
+                                        reason=(
+                                            f"Extracted incident location: "
+                                            f"Washington (state, from '{city}, "
+                                            f"Washington')"
+                                        ),
                                         alternatives=["us_dc"],
                                         notes=[],
                                     )
