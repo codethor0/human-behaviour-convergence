@@ -120,11 +120,13 @@ class TestOSMChangesetsSync:
         # Create a minimal valid OSM changesets XML
         xml_data = """<?xml version="1.0" encoding="UTF-8"?>
 <osm version="0.6" generator="test">
-  <changeset id="1" user="test" uid="1" created_at="2024-11-04T00:00:00Z" min_lat="37.7749" min_lon="-122.4194" max_lat="37.7750" max_lon="-122.4193">
+  <changeset id="1" user="test" uid="1" created_at="2024-11-04T00:00:00Z"
+    min_lat="37.7749" min_lon="-122.4194" max_lat="37.7750" max_lon="-122.4193">
     <tag k="comment" v="test changeset"/>
     <tag k="building" v="yes"/>
   </changeset>
-  <changeset id="2" user="test" uid="1" created_at="2024-11-04T01:00:00Z" min_lat="34.0522" min_lon="-118.2437" max_lat="34.0523" max_lon="-118.2436">
+  <changeset id="2" user="test" uid="1" created_at="2024-11-04T01:00:00Z"
+    min_lat="34.0522" min_lon="-118.2437" max_lat="34.0523" max_lon="-118.2436">
     <tag k="comment" v="test changeset 2"/>
     <tag k="highway" v="primary"/>
   </changeset>

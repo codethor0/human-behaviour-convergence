@@ -44,7 +44,8 @@ class TestLocationNormalizer:
 
         # Example: incident location should be used, not origin location
         result = normalizer.normalize(
-            "Two West Virginia National Guardsmen were shot near the White House in Washington, D.C."
+            "Two West Virginia National Guardsmen were shot near the "
+            "White House in Washington, D.C."
         )
         assert result.normalized_location is not None
         assert result.normalized_location.region_id == "us_dc"
@@ -137,7 +138,8 @@ class TestLocationNormalizer:
     def test_convenience_function(self):
         """Test the convenience function."""
         result = normalize_location(
-            "Two West Virginia National Guardsmen were shot near the White House in Washington, D.C."
+            "Two West Virginia National Guardsmen were shot near the "
+            "White House in Washington, D.C."
         )
         assert result.normalized_location is not None
         assert result.normalized_location.region_id == "us_dc"

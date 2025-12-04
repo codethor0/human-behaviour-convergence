@@ -109,10 +109,12 @@ def main():
         f"  Mobility: {'Configured' if optional_sources['mobility'] else 'Not configured'}"
     )
     print(
-        f"  Public Health: {'Configured' if optional_sources['public_health'] else 'Not configured'}"
+        f"  Public Health: {'Configured' if optional_sources['public_health'] "
+        f"else 'Not configured'}"
     )
     print(
-        f"  Search Trends: {'Configured' if optional_sources['search_trends'] else 'Not configured'}"
+        f"  Search Trends: {'Configured' if optional_sources['search_trends'] "
+        f"else 'Not configured'}"
     )
     print()
 

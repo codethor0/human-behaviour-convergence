@@ -11,7 +11,10 @@ class TestForecastConfigBuilder:
         """Test West Virginia Guardsmen incident location normalization."""
         builder = ForecastConfigBuilder()
         config = builder.prepare_config(
-            description="Two West Virginia National Guardsmen were shot near the White House in Washington, D.C."
+            description=(
+                "Two West Virginia National Guardsmen were shot near the "
+                "White House in Washington, D.C."
+            )
         )
 
         assert config.normalized_location is not None
@@ -91,7 +94,8 @@ class TestForecastConfigBuilder:
     def test_convenience_function(self):
         """Test the convenience function."""
         config_dict = prepare_forecast_config(
-            "Two West Virginia National Guardsmen were shot near the White House in Washington, D.C."
+            "Two West Virginia National Guardsmen were shot near the "
+            "White House in Washington, D.C."
         )
 
         assert config_dict["task"] == "prepare_forecast_location_config"
