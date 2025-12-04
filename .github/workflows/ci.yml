@@ -44,6 +44,17 @@ jobs:
             requirements-dev.txt
             app/backend/requirements.txt
 
+      - name: Validate Requirements Files Exist
+        run: |
+          echo "=== Validating Requirements Files ==="
+          for req_file in requirements.txt requirements-dev.txt app/backend/requirements.txt; do
+            if [ ! -f "$req_file" ]; then
+              echo "❌ Missing requirements file: $req_file"
+              exit 1
+            fi
+            echo "✅ Found: $req_file"
+          done
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
@@ -53,6 +64,17 @@ jobs:
           pip install -r app/backend/requirements.txt
           # Install development dependencies
           pip install -r requirements-dev.txt
+
+      - name: Validate Python Version
+        run: |
+          echo "=== Validating Python Version ==="
+          PYTHON_VERSION=$(python --version 2>&1 | awk '{print $2}')
+          EXPECTED_VERSION="3.10"
+          if [[ ! "$PYTHON_VERSION" == "$EXPECTED_VERSION"* ]]; then
+            echo "❌ Python version mismatch: expected $EXPECTED_VERSION, got $PYTHON_VERSION"
+            exit 1
+          fi
+          echo "✅ Python version correct: $PYTHON_VERSION"
 
       - name: Verify build
         env:
@@ -88,6 +110,17 @@ jobs:
             requirements-dev.txt
             app/backend/requirements.txt
 
+      - name: Validate Requirements Files Exist
+        run: |
+          echo "=== Validating Requirements Files ==="
+          for req_file in requirements.txt requirements-dev.txt app/backend/requirements.txt; do
+            if [ ! -f "$req_file" ]; then
+              echo "❌ Missing requirements file: $req_file"
+              exit 1
+            fi
+            echo "✅ Found: $req_file"
+          done
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -97,6 +130,20 @@ jobs:
           pip install -r app/backend/requirements.txt
           # Install development dependencies (includes black and ruff)
           pip install -r requirements-dev.txt
+
+      - name: Validate Test Directory
+        run: |
+          echo "=== Validating Test Directory ==="
+          if [ ! -d "tests" ]; then
+            echo "❌ tests/ directory not found"
+            exit 1
+          fi
+          TEST_COUNT=$(find tests -name "test_*.py" | wc -l)
+          if [ "$TEST_COUNT" -eq 0 ]; then
+            echo "❌ No test files found in tests/"
+            exit 1
+          fi
+          echo "✅ Found $TEST_COUNT test files"
 
       - name: Run tests
         env:
@@ -164,6 +211,17 @@ jobs:
             requirements-dev.txt
             app/backend/requirements.txt
 
+      - name: Validate Requirements Files Exist
+        run: |
+          echo "=== Validating Requirements Files ==="
+          for req_file in requirements.txt requirements-dev.txt app/backend/requirements.txt; do
+            if [ ! -f "$req_file" ]; then
+              echo "❌ Missing requirements file: $req_file"
+              exit 1
+            fi
+            echo "✅ Found: $req_file"
+          done
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
@@ -173,6 +231,19 @@ jobs:
           pip install -r app/backend/requirements.txt
           # Install development dependencies (includes black and ruff)
           pip install -r requirements-dev.txt
+
+      - name: Validate Lint Tools Installed
+        run: |
+          echo "=== Validating Lint Tools ==="
+          if ! command -v ruff &> /dev/null; then
+            echo "❌ ruff not installed"
+            exit 1
+          fi
+          if ! command -v black &> /dev/null; then
+            echo "❌ black not installed"
+            exit 1
+          fi
+          echo "✅ ruff and black are installed"
 
       - name: Ruff Lint
         run: ruff check app/ tests/ scripts/

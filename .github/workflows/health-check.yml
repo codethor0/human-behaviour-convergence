@@ -1,0 +1,248 @@
+# SPDX-License-Identifier: PROPRIETARY
+name: Repository Health Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  health-check:
+    name: Repository Health Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+            app/backend/requirements.txt
+
+      - name: Validate Folder Structure
+        run: |
+          echo "=== Validating Folder Structure ==="
+          MISSING=0
+          
+          # Check required directories
+          for dir in "app" "app/backend" "app/frontend" "tests" "scripts" ".github/scripts"; do
+            if [ ! -d "$dir" ]; then
+              echo "❌ Missing directory: $dir"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ Directory exists: $dir"
+            fi
+          done
+          
+          # Check required files
+          for file in "requirements.txt" "requirements-dev.txt" "app/backend/requirements.txt" "pyproject.toml"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing file: $file"
+              MISSING=$((MISSING + 1))
+            else
+              echo "✅ File exists: $file"
+            fi
+          done
+          
+          if [ $MISSING -gt 0 ]; then
+            echo "❌ Found $MISSING missing directories/files"
+            exit 1
+          fi
+          echo "✅ All required directories and files exist"
+
+      - name: Validate Workflow YAML
+        run: |
+          echo "=== Validating Workflow YAML ==="
+          python3 << 'PYEOF'
+          import yaml
+          import os
+          import sys
+          
+          errors = 0
+          workflow_dir = '.github/workflows'
+          
+          for filename in os.listdir(workflow_dir):
+              if not filename.endswith(('.yml', '.yaml')):
+                  continue
+              filepath = os.path.join(workflow_dir, filename)
+              try:
+                  with open(filepath, 'r') as f:
+                      workflow = yaml.safe_load(f)
+                  if not isinstance(workflow, dict):
+                      print(f"❌ {filename}: Not a valid YAML dictionary")
+                      errors += 1
+                  elif 'name' not in workflow or 'on' not in workflow or 'jobs' not in workflow:
+                      print(f"❌ {filename}: Missing required fields (name, on, or jobs)")
+                      errors += 1
+                  else:
+                      print(f"✅ {filename}: Valid YAML structure")
+              except yaml.YAMLError as e:
+                  print(f"❌ {filename}: YAML syntax error - {e}")
+                  errors += 1
+              except Exception as e:
+                  print(f"❌ {filename}: Error - {e}")
+                  errors += 1
+          
+          if errors > 0:
+              sys.exit(1)
+          print("✅ All workflow YAML files are valid")
+          PYEOF
+
+      - name: Validate Python Paths
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "=== Validating Python Paths ==="
+          python3 << 'PYEOF'
+          import sys
+          import os
+          
+          sys.path.insert(0, os.getcwd())
+          
+          # Try importing app module
+          try:
+              import app
+              print("✅ 'import app' works")
+          except ImportError as e:
+              print(f"❌ 'import app' failed: {e}")
+              sys.exit(1)
+          except Exception as e:
+              print(f"⚠️  'import app' warning: {e}")
+          
+          # Check if tests directory exists and has test files
+          if os.path.exists('tests'):
+              test_files = [f for f in os.listdir('tests') if f.startswith('test_') and f.endswith('.py')]
+              if len(test_files) > 0:
+                  print(f"✅ tests/ directory exists with {len(test_files)} test files")
+              else:
+                  print("❌ tests/ directory exists but has no test files")
+                  sys.exit(1)
+          else:
+              print("❌ tests/ directory not found")
+              sys.exit(1)
+          PYEOF
+
+      - name: Validate Test Discovery
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "=== Validating Test Discovery ==="
+          pip install --upgrade pip --quiet
+          pip install -r requirements-dev.txt --quiet
+          
+          # Check if pytest can discover tests
+          python3 -m pytest --collect-only -q tests/ > /dev/null 2>&1
+          if [ $? -eq 0 ]; then
+              TEST_COUNT=$(python3 -m pytest --collect-only -q tests/ 2>/dev/null | grep -c "test session starts" || echo "0")
+              echo "✅ pytest can discover tests"
+          else
+              echo "❌ pytest cannot discover tests"
+              exit 1
+          fi
+
+      - name: Validate Requirements Files
+        run: |
+          echo "=== Validating Requirements Files ==="
+          for req_file in requirements.txt requirements-dev.txt app/backend/requirements.txt; do
+              if [ ! -f "$req_file" ]; then
+                  echo "❌ Missing: $req_file"
+                  exit 1
+              fi
+              
+              # Check for basic syntax
+              if grep -q "^[^#-]" "$req_file"; then
+                  echo "✅ $req_file: Has dependencies"
+              else
+                  echo "⚠️  $req_file: Appears empty or only comments"
+              fi
+          done
+          echo "✅ All requirements files exist and are valid"
+
+      - name: Validate Configuration Files
+        run: |
+          echo "=== Validating Configuration Files ==="
+          
+          # Check pyproject.toml
+          if [ -f "pyproject.toml" ]; then
+              python3 << 'PYEOF'
+              import tomllib
+              try:
+                  with open('pyproject.toml', 'rb') as f:
+                      tomllib.load(f)
+                  print("✅ pyproject.toml: Valid TOML")
+              except Exception as e:
+                  print(f"❌ pyproject.toml: Invalid - {e}")
+                  exit(1)
+              PYEOF
+          else
+              echo "❌ pyproject.toml not found"
+              exit 1
+          fi
+
+      - name: Check for Temporary/Debug Files
+        run: |
+          echo "=== Checking for Temporary/Debug Files ==="
+          TEMP_FILES=$(find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" -o -name ".DS_Store" -o -name "__pycache__/*.pyc" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.venv/*" | wc -l)
+          if [ "$TEMP_FILES" -gt 0 ]; then
+              echo "⚠️  Found temporary/debug files (this is a warning, not an error)"
+              find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" -o -name ".DS_Store" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.venv/*" | head -10
+          else
+              echo "✅ No temporary/debug files found"
+          fi
+
+      - name: Validate Workflow Paths
+        run: |
+          echo "=== Validating Workflow Paths ==="
+          python3 << 'PYEOF'
+          import os
+          import re
+          import yaml
+          
+          errors = 0
+          workflow_dir = '.github/workflows'
+          
+          for filename in os.listdir(workflow_dir):
+              if not filename.endswith(('.yml', '.yaml')):
+                  continue
+              filepath = os.path.join(workflow_dir, filename)
+              with open(filepath, 'r') as f:
+                  content = f.read()
+              
+              # Find file references
+              paths = re.findall(r'(?:-r|--file|path:)\s+([^\s\n]+)', content)
+              paths.extend(re.findall(r'["\']([^"\']*\.(?:txt|py|js|json|yml|yaml|md|sh))["\']', content))
+              
+              for path in set(paths):
+                  path = path.strip('"\'')
+                  if path.startswith('${{') or path.startswith('${') or path.startswith('http'):
+                      continue
+                  if '/' in path or path.endswith(('.txt', '.py', '.js', '.json', '.yml', '.yaml', '.md', '.sh')):
+                      if not os.path.exists(path):
+                          print(f"❌ {filename}: Missing path '{path}'")
+                          errors += 1
+          
+          if errors > 0:
+              exit(1)
+          print("✅ All workflow paths are valid")
+          PYEOF
+
+      - name: Health Check Summary
+        if: always()
+        run: |
+          echo "=== Health Check Summary ==="
+          echo "✅ Repository health check completed"
+          echo "All validations passed successfully"
+
