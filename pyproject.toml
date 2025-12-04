@@ -38,3 +38,21 @@ example = "predictors.example_predictor:ExamplePredictor"
 
 [tool.setuptools.packages.find]
 include = ["hbc", "connectors", "predictors"]
+
+[tool.black]
+line-length = 88
+extend-exclude = [
+    "notebooks",
+    "\\.venv",
+    "\\.git",
+    "node_modules",
+]
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "notebooks",
+    ".venv",
+    ".git",
+    "node_modules",
+]

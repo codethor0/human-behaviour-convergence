@@ -93,7 +93,7 @@ jobs:
           pip install -r requirements.txt
           # Install backend requirements (FastAPI, uvicorn - complements root requirements)
           pip install -r app/backend/requirements.txt
-          # Install development dependencies
+          # Install development dependencies (includes black and ruff)
           pip install -r requirements-dev.txt
 
       - name: Run tests
@@ -131,7 +131,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.10'
 
       - name: Check for emojis in Markdown files
         run: python .github/scripts/check_no_emoji.py
@@ -167,12 +167,11 @@ jobs:
           pip install -r requirements.txt
           # Install backend requirements (FastAPI, uvicorn - complements root requirements)
           pip install -r app/backend/requirements.txt
-          # Install development dependencies
+          # Install development dependencies (includes black and ruff)
           pip install -r requirements-dev.txt
-          pip install black ruff
 
       - name: Ruff Lint
-        run: ruff check app/ tests/ scripts/ --exclude="notebooks|\.venv|\.git|node_modules"
+        run: ruff check app/ tests/ scripts/
 
       - name: Black Format
-        run: black --check app/ tests/ scripts/ --exclude="notebooks|\.venv|\.git|node_modules"
+        run: black --check app/ tests/ scripts/
