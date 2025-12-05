@@ -391,41 +391,84 @@ class LocationNormalizer:
                 # For non-Washington locations, match normally but prefer exact matches
                 region = self._match_location(incident_location)
                 if region:
-                    # Double-check: if we extracted from a comma-separated
-                    # location like "Seattle, Washington",
-                    # make sure we're using the right part
-                    if "," in description and incident_location.lower() == "washington":
-                        # Check if there's a city before comma suggesting WA state
-                        import re
-
-                        city_state_pattern = r"([A-Z][a-z]+),\s*Washington"
-                        match = re.search(city_state_pattern, description)
-                        if match:
-                            city = match.group(1).lower()
-                            if city in self.WA_STATE_KEYWORDS:
+                    # Special handling: if matched region is Washington (state or DC)
+                    # and it's ambiguous, don't create normalized_location here
+                    # (let it fall through to ambiguity handling)
+                    if region.id in ["us_wa", "us_dc"]:
+                        # Check if it's ambiguous (no clear context)
+                        has_dc_context = any(kw in text for kw in self.DC_KEYWORDS)
+                        has_wa_context = any(
+                            kw in text for kw in self.WA_STATE_KEYWORDS
+                        )
+                        if not has_dc_context and not has_wa_context:
+                            # Ambiguous - let it fall through to ambiguity handling
+                            pass
+                        else:
+                            # Has context, so we can match it
+                            if has_dc_context:
+                                region = get_region_by_id("us_dc")
+                                if region:
+                                    result.normalized_location = NormalizedLocation(
+                                        region_id=region.id,
+                                        region_label=region.name,
+                                        reason=(
+                                            "Extracted incident location: "
+                                            "Washington (D.C. context)"
+                                        ),
+                                        alternatives=["us_wa"],
+                                        notes=[],
+                                    )
+                                    return result
+                            elif has_wa_context:
                                 region = get_region_by_id("us_wa")
                                 if region:
                                     result.normalized_location = NormalizedLocation(
                                         region_id=region.id,
                                         region_label=region.name,
                                         reason=(
-                                            f"Extracted incident location: "
-                                            f"Washington (state, from '{city}, "
-                                            f"Washington')"
+                                            "Extracted incident location: "
+                                            "Washington (state context)"
                                         ),
                                         alternatives=["us_dc"],
                                         notes=[],
                                     )
                                     return result
+                    else:
+                        # Double-check: if we extracted from a comma-separated
+                        # location like "Seattle, Washington",
+                        # make sure we're using the right part
+                        if "," in description and incident_location.lower() == "washington":
+                            # Check if there's a city before comma suggesting WA state
+                            import re
 
-                    result.normalized_location = NormalizedLocation(
-                        region_id=region.id,
-                        region_label=region.name,
-                        reason=f"Extracted incident location: {incident_location}",
-                        alternatives=[],
-                        notes=[],
-                    )
-                    return result
+                            city_state_pattern = r"([A-Z][a-z]+),\s*Washington"
+                            match = re.search(city_state_pattern, description)
+                            if match:
+                                city = match.group(1).lower()
+                                if city in self.WA_STATE_KEYWORDS:
+                                    region = get_region_by_id("us_wa")
+                                    if region:
+                                        result.normalized_location = NormalizedLocation(
+                                            region_id=region.id,
+                                            region_label=region.name,
+                                            reason=(
+                                                f"Extracted incident location: "
+                                                f"Washington (state, from '{city}, "
+                                                f"Washington')"
+                                            ),
+                                            alternatives=["us_dc"],
+                                            notes=[],
+                                        )
+                                        return result
+
+                        result.normalized_location = NormalizedLocation(
+                            region_id=region.id,
+                            region_label=region.name,
+                            reason=f"Extracted incident location: {incident_location}",
+                            alternatives=[],
+                            notes=[],
+                        )
+                        return result
 
         # Rule 7: Ambiguity handling - return best guess with alternatives
         best_guess, alternatives, reason = self._handle_ambiguity(text, description)
