@@ -434,33 +434,7 @@ class LocationNormalizer:
                                     )
                                     return result
                     else:
-                        # Double-check: if we extracted from a comma-separated
-                        # location like "Seattle, Washington",
-                        # make sure we're using the right part
-                        if "," in description and incident_location.lower() == "washington":
-                            # Check if there's a city before comma suggesting WA state
-                            import re
-
-                            city_state_pattern = r"([A-Z][a-z]+),\s*Washington"
-                            match = re.search(city_state_pattern, description)
-                            if match:
-                                city = match.group(1).lower()
-                                if city in self.WA_STATE_KEYWORDS:
-                                    region = get_region_by_id("us_wa")
-                                    if region:
-                                        result.normalized_location = NormalizedLocation(
-                                            region_id=region.id,
-                                            region_label=region.name,
-                                            reason=(
-                                                f"Extracted incident location: "
-                                                f"Washington (state, from '{city}, "
-                                                f"Washington')"
-                                            ),
-                                            alternatives=["us_dc"],
-                                            notes=[],
-                                        )
-                                        return result
-
+                        # For non-Washington regions, create normalized_location normally
                         result.normalized_location = NormalizedLocation(
                             region_id=region.id,
                             region_label=region.name,
