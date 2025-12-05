@@ -49,7 +49,7 @@ class TestLocationNormalizer:
         )
         assert result.normalized_location is not None
         assert result.normalized_location.region_id == "us_dc"
-        assert "us_wv" not in [alt for alt in result.normalized_location.alternatives]
+        assert "us_wv" not in result.normalized_location.alternatives
 
         # Another example: California team playing in New York
         result = normalizer.normalize(
@@ -57,7 +57,7 @@ class TestLocationNormalizer:
         )
         assert result.normalized_location is not None
         assert result.normalized_location.region_id == "city_nyc"
-        assert "us_ca" not in [alt for alt in result.normalized_location.alternatives]
+        assert "us_ca" not in result.normalized_location.alternatives
 
     def test_city_vs_state_disambiguation(self):
         """Test city vs state disambiguation."""
@@ -80,9 +80,13 @@ class TestLocationNormalizer:
         result = normalizer.normalize("State-wide emergency in New York")
         # Should prefer state if state-wide context
         # Note: This might need refinement based on actual matching logic
+        # For now, just verify it doesn't crash
+        assert result is not None
 
         result = normalizer.normalize("Event in upstate New York")
         # Should prefer state for upstate
+        # For now, just verify it doesn't crash
+        assert result is not None
 
     def test_global_cities(self):
         """Test global city matching."""
