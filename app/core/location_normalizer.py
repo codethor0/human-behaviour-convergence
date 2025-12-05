@@ -386,7 +386,8 @@ class LocationNormalizer:
                             ],
                         )
                         return result
-                # Truly ambiguous - handle in ambiguity section
+                # Truly ambiguous - skip to ambiguity handling (Rule 7)
+                # Don't process in the else block below
             else:
                 # For non-Washington locations, match normally but prefer exact matches
                 region = self._match_location(incident_location)
