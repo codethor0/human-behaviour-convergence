@@ -387,7 +387,8 @@ class LocationNormalizer:
                         )
                         return result
                 # Truly ambiguous - skip to ambiguity handling (Rule 7)
-                # Don't process in the else block below
+                # Do NOT create normalized_location for ambiguous Washington
+                # Fall through to Rule 7
             else:
                 # For non-Washington locations, match normally but prefer exact matches
                 region = self._match_location(incident_location)
@@ -518,6 +519,41 @@ class LocationNormalizer:
 
         import re
 
+        # Special early check: If ONLY "washington" appears without clear context,
+        # return None immediately to skip all state matching and go to ambiguity handling
+        # This prevents ambiguous Washington from being matched in Rule 5
+        if "washington" in text.lower():
+            has_dc_context = any(kw in text for kw in self.DC_KEYWORDS)
+            has_wa_context = any(kw in text for kw in self.WA_STATE_KEYWORDS)
+            has_explicit_dc = any(
+                pattern in text
+                for pattern in [
+                    "washington d.c.",
+                    "washington dc",
+                    "washington, d.c.",
+                    "washington, dc",
+                    "district of columbia",
+                    "d.c.",
+                ]
+            )
+            # If truly ambiguous (no context), check if ONLY Washington is mentioned
+            # If so, return None immediately to force fall-through to ambiguity handling
+            if not has_dc_context and not has_wa_context and not has_explicit_dc:
+                # Check if there are other state names in the text besides Washington
+                # If only Washington is mentioned, skip all state matching
+                state_names_in_text = []
+                for region in self.regions:
+                    if region.region_type == "state" and region.id != "us_wa":
+                        # Check if this state name appears in text
+                        pattern = r"\b" + re.escape(region.name.lower()) + r"\b"
+                        if re.search(pattern, text):
+                            state_names_in_text.append(region.name.lower())
+
+                # If no other states are mentioned, Washington is the only candidate
+                # and it's ambiguous, so skip matching entirely
+                if not state_names_in_text:
+                    return None
+
         # First, try state abbreviations (2-letter codes like "NY", "CA")
         # Extract potential abbreviations from text
         abbrev_pattern = r"\b([A-Z]{2})\b"
@@ -533,6 +569,7 @@ class LocationNormalizer:
                         kw in text for kw in self.WA_STATE_KEYWORDS
                     ):
                         return region
+                    # Ambiguous Washington - don't match here
                     continue
                 return region
 
@@ -542,13 +579,31 @@ class LocationNormalizer:
         state_regions.sort(key=lambda r: len(r.name), reverse=True)
 
         for region in state_regions:
+            # Special check: Skip ambiguous Washington entirely
+            if region.id == "us_wa" and "washington" in text.lower():
+                has_dc_context = any(kw in text for kw in self.DC_KEYWORDS)
+                has_wa_context = any(kw in text for kw in self.WA_STATE_KEYWORDS)
+                has_explicit_dc = any(
+                    pattern in text
+                    for pattern in [
+                        "washington d.c.",
+                        "washington dc",
+                        "washington, d.c.",
+                        "washington, dc",
+                        "district of columbia",
+                        "d.c.",
+                    ]
+                )
+                # If ambiguous, skip it
+                if not has_dc_context and not has_wa_context and not has_explicit_dc:
+                    continue
+
             # Check name with word boundaries - must be a complete word
             pattern = r"\b" + re.escape(region.name.lower()) + r"\b"
             if re.search(pattern, text):
                 # Special handling for Washington
                 if region.id == "us_wa":
-                    # Only match if clearly the state (has state keywords or
-                    # no D.C. context)
+                    # Only match if clearly the state (has state keywords or WA keywords)
                     if has_state_context or any(
                         kw in text for kw in self.WA_STATE_KEYWORDS
                     ):
@@ -570,6 +625,7 @@ class LocationNormalizer:
                             kw in text for kw in self.WA_STATE_KEYWORDS
                         ):
                             return region
+                        # Ambiguous Washington - don't match here
                         continue
                     return region
 
@@ -685,7 +741,7 @@ class LocationNormalizer:
                 return (
                     "us_wa",
                     ["us_dc"],
-                    "Washington is ambiguous between state and D.C.; no context provided.",  # noqa: E501
+                    "Ambiguous: Washington could refer to WA or DC",
                 )
 
         # Default: return None with empty alternatives
