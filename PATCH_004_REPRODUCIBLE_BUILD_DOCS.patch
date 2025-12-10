@@ -1,0 +1,149 @@
+--- START PATCH docs/REPRODUCIBLE_BUILDS.md
+--- New file: Reproducible Build Documentation
+
+# Reproducible Builds
+
+This document describes how to achieve reproducible builds for human-behaviour-convergence.
+
+## Overview
+
+Reproducible builds ensure that the same source code always produces identical build artifacts, enabling verification and trust in the build process.
+
+## Python Dependencies
+
+### Lock Files
+
+Dependency lock files with cryptographic hashes are generated to ensure reproducible installs:
+
+- `requirements-lock.txt` - Production dependencies with hashes
+- `requirements-dev-lock.txt` - Development dependencies with hashes
+- `app/backend/requirements-lock.txt` - Backend-specific dependencies with hashes
+
+### Generating Lock Files
+
+```bash
+# Install pip-tools if not already installed
+pip install pip-tools
+
+# Generate lock files with hashes
+.github/scripts/generate_dependency_locks.sh
+```
+
+### Installing from Lock Files
+
+```bash
+# Install production dependencies with hash verification
+pip install --require-hashes -r requirements-lock.txt
+
+# Install development dependencies
+pip install --require-hashes -r requirements-dev-lock.txt
+
+# Install backend dependencies
+pip install --require-hashes -r app/backend/requirements-lock.txt
+```
+
+## Node.js Dependencies
+
+### Lock File
+
+- `app/frontend/package-lock.json` - Node.js dependency lock file
+
+### Installing Node Dependencies
+
+```bash
+cd app/frontend
+npm ci  # Uses package-lock.json for reproducible installs
+```
+
+## Docker Builds
+
+### Reproducible Docker Images
+
+Docker builds use pinned base images and dependency lock files:
+
+```bash
+# Build backend image
+docker build -f Dockerfile -t hbc-backend:latest .
+
+# Build frontend image
+docker build -f Dockerfile.frontend -t hbc-frontend:latest .
+```
+
+### Build Arguments
+
+For reproducible builds, ensure consistent build arguments:
+
+- `PYTHON_VERSION` - Pinned in Dockerfile
+- `NODE_VERSION` - Pinned in Dockerfile.frontend
+- Dependency versions - Locked via requirements-lock.txt and package-lock.json
+
+## Verification
+
+### Verify Dependency Integrity
+
+```bash
+# Verify Python dependencies
+pip check
+
+# Verify Node dependencies
+cd app/frontend && npm audit
+```
+
+### Verify Build Reproducibility
+
+```bash
+# Build twice and compare checksums
+docker build -f Dockerfile -t hbc-backend:build1 .
+docker build -f Dockerfile -t hbc-backend:build2 .
+
+# Compare image layers
+docker inspect hbc-backend:build1 | jq '.[0].RootFS.Layers'
+docker inspect hbc-backend:build2 | jq '.[0].RootFS.Layers'
+```
+
+## CI/CD Integration
+
+The CI workflow automatically:
+
+1. Validates lock files exist
+2. Installs dependencies using lock files with hash verification
+3. Builds Docker images using locked dependencies
+4. Runs tests in reproducible environments
+
+## Best Practices
+
+1. **Always commit lock files** - Lock files must be committed to version control
+2. **Regenerate lock files** - When updating dependencies, regenerate lock files
+3. **Verify hashes** - Use `--require-hashes` when installing Python dependencies
+4. **Pin versions** - Pin all dependency versions in requirements files
+5. **Use `npm ci`** - Use `npm ci` instead of `npm install` for reproducible Node installs
+
+## Troubleshooting
+
+### Hash Mismatch Errors
+
+If you encounter hash mismatch errors:
+
+1. Regenerate lock files: `.github/scripts/generate_dependency_locks.sh`
+2. Verify requirements files are correct
+3. Check for platform-specific dependencies
+
+### Lock File Conflicts
+
+If lock files conflict:
+
+1. Regenerate lock files from requirements files
+2. Resolve conflicts in requirements files first
+3. Commit updated lock files
+
+--- END PATCH
+
+--- START GIT COMMANDS
+git add docs/REPRODUCIBLE_BUILDS.md
+git commit -S -m "docs: add reproducible builds documentation
+
+- Document dependency lock file generation and usage
+- Add Docker build reproducibility guidelines
+- Include verification procedures
+- Add troubleshooting section"
+--- END GIT COMMANDS

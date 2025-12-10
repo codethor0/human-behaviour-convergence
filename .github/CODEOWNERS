@@ -1,2 +1,16 @@
 # Default owners for everything
 * @codethor0
+
+# Workflow files require review to prevent CI breakage
+.github/workflows/ @codethor0
+
+# Critical configuration files
+requirements.txt @codethor0
+requirements-dev.txt @codethor0
+app/backend/requirements.txt @codethor0
+.python-version @codethor0
+pyproject.toml @codethor0
+
+# Test infrastructure
+tests/ @codethor0
+.github/scripts/ @codethor0

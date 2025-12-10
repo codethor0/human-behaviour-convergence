@@ -1,0 +1,74 @@
+--- START PATCH .pre-commit-config.yaml
+--- Enhanced pre-commit configuration with conventional commits and architecture validation
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: ['--check']
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--check-only"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  - repo: local
+    hooks:
+      - id: no-emojis-in-markdown
+        name: no-emojis-in-markdown
+        entry: python .github/scripts/check_no_emoji.py
+        language: system
+        pass_filenames: false
+        types: [markdown]
+      - id: enforce-american-spelling
+        name: enforce-american-spelling
+        entry: python .github/scripts/check_american_spelling.py
+        language: system
+        pass_filenames: false
+        types: [text]
+      - id: validate-architecture
+        name: validate-architecture
+        entry: python .github/scripts/validate_architecture.py
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: conventional-commits
+        name: conventional-commits
+        entry: python .github/scripts/validate_conventional_commits.py
+        language: system
+        pass_filenames: false
+        stages: [commit-msg]
+
+--- END PATCH
+
+--- START GIT COMMANDS
+git add .pre-commit-config.yaml
+git commit -S -m "chore: enhance pre-commit hooks with Level 3 hardening
+
+- Add conventional commits validation
+- Add architecture import validation
+- Add format lock enforcement via black --check
+- Add additional file checks (merge conflicts, case conflicts, line endings)
+- Add ruff with auto-fix capability"
+--- END GIT COMMANDS
