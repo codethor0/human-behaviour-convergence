@@ -1,16 +1,13 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Comprehensive tests for new indices (Crime, Misinformation, Social Cohesion)."""
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from app.core.behavior_index import BehaviorIndexComputer
 from app.core.prediction import BehavioralForecaster
 from app.services.ingestion.crime import CrimeSafetyStressFetcher
 from app.services.ingestion.misinformation import MisinformationStressFetcher
-from app.services.ingestion.political import PoliticalStressFetcher
 from app.services.ingestion.social_cohesion import SocialCohesionStressFetcher
 
 

@@ -2,8 +2,6 @@
 """Tests for live monitoring functionality."""
 from datetime import datetime, timedelta
 
-import pytest
-
 from app.core.live_monitor import LiveMonitor, LiveSnapshot
 
 

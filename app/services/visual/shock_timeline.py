@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Shock Timeline Engine for chronological shock visualization."""
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import pandas as pd
 import structlog
 
 logger = structlog.get_logger("visual.shock_timeline")

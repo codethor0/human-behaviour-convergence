@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Information Integrity & Misinformation Index (IIMI) data ingestion."""
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 import structlog

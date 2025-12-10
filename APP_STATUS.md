@@ -1,8 +1,8 @@
 # Application Status
 
-## ✅ Backend Server - RUNNING
+## Backend Server - RUNNING
 
-- **Status:** ✅ Running and healthy
+- **Status:** Running and healthy
 - **URL:** http://localhost:8000
 - **Health Check:** http://localhost:8000/health
 - **Status:** `{"status":"ok"}`
@@ -10,7 +10,7 @@
 ### Available Backend Endpoints:
 
 - **Health:** `GET /health`
-- **Forecasting:** 
+- **Forecasting:**
   - `GET /api/forecasting/data-sources`
   - `GET /api/forecasting/models`
   - `GET /api/forecasting/regions`
@@ -21,9 +21,9 @@
   - `GET /api/public/{source}/latest`
 - **API Docs:** http://localhost:8000/docs
 
-## ⚠️ Frontend Server - PERMISSION ISSUE
+## Frontend Server - PERMISSION ISSUE
 
-- **Status:** ⚠️ Cannot start due to port binding permissions
+- **Status:** Cannot start due to port binding permissions
 - **Error:** `EPERM: operation not permitted 0.0.0.0:3000`
 
 ### Issue:
@@ -63,8 +63,6 @@ Since the backend is running, you can:
 
 ## Test Results Summary
 
-✅ All location normalization tests passed (18/18)
-✅ Backend API responding correctly
-✅ Health checks passing
-
-
+- All location normalization tests passed (18/18)
+- Backend API responding correctly
+- Health checks passing

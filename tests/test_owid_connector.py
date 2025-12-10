@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for OWID health connector."""
 import pandas as pd
-import pytest
-import responses
 
 from app.services.ingestion.health_owid import OWIDHealthFetcher
 

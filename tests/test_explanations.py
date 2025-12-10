@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for explanation generation."""
-import pytest
 
 from app.core.explanations import (
     _classify_level,

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """USGS Earthquake feed connector for environmental hazard signals."""
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pandas as pd
 import requests

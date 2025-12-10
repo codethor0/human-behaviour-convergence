@@ -1,7 +1,3 @@
---- START PATCH .github/workflows/ci.yml
---- Enhanced CI workflow with Level 3 Maximum Hardening features
---- Adds: security scanning, Docker E2E, architecture validation, format lock, conventional commits
-
 # SPDX-License-Identifier: PROPRIETARY
 name: CI
 
@@ -28,8 +24,6 @@ env:
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
 
 jobs:
   pre-flight-checks:
@@ -134,11 +128,6 @@ jobs:
             echo "WARNING: Found temporary files (not blocking)"
             find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" -o -name ".DS_Store" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.venv/*" 2>/dev/null | head -5
           fi
-
-      - name: Validate Architecture
-        run: |
-          echo "=== Validating Architecture ==="
-          python3 .github/scripts/validate_architecture.py
 
   build:
     name: build
@@ -336,7 +325,7 @@ jobs:
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
-          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short -n auto
+          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short
         continue-on-error: false
         timeout-minutes: 15
 
@@ -377,77 +366,6 @@ jobs:
           find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
           find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
           find . -type f -name ".coverage.*" -delete 2>/dev/null || true
-
-  security-scan:
-    name: Security Scanning
-    runs-on: ubuntu-latest
-    needs: pre-flight-checks
-    strategy:
-      fail-fast: false
-      matrix:
-        scan-type: [bandit, pip-audit, trivy]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r app/backend/requirements.txt
-          pip install -r requirements-dev.txt
-
-      - name: Run Bandit Security Scan
-        if: matrix.scan-type == 'bandit'
-        run: |
-          pip install bandit[toml]
-          bandit -r app/ connectors/ -f json -o bandit-report.json || true
-          bandit -r app/ connectors/ -ll
-
-      - name: Run pip-audit
-        if: matrix.scan-type == 'pip-audit'
-        run: |
-          pip install pip-audit
-          pip-audit --requirement requirements.txt --requirement requirements-dev.txt --requirement app/backend/requirements.txt --format=json --output=pip-audit-report.json || true
-          pip-audit --requirement requirements.txt --requirement requirements-dev.txt --requirement app/backend/requirements.txt
-
-      - name: Run Trivy Vulnerability Scanner
-        if: matrix.scan-type == 'trivy'
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        if: matrix.scan-type == 'trivy'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  docker-e2e:
-    name: Docker E2E Tests
-    runs-on: ubuntu-latest
-    needs: [build, test]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run Docker E2E Test Suite
-        run: |
-          chmod +x .github/scripts/run_docker_e2e.sh
-          .github/scripts/run_docker_e2e.sh
 
   emoji-check:
     name: check-no-emoji
@@ -531,52 +449,5 @@ jobs:
       - name: Ruff Lint
         run: ruff check app/ tests/ scripts/
 
-      - name: Black Format Check (Format Lock)
-        run: |
-          black --check app/ tests/ scripts/
-          echo "PASS: Format lock validated - zero drift guarantee"
-
-      - name: Format Lock Validation
-        run: |
-          echo "=== Format Lock Validation ==="
-          black --check --diff app/ tests/ scripts/ > format-diff.txt || true
-          if [ -s format-diff.txt ]; then
-            echo "ERROR: Format drift detected. Run 'black app/ tests/ scripts/' to fix."
-            cat format-diff.txt
-            exit 1
-          fi
-          echo "PASS: No format drift detected"
-
-  conventional-commits:
-    name: Conventional Commits Validation
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Validate Commit Messages
-        run: |
-          python3 .github/scripts/validate_conventional_commits.py "$(git log --format=%B -n 1 HEAD)"
-
---- END PATCH
-
---- START GIT COMMANDS
-git add .github/workflows/ci.yml
-git commit -S -m "ci: add Level 3 maximum hardening features
-
-- Add security scanning jobs (bandit, pip-audit, trivy)
-- Add Docker E2E test suite
-- Add architecture validation
-- Add format lock enforcement (zero-drift guarantee)
-- Add conventional commits validation
-- Enable parallel test execution with pytest-xdist
-- Add SARIF upload for security findings"
---- END GIT COMMANDS
+      - name: Black Format
+        run: black --check app/ tests/ scripts/

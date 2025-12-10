@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Crime & Public Safety Stress Index (CPSSI) data ingestion."""
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 import structlog

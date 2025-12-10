@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Social Cohesion & Civil Stability Index (SCCSI) data ingestion."""
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 import structlog

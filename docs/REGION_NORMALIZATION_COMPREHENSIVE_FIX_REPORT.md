@@ -44,11 +44,11 @@ This report documents a complete systematic review and fix of location normaliza
    - **Location:** `app/core/location_normalizer.py:353-391`
 
 **Verification:**
-- "Washington" alone = ambiguous ✓
-- best_guess_region_id="us_wa" ✓
-- alternate_region_ids=["us_dc"] ✓
-- ambiguity_reason populated ✓
-- normalized_location not created ✓
+- "Washington" alone = ambiguous
+- best_guess_region_id="us_wa"
+- alternate_region_ids=["us_dc"]
+- ambiguity_reason populated
+- normalized_location not created
 
 ### Phase 3: Rule Ordering & Priority Fix
 
@@ -63,11 +63,11 @@ This report documents a complete systematic review and fix of location normaliza
 7. **Rule 7:** Ambiguity handling - **Always executed for ambiguous cases**
 
 **Guarantees:**
-- Ambiguous cases always fall through to Rule 7 ✓
-- No rule overrides ambiguity logic ✓
-- Specific matches don't incorrectly claim Washington ✓
-- Substring logic doesn't bypass ambiguity detection ✓
-- Normalization stops only after correct rule evaluation ✓
+- Ambiguous cases always fall through to Rule 7
+- No rule overrides ambiguity logic
+- Specific matches don't incorrectly claim Washington
+- Substring logic doesn't bypass ambiguity detection
+- Normalization stops only after correct rule evaluation
 
 ### Phase 4: Cross-Module Consistency Validation
 
@@ -97,13 +97,13 @@ This report documents a complete systematic review and fix of location normaliza
    - Input: "Event happened near Washington"
    - Expected: Either normalized_location with alternatives OR best_guess_region_id
    - Actual: best_guess_region_id="us_wa", alternate_region_ids=["us_dc"], ambiguity_reason set
-   - Status: ✓ Will pass
+   - Status:  Will pass
 
 2. **test_ambiguity_handling (test_forecast_config.py)**
    - Input: "Event happened near Washington"
    - Expected: normalized_location with best_guess=True and alternatives
    - Actual: ForecastConfigBuilder converts best_guess_region_id to normalized_location correctly
-   - Status: ✓ Will pass
+   - Status:  Will pass
 
 **Expected Output for Ambiguous Washington:**
 ```python
@@ -119,29 +119,29 @@ LocationNormalizationResult(
 
 **Verification Results:**
 
-1. **No normalized_location for ambiguous queries** ✓
+1. **No normalized_location for ambiguous queries**
    - Rule 5 returns None
    - Rule 6 falls through
    - Rule 7 sets best_guess_region_id (no normalized_location)
 
-2. **best_guess_region_id always present for ambiguous cases** ✓
+2. **best_guess_region_id always present for ambiguous cases**
    - Set by Rule 7 via `_handle_ambiguity()`
    - Always "us_wa" for ambiguous Washington
 
-3. **alternate_region_ids always populated** ✓
+3. **alternate_region_ids always populated**
    - Set by Rule 7
    - Always ["us_dc"] for ambiguous Washington
 
-4. **ambiguity_reason always a meaningful string** ✓
+4. **ambiguity_reason always a meaningful string**
    - Set by Rule 7
    - Format: "Ambiguous: Washington could refer to WA or DC"
 
-5. **Ambiguous cases never silently fall into deterministic paths** ✓
+5. **Ambiguous cases never silently fall into deterministic paths**
    - Rule 5 explicitly returns None
    - Rule 6 explicitly falls through
    - Rule 7 explicitly handles ambiguity
 
-6. **Consistent shape across API and internal functions** ✓
+6. **Consistent shape across API and internal functions**
    - Same structure for all ambiguous cases
    - ForecastConfigBuilder correctly converts to normalized_location format
 
@@ -292,10 +292,10 @@ else:
 ```
 
 **Our Output:**
-- `normalized_location = None` ✓
-- `best_guess_region_id = "us_wa"` ✓
-- `alternate_region_ids = ["us_dc"]` ✓
-- `ambiguity_reason = "Ambiguous: Washington could refer to WA or DC"` ✓
+- `normalized_location = None`
+- `best_guess_region_id = "us_wa"`
+- `alternate_region_ids = ["us_dc"]`
+- `ambiguity_reason = "Ambiguous: Washington could refer to WA or DC"`
 
 **Status:** Test will pass (else branch)
 
@@ -311,10 +311,10 @@ if config.normalized_location.best_guess:
 ```
 
 **Our Output (via ForecastConfigBuilder):**
-- `normalized_location` exists (created from best_guess_region_id) ✓
-- `best_guess = True` ✓
-- `alternatives = ["us_dc"]` ✓
-- `region_id = "us_wa"` ✓
+- `normalized_location` exists (created from best_guess_region_id)
+- `best_guess = True`
+- `alternatives = ["us_dc"]`
+- `region_id = "us_wa"`
 
 **Status:** Test will pass
 
@@ -381,21 +381,21 @@ LocationNormalizationResult(
 ## Validation Results
 
 ### Code Quality
-- ✓ No linter errors
-- ✓ All type hints correct
-- ✓ Docstrings updated
-- ✓ Comments clarify logic
+-  No linter errors
+-  All type hints correct
+-  Docstrings updated
+-  Comments clarify logic
 
 ### Logic Consistency
-- ✓ Ambiguous Washington never creates normalized_location
-- ✓ DC context correctly matches to us_dc
-- ✓ WA context correctly matches to us_wa
-- ✓ Cross-module integration verified
+-  Ambiguous Washington never creates normalized_location
+-  DC context correctly matches to us_dc
+-  WA context correctly matches to us_wa
+-  Cross-module integration verified
 
 ### Test Compatibility
-- ✓ test_ambiguity_handling expectations met
-- ✓ test_forecast_config::test_ambiguity_handling expectations met
-- ✓ Other normalization tests continue to pass
+-  test_ambiguity_handling expectations met
+-  test_forecast_config::test_ambiguity_handling expectations met
+-  Other normalization tests continue to pass
 
 ## Conclusion
 

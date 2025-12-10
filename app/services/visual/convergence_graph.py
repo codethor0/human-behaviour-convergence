@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Convergence Graph Engine for network visualization."""
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
-import numpy as np
-import pandas as pd
 import structlog
 
 logger = structlog.get_logger("visual.convergence_graph")

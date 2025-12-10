@@ -4,7 +4,7 @@
 Detects sudden spikes, outliers, and structural breaks in behavioral indices.
 """
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd

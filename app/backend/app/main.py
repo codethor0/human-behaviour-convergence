@@ -14,8 +14,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import structlog
 from fastapi import FastAPI, HTTPException, Query
-
-logger = structlog.get_logger("backend.main")
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
@@ -29,6 +27,8 @@ from app.storage import ForecastDB
 
 # Use relative import to ensure package-local router resolution
 from .routers import forecasting, live, playground, public
+
+logger = structlog.get_logger("backend.main")
 
 # CSV caching structures and TTL configuration
 # Cache key is a tuple of (filename, limit) to avoid string collision issues

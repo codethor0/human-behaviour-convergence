@@ -6,7 +6,6 @@ has a particular value, based on sub-indices and component-level details.
 """
 from typing import Dict, List, Optional
 
-import pandas as pd
 import structlog
 
 logger = structlog.get_logger("core.explanations")

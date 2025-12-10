@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Radar/Spider Chart Engine for behavioral fingerprints."""
-from typing import Dict, List, Optional
+from typing import Dict
 
 import numpy as np
-import pandas as pd
 import structlog
 
 logger = structlog.get_logger("visual.radar")

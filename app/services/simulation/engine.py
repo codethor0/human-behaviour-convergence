@@ -3,7 +3,7 @@
 
 Allows hypothetical scenario testing by modifying index values.
 """
-from typing import Dict, Optional
+from typing import Dict
 
 import pandas as pd
 import structlog

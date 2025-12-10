@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Our World in Data (OWID) connector for public health indicators."""
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pandas as pd
 import requests

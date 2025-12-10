@@ -44,8 +44,12 @@ class TestForecastingEndpoints:
         assert "models" in data
         assert data["system"] == "operational"
 
-    def test_get_forecast_history_empty(self):
+    @patch("app.storage.ForecastDB")
+    def test_get_forecast_history_empty(self, mock_db_class):
         """Test GET /api/forecasting/history endpoint returns empty list."""
+        mock_db = MagicMock()
+        mock_db.get_forecasts.return_value = []
+        mock_db_class.return_value = mock_db
         response = client.get("/api/forecasting/history")
         assert response.status_code == 200
         data = response.json()

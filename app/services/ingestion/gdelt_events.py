@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """GDELT Events API connector for global event and crisis signals."""
-import os
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pandas as pd
 import requests

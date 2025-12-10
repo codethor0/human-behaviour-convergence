@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for USGS Earthquake connector."""
 import pandas as pd
-import pytest
 import responses
 
 from app.services.ingestion.usgs_earthquakes import USGSEarthquakeFetcher

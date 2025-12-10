@@ -41,12 +41,14 @@ include = ["hbc", "connectors", "predictors"]
 
 [tool.black]
 line-length = 88
-extend-exclude = [
-    "notebooks",
-    "\\.venv",
-    "\\.git",
-    "node_modules",
-]
+exclude = '''
+/(
+    notebooks
+  | \.venv
+  | \.git
+  | node_modules
+)/
+'''
 
 [tool.ruff]
 line-length = 88

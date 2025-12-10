@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for GDELT Events connector."""
 import pandas as pd
-import pytest
 import responses
 
 from app.services.ingestion.gdelt_events import GDELTEventsFetcher

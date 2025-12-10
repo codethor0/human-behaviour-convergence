@@ -1,10 +1,8 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for Visualization Layer components."""
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from app.services.comparison.state_compare import StateComparisonEngine
 from app.services.visual.convergence_graph import ConvergenceGraphEngine

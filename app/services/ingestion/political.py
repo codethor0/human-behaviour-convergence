@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Political stress data ingestion from multiple public sources."""
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
-import requests
 import structlog
 
 logger = structlog.get_logger("ingestion.political")

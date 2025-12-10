@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.core.live_monitor import get_live_monitor
 
@@ -32,8 +32,7 @@ def get_live_summary(
         ge=1,
         le=1440,
         description=(
-            "Time window in minutes for historical snapshots "
-            "(1-1440, default: 60)"
+            "Time window in minutes for historical snapshots " "(1-1440, default: 60)"
         ),
     ),
 ) -> LiveSummaryResponse:

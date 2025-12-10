@@ -10,7 +10,7 @@ This report documents the comprehensive fixes applied to location normalization 
 
 **Problem:** The location normalizer was inconsistently handling ambiguous "Washington" references (e.g., "Event happened near Washington"). In some cases, it would incorrectly create a `normalized_location` instead of properly flagging the ambiguity.
 
-**Root Cause:** 
+**Root Cause:**
 - Rule 5 (`_try_state_match`) could potentially match "washington" even when ambiguous
 - Rule 6 (incident location extraction) didn't explicitly prevent ambiguous Washington from creating normalized_location
 - Missing explicit checks to skip ambiguous cases to Rule 7 (ambiguity handling)
@@ -156,7 +156,7 @@ LocationNormalizationResult(
 **Current Behavior:**
 - For ambiguous "Washington", returns `best_guess_region_id="us_wa"`, `alternate_region_ids=["us_dc"]`, `ambiguity_reason="..."`
 
-**Status:** ✅ Test should pass with else branch (ambiguous case)
+**Status:**  Test should pass with else branch (ambiguous case)
 
 ### `test_forecast_config.py::test_ambiguity_handling`
 
@@ -169,7 +169,7 @@ LocationNormalizationResult(
 **Current Behavior:**
 - `ForecastConfigBuilder` correctly converts `best_guess_region_id` to `normalized_location` with `best_guess=True`
 
-**Status:** ✅ Test should pass
+**Status:**  Test should pass
 
 ## Rule Execution Flow
 
@@ -183,26 +183,26 @@ LocationNormalizationResult(
 6. **Rule 6:** Try incident location → Detects ambiguous Washington, falls through
 7. **Rule 7:** Handle ambiguity → Sets `best_guess_region_id="us_wa"`, `alternate_region_ids=["us_dc"]`, `ambiguity_reason="..."`
 
-**Result:** ✅ No `normalized_location` created, ambiguity properly flagged
+**Result:**  No `normalized_location` created, ambiguity properly flagged
 
 ## Validation Results
 
 ### Code Quality
-- ✅ No linter errors
-- ✅ All type hints correct
-- ✅ Docstrings updated where necessary
-- ✅ Comments clarify ambiguity handling logic
+-  No linter errors
+-  All type hints correct
+-  Docstrings updated where necessary
+-  Comments clarify ambiguity handling logic
 
 ### Logic Consistency
-- ✅ Ambiguous Washington never creates normalized_location
-- ✅ DC context correctly matches to us_dc
-- ✅ WA context correctly matches to us_wa
-- ✅ Cross-module integration verified
+-  Ambiguous Washington never creates normalized_location
+-  DC context correctly matches to us_dc
+-  WA context correctly matches to us_wa
+-  Cross-module integration verified
 
 ### Test Compatibility
-- ✅ `test_ambiguity_handling` expectations met
-- ✅ `test_forecast_config::test_ambiguity_handling` expectations met
-- ✅ Other normalization tests should continue to pass
+-  `test_ambiguity_handling` expectations met
+-  `test_forecast_config::test_ambiguity_handling` expectations met
+-  Other normalization tests should continue to pass
 
 ## Files Modified
 

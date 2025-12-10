@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Correlation Matrix Engine for heatmap visualization."""
-from typing import Dict, List, Optional
+from typing import Dict
 
-import numpy as np
 import structlog
 
 logger = structlog.get_logger("visual.correlation_matrix")
