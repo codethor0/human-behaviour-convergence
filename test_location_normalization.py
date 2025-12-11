@@ -17,9 +17,9 @@ try:
     from app.core.forecast_config import ForecastConfigBuilder
     from app.core.location_normalizer import LocationNormalizer
 except ImportError as e:
-    print(f"ERROR: Could not import modules. Make sure dependencies are installed:")
-    print(f"  pip install -r requirements.txt")
-    print(f"  pip install -r requirements-dev.txt")
+    print("ERROR: Could not import modules. Make sure dependencies are installed:")
+    print("  pip install -r requirements.txt")
+    print("  pip install -r requirements-dev.txt")
     print(f"\nImport error: {e}")
     sys.exit(1)
 
@@ -33,8 +33,8 @@ def test_ambiguous_washington():
     normalizer = LocationNormalizer()
     result = normalizer.normalize("Event happened near Washington")
 
-    print(f"\nInput: 'Event happened near Washington'")
-    print(f"\nOutput:")
+    print("\nInput: 'Event happened near Washington'")
+    print("\nOutput:")
     print(f"  normalized_location: {result.normalized_location}")
     print(f"  best_guess_region_id: {result.best_guess_region_id}")
     print(f"  alternate_region_ids: {result.alternate_region_ids}")
@@ -53,7 +53,7 @@ def test_ambiguous_washington():
     assert result.ambiguity_reason is not None, "❌ Should have ambiguity_reason"
     assert (
         "Ambiguous" in result.ambiguity_reason
-    ), f"❌ Reason should mention 'Ambiguous'"
+    ), "❌ Reason should mention 'Ambiguous'"
 
     print("\n✅ PASS: Ambiguous Washington handled correctly")
     return True
@@ -68,8 +68,8 @@ def test_dc_context():
     normalizer = LocationNormalizer()
     result = normalizer.normalize("Event happened near Washington D.C.")
 
-    print(f"\nInput: 'Event happened near Washington D.C.'")
-    print(f"\nOutput:")
+    print("\nInput: 'Event happened near Washington D.C.'")
+    print("\nOutput:")
     if result.normalized_location:
         print(
             f"  normalized_location.region_id: {result.normalized_location.region_id}"
@@ -78,7 +78,7 @@ def test_dc_context():
             f"  normalized_location.region_label: {result.normalized_location.region_label}"
         )
     else:
-        print(f"  normalized_location: None")
+        print("  normalized_location: None")
 
     assert (
         result.normalized_location is not None
@@ -100,8 +100,8 @@ def test_wa_state_context():
     normalizer = LocationNormalizer()
     result = normalizer.normalize("Event in Seattle, Washington")
 
-    print(f"\nInput: 'Event in Seattle, Washington'")
-    print(f"\nOutput:")
+    print("\nInput: 'Event in Seattle, Washington'")
+    print("\nOutput:")
     if result.normalized_location:
         print(
             f"  normalized_location.region_id: {result.normalized_location.region_id}"
@@ -110,7 +110,7 @@ def test_wa_state_context():
             f"  normalized_location.region_label: {result.normalized_location.region_label}"
         )
     else:
-        print(f"  normalized_location: None")
+        print("  normalized_location: None")
 
     assert (
         result.normalized_location is not None
@@ -132,8 +132,8 @@ def test_forecast_config_ambiguity():
     builder = ForecastConfigBuilder()
     config = builder.prepare_config(description="Event happened near Washington")
 
-    print(f"\nInput: 'Event happened near Washington'")
-    print(f"\nOutput:")
+    print("\nInput: 'Event happened near Washington'")
+    print("\nOutput:")
     print(f"  normalized_location exists: {config.normalized_location is not None}")
     if config.normalized_location:
         print(
@@ -158,7 +158,7 @@ def test_forecast_config_ambiguity():
     assert config.normalized_location.region_id in [
         "us_wa",
         "us_dc",
-    ], f"❌ region_id should be us_wa or us_dc"
+    ], "❌ region_id should be us_wa or us_dc"
 
     print("\n✅ PASS: ForecastConfigBuilder handles ambiguity correctly")
     return True

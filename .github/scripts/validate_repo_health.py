@@ -186,7 +186,7 @@ def validate_version_consistency():
         expected = "3.10"
 
         if major_minor != expected:
-            print(f"ERROR: Python version mismatch")
+            print("ERROR: Python version mismatch")
             print(f"Expected: {expected}")
             print(f"Found: {major_minor}")
             return False

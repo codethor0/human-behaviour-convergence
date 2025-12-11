@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: MIT-0
-import pytest
 
 from predictors.registry import PredictorRegistry
 

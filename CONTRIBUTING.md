@@ -92,6 +92,6 @@ By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.
 
 ## Project Stewardship
 
-Primary maintainer: **Thor Thor**  
-Email: [codethor@gmail.com](mailto:codethor@gmail.com)  
+Primary maintainer: **Thor Thor**
+Email: [codethor@gmail.com](mailto:codethor@gmail.com)
 LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/thor-thor0)

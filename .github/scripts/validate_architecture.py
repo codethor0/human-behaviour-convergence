@@ -92,7 +92,7 @@ def validate_architecture():
 
     print("PASS: Architecture validation successful")
     print(f"  - Scanned {len(import_graph)} files")
-    print(f"  - No forbidden imports detected")
+    print("  - No forbidden imports detected")
     return True
 
 
