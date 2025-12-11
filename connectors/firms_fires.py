@@ -23,8 +23,7 @@ class FIRMSFiresSync(AbstractSync):
     """
 
     BASE_URL = "https://firms.modaps.eosdis.nasa.gov/api/country/csv"
-    # nosec B108: /tmp usage acceptable for transient cache, not security-sensitive
-    CACHE_DIR = Path("/tmp/firms_fires_cache")
+    CACHE_DIR = Path("/tmp/firms_fires_cache")  # nosec B108
     MAP_KEY = os.getenv("FIRMS_MAP_KEY", "")
 
     def __init__(self, date: Optional[str] = None, country: str = "USA"):

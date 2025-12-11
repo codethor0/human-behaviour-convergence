@@ -20,8 +20,7 @@ class WikiPageviewsSync(AbstractSync):
     """
 
     BASE_URL = "https://dumps.wikimedia.org/other/pageviews"
-    # nosec B108: /tmp usage acceptable for transient cache, not security-sensitive
-    CACHE_DIR = Path("/tmp/wiki_pageviews_cache")
+    CACHE_DIR = Path("/tmp/wiki_pageviews_cache")  # nosec B108
     PROJECTS = ["en", "de", "fr", "es", "zh"]  # Top 5 languages
 
     def __init__(self, date: Optional[str] = None, max_hours: int = 24):
