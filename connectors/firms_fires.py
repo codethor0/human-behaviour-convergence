@@ -23,6 +23,7 @@ class FIRMSFiresSync(AbstractSync):
     """
 
     BASE_URL = "https://firms.modaps.eosdis.nasa.gov/api/country/csv"
+    # nosec B108: /tmp usage acceptable for transient cache, not security-sensitive
     CACHE_DIR = Path("/tmp/firms_fires_cache")
     MAP_KEY = os.getenv("FIRMS_MAP_KEY", "")
 

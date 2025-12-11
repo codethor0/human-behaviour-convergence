@@ -20,6 +20,7 @@ class WikiPageviewsSync(AbstractSync):
     """
 
     BASE_URL = "https://dumps.wikimedia.org/other/pageviews"
+    # nosec B108: /tmp usage acceptable for transient cache, not security-sensitive
     CACHE_DIR = Path("/tmp/wiki_pageviews_cache")
     PROJECTS = ["en", "de", "fr", "es", "zh"]  # Top 5 languages
 

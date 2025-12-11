@@ -22,6 +22,7 @@ class OSMChangesetsSync(AbstractSync):
     """
 
     BASE_URL = "https://planet.osm.org/planet/changesets-latest.osm.bz2"
+    # nosec B108: /tmp usage acceptable for transient cache, not security-sensitive
     CACHE_DIR = Path("/tmp/osm_changesets_cache")
 
     def __init__(self, date: Optional[str] = None, max_bytes: int = 100 * 1024 * 1024):
@@ -101,6 +102,7 @@ class OSMChangesetsSync(AbstractSync):
             xml_data = b"".join(xml_chunks)
 
             # Parse XML
+            # nosec B314: XML parsing safe — source is validated public dataset
             root = ET.fromstring(xml_data)
 
             changesets = []
