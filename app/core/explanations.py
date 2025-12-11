@@ -137,7 +137,6 @@ def _explain_economic_stress(
             comp_label = comp.get("label", comp_id.replace("_", " ").title())
             comp_value = comp.get("value", 0.5)
             comp_weight = comp.get("weight", 0.0)
-            comp_source = comp.get("source", "unknown")
 
             direction = _get_direction(comp_value)
             importance = _get_importance(comp_weight, comp_value)
@@ -238,7 +237,6 @@ def _explain_environmental_stress(
     # Check for earthquake component
     has_earthquake = False
     earthquake_value = 0.0
-    weather_value = 0.5
 
     if components:
         for comp in components:
@@ -247,7 +245,9 @@ def _explain_environmental_stress(
                 has_earthquake = True
                 earthquake_value = comp.get("value", 0.0)
             elif comp_id == "weather_discomfort":
-                weather_value = comp.get("value", 0.5)
+                _ = comp.get(
+                    "value", 0.5
+                )  # Weather value tracked but not used in current logic
 
     # Build reason
     if has_earthquake:
