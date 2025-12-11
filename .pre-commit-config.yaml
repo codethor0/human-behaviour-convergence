@@ -7,18 +7,28 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
 
   - repo: https://github.com/psf/black
     rev: 24.8.0
     hooks:
       - id: black
         language_version: python3
+        args: ['--check']
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--profile", "black"]
+        args: ["--profile", "black", "--check-only"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.0
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
 
   - repo: local
     hooks:
@@ -34,3 +44,15 @@ repos:
         language: system
         pass_filenames: false
         types: [text]
+      - id: validate-architecture
+        name: validate-architecture
+        entry: python .github/scripts/validate_architecture.py
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: conventional-commits
+        name: conventional-commits
+        entry: python .github/scripts/validate_conventional_commits.py
+        language: system
+        pass_filenames: false
+        stages: [commit-msg]

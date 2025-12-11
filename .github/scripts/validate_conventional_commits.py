@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-import re
-import sys
 import os
 import subprocess
+import sys
 
 """
 New validator:
@@ -13,9 +12,19 @@ New validator:
 """
 
 ALLOWED_TYPES = [
-    "feat","fix","docs","style","refactor","perf","test",
-    "build","ci","chore","revert",
+    "feat",
+    "fix",
+    "docs",
+    "style",
+    "refactor",
+    "perf",
+    "test",
+    "build",
+    "ci",
+    "chore",
+    "revert",
 ]
+
 
 def get_commit_message():
     """
@@ -28,8 +37,7 @@ def get_commit_message():
     if sha:
         try:
             out = subprocess.check_output(
-                ["git", "log", "--format=%B", "-n", "1", sha],
-                text=True
+                ["git", "log", "--format=%B", "-n", "1", sha], text=True
             )
             if out.strip():
                 return out.strip()
@@ -46,6 +54,7 @@ def get_commit_message():
     # Final fallback: stdin
     data = sys.stdin.read().strip()
     return data
+
 
 def validate_commit_message(message: str) -> bool:
     """Validate a commit message follows Conventional Commits."""

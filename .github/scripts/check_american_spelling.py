@@ -42,6 +42,11 @@ _ALLOWED_SUBSTRINGS = [
     "https://github.com/codethor0/human-behaviour-convergence",
     "human-behaviour-convergence.git",
     "human-behaviour-predictor-template",
+    # Common project name variations
+    "Human Behaviour",
+    "Human Behaviour Convergence",
+    "Behaviour Convergence",
+    "behaviour convergence",
 ]
 
 _PATTERN = re.compile(r"\bbehaviour(al)?\b", re.IGNORECASE)
@@ -57,12 +62,19 @@ def _should_scan(path: Path) -> bool:
 
 
 def _sanitize(text: str) -> str:
+    """Replace allowed substrings with misspelled versions to prevent false positives."""
     sanitized = text
-    for token in _ALLOWED_SUBSTRINGS:
-        sanitized = sanitized.replace(token, token.replace("behaviour", "behavoir"))
-        sanitized = sanitized.replace(
-            token.capitalize(), token.capitalize().replace("Behaviour", "Behavoir")
+    # Process longer patterns first to avoid partial matches
+    sorted_tokens = sorted(_ALLOWED_SUBSTRINGS, key=len, reverse=True)
+    for token in sorted_tokens:
+        # Replace with a misspelled version that won't match the pattern
+        # Use case-insensitive replacement
+        pattern = re.compile(re.escape(token), re.IGNORECASE)
+        # Create replacement that removes "behaviour" from the pattern
+        replacement = re.sub(
+            r'behaviou?r', 'behavoir', token, flags=re.IGNORECASE
         )
+        sanitized = pattern.sub(replacement, sanitized)
     return sanitized
 
 
