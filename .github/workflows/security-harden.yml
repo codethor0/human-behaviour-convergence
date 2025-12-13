@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: PROPRIETARY
+name: Security Harden
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+jobs:
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r app/backend/requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run pip-audit (strict)
+        run: |
+          pip install pip-audit
+          pip-audit --strict --requirement requirements.txt --requirement requirements-dev.txt --requirement app/backend/requirements.txt
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Bandit (strict)
+        run: |
+          pip install bandit[toml]
+          bandit -r app/ connectors/ -ll -f json -o bandit-report.json
+          bandit -r app/ connectors/ -ll
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        if: github.event_name == 'pull_request'
+        with:
+          fail-on-severity: moderate

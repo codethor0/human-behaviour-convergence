@@ -3,6 +3,7 @@
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
 [![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
+[![Security](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml)
 [![codecov](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/main/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)

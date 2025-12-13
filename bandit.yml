@@ -1,0 +1,17 @@
+# Bandit configuration for strict security scanning
+exclude_dirs:
+  - tests
+  - test
+  - .venv
+  - venv
+  - node_modules
+
+skips:
+  - B101  # assert_used (allow assertions in tests)
+
+severity_level: high
+confidence_level: high
+
+test_id:
+  - B101
+  - B601
