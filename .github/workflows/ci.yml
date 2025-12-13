@@ -2,13 +2,14 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - '.github/**'
-    # Skip CI for dependabot branches unless PR is open
-    branches-ignore:
-      - 'dependabot/**'
   workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates

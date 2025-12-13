@@ -2,13 +2,14 @@
 name: CodeQL Security Analysis
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
   pull_request:
     branches: [main]
     paths-ignore:
       - '.github/**'
-    # Skip CodeQL for dependabot branches unless PR is open
-    branches-ignore:
-      - 'dependabot/**'
   schedule:
     - cron: '0 0 * * 0'  # Runs weekly on Sunday
   workflow_dispatch: {}
