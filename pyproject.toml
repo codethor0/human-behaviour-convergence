@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hbc"
-version = "0.1.0"
+version = "0.1.0"  # Managed by semantic-release
 description = "Synthetic, population-scale behavioral forecasting explorer."
 readme = "README.md"
 license = {text = "Proprietary - All Rights Reserved"}
@@ -93,3 +93,12 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "@abstractmethod",
 ]
+
+[tool.semantic_release]
+version_variable = "pyproject.toml:project.version"
+version_toml = "pyproject.toml:project.version"
+build_command = "pip install build && python -m build"
+dist_path = "dist"
+upload_to_vcs_release = true
+hvcs = "github"
+commit_author = "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
