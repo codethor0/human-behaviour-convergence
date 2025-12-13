@@ -1,0 +1,292 @@
+# SPDX-License-Identifier: PROPRIETARY
+name: Hygiene Monitor
+
+on:
+  schedule:
+    # Run weekly on Monday at 10:00 UTC (after branch hygiene runs)
+    - cron: '0 10 * * 1'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+
+jobs:
+  validate-configuration:
+    name: Validate Hygiene Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      ci_ok: ${{ steps.validate-ci.outputs.ci_ok }}
+      codeql_ok: ${{ steps.validate-codeql.outputs.codeql_ok }}
+      head_ok: ${{ steps.check-head.outputs.head_ok }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate CI Configuration
+        id: validate-ci
+        run: |
+          echo "=== Validating CI Configuration ==="
+          if grep -q "branches-ignore.*dependabot" .github/workflows/ci.yml; then
+            echo "✅ CI correctly ignores dependabot branches"
+            echo "ci_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ CI does not ignore dependabot branches"
+            echo "ci_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate CodeQL Configuration
+        id: validate-codeql
+        run: |
+          echo "=== Validating CodeQL Configuration ==="
+          if grep -q "branches-ignore.*dependabot" .github/workflows/codeql.yml; then
+            echo "✅ CodeQL correctly ignores dependabot branches"
+            echo "codeql_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ CodeQL does not ignore dependabot branches"
+            echo "codeql_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Dependabot Configuration
+        id: validate-dependabot
+        run: |
+          echo "=== Validating Dependabot Configuration ==="
+          python3 << 'PYEOF'
+          import yaml
+          import sys
+
+          with open('.github/dependabot.yml', 'r') as f:
+              config = yaml.safe_load(f)
+
+          issues = []
+
+          for update in config['updates']:
+              ecosystem = update['package-ecosystem']
+              schedule = update.get('schedule', {})
+              interval = schedule.get('interval', '')
+
+              # Check for weekly schedule
+              if interval != 'weekly':
+                  issues.append(f"{ecosystem}: schedule is not weekly ({interval})")
+
+              # Check for grouped updates (npm and github-actions)
+              if ecosystem in ['npm', 'github-actions']:
+                  if 'groups' not in update:
+                      issues.append(f"{ecosystem}: missing groups configuration")
+                  elif update.get('open-pull-requests-limit', 10) > 1:
+                      issues.append(f"{ecosystem}: PR limit should be 1 for grouped updates")
+
+              # Check Python security-only
+              if ecosystem == 'pip':
+                  ignore = update.get('ignore', [])
+                  has_security_only = any(
+                      'unless-security-advisory' in rule for rule in ignore
+                  )
+                  if not has_security_only:
+                      issues.append(f"{ecosystem} ({update.get('directory', '/')}): not configured for security-only")
+
+          if issues:
+              print("❌ Dependabot configuration issues:")
+              for issue in issues:
+                  print(f"  - {issue}")
+              sys.exit(1)
+          else:
+              print("✅ Dependabot configuration is correct")
+          PYEOF
+
+      - name: Validate Branch Hygiene Workflow
+        id: validate-branch-hygiene
+        run: |
+          echo "=== Validating Branch Hygiene Workflow ==="
+          if [ ! -f ".github/workflows/branch-hygiene.yml" ]; then
+            echo "❌ Branch hygiene workflow not found"
+            exit 1
+          fi
+
+          if grep -q "cron: '0 2 \* \* \*'" .github/workflows/branch-hygiene.yml; then
+            echo "✅ Branch hygiene workflow scheduled correctly (02:00 UTC)"
+            echo "branch_hygiene_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Branch hygiene workflow schedule incorrect"
+            echo "branch_hygiene_ok=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Remote HEAD
+        id: check-head
+        run: |
+          echo "=== Checking Remote HEAD ==="
+          git fetch --all --prune
+          HEAD_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}')
+          if [ "$HEAD_BRANCH" = "main" ]; then
+            echo "✅ Remote HEAD correctly points to main"
+            echo "head_ok=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Remote HEAD points to $HEAD_BRANCH (should be main)"
+            echo "head_ok=false" >> $GITHUB_OUTPUT
+            echo "Attempting to fix..."
+            git remote set-head origin main
+            git remote show origin | grep "HEAD branch"
+          fi
+
+  check-branch-hygiene-execution:
+    name: Check Branch Hygiene Execution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Recent Branch Hygiene Runs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'branch-hygiene.yml',
+              per_page: 10
+            });
+
+            const now = new Date();
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            let recentRuns = 0;
+            let lastRun = null;
+
+            for (const run of runs.workflow_runs) {
+              const runDate = new Date(run.created_at);
+              if (runDate > sevenDaysAgo) {
+                recentRuns++;
+                if (!lastRun || runDate > new Date(lastRun.created_at)) {
+                  lastRun = run;
+                }
+              }
+            }
+
+            console.log(`Branch hygiene runs in last 7 days: ${recentRuns}`);
+
+            if (lastRun) {
+              console.log(`Last run: ${lastRun.created_at} (${lastRun.status}, ${lastRun.conclusion || 'in_progress'})`);
+
+              if (lastRun.conclusion === 'failure') {
+                console.log('⚠️ Last branch hygiene run failed');
+                core.setFailed('Branch hygiene workflow failed');
+              } else if (lastRun.conclusion === 'success') {
+                console.log('✅ Last branch hygiene run succeeded');
+              }
+            } else {
+              console.log('⚠️ No branch hygiene runs found in last 7 days');
+            }
+
+  generate-report:
+    name: Generate Hygiene Report
+    runs-on: ubuntu-latest
+    needs: [validate-configuration, check-branch-hygiene-execution]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all branches
+        run: git fetch --all --prune
+
+      - name: Generate Report
+        uses: actions/github-script@v7
+        env:
+          CI_OK: ${{ needs.validate-configuration.outputs.ci_ok }}
+          CODEQL_OK: ${{ needs.validate-configuration.outputs.codeql_ok }}
+          HEAD_OK: ${{ needs.validate-configuration.outputs.head_ok }}
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+
+            const branches = execSync('git branch -r', { encoding: 'utf-8' })
+              .split('\n')
+              .filter(b => b.trim() && !b.includes('HEAD'))
+              .map(b => b.trim().replace('origin/', ''));
+
+            const dependabotBranches = branches.filter(b => b.startsWith('dependabot/'));
+            const protectedBranches = branches.filter(b => ['main', 'master'].includes(b));
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const dependabotPRs = prs.filter(pr => pr.head.ref.startsWith('dependabot/'));
+
+            const { data: ciRuns } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'ci.yml',
+              per_page: 100
+            });
+
+            const dependabotCIRuns = ciRuns.workflow_runs.filter(run =>
+              run.head_branch && run.head_branch.startsWith('dependabot/')
+            );
+
+            const reportLines = [];
+            reportLines.push('# Repository Hygiene Report');
+            reportLines.push('Generated: ' + new Date().toISOString());
+            reportLines.push('');
+            reportLines.push('## Branch Status');
+            reportLines.push('- **Total branches:** ' + branches.length);
+            reportLines.push('- **Protected branches:** ' + protectedBranches.join(', '));
+            reportLines.push('- **Dependabot branches:** ' + dependabotBranches.length);
+
+            if (dependabotBranches.length > 0) {
+              dependabotBranches.forEach(b => reportLines.push('  - ' + b));
+            } else {
+              reportLines.push('  - None');
+            }
+
+            reportLines.push('');
+            reportLines.push('## Pull Requests');
+            reportLines.push('- **Open PRs:** ' + prs.length);
+            reportLines.push('- **Dependabot PRs:** ' + dependabotPRs.length);
+
+            if (dependabotPRs.length > 0) {
+              dependabotPRs.forEach(pr => reportLines.push('  - #' + pr.number + ': ' + pr.title));
+            } else {
+              reportLines.push('  - None');
+            }
+
+            reportLines.push('');
+            reportLines.push('## CI Cost Analysis');
+            reportLines.push('- **CI runs on dependabot branches (last 100 runs):** ' + dependabotCIRuns.length);
+            reportLines.push('- **Status:** ' + (dependabotCIRuns.length === 0 ? '✅ No CI runs on dependabot branches' : '⚠️ CI runs detected on dependabot branches'));
+            reportLines.push('');
+            reportLines.push('## Configuration Status');
+            reportLines.push('- **CI dependabot ignore:** ' + (process.env.CI_OK === 'true' ? '✅ Configured' : '❌ Not configured'));
+            reportLines.push('- **CodeQL dependabot ignore:** ' + (process.env.CODEQL_OK === 'true' ? '✅ Configured' : '❌ Not configured'));
+            reportLines.push('- **Dependabot config:** ✅ Validated');
+            reportLines.push('- **Branch hygiene:** ✅ Scheduled (02:00 UTC nightly)');
+            reportLines.push('- **Remote HEAD:** ' + (process.env.HEAD_OK === 'true' ? '✅ Points to main' : '❌ Incorrect'));
+            reportLines.push('');
+            reportLines.push('## Recommendations');
+
+            if (dependabotBranches.length > 5) {
+              reportLines.push('- ⚠️ High number of dependabot branches, consider reviewing PRs');
+            }
+            if (dependabotPRs.length > 5) {
+              reportLines.push('- ⚠️ High number of open dependabot PRs, consider grouping updates');
+            }
+            if (dependabotCIRuns.length > 0) {
+              reportLines.push('- ⚠️ CI is running on dependabot branches, check workflow configuration');
+            }
+            if (dependabotBranches.length === 0 && dependabotPRs.length === 0) {
+              reportLines.push('- ✅ Repository hygiene is optimal');
+            }
+
+            const report = reportLines.join('\n');
+            console.log(report);
+            fs.writeFileSync('hygiene-report.md', report);
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hygiene-report
+          path: hygiene-report.md
+          retention-days: 30

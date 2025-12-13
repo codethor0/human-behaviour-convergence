@@ -1,60 +1,40 @@
 version: 2
 updates:
-  # GitHub Actions dependencies
+  # GitHub Actions dependencies - grouped weekly
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "09:00"
+    # Group all GitHub Actions updates into a single PR
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
+      - "github-actions"
       - "automated"
     commit-message:
       prefix: "chore"
       include: "scope"
+    # Auto-merge will be handled by GitHub settings + workflow
 
-  # Python dependencies
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "python"
-      - "automated"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    ignore:
-      # Ignore major version updates for now
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # Python dependencies in app/backend
-  - package-ecosystem: "pip"
-    directory: "/app/backend"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "python"
-      - "backend"
-      - "automated"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # npm dependencies (if frontend exists)
+  # npm dependencies - grouped weekly
   - package-ecosystem: "npm"
     directory: "/app/frontend"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+      time: "09:00"
+    # Group all npm updates into a single PR
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "npm"
@@ -64,5 +44,53 @@ updates:
       prefix: "chore"
       include: "scope"
     ignore:
+      # Ignore major version updates (require manual review)
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    # Enable lockfile maintenance
+    versioning-strategy: lockfile-only
+
+  # Python dependencies - root level (security-only)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "security"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Security updates only
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        unless-security-advisory: true
+
+  # Python dependencies in app/backend (security-only)
+  - package-ecosystem: "pip"
+    directory: "/app/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "backend"
+      - "security"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Security updates only
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+        unless-security-advisory: true

@@ -1,0 +1,169 @@
+# SPDX-License-Identifier: PROPRIETARY
+name: Branch Hygiene
+
+on:
+  schedule:
+    # Run nightly at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cleanup-branches:
+    name: Cleanup Stale Branches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch all branches
+        run: git fetch --all --prune
+
+      - name: Find merged branches
+        id: merged-branches
+        run: |
+          echo "=== Finding merged branches ==="
+          MERGED_BRANCHES=$(git branch -r --merged origin/main | grep -v "origin/main\|origin/master\|origin/HEAD\|origin/dependabot" | sed 's|origin/||' | tr '\n' ' ')
+          echo "merged=$MERGED_BRANCHES" >> $GITHUB_OUTPUT
+          if [ -n "$MERGED_BRANCHES" ]; then
+            echo "Found merged branches: $MERGED_BRANCHES"
+          else
+            echo "No merged branches found"
+          fi
+
+      - name: Find stale dependabot branches
+        id: stale-dependabot
+        run: |
+          echo "=== Finding stale Dependabot branches ==="
+          STALE_BRANCHES=""
+          THIRTY_DAYS_AGO=$(date -u -d '30 days ago' +%s 2>/dev/null || date -u -v-30d +%s 2>/dev/null || echo "")
+
+          for branch in $(git branch -r | grep "origin/dependabot" | sed 's|origin/||'); do
+            # Check if branch is merged
+            if git merge-base --is-ancestor "origin/$branch" origin/main 2>/dev/null; then
+              echo "Dependabot branch $branch is merged, marking for deletion"
+              STALE_BRANCHES="$STALE_BRANCHES $branch"
+              continue
+            fi
+
+            # Check commits behind main
+            COMMITS_BEHIND=$(git rev-list --count "origin/$branch..origin/main" 2>/dev/null || echo "0")
+            if [ "$COMMITS_BEHIND" -gt 50 ]; then
+              echo "Dependabot branch $branch is $COMMITS_BEHIND commits behind main, marking for deletion"
+              STALE_BRANCHES="$STALE_BRANCHES $branch"
+              continue
+            fi
+
+            # Check age if date command supports it
+            if [ -n "$THIRTY_DAYS_AGO" ]; then
+              BRANCH_DATE=$(git log -1 --format="%ct" "origin/$branch" 2>/dev/null || echo "")
+              if [ -n "$BRANCH_DATE" ] && [ "$BRANCH_DATE" -lt "$THIRTY_DAYS_AGO" ]; then
+                echo "Dependabot branch $branch is older than 30 days, marking for deletion"
+                STALE_BRANCHES="$STALE_BRANCHES $branch"
+              fi
+            fi
+          done
+
+          echo "stale=$STALE_BRANCHES" >> $GITHUB_OUTPUT
+          if [ -n "$STALE_BRANCHES" ]; then
+            echo "Found stale Dependabot branches: $STALE_BRANCHES"
+          else
+            echo "No stale Dependabot branches found"
+          fi
+
+      - name: Delete merged branches
+        if: steps.merged-branches.outputs.merged != ''
+        run: |
+          echo "=== Deleting merged branches ==="
+          for branch in ${{ steps.merged-branches.outputs.merged }}; do
+            echo "Deleting merged branch: $branch"
+            git push origin --delete "$branch" || echo "Failed to delete $branch (may be protected)"
+          done
+
+      - name: Delete stale Dependabot branches
+        if: steps.stale-dependabot.outputs.stale != ''
+        run: |
+          echo "=== Deleting stale Dependabot branches ==="
+          for branch in ${{ steps.stale-dependabot.outputs.stale }}; do
+            echo "Deleting stale Dependabot branch: $branch"
+            git push origin --delete "$branch" || echo "Failed to delete $branch"
+          done
+
+      - name: Close outdated Dependabot PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'dependabot',
+              per_page: 100
+            });
+
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            let closedCount = 0;
+            for (const pr of prs) {
+              const prDate = new Date(pr.created_at);
+              const commitsBehind = await github.rest.repos.compareCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                base: pr.head.ref,
+                head: 'main'
+              });
+
+              const shouldClose =
+                prDate < thirtyDaysAgo ||
+                commitsBehind.data.behind_by > 50 ||
+                pr.merged === true;
+
+              if (shouldClose) {
+                await github.rest.pulls.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  state: 'closed'
+                });
+                console.log(`Closed PR #${pr.number}: ${pr.title}`);
+                closedCount++;
+              }
+            }
+
+            console.log(`Closed ${closedCount} outdated Dependabot PRs`);
+
+      - name: Ensure Remote HEAD Points to Main
+        run: |
+          echo "=== Ensuring Remote HEAD Points to Main ==="
+          CURRENT_HEAD=$(git remote show origin | grep "HEAD branch" | awk '{print $3}')
+          if [ "$CURRENT_HEAD" != "main" ]; then
+            echo "Fixing remote HEAD (currently: $CURRENT_HEAD)"
+            git remote set-head origin main
+            git remote show origin | grep "HEAD branch"
+          else
+            echo "✅ Remote HEAD correctly points to main"
+          fi
+
+      - name: Cleanup Summary
+        run: |
+          echo "=== Branch Hygiene Cleanup Summary ==="
+          echo "Merged branches deleted: ${{ steps.merged-branches.outputs.merged }}"
+          echo "Stale Dependabot branches deleted: ${{ steps.stale-dependabot.outputs.stale }}"
+          echo ""
+          echo "Current remote branches:"
+          git branch -r | grep -v "origin/HEAD"
+          echo ""
+          echo "Remote HEAD status:"
+          git remote show origin | grep "HEAD branch"

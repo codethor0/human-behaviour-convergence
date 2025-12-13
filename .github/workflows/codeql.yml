@@ -4,6 +4,9 @@ name: CodeQL Security Analysis
 on:
   push:
     branches: [main]
+    # Skip CodeQL for dependabot branches unless PR is open
+    branches-ignore:
+      - 'dependabot/**'
   pull_request:
     branches: [main]
   schedule:
