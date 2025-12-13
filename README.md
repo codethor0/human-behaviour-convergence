@@ -2,7 +2,10 @@
 > Public-data-driven behavioral forecasting for population-scale analysis and planning.
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
+[![Coverage](https://img.shields.io/badge/coverage-coming%20soon-lightgrey)](https://github.com/codethor0/human-behaviour-convergence)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/codethor0/human-behaviour-convergence)
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/codethor0/human-behaviour-convergence)
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
