@@ -7,7 +7,8 @@ backend FastAPI application located at `app/backend/app/main.py`.
 
 # Re-export submodule so imports like `from app import main` work consistently.
 # We rely on namespace packages (PEP 420) for `app.backend`.
-# CI badge reset - triggers workflows to update badges
+# CI reset - forces workflows to run on main for green badges
+__ci_reset__ = True  # noqa: F401
 from .backend.app import main  # type: ignore  # noqa: F401
 
 __all__ = ["main"]
