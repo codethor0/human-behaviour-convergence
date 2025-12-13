@@ -2,17 +2,13 @@
 name: CI
 
 on:
-  push:
+  pull_request:
     branches: [main]
     paths-ignore:
       - '.github/**'
     # Skip CI for dependabot branches unless PR is open
     branches-ignore:
       - 'dependabot/**'
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - '.github/**'
   workflow_dispatch: {}
 
 # Cancel in-progress runs for the same workflow on PR updates
@@ -339,7 +335,7 @@ jobs:
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
-          pytest tests/ --cov --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short -n auto
+          pytest tests/ --cov=app --cov=hbc --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short -n auto
         continue-on-error: false
         timeout-minutes: 15
 
