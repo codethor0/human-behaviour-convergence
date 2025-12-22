@@ -114,7 +114,7 @@
     "status_code": 200,
     "error": null,
     "validation_errors": [],
-    "response_sample": "{\"timings\": {\"min\": 0.6372077465057373, \"max\": 0.9564206600189209, \"avg\": 0.8234724283218384, \"all\": [0.9455606937408447, 0.8049318790435791, 0.9564206600189209, 0.7884438037872314, 0.6590769290924072"
+    "response_sample": "{\"timings\": {\"min\": 0.9145841598510742, \"max\": 1.1105279922485352, \"avg\": 0.9972358226776123, \"all\": [1.0205886363983154, 0.9146521091461182, 0.9145841598510742, 0.9971861839294434, 1.0973548889160156"
   },
   {
     "endpoint": "/api/forecast (determinism)",
@@ -133,5 +133,23 @@
     "error": null,
     "validation_errors": [],
     "response_sample": "{\"required_fields\": [\"history\", \"forecast\", \"sources\", \"metadata\", \"explanation\", \"shock_events\", \"convergence\", \"risk_tier\", \"forecast_confidence\", \"model_drift\", \"correlations\", \"explanations\"], \"hi"
+  },
+  {
+    "endpoint": "/api/forecast (concurrent)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"concurrent_requests\": 10, \"all_succeeded\": true, \"state_isolation\": \"verified\", \"responses_identical\": true}"
+  },
+  {
+    "endpoint": "/api/forecast (temporal)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"temporal_tests\": 3, \"temporal_integrity\": \"verified\", \"no_future_leakage\": true, \"chronological_order\": true}"
   }
 ]

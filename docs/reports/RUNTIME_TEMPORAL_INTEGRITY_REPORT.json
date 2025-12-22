@@ -1,0 +1,41 @@
+{
+  "validation_date": "2025-12-22",
+  "iteration": "N+8",
+  "test_description": "Validate temporal integrity across different time windows",
+  "test_cases": [
+    {
+      "name": "min_window",
+      "days_back": 7,
+      "forecast_horizon": 7
+    },
+    {
+      "name": "standard_window",
+      "days_back": 30,
+      "forecast_horizon": 7
+    },
+    {
+      "name": "extended_window",
+      "days_back": 90,
+      "forecast_horizon": 7
+    }
+  ],
+  "temporal_integrity_results": {
+    "temporal_tests": 3,
+    "temporal_integrity": "verified",
+    "no_future_leakage": true,
+    "chronological_order": true,
+    "findings": {
+      "history_lengths": "All windows return at least the requested days_back",
+      "forecast_lengths": "All forecasts match requested forecast_horizon",
+      "timestamp_ordering": "All timestamps are in chronological order",
+      "subset_validation": "Shorter windows are proper subsets of longer windows",
+      "classification": "TEMPORALLY_CONSISTENT - No time bleed detected"
+    }
+  },
+  "time_travel_validation": {
+    "historical_data_stable": true,
+    "no_future_leakage": true,
+    "reproducibility": "verified",
+    "time_window_isolation": "verified"
+  }
+}

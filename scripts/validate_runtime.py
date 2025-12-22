@@ -12,6 +12,7 @@ Usage:
 import json
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -855,6 +856,256 @@ def validate_contract_permanence() -> ValidationResult:
     return result
 
 
+def validate_state_isolation_concurrent() -> ValidationResult:
+    """Validate state isolation by executing concurrent requests."""
+    result = ValidationResult("/api/forecast (concurrent)", "POST")
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
+    }
+
+    responses = []
+    errors = []
+
+    def make_request(request_id: int) -> tuple[int, Optional[Dict], Optional[str]]:
+        """Make a single request and return (id, response_body, error)."""
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/forecast", json=payload, timeout=30
+            )
+            if response.status_code == 200:
+                return (request_id, response.json(), None)
+            else:
+                return (
+                    request_id,
+                    None,
+                    f"Status {response.status_code}: {response.text[:100]}",
+                )
+        except Exception as e:
+            return (request_id, None, str(e))
+
+    # Execute 10 concurrent requests
+    num_requests = 10
+    with ThreadPoolExecutor(max_workers=num_requests) as executor:
+        futures = [executor.submit(make_request, i) for i in range(num_requests)]
+        for future in as_completed(futures):
+            req_id, resp_body, error = future.result()
+            if error:
+                errors.append(f"Request {req_id}: {error}")
+            else:
+                responses.append((req_id, resp_body))
+
+    if errors:
+        result.record_error(0, f"Some requests failed: {errors}")
+        return result
+
+    if len(responses) != num_requests:
+        result.record_error(
+            0, f"Only {len(responses)}/{num_requests} requests succeeded"
+        )
+        return result
+
+    # Verify state isolation: responses should be identical (same input)
+    first_response = responses[0][1]
+    structural_diffs = []
+    numeric_diffs = []
+    tolerance = 1e-10
+
+    for req_id, resp in responses[1:]:
+        # Check structure
+        if set(resp.keys()) != set(first_response.keys()):
+            structural_diffs.append(
+                f"Request {req_id} has different keys: {set(resp.keys())} vs {set(first_response.keys())}"
+            )
+
+        # Check array lengths
+        for key in ["history", "forecast"]:
+            if key in first_response:
+                if len(resp.get(key, [])) != len(first_response[key]):
+                    structural_diffs.append(
+                        f"Request {req_id} {key} length differs: {len(resp.get(key, []))} vs {len(first_response[key])}"
+                    )
+
+        # Check numeric values
+        if "history" in first_response:
+            for j, (first_item, resp_item) in enumerate(
+                zip(first_response["history"], resp["history"])
+            ):
+                if "behavior_index" in first_item and "behavior_index" in resp_item:
+                    diff = abs(
+                        first_item["behavior_index"] - resp_item["behavior_index"]
+                    )
+                    if diff > tolerance:
+                        numeric_diffs.append(
+                            f"Request {req_id} history[{j}].behavior_index differs by {diff}"
+                        )
+
+    if structural_diffs:
+        result.record_error(0, f"State leakage detected: {', '.join(structural_diffs)}")
+        return result
+
+    if numeric_diffs:
+        result.add_validation_error(
+            f"State leakage detected: {len(numeric_diffs)} numeric differences"
+        )
+        result.record_success(
+            200,
+            {
+                "concurrent_requests": num_requests,
+                "all_succeeded": True,
+                "state_isolation": "violated" if numeric_diffs else "verified",
+                "numeric_diffs": len(numeric_diffs),
+            },
+        )
+    else:
+        result.record_success(
+            200,
+            {
+                "concurrent_requests": num_requests,
+                "all_succeeded": True,
+                "state_isolation": "verified",
+                "responses_identical": True,
+            },
+        )
+
+    return result
+
+
+def validate_temporal_integrity() -> ValidationResult:
+    """Validate temporal integrity by testing same request across different time contexts."""
+    result = ValidationResult("/api/forecast (temporal)", "POST")
+
+    # Test with different days_back values (simulating different time windows)
+    test_cases = [
+        {"days_back": 7, "forecast_horizon": 7, "name": "min_window"},
+        {"days_back": 30, "forecast_horizon": 7, "name": "standard_window"},
+        {"days_back": 90, "forecast_horizon": 7, "name": "extended_window"},
+    ]
+
+    responses = []
+    errors = []
+
+    base_payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+    }
+
+    for test_case in test_cases:
+        payload = {**base_payload, **test_case}
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/forecast", json=payload, timeout=30
+            )
+            if response.status_code == 200:
+                responses.append((test_case["name"], response.json()))
+            else:
+                errors.append(
+                    f"{test_case['name']}: Status {response.status_code}: {response.text[:100]}"
+                )
+        except Exception as e:
+            errors.append(f"{test_case['name']}: {str(e)}")
+
+    if errors:
+        result.record_error(0, f"Some temporal tests failed: {errors}")
+        return result
+
+    if len(responses) != len(test_cases):
+        result.record_error(
+            0, f"Only {len(responses)}/{len(test_cases)} temporal tests succeeded"
+        )
+        return result
+
+    # Verify temporal consistency:
+    # 1. Each response should have history length matching days_back
+    # 2. Forecasts should be consistent (same horizon)
+    # 3. No future data should leak into past windows
+
+    temporal_issues = []
+
+    for name, resp in responses:
+        # Verify history length is at least days_back (system may return more if data available)
+        test_case = next(tc for tc in test_cases if tc["name"] == name)
+        expected_min_history_length = test_case["days_back"]
+        actual_history_length = len(resp.get("history", []))
+
+        if actual_history_length < expected_min_history_length:
+            temporal_issues.append(
+                f"{name}: History length insufficient: expected at least {expected_min_history_length}, got {actual_history_length}"
+            )
+
+        # Verify forecast horizon is consistent
+        expected_forecast_length = test_case["forecast_horizon"]
+        actual_forecast_length = len(resp.get("forecast", []))
+
+        if actual_forecast_length != expected_forecast_length:
+            temporal_issues.append(
+                f"{name}: Forecast length mismatch: expected {expected_forecast_length}, got {actual_forecast_length}"
+            )
+
+        # Verify timestamps are in correct order (past to future)
+        if "history" in resp and len(resp["history"]) > 1:
+            timestamps = [item.get("timestamp") for item in resp["history"]]
+            if timestamps != sorted(timestamps):
+                temporal_issues.append(
+                    f"{name}: History timestamps not in chronological order"
+                )
+
+        if "forecast" in resp and len(resp["forecast"]) > 1:
+            timestamps = [item.get("timestamp") for item in resp["forecast"]]
+            if timestamps != sorted(timestamps):
+                temporal_issues.append(
+                    f"{name}: Forecast timestamps not in chronological order"
+                )
+
+    # Verify no future leakage: shorter window should not have data beyond its range
+    # Compare overlapping periods between windows
+    min_window_resp = next(r[1] for r in responses if r[0] == "min_window")
+    standard_window_resp = next(r[1] for r in responses if r[0] == "standard_window")
+
+    if "history" in min_window_resp and "history" in standard_window_resp:
+        min_timestamps = {item.get("timestamp") for item in min_window_resp["history"]}
+        standard_timestamps = {
+            item.get("timestamp") for item in standard_window_resp["history"]
+        }
+
+        # All timestamps in min_window should be in standard_window
+        if not min_timestamps.issubset(standard_timestamps):
+            temporal_issues.append(
+                "Future leakage: min_window contains timestamps not in standard_window"
+            )
+
+    if temporal_issues:
+        result.add_validation_error(
+            f"Temporal integrity violations: {len(temporal_issues)} issues"
+        )
+        # Store issues in response_body for debugging
+        result.record_success(
+            200,
+            {
+                "temporal_tests": len(test_cases),
+                "temporal_integrity": "violated",
+                "issues": temporal_issues,
+                "all_issues": temporal_issues,  # Duplicate for visibility
+            },
+        )
+    else:
+        result.record_success(
+            200,
+            {
+                "temporal_tests": len(test_cases),
+                "temporal_integrity": "verified",
+                "no_future_leakage": True,
+                "chronological_order": True,
+            },
+        )
+
+    return result
+
+
 def main():
     """Run all validations."""
     global BASE_URL
@@ -916,6 +1167,14 @@ def main():
     # Contract permanence tests
     print("\n15. Validating contract permanence...")
     results.append(validate_contract_permanence())
+
+    # State isolation and concurrency tests
+    print("\n16. Validating state isolation (concurrent requests)...")
+    results.append(validate_state_isolation_concurrent())
+
+    # Temporal integrity tests
+    print("\n17. Validating temporal integrity...")
+    results.append(validate_temporal_integrity())
 
     # Summary
     print("\n" + "=" * 70)
