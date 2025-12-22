@@ -542,8 +542,6 @@ jobs:
   #
   #     - name: Run Docker E2E Test Suite
   #       run: |
-  #         chmod +x .github/scripts/run_docker_e2e.sh
-  #         .github/scripts/run_docker_e2e.sh
 
   conventional-commits:
     name: Conventional Commits Validation
