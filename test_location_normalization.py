@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """Test location normalization fixes - run after installing dependencies."""
 
+import os
 import sys
 from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
-
-# Set PYTHONPATH for imports
-import os
-
 os.environ["PYTHONPATH"] = str(project_root)
 
 try:
@@ -43,19 +40,17 @@ def test_ambiguous_washington():
     # Verify
     assert (
         result.normalized_location is None
-    ), "❌ Should NOT create normalized_location for ambiguous case"
+    ), "Should NOT create normalized_location for ambiguous case"
     assert (
         result.best_guess_region_id == "us_wa"
-    ), f"❌ Expected 'us_wa', got '{result.best_guess_region_id}'"
+    ), f"Expected 'us_wa', got '{result.best_guess_region_id}'"
     assert result.alternate_region_ids == [
         "us_dc"
-    ], f"❌ Expected ['us_dc'], got {result.alternate_region_ids}"
-    assert result.ambiguity_reason is not None, "❌ Should have ambiguity_reason"
-    assert (
-        "Ambiguous" in result.ambiguity_reason
-    ), "❌ Reason should mention 'Ambiguous'"
+    ], f"Expected ['us_dc'], got {result.alternate_region_ids}"
+    assert result.ambiguity_reason is not None, "Should have ambiguity_reason"
+    assert "Ambiguous" in result.ambiguity_reason, "Reason should mention 'Ambiguous'"
 
-    print("\n✅ PASS: Ambiguous Washington handled correctly")
+    print("\nPASS: Ambiguous Washington handled correctly")
     return True
 
 
@@ -82,12 +77,12 @@ def test_dc_context():
 
     assert (
         result.normalized_location is not None
-    ), "❌ Should create normalized_location for DC context"
+    ), "Should create normalized_location for DC context"
     assert (
         result.normalized_location.region_id == "us_dc"
-    ), f"❌ Expected 'us_dc', got '{result.normalized_location.region_id}'"
+    ), f"Expected 'us_dc', got '{result.normalized_location.region_id}'"
 
-    print("\n✅ PASS: DC context handled correctly")
+    print("\nPASS: DC context handled correctly")
     return True
 
 
@@ -114,12 +109,12 @@ def test_wa_state_context():
 
     assert (
         result.normalized_location is not None
-    ), "❌ Should create normalized_location for WA state context"
+    ), "Should create normalized_location for WA state context"
     assert (
         result.normalized_location.region_id == "us_wa"
-    ), f"❌ Expected 'us_wa', got '{result.normalized_location.region_id}'"
+    ), f"Expected 'us_wa', got '{result.normalized_location.region_id}'"
 
-    print("\n✅ PASS: WA state context handled correctly")
+    print("\nPASS: WA state context handled correctly")
     return True
 
 
@@ -148,19 +143,17 @@ def test_forecast_config_ambiguity():
 
     assert (
         config.normalized_location is not None
-    ), "❌ ForecastConfigBuilder should create normalized_location"
+    ), "ForecastConfigBuilder should create normalized_location"
     assert (
         config.normalized_location.best_guess is True
-    ), "❌ Should have best_guess=True for ambiguous case"
-    assert (
-        len(config.normalized_location.alternatives) > 0
-    ), "❌ Should have alternatives"
+    ), "Should have best_guess=True for ambiguous case"
+    assert len(config.normalized_location.alternatives) > 0, "Should have alternatives"
     assert config.normalized_location.region_id in [
         "us_wa",
         "us_dc",
-    ], "❌ region_id should be us_wa or us_dc"
+    ], "region_id should be us_wa or us_dc"
 
-    print("\n✅ PASS: ForecastConfigBuilder handles ambiguity correctly")
+    print("\nPASS: ForecastConfigBuilder handles ambiguity correctly")
     return True
 
 
@@ -176,16 +169,16 @@ if __name__ == "__main__":
         test_forecast_config_ambiguity()
 
         print("\n" + "=" * 70)
-        print("✅ ALL TESTS PASSED!")
+        print("ALL TESTS PASSED!")
         print("=" * 70)
         print("\nLocation normalization is working correctly.")
         print("You can now start the backend server to test via API.")
         sys.exit(0)
     except AssertionError as e:
-        print(f"\n❌ TEST FAILED: {e}")
+        print(f"\nTEST FAILED: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
+        print(f"\nERROR: {e}")
         import traceback
 
         traceback.print_exc()
