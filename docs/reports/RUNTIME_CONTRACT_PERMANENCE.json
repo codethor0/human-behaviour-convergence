@@ -1,0 +1,119 @@
+{
+  "validation_date": "2025-12-22",
+  "iteration": "N+7",
+  "api_endpoint": "/api/forecast",
+  "contract_snapshot": {
+    "required_top_level_fields": [
+      "history",
+      "forecast",
+      "sources",
+      "metadata"
+    ],
+    "history_schema": {
+      "required_fields": [
+        "timestamp",
+        "behavior_index",
+        "sub_indices"
+      ],
+      "has_behavior_index": true,
+      "has_sub_indices": true,
+      "has_timestamp": true,
+      "sub_indices_structure": {
+        "economic_stress": "number",
+        "environmental_stress": "number",
+        "mobility_activity": "number",
+        "social_activity": "number"
+      }
+    },
+    "forecast_schema": {
+      "required_fields": [
+        "timestamp",
+        "behavior_index",
+        "sub_indices"
+      ],
+      "has_behavior_index": true,
+      "has_sub_indices": true,
+      "has_timestamp": true,
+      "sub_indices_structure": {
+        "economic_stress": "number",
+        "environmental_stress": "number",
+        "mobility_activity": "number",
+        "social_activity": "number"
+      }
+    },
+    "metadata_schema": {
+      "required_fields": [],
+      "optional_fields": [
+        "region_name",
+        "forecast_date",
+        "model_type"
+      ]
+    },
+    "sources_schema": {
+      "is_list": true,
+      "expected_sources": [
+        "firms_fires",
+        "osm_changesets",
+        "wiki_pageviews"
+      ]
+    }
+  },
+  "frontend_expectations": {
+    "forecast.tsx": {
+      "interface": "ForecastResponse",
+      "required_fields": [
+        "history",
+        "forecast",
+        "sources",
+        "metadata"
+      ],
+      "optional_fields": [
+        "explanation",
+        "explanations",
+        "shock_events",
+        "convergence",
+        "risk_tier",
+        "forecast_confidence",
+        "model_drift",
+        "correlations"
+      ],
+      "history_type": "ForecastHistoryItem[]",
+      "forecast_type": "ForecastItem[]",
+      "sources_type": "string[]",
+      "metadata_type": "Record<string, any>"
+    },
+    "playground.tsx": {
+      "interface": "ForecastResponse",
+      "required_fields": [
+        "history",
+        "forecast",
+        "sources",
+        "metadata"
+      ],
+      "optional_fields": [
+        "explanations"
+      ],
+      "history_type": "Array<Record<string, unknown>>",
+      "forecast_type": "Array<Record<string, unknown>>",
+      "sources_type": "string[]",
+      "metadata_type": "Record<string, unknown>"
+    }
+  },
+  "compatibility_matrix": {
+    "required_fields_match": true,
+    "history_structure_compatible": true,
+    "forecast_structure_compatible": true,
+    "sources_type_compatible": true,
+    "metadata_type_compatible": true,
+    "optional_fields_present": true,
+    "frontend_handles_optional_fields": true,
+    "backward_compatibility": "maintained",
+    "breaking_changes": [],
+    "notes": [
+      "Frontend uses Record<string, any> for flexible handling of optional fields",
+      "Backend provides more fields than frontend strictly requires",
+      "This is acceptable - frontend ignores unknown fields"
+    ]
+  },
+  "contract_drift_detected": false
+}

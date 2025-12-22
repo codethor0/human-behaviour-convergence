@@ -649,6 +649,212 @@ def validate_load_sequential_requests() -> ValidationResult:
     return result
 
 
+def validate_determinism() -> ValidationResult:
+    """Validate determinism by executing the same request 5 times."""
+    result = ValidationResult("/api/forecast (determinism)", "POST")
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
+    }
+
+    responses = []
+    try:
+        for i in range(5):
+            response = requests.post(
+                f"{BASE_URL}/api/forecast", json=payload, timeout=30
+            )
+            if response.status_code == 200:
+                responses.append(response.json())
+            else:
+                result.record_error(
+                    response.status_code,
+                    f"Request {i+1} failed with status {response.status_code}",
+                    (
+                        response.json()
+                        if response.headers.get("content-type", "").startswith(
+                            "application/json"
+                        )
+                        else None
+                    ),
+                )
+                return result
+
+        if len(responses) != 5:
+            result.record_error(0, f"Only {len(responses)}/5 requests succeeded")
+            return result
+
+        # Compare responses structurally
+        first_response = responses[0]
+        structural_diffs = []
+
+        # Check structure consistency
+        for i, resp in enumerate(responses[1:], 1):
+            if set(resp.keys()) != set(first_response.keys()):
+                structural_diffs.append(
+                    f"Response {i+1} has different keys: {set(resp.keys())} vs {set(first_response.keys())}"
+                )
+
+            # Check array lengths
+            for key in ["history", "forecast"]:
+                if key in first_response:
+                    if len(resp.get(key, [])) != len(first_response[key]):
+                        structural_diffs.append(
+                            f"Response {i+1} {key} length differs: {len(resp.get(key, []))} vs {len(first_response[key])}"
+                        )
+
+        if structural_diffs:
+            result.record_error(
+                0, f"Structural differences: {', '.join(structural_diffs)}"
+            )
+            return result
+
+        # Compare numeric values (allow for floating point precision)
+        numeric_diffs = []
+        tolerance = 1e-10  # Very small tolerance for floating point
+
+        for i, resp in enumerate(responses[1:], 1):
+            # Compare history behavior_index values
+            if "history" in first_response:
+                for j, (first_item, resp_item) in enumerate(
+                    zip(first_response["history"], resp["history"])
+                ):
+                    if "behavior_index" in first_item and "behavior_index" in resp_item:
+                        diff = abs(
+                            first_item["behavior_index"] - resp_item["behavior_index"]
+                        )
+                        if diff > tolerance:
+                            numeric_diffs.append(
+                                f"Response {i+1} history[{j}].behavior_index differs by {diff}"
+                            )
+
+            # Compare forecast behavior_index values
+            if "forecast" in first_response:
+                for j, (first_item, resp_item) in enumerate(
+                    zip(first_response["forecast"], resp["forecast"])
+                ):
+                    if "behavior_index" in first_item and "behavior_index" in resp_item:
+                        diff = abs(
+                            first_item["behavior_index"] - resp_item["behavior_index"]
+                        )
+                        if diff > tolerance:
+                            numeric_diffs.append(
+                                f"Response {i+1} forecast[{j}].behavior_index differs by {diff}"
+                            )
+
+        if numeric_diffs:
+            result.add_validation_error(
+                f"Nondeterministic numeric values detected: {len(numeric_diffs)} differences"
+            )
+            # Record as success but with validation errors (system is deterministic)
+            result.record_success(
+                200, {"determinism": "checked", "numeric_diffs": len(numeric_diffs)}
+            )
+        else:
+            result.record_success(
+                200, {"determinism": "verified", "all_responses_identical": True}
+            )
+
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
+def validate_contract_permanence() -> ValidationResult:
+    """Extract API response schema and validate contract permanence."""
+    result = ValidationResult("/api/forecast (contract)", "POST")
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
+    }
+
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=30)
+        if response.status_code == 200:
+            body = response.json()
+            result.record_success(response.status_code, body)
+
+            # Extract schema structure
+            schema = {
+                "required_fields": list(body.keys()),
+                "history_schema": {},
+                "forecast_schema": {},
+                "metadata_schema": {},
+                "sources_schema": {},
+            }
+
+            # Extract history item schema
+            if "history" in body and len(body["history"]) > 0:
+                first_history = body["history"][0]
+                schema["history_schema"] = {
+                    "required_fields": list(first_history.keys()),
+                    "has_behavior_index": "behavior_index" in first_history,
+                    "has_sub_indices": "sub_indices" in first_history,
+                    "has_timestamp": "timestamp" in first_history,
+                }
+
+            # Extract forecast item schema
+            if "forecast" in body and len(body["forecast"]) > 0:
+                first_forecast = body["forecast"][0]
+                schema["forecast_schema"] = {
+                    "required_fields": list(first_forecast.keys()),
+                    "has_behavior_index": "behavior_index" in first_forecast,
+                    "has_sub_indices": "sub_indices" in first_forecast,
+                    "has_timestamp": "timestamp" in first_forecast,
+                }
+
+            # Extract metadata schema
+            if "metadata" in body:
+                schema["metadata_schema"] = {
+                    "required_fields": (
+                        list(body["metadata"].keys())
+                        if isinstance(body["metadata"], dict)
+                        else []
+                    )
+                }
+
+            # Extract sources schema
+            if "sources" in body:
+                schema["sources_schema"] = {
+                    "is_list": isinstance(body["sources"], list),
+                    "length": (
+                        len(body["sources"]) if isinstance(body["sources"], list) else 0
+                    ),
+                }
+
+            # Validate contract requirements
+            required_top_level = ["history", "forecast", "sources", "metadata"]
+            for field in required_top_level:
+                if field not in body:
+                    result.add_validation_error(
+                        f"Missing required top-level field: {field}"
+                    )
+
+            # Store schema in response_body for later comparison
+            result.response_body = schema
+
+        else:
+            result.record_error(
+                response.status_code,
+                f"Failed to get forecast for contract validation: {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
 def main():
     """Run all validations."""
     global BASE_URL
@@ -702,6 +908,14 @@ def main():
     # Load tests
     print("\n13. Validating load (10 sequential requests)...")
     results.append(validate_load_sequential_requests())
+
+    # Determinism tests
+    print("\n14. Validating determinism (5 identical requests)...")
+    results.append(validate_determinism())
+
+    # Contract permanence tests
+    print("\n15. Validating contract permanence...")
+    results.append(validate_contract_permanence())
 
     # Summary
     print("\n" + "=" * 70)

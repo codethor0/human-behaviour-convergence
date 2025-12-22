@@ -114,6 +114,24 @@
     "status_code": 200,
     "error": null,
     "validation_errors": [],
-    "response_sample": "{\"timings\": {\"min\": 0.6775400638580322, \"max\": 1.0149109363555908, \"avg\": 0.9018369674682617, \"all\": [1.0098838806152344, 0.9456167221069336, 0.9164981842041016, 0.8408787250518799, 0.9083888530731201"
+    "response_sample": "{\"timings\": {\"min\": 0.6372077465057373, \"max\": 0.9564206600189209, \"avg\": 0.8234724283218384, \"all\": [0.9455606937408447, 0.8049318790435791, 0.9564206600189209, 0.7884438037872314, 0.6590769290924072"
+  },
+  {
+    "endpoint": "/api/forecast (determinism)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"determinism\": \"verified\", \"all_responses_identical\": true}"
+  },
+  {
+    "endpoint": "/api/forecast (contract)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"required_fields\": [\"history\", \"forecast\", \"sources\", \"metadata\", \"explanation\", \"shock_events\", \"convergence\", \"risk_tier\", \"forecast_confidence\", \"model_drift\", \"correlations\", \"explanations\"], \"hi"
   }
 ]
