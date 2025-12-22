@@ -1,0 +1,56 @@
+[
+  {
+    "endpoint": "/health",
+    "method": "GET",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"status\": \"ok\"}"
+  },
+  {
+    "endpoint": "/api/forecast",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"history\": [{\"timestamp\": \"2025-11-17T00:00:00\", \"behavior_index\": 0.3498455006114899, \"sub_indices\": {\"economic_stress\": 0.3048511886596679, \"environmental_stress\": 0.1692909151315689, \"mobility_act"
+  },
+  {
+    "endpoint": "/api/forecast (invalid coords)",
+    "method": "POST",
+    "success": true,
+    "status_code": 422,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"detail\": [{\"type\": \"less_than_equal\", \"loc\": [\"body\", \"latitude\"], \"msg\": \"Input should be less than or equal to 90\", \"input\": 100.0, \"ctx\": {\"le\": 90.0}}]}"
+  },
+  {
+    "endpoint": "/api/forecast (boundary)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"history\": [{\"timestamp\": \"2025-12-10T00:00:00\", \"behavior_index\": 0.43730070864000636, \"sub_indices\": {\"economic_stress\": 0.1529356994628906, \"environmental_stress\": 0.4583286941051483, \"mobility_ac"
+  },
+  {
+    "endpoint": "/api/forecasting/regions",
+    "method": "GET",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "[{\"id\": \"city_johannesburg\", \"name\": \"Johannesburg\", \"country\": \"ZA\", \"region_type\": \"city\", \"latitude\": -26.2041, \"longitude\": 28.0473, \"region_group\": \"AFRICA\"}, {\"id\": \"city_mumbai\", \"name\": \"Mumba"
+  },
+  {
+    "endpoint": "/api/forecast (data integrity)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"history\": [{\"timestamp\": \"2025-11-17T00:00:00\", \"behavior_index\": 0.3498455006114899, \"sub_indices\": {\"economic_stress\": 0.3048511886596679, \"environmental_stress\": 0.1692909151315689, \"mobility_act"
+  }
+]
