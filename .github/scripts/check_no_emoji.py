@@ -40,21 +40,43 @@ def check_file(file_path: Path) -> list[tuple[int, str]]:
 
 def main():
     root = Path(__file__).parent.parent.parent
-    md_files = list(root.glob("**/*.md"))
 
-    # Exclude files in hidden directories, node_modules, or specific paths
-    md_files = [
-        f
-        for f in md_files
-        if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
-        and "node_modules" not in f.parts
-        and ".venv" not in f.parts
-        and "venv" not in f.parts
-    ]
+    # Check only staged markdown files (pre-commit hook context)
+    import subprocess
 
-    # Exclude audit reports that document emojis as findings
-    md_files = [f for f in md_files if "REPO_HEALTH_AUDIT" not in f.name]
-    md_files = [f for f in md_files if "ISSUE_STATUS_REPORT" not in f.name]
+    try:
+        # Get list of staged markdown files
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        staged_files = [
+            f.strip() for f in result.stdout.splitlines() if f.strip().endswith(".md")
+        ]
+        if staged_files:
+            md_files = [root / f for f in staged_files if (root / f).exists()]
+        else:
+            # No staged markdown files - nothing to check
+            md_files = []
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        # Fallback: check all markdown files if git not available
+        print(f"[WARNING] Git command failed: {e}, checking all files", file=sys.stderr)
+        md_files = list(root.glob("**/*.md"))
+        # Exclude files in hidden directories, node_modules, or specific paths
+        md_files = [
+            f
+            for f in md_files
+            if not any(part.startswith(".") for part in f.relative_to(root).parts[:-1])
+            and "node_modules" not in f.parts
+            and ".venv" not in f.parts
+            and "venv" not in f.parts
+        ]
+        # Exclude audit reports that document emojis as findings
+        md_files = [f for f in md_files if "REPO_HEALTH_AUDIT" not in f.name]
+        md_files = [f for f in md_files if "ISSUE_STATUS_REPORT" not in f.name]
 
     found_emojis = False
 

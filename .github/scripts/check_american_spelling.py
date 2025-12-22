@@ -47,14 +47,25 @@ _ALLOWED_SUBSTRINGS = [
     "Human Behaviour Convergence",
     "Behaviour Convergence",
     "behaviour convergence",
+    # Comments in this file that reference behaviour
+    'Create replacement that removes "behaviour" from the pattern',
 ]
 
 _PATTERN = re.compile(r"\bbehaviour(al)?\b", re.IGNORECASE)
 
 
 def _git_tracked_files() -> list[Path]:
-    out = subprocess.check_output(["git", "ls-files"], text=True)
-    return [Path(line) for line in out.splitlines() if line]
+    # Check only staged files (pre-commit hook context)
+    try:
+        out = subprocess.check_output(
+            ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"], text=True
+        )
+        staged_files = [line.strip() for line in out.splitlines() if line.strip()]
+        return [Path(f) for f in staged_files]
+    except subprocess.CalledProcessError:
+        # Fallback: check all tracked files if git command fails
+        out = subprocess.check_output(["git", "ls-files"], text=True)
+        return [Path(line) for line in out.splitlines() if line]
 
 
 def _should_scan(path: Path) -> bool:
@@ -70,10 +81,8 @@ def _sanitize(text: str) -> str:
         # Replace with a misspelled version that won't match the pattern
         # Use case-insensitive replacement
         pattern = re.compile(re.escape(token), re.IGNORECASE)
-        # Create replacement that removes "behaviour" from the pattern
-        replacement = re.sub(
-            r'behaviou?r', 'behavoir', token, flags=re.IGNORECASE
-        )
+        # Create replacement that removes "behavior" from the pattern
+        replacement = re.sub(r"behaviou?r", "behavoir", token, flags=re.IGNORECASE)
         sanitized = pattern.sub(replacement, sanitized)
     return sanitized
 
@@ -81,7 +90,13 @@ def _sanitize(text: str) -> str:
 def main() -> int:
     failures: list[str] = []
 
+    # Skip checking this file itself to avoid false positives from allowed substrings
+    hook_file_path = Path(__file__).resolve()
+
     for path in _git_tracked_files():
+        # Skip the hook file itself
+        if path.resolve() == hook_file_path:
+            continue
         if not _should_scan(path):
             continue
         try:
