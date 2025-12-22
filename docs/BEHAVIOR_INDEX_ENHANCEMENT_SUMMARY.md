@@ -166,7 +166,6 @@ BEHAVIOR_INDEX =
 **New Documentation:**
 - `docs/BEHAVIOR_INDEX.md` - Comprehensive behavior index explanation
 - `docs/BEHAVIOR_INDEX_TAXONOMY.md` - Data source taxonomy
-- `docs/BEHAVIOR_INDEX_CURRENT.md` - Current state analysis
 - `docs/STORAGE.md` - Database design and usage
 
 **Updated Documentation:**

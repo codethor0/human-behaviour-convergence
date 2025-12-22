@@ -7,7 +7,6 @@ This directory contains validation, audit, and implementation reports generated 
 ### Validation Reports
 - `FORMAL_VALIDATION_REPORT.md` - Formal methods validation, symbolic execution, invariant proofing
 - `FINAL_VALIDATION_SUMMARY.md` - Summary of final validation results
-- `VALIDATION_REPORT.md` - General validation report
 
 ### Audit Reports
 - `CHAOS_TEST_REPORT.md` - Chaos engineering and fault injection testing
