@@ -1,4 +1,7 @@
-%% ---------- THEME: CLEAN / MODERN ----------
+%% Architecture Diagram - Code-Derived (Iteration N+9)
+%% Generated: 2025-12-22
+%% Source: Direct code analysis from app/backend/app/main.py and routers
+
 %%{ init: {
   "fontFamily": "Inter, Roboto, Helvetica, Arial, sans-serif",
   "fontSize": "14px",
@@ -20,103 +23,131 @@
   }
 } }%%
 
-%% ---------- DIAGRAM ----------
-flowchart LR
+flowchart TB
     %% ================================================================
-    %% 0. TITLE
+    %% CLIENT LAYER
     %% ================================================================
-    TITLE["THE CONVERGENCE OF HUMAN BEHAVIOR PREDICTION
-Population-scale forecasting in a No-Guard-Rails data regime"]
-
-    %% ================================================================
-    %% 1. TRAIN  (5.6 B ONLINE)
-    %% ================================================================
-    subgraph TRAIN["1. TRAIN  –  5.6 B ONLINE"]
-        direction TB
-        A["5.6 B Population\nDigital Natives"]
-        B[("RAW DIGITAL FOOTPRINTS
-Clickstreams · Geo-tags · Purchases · Telemetry")]
-        C[["Centaur AI
-97 % behavioral accuracy"]]
-        D[["Stanford AI
-85 % personality sim"]]
-        A --> B --> C & D
+    subgraph CLIENT["Client Layer"]
+        WEB["Next.js Frontend<br/>(index, forecast, playground, live)"]
+        API_CLIENT["API Clients<br/>(REST)"]
     end
 
     %% ================================================================
-    %% 2. ACQUIRE  (2.8 B OFFLINE)
+    %% API LAYER
     %% ================================================================
-    subgraph ACQUIRE["2. ACQUIRE  –  2.8 B OFFLINE"]
-        direction TB
-        E["2.8 B Population
-Limited / No Internet"]
-        F[("ORBITAL LAYER
-@Albedo Space · 10 cm EO+IR+SAR")]
-        G[("GROUND LAYER
-China 700 M cameras · 99.8 % facial ID")]
-        E -.-> F
-        E -.-> G
+    subgraph API["FastAPI Application<br/>(app/backend/app/main.py)"]
+        FASTAPI["FastAPI App<br/>CORS + GZip Middleware"]
+
+        subgraph ROUTERS["Routers"]
+            PUBLIC_ROUTER["Public Router<br/>/api/public"]
+            FORECAST_ROUTER["Forecasting Router<br/>/api/forecasting"]
+            LIVE_ROUTER["Live Router<br/>/api/live"]
+            PLAYGROUND_ROUTER["Playground Router<br/>/api/playground"]
+            MAIN_ENDPOINTS["Core Endpoints<br/>/api/forecast, /health, /api/visual/*"]
+        end
+
+        CACHE["Thread-Safe Cache<br/>(CSV files, 5min TTL)"]
+        BG_THREAD["Background Thread<br/>(Live monitoring refresh)"]
     end
 
     %% ================================================================
-    %% 3. PROCESS  (8.4 B TOTAL)
+    %% CORE SERVICES
     %% ================================================================
-    subgraph PROCESS["3. PROCESS  –  8.4 B TOTAL"]
-        direction TB
-        H[("COMPUTE FABRIC
-$500 B NVIDIA backlog · 7 DOE exascale rigs")]
-        I[("FUSION & INFERENCE
-Real-time fusion · Cross-modal embeddings")]
-        J[("PREDICTIVE SYSTEM
-8.4 B simultaneous forecasts · Confidence bands")]
-        H --> I --> J
+    subgraph CORE["Core Services<br/>(app/core/)"]
+        BEHAVIOR_INDEX["BehaviorIndexComputer<br/>(Stateless)"]
+        FORECASTER["BehavioralForecaster<br/>(Stateless)"]
+        LIVE_MONITOR["LiveMonitor<br/>(Stateful: snapshots)"]
+        PLAYGROUND_SVC["Playground Service<br/>(Stateless)"]
+        EXPLANATIONS["Explanation Generator<br/>(Stateless)"]
     end
 
     %% ================================================================
-    %% 4. FEEDBACK
+    %% DATA CONNECTORS
     %% ================================================================
-    subgraph FEEDBACK["4. FEEDBACK LOOP  –  Weaponization Surface"]
-        direction LR
-        K[["Policy Micro-targeting
-Nudge campaigns · Disinfo seeds"]]
-        L[["Kinetic / Cyber Ops
-Drone strikes · Zero-day timing"]]
-        M[["Economic Manipulation
-Market shocks · Supply chokepoints"]]
+    subgraph CONNECTORS["Data Connectors<br/>(connectors/)"]
+        FIRMS["FIRMSFiresSync<br/>(NASA FIRMS API)"]
+        OSM["OSMChangesetsSync<br/>(OpenStreetMap)"]
+        WIKI["WikiPageviewsSync<br/>(Wikimedia)"]
     end
 
     %% ================================================================
-    %% 5. TAGLINE
+    %% EXTERNAL DATA SOURCES
     %% ================================================================
-    TAG[[8.4 B  ⇒  1 PREDICTABLE SYSTEM
-Offline 32 % are not safe — just inference targets]]
+    subgraph EXTERNAL["External Data Sources"]
+        FIRMS_API["NASA FIRMS API<br/>(Fire data)"]
+        OSM_API["OpenStreetMap<br/>(Changesets)"]
+        WIKI_API["Wikimedia<br/>(Pageviews)"]
+    end
 
     %% ================================================================
-    %% EDGES
+    %% STORAGE
     %% ================================================================
-    C & D -.->|model weights| H
-    F & G -.->|imagery & biometrics| H
-    J --> K & L & M
-    K & L & M -.->|reinforcement data| B
-    J --> TAG
+    subgraph STORAGE["Storage"]
+        CSV_FILES["CSV Files<br/>(results/forecasts.csv, metrics.csv)"]
+        DB["SQLite Database<br/>(ForecastDB)"]
+        DATA_DIR["Public Data<br/>(data/public/)"]
+    end
+
+    %% ================================================================
+    %% EDGES - CLIENT TO API
+    %% ================================================================
+    WEB --> API_CLIENT
+    API_CLIENT --> FASTAPI
+
+    %% ================================================================
+    %% EDGES - API ROUTING
+    %% ================================================================
+    FASTAPI --> ROUTERS
+    FASTAPI --> MAIN_ENDPOINTS
+    FASTAPI --> CACHE
+    FASTAPI --> BG_THREAD
+
+    PUBLIC_ROUTER --> CONNECTORS
+    FORECAST_ROUTER --> CORE
+    LIVE_ROUTER --> LIVE_MONITOR
+    PLAYGROUND_ROUTER --> PLAYGROUND_SVC
+    MAIN_ENDPOINTS --> BEHAVIOR_INDEX
+    MAIN_ENDPOINTS --> FORECASTER
+    MAIN_ENDPOINTS --> EXPLANATIONS
+
+    %% ================================================================
+    %% EDGES - CORE SERVICES
+    %% ================================================================
+    BEHAVIOR_INDEX --> CONNECTORS
+    FORECASTER --> BEHAVIOR_INDEX
+    LIVE_MONITOR --> BEHAVIOR_INDEX
+    LIVE_MONITOR --> CONNECTORS
+    PLAYGROUND_SVC --> FORECASTER
+    PLAYGROUND_SVC --> BEHAVIOR_INDEX
+
+    %% ================================================================
+    %% EDGES - CONNECTORS TO EXTERNAL
+    %% ================================================================
+    FIRMS --> FIRMS_API
+    OSM --> OSM_API
+    WIKI --> WIKI_API
+
+    %% ================================================================
+    %% EDGES - STORAGE
+    %% ================================================================
+    CACHE --> CSV_FILES
+    FORECASTER --> DB
+    CONNECTORS --> DATA_DIR
+    LIVE_MONITOR --> DB
 
     %% ================================================================
     %% STYLES
     %% ================================================================
-    classDef title     fill:#ffffff,stroke:#ffffff,stroke-width:0,color:#1a1a1a
-    classDef population fill:#e3f2fd,stroke:#90caf9,stroke-width:2px,color:#0d47a1
-    classDef data       fill:#fafafa,stroke:#bdbdbd,stroke-width:2px,color:#424242
-    classDef model      fill:#e8f5e9,stroke:#81c784,stroke-width:2px,color:#2e7d32
-    classDef compute    fill:#fff3e0,stroke:#ffb74d,stroke-width:2px,color:#e65100
-    classDef feedback   fill:#ffebee,stroke:#ef9a9a,stroke-width:2px,color:#b71c1c
+    classDef client fill:#e3f2fd,stroke:#90caf9,stroke-width:2px,color:#0d47a1
+    classDef api fill:#fff3e0,stroke:#ffb74d,stroke-width:2px,color:#e65100
+    classDef core fill:#e8f5e9,stroke:#81c784,stroke-width:2px,color:#2e7d32
+    classDef connector fill:#f3e5f5,stroke:#ba68c8,stroke-width:2px,color:#4a148c
+    classDef external fill:#fafafa,stroke:#bdbdbd,stroke-width:2px,color:#424242
+    classDef storage fill:#e0f2f1,stroke:#4db6ac,stroke-width:2px,color:#004d40
 
-    class TITLE title
-    class A,E population
-        class B,F,G data
-        class H,I,J compute
-        class C,D model
-        class K,L,M feedback
-        class TAG feedback
-
-                %% ci: trigger render — no-op comment to force GitHub Actions on diagram change
-                %% ci: touch to trigger PR artifact upload on feat/public-layer
+    class WEB,API_CLIENT client
+    class FASTAPI,ROUTERS,PUBLIC_ROUTER,FORECAST_ROUTER,LIVE_ROUTER,PLAYGROUND_ROUTER,MAIN_ENDPOINTS,CACHE,BG_THREAD api
+    class BEHAVIOR_INDEX,FORECASTER,LIVE_MONITOR,PLAYGROUND_SVC,EXPLANATIONS core
+    class FIRMS,OSM,WIKI connector
+    class FIRMS_API,OSM_API,WIKI_API external
+    class CSV_FILES,DB,DATA_DIR storage

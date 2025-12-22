@@ -86,6 +86,8 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
 
 ![diagram](diagram/behaviour-convergence.svg)
 
+**Note:** Architecture diagram is code-derived and verified against actual implementation. See [docs/reports/ARCHITECTURE_INVENTORY.md](./docs/reports/ARCHITECTURE_INVENTORY.md) for detailed component inventory.
+
 ## Repository Structure
 
 ### Core Application Code
