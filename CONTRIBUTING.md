@@ -87,6 +87,49 @@ After all checks pass locally:
 2. Push to your branch
 3. Verify that all GitHub Actions checks are green
 
+## CI and Governance Enforcement
+
+All pull requests must pass automated checks before merging:
+
+### Required CI Checks
+
+- **Pre-Flight Checks** — Validates repository structure, YAML syntax, and required files
+- **Lint & Format** — Code formatting (Black) and linting (Ruff)
+- **Build** — Verifies Python package builds correctly
+- **Tests** — Runs test suite across Python 3.10, 3.11, and 3.12
+- **Security Scanning** — Bandit and Trivy vulnerability scanning
+- **Emoji Check** — Ensures no emojis in markdown files
+- **Conventional Commits** — Validates commit message format
+
+### Governance Checks
+
+The repository enforces governance rules via automated checks:
+
+- **Version Contract Enforcement** — Ensures version changes are documented
+- **Sub-Index Count Consistency** — Validates behavioral index documentation
+- **Weight Semantics Documentation** — Ensures mathematical operations are documented
+- **Drift Detection** — Prevents documentation and code divergence
+
+See [GOVERNANCE_RULES.md](./GOVERNANCE_RULES.md) and [INVARIANTS.md](./INVARIANTS.md) for details.
+
+### What Will Block a PR
+
+A pull request will be blocked if:
+
+- Any CI check fails
+- Tests fail or coverage drops below threshold
+- Code formatting or linting issues are detected
+- Governance checks fail
+- Security vulnerabilities are detected
+- Commit messages don't follow Conventional Commits format
+
+### Branch Discipline
+
+- All changes must go through pull requests targeting `main`
+- Direct pushes to `main` are blocked by branch protection
+- Keep branches focused and up-to-date with `main`
+- Delete branches after merging
+
 ## Code of Conduct
 By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
 

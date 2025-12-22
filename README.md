@@ -24,10 +24,25 @@ This project is a **public-data-driven behavioral forecasting application** that
 **License:** Proprietary / All Rights Reserved — repository is public for viewing and educational purposes only
 **Data:** Public sources only — no individual user data, no proprietary datasets, fully aggregated
 **Ethics:** Strict privacy-first approach — see [ETHICS.md](./ETHICS.md) for details
+**Governance:** Automated enforcement of rules and invariants — see [GOVERNANCE_RULES.md](./GOVERNANCE_RULES.md) for details
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
 **Interpretability:** Forecast explanations available — see [BEHAVIOR_INDEX.md](./docs/BEHAVIOR_INDEX.md) for details
 **Playground:** Interactive multi-region comparison and scenario exploration — see `/playground` route in the web UI
 **Live Monitoring:** Near real-time behavior index tracking with automatic event detection — see `/live` route in the web UI
+
+### Scope and Non-Goals
+
+**What this project does:**
+- Provides population-scale behavioral forecasting using public data
+- Supports research, planning, and policy scenario exploration
+- Maintains strict privacy and ethical standards
+- Enforces governance rules and system invariants
+
+**What this project does not do:**
+- Individual-level prediction or tracking
+- Real-time targeting or manipulation
+- Collection of personal or private data
+- Commercial use without explicit permission (see [License](#license-and-usage))
 
 ### Three-Layer Architecture
 
@@ -91,7 +106,7 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
 
 ## Who is this for?
 
-- **Data science teams** exploring large-scale behavioural modelling
+- **Data science teams** exploring large-scale behavioral modeling
 - **Public health agencies** interested in population-level forecasting
 - **Researchers** studying AI alignment, privacy, and predictive systems
 - **Policy analysts** evaluating implications of pervasive surveillance
