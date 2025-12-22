@@ -52,5 +52,68 @@
     "error": null,
     "validation_errors": [],
     "response_sample": "{\"history\": [{\"timestamp\": \"2025-11-17T00:00:00\", \"behavior_index\": 0.3498455006114899, \"sub_indices\": {\"economic_stress\": 0.3048511886596679, \"environmental_stress\": 0.1692909151315689, \"mobility_act"
+  },
+  {
+    "endpoint": "/api/forecast (missing fields)",
+    "method": "POST",
+    "success": true,
+    "status_code": 400,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"detail\": \"Either region_id or both latitude and longitude must be provided\"}"
+  },
+  {
+    "endpoint": "/api/forecast (wrong types)",
+    "method": "POST",
+    "success": true,
+    "status_code": 422,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"detail\": [{\"type\": \"float_parsing\", \"loc\": [\"body\", \"latitude\"], \"msg\": \"Input should be a valid number, unable to parse string as a number\", \"input\": \"not_a_number\"}, {\"type\": \"int_parsing\", \"loc\":"
+  },
+  {
+    "endpoint": "/api/forecast (extreme values)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"extreme_value_tests\": \"all_passed\"}"
+  },
+  {
+    "endpoint": "/api/forecast (empty payload)",
+    "method": "POST",
+    "success": true,
+    "status_code": 422,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"detail\": [{\"type\": \"missing\", \"loc\": [\"body\", \"region_name\"], \"msg\": \"Field required\", \"input\": {}}]}"
+  },
+  {
+    "endpoint": "/api/forecast (extra fields)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"history\": [{\"timestamp\": \"2025-11-17T00:00:00\", \"behavior_index\": 0.4151842102889093, \"sub_indices\": {\"economic_stress\": 0.3048511886596679, \"environmental_stress\": 0.1692909151315689, \"mobility_act"
+  },
+  {
+    "endpoint": "/api/forecast (resilience)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"history\": [{\"timestamp\": \"2025-11-17T00:00:00\", \"behavior_index\": 0.3498455006114899, \"sub_indices\": {\"economic_stress\": 0.3048511886596679, \"environmental_stress\": 0.1692909151315689, \"mobility_act"
+  },
+  {
+    "endpoint": "/api/forecast (load test)",
+    "method": "POST",
+    "success": true,
+    "status_code": 200,
+    "error": null,
+    "validation_errors": [],
+    "response_sample": "{\"timings\": {\"min\": 0.6775400638580322, \"max\": 1.0149109363555908, \"avg\": 0.9018369674682617, \"all\": [1.0098838806152344, 0.9456167221069336, 0.9164981842041016, 0.8408787250518799, 0.9083888530731201"
   }
 ]

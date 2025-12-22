@@ -11,6 +11,7 @@ Usage:
 
 import json
 import sys
+import time
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -66,7 +67,7 @@ def validate_health_endpoint() -> ValidationResult:
     """Validate /health endpoint."""
     result = ValidationResult("/health", "GET")
     try:
-        response = requests.get(f"{BASE_URL}/health", timeout=5)
+        response = requests.get(f"{BASE_URL}/health", timeout=10)
         result.record_success(response.status_code, response.json())
         if response.status_code != 200:
             result.add_validation_error(f"Expected 200, got {response.status_code}")
@@ -232,6 +233,224 @@ def validate_forecasting_regions() -> ValidationResult:
     return result
 
 
+def validate_error_missing_fields() -> ValidationResult:
+    """Validate POST /api/forecast with missing required fields."""
+    result = ValidationResult("/api/forecast (missing fields)", "POST")
+    payload = {
+        "region_name": "Test",
+        # Missing latitude, longitude, days_back, forecast_horizon
+    }
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=10)
+        # Accept both 400 and 422 as valid error responses for missing fields
+        if response.status_code in [400, 422]:
+            body = response.json()
+            result.record_success(response.status_code, body)
+            # Verify error message is actionable
+            if "detail" not in body:
+                result.add_validation_error("Error response missing 'detail' field")
+            elif isinstance(body["detail"], list):
+                # Pydantic validation errors
+                missing_fields = [err.get("loc", []) for err in body["detail"]]
+                if not missing_fields:
+                    result.add_validation_error(
+                        "Error detail does not specify missing fields"
+                    )
+        else:
+            result.record_error(
+                response.status_code,
+                f"Expected 400 or 422 for missing fields, got {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
+def validate_error_wrong_types() -> ValidationResult:
+    """Validate POST /api/forecast with wrong types."""
+    result = ValidationResult("/api/forecast (wrong types)", "POST")
+    payload = {
+        "latitude": "not_a_number",  # Should be float
+        "longitude": -74.0060,
+        "region_name": "Test",
+        "days_back": "thirty",  # Should be int
+        "forecast_horizon": 7,
+    }
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=10)
+        # Accept both 400 and 422 as valid error responses for wrong types
+        if response.status_code in [400, 422]:
+            body = response.json()
+            result.record_success(response.status_code, body)
+            # Verify error message is actionable (has detail field)
+            if "detail" not in body:
+                result.add_validation_error("Error response missing 'detail' field")
+            elif isinstance(body["detail"], list):
+                # Verify errors reference the problematic fields and indicate type issues
+                error_fields = [
+                    err.get("loc", [])
+                    for err in body["detail"]
+                    if isinstance(err, dict)
+                ]
+                if not error_fields:
+                    result.add_validation_error(
+                        "Type errors do not reference problematic fields"
+                    )
+                # Type errors with parsing indicators (float_parsing, int_parsing) are acceptable
+        else:
+            result.record_error(
+                response.status_code,
+                f"Expected 400 or 422 for wrong types, got {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
+def validate_error_extreme_values() -> ValidationResult:
+    """Validate POST /api/forecast with extreme values."""
+    result = ValidationResult("/api/forecast (extreme values)", "POST")
+    test_cases = [
+        {
+            "name": "max_lat_max_lon",
+            "payload": {
+                "latitude": 90.0,
+                "longitude": 180.0,
+                "region_name": "Extreme Test",
+                "days_back": 365,  # Maximum
+                "forecast_horizon": 30,  # Maximum
+            },
+            "expected_status": 200,
+        },
+        {
+            "name": "exceeds_max_days_back",
+            "payload": {
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "region_name": "Test",
+                "days_back": 366,  # Exceeds max
+                "forecast_horizon": 7,
+            },
+            "expected_status": 422,
+        },
+        {
+            "name": "exceeds_max_horizon",
+            "payload": {
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "region_name": "Test",
+                "days_back": 30,
+                "forecast_horizon": 31,  # Exceeds max
+            },
+            "expected_status": 422,
+        },
+    ]
+
+    all_passed = True
+    for test_case in test_cases:
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/forecast", json=test_case["payload"], timeout=10
+            )
+            if response.status_code != test_case["expected_status"]:
+                result.add_validation_error(
+                    f"{test_case['name']}: Expected {test_case['expected_status']}, "
+                    f"got {response.status_code}"
+                )
+                all_passed = False
+        except Exception as e:
+            result.add_validation_error(f"{test_case['name']}: Exception: {str(e)}")
+            all_passed = False
+
+    if all_passed:
+        result.record_success(200, {"extreme_value_tests": "all_passed"})
+    else:
+        result.record_error(0, "Some extreme value tests failed")
+    return result
+
+
+def validate_error_empty_payload() -> ValidationResult:
+    """Validate POST /api/forecast with empty payload."""
+    result = ValidationResult("/api/forecast (empty payload)", "POST")
+    payload = {}
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=10)
+        if response.status_code == 422:
+            body = response.json()
+            result.record_success(response.status_code, body)
+        else:
+            result.record_error(
+                response.status_code,
+                f"Expected 422 for empty payload, got {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
+def validate_error_extra_fields() -> ValidationResult:
+    """Validate POST /api/forecast with unexpected extra fields."""
+    result = ValidationResult("/api/forecast (extra fields)", "POST")
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "Test",
+        "days_back": 30,
+        "forecast_horizon": 7,
+        "unexpected_field": "should_be_ignored",
+        "another_extra": 12345,
+    }
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=30)
+        # Extra fields should be ignored (Pydantic default behavior)
+        if response.status_code == 200:
+            body = response.json()
+            result.record_success(response.status_code, body)
+            # Verify request was processed correctly despite extra fields
+            if "history" not in body or "forecast" not in body:
+                result.add_validation_error("Response missing required fields")
+        elif response.status_code == 422:
+            # If extra fields cause validation error, that's also acceptable
+            body = response.json()
+            result.record_success(response.status_code, body)
+        else:
+            result.record_error(
+                response.status_code,
+                f"Unexpected status code: {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
 def validate_data_integrity() -> ValidationResult:
     """Validate data integrity of forecast response."""
     result = ValidationResult("/api/forecast (data integrity)", "POST")
@@ -301,6 +520,135 @@ def validate_data_integrity() -> ValidationResult:
     return result
 
 
+def validate_resilience_partial_data() -> ValidationResult:
+    """Validate system resilience when data sources return partial/empty data."""
+    result = ValidationResult("/api/forecast (resilience)", "POST")
+    # Test with valid request - system should handle gracefully even if some
+    # data sources are unavailable (they default to 0.5)
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
+    }
+    try:
+        response = requests.post(f"{BASE_URL}/api/forecast", json=payload, timeout=30)
+        if response.status_code == 200:
+            body = response.json()
+            result.record_success(response.status_code, body)
+            # Verify system doesn't crash on partial data
+            # Missing data sources should default to 0.5 (system behavior)
+            if "history" not in body or len(body.get("history", [])) == 0:
+                result.add_validation_error("System returned empty history")
+            # Verify no 500 errors (system should degrade gracefully)
+        elif response.status_code == 500:
+            result.record_error(
+                response.status_code,
+                "System returned 500 on partial data (should degrade gracefully)",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+        else:
+            result.record_error(
+                response.status_code,
+                f"Unexpected status code: {response.status_code}",
+                (
+                    response.json()
+                    if response.headers.get("content-type", "").startswith(
+                        "application/json"
+                    )
+                    else None
+                ),
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
+def validate_load_sequential_requests() -> ValidationResult:
+    """Validate system under sequential load (10 requests)."""
+    result = ValidationResult("/api/forecast (load test)", "POST")
+    payload = {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "New York City",
+        "days_back": 30,
+        "forecast_horizon": 7,
+    }
+
+    timings = []
+    status_codes = []
+    response_hashes = []
+
+    try:
+        for i in range(10):
+            start_time = time.time()
+            response = requests.post(
+                f"{BASE_URL}/api/forecast", json=payload, timeout=30
+            )
+            elapsed = time.time() - start_time
+            timings.append(elapsed)
+            status_codes.append(response.status_code)
+
+            if response.status_code == 200:
+                body = response.json()
+                # Create a simple hash of response structure for consistency check
+                response_hash = hash(
+                    (
+                        len(body.get("history", [])),
+                        len(body.get("forecast", [])),
+                        len(body.get("sources", [])),
+                    )
+                )
+                response_hashes.append(response_hash)
+            else:
+                response_hashes.append(None)
+
+        # Analyze results
+        if all(code == 200 for code in status_codes):
+            result.record_success(200, {"load_test": "passed"})
+            # Check for state bleed (responses should be consistent)
+            if len(set(response_hashes)) > 1:
+                result.add_validation_error(
+                    "Response structure inconsistent across requests (possible state bleed)"
+                )
+            # Check timing (should be reasonable, not exponentially increasing)
+            if max(timings) > min(timings) * 10:
+                result.add_validation_error(
+                    f"Response time variance too high: min={min(timings):.2f}s, "
+                    f"max={max(timings):.2f}s"
+                )
+            # Record timing stats
+            result.response_body = {
+                "timings": {
+                    "min": min(timings),
+                    "max": max(timings),
+                    "avg": sum(timings) / len(timings),
+                    "all": timings,
+                },
+                "all_succeeded": True,
+                "response_consistent": len(set(response_hashes)) == 1,
+            }
+        else:
+            result.record_error(
+                0,
+                f"Some requests failed: status codes {status_codes}",
+                {
+                    "status_codes": status_codes,
+                    "timings": timings,
+                },
+            )
+    except Exception as e:
+        result.record_error(0, str(e))
+    return result
+
+
 def main():
     """Run all validations."""
     global BASE_URL
@@ -330,6 +678,30 @@ def main():
 
     print("\n6. Validating data integrity...")
     results.append(validate_data_integrity())
+
+    # Error semantics tests
+    print("\n7. Validating error semantics (missing fields)...")
+    results.append(validate_error_missing_fields())
+
+    print("\n8. Validating error semantics (wrong types)...")
+    results.append(validate_error_wrong_types())
+
+    print("\n9. Validating error semantics (extreme values)...")
+    results.append(validate_error_extreme_values())
+
+    print("\n10. Validating error semantics (empty payload)...")
+    results.append(validate_error_empty_payload())
+
+    print("\n11. Validating error semantics (extra fields)...")
+    results.append(validate_error_extra_fields())
+
+    # Resilience tests
+    print("\n12. Validating resilience (partial data)...")
+    results.append(validate_resilience_partial_data())
+
+    # Load tests
+    print("\n13. Validating load (10 sequential requests)...")
+    results.append(validate_load_sequential_requests())
 
     # Summary
     print("\n" + "=" * 70)

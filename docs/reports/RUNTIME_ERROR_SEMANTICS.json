@@ -1,0 +1,94 @@
+{
+  "validation_date": "2025-12-22",
+  "error_semantics_tests": [
+    {
+      "test": "missing_required_fields",
+      "payload": {"region_name": "Test"},
+      "status_code": 400,
+      "error_type": "missing_fields",
+      "error_detail": "Either region_id or both latitude and longitude must be provided",
+      "classification": "CORRECT - Actionable error message"
+    },
+    {
+      "test": "wrong_types",
+      "payload": {
+        "latitude": "not_a_number",
+        "days_back": "thirty"
+      },
+      "status_code": 422,
+      "error_type": "type_validation",
+      "error_detail": [
+        {
+          "type": "float_parsing",
+          "loc": ["body", "latitude"],
+          "msg": "Input should be a valid number, unable to parse string as a number"
+        },
+        {
+          "type": "int_parsing",
+          "loc": ["body", "days_back"],
+          "msg": "Input should be a valid integer, unable to parse string as an integer"
+        }
+      ],
+      "classification": "CORRECT - Explicit type errors with field locations"
+    },
+    {
+      "test": "extreme_values_valid",
+      "payload": {
+        "latitude": 90.0,
+        "longitude": 180.0,
+        "days_back": 365,
+        "forecast_horizon": 30
+      },
+      "status_code": 200,
+      "classification": "CORRECT - Boundary values accepted"
+    },
+    {
+      "test": "extreme_values_invalid",
+      "payload": {
+        "days_back": 366
+      },
+      "status_code": 422,
+      "error_type": "range_validation",
+      "classification": "CORRECT - Out-of-range values rejected"
+    },
+    {
+      "test": "empty_payload",
+      "payload": {},
+      "status_code": 422,
+      "error_type": "missing_fields",
+      "error_detail": [
+        {
+          "type": "missing",
+          "loc": ["body", "region_name"],
+          "msg": "Field required"
+        }
+      ],
+      "classification": "CORRECT - Missing required fields identified"
+    },
+    {
+      "test": "extra_fields",
+      "payload": {
+        "latitude": 40.7128,
+        "longitude": -74.0060,
+        "region_name": "Test",
+        "days_back": 30,
+        "forecast_horizon": 7,
+        "unexpected_field": "ignored"
+      },
+      "status_code": 200,
+      "classification": "CORRECT - Extra fields ignored (Pydantic default behavior)"
+    }
+  ],
+  "error_semantics_summary": {
+    "total_tests": 6,
+    "correct_behavior": 6,
+    "incorrect_behavior": 0,
+    "error_types_observed": [
+      "missing_fields",
+      "type_validation",
+      "range_validation"
+    ],
+    "status_codes_used": [400, 422],
+    "error_message_quality": "All errors include field locations and actionable messages"
+  }
+}
