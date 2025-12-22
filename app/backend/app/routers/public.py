@@ -6,12 +6,15 @@ from pathlib import Path
 from typing import Dict, List, Literal, Optional
 
 import pandas as pd
+import structlog
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from connectors.firms_fires import FIRMSFiresSync
 from connectors.osm_changesets import OSMChangesetsSync
 from connectors.wiki_pageviews import WikiPageviewsSync
+
+logger = structlog.get_logger("routers.public")
 
 router = APIRouter(prefix="/api/public", tags=["public"])
 # Resolve to repository root (one level above top-level `app/` package)
@@ -99,8 +102,13 @@ async def get_public_data_latest(
         )
 
     except Exception as e:
+        logger.error(
+            "Failed to fetch public data", source=source, error=str(e), exc_info=True
+        )
+        # Do not leak internal error details to clients
         raise HTTPException(
-            status_code=500, detail=f"Failed to fetch {source} data: {str(e)}"
+            status_code=500,
+            detail=f"Failed to fetch {source} data. Please try again later.",
         ) from e
 
 
@@ -175,8 +183,11 @@ async def get_synthetic_score(h3_res: int, date: str) -> SyntheticScoreResponse:
         return SyntheticScoreResponse(h3_res=h3_res, date=date, scores=scores)
 
     except Exception as e:
+        logger.error("Failed to compute synthetic score", error=str(e), exc_info=True)
+        # Do not leak internal error details to clients
         raise HTTPException(
-            status_code=500, detail=f"Failed to compute synthetic score: {str(e)}"
+            status_code=500,
+            detail="Failed to compute synthetic score. Please try again later.",
         ) from e
 
 

@@ -2,10 +2,13 @@
 """Playground endpoints for interactive scenario exploration."""
 from typing import Dict, List, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.playground import compare_regions
+
+logger = structlog.get_logger("routers.playground")
 
 router = APIRouter(prefix="/api/playground", tags=["playground"])
 
@@ -149,9 +152,14 @@ def compare_forecasts(payload: PlaygroundCompareRequest) -> PlaygroundCompareRes
         )
         return PlaygroundCompareResponse(**result)
     except ValueError as e:
+        # ValueError messages are user-actionable (e.g., invalid region_id)
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(
+            "Failed to generate playground comparison", error=str(e), exc_info=True
+        )
+        # Do not leak internal error details to clients
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to generate playground comparison: {str(e)}",
+            detail="Failed to generate playground comparison. Please try again later.",
         ) from e

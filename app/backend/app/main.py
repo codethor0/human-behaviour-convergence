@@ -102,9 +102,9 @@ ALLOWED_ORIGINS = os.getenv(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,  # No authentication, no credentials needed
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type"],
     max_age=600,
 )
 
@@ -1076,8 +1076,11 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             raise HTTPException(
                 status_code=400, detail="forecast_horizon must be between 1 and 30"
             )
-    except (TypeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid parameter: {str(e)}")
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid parameter values. Check days_back and forecast_horizon ranges.",
+        )
 
     try:
         forecaster = BehavioralForecaster()
@@ -1090,8 +1093,10 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         )
     except Exception as e:
         logger.error("Forecast generation failed", error=str(e), exc_info=True)
+        # Do not leak internal error details to clients
         raise HTTPException(
-            status_code=500, detail=f"Forecast generation failed: {str(e)}"
+            status_code=500,
+            detail="Forecast generation failed. Please try again later.",
         )
 
     # Validate result structure

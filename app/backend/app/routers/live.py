@@ -3,10 +3,13 @@
 from datetime import datetime
 from typing import List, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.core.live_monitor import get_live_monitor
+
+logger = structlog.get_logger("routers.live")
 
 router = APIRouter(prefix="/api/live", tags=["live"])
 
@@ -123,7 +126,9 @@ def trigger_refresh(
             "results": results,
         }
     except Exception as e:
+        logger.error("Failed to trigger refresh", error=str(e), exc_info=True)
+        # Do not leak internal error details to clients
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to trigger refresh: {str(e)}",
+            detail="Failed to trigger refresh. Please try again later.",
         ) from e
