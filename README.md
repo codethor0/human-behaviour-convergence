@@ -86,15 +86,32 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
 
 ![diagram](diagram/behaviour-convergence.svg)
 
-## What's inside
-| File | Purpose |
-|------|---------|
-| `diagram/behaviour-convergence.mmd` | Source Mermaid diagram – edit here |
-| `diagram/behaviour-convergence.svg` | Auto-generated vector (perfect for docs / slides) |
-| `diagram/behaviour-convergence.png` | Hi-res PNG (2400 px) – social cards, posters |
-| `notebooks/` | Jupyter notebooks with end-to-end demos |
-| `results/` | Ground truth, forecasts, and error metrics (CSV) |
-| `tests/` | Unit tests and CI validation |
+## Repository Structure
+
+### Core Application Code
+- `app/backend/app/main.py` - FastAPI application (main entry point)
+- `app/main.py` - Shim module for test compatibility (forwards to backend)
+- `app/core/` - Core business logic (behavior index, prediction, location normalization, etc.)
+- `app/services/` - Service layer (38 files: ingestion, analytics, comparison, convergence, forecast, risk, shocks, simulation, visual)
+- `app/frontend/` - Next.js frontend application (5 pages: index, forecast, playground, live, _app)
+- `app/storage/` - Database layer (SQLite storage)
+
+### Data & Connectors
+- `connectors/` - Data connector modules (5 files: base, firms_fires, osm_changesets, wiki_pageviews)
+- `predictors/` - Predictor registry system (2 files: registry, example_predictor)
+- `data/` - Public data snapshots (9 files: CSV data and database)
+- `results/` - Example output files (6 files: forecasts, metrics, ground truth, intervals, manifest)
+
+### Development & Research
+- `hbc/` - CLI utilities and forecasting functions (3 files: cli, forecasting, __init__)
+- `scripts/` - Development scripts (2 files: dev bootstrap script, run_live_forecast_demo)
+- `notebooks/` - Jupyter notebook demos (1 file: demo.ipynb)
+- `tests/` - Test suite (240 test functions across 28+ test files)
+
+### Documentation & Configuration
+- `docs/` - Comprehensive documentation (49 files: architecture, data sources, system status, behavior index, etc.)
+- `diagram/` - System architecture diagrams (Mermaid source and generated SVG/PNG)
+- Root-level markdown files: README, CONTRIBUTING, SECURITY, ETHICS, GOVERNANCE_RULES, INVARIANTS, etc.
 
 ## Diagram quickstart
 
@@ -122,12 +139,18 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
    pip install -r requirements.txt
    pip install -r requirements-dev.txt
 
-   # Start the API server
+   # Start the API server (choose one method)
+   # Method 1: Using uvicorn directly (recommended)
+   uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+   # Method 2: Using development script
+   ./scripts/dev
+   # Method 3: Using Python module
    python -m app.backend.app.main
-   # Server runs on http://localhost:8000 (or 8100 in Docker)
+
+   # Server runs on http://localhost:8000 (or http://localhost:8100 in Docker)
 
    # Make a forecast request
-   curl -X POST "http://localhost:8100/api/forecast" \
+   curl -X POST "http://localhost:8000/api/forecast" \
      -H "Content-Type: application/json" \
      -d '{
        "latitude": 40.7128,
@@ -138,16 +161,19 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
      }'
 
    # Check available data sources
-   curl "http://localhost:8100/api/forecasting/data-sources"
+   curl "http://localhost:8000/api/forecasting/data-sources"
 
    # Check available models
-   curl "http://localhost:8100/api/forecasting/models"
+   curl "http://localhost:8000/api/forecasting/models"
+
+   # Check available regions
+   curl "http://localhost:8000/api/forecasting/regions"
 
    # Get visualization data
-   curl "http://localhost:8100/api/visual/heatmap?region_name=Minnesota"
-   curl "http://localhost:8100/api/visual/trends?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
-   curl "http://localhost:8100/api/visual/radar?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
-   curl "http://localhost:8100/api/visual/state-comparison?state_a_name=Minnesota&state_a_lat=46.7296&state_a_lon=-94.6859&state_b_name=Wisconsin&state_b_lat=44.2685&state_b_lon=-89.6165"
+   curl "http://localhost:8000/api/visual/heatmap?region_name=Minnesota"
+   curl "http://localhost:8000/api/visual/trends?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
+   curl "http://localhost:8000/api/visual/radar?region_name=Minnesota&latitude=46.7296&longitude=-94.6859"
+   curl "http://localhost:8000/api/visual/state-comparison?state_a_name=Minnesota&state_a_lat=46.7296&state_a_lon=-94.6859&state_b_name=Wisconsin&state_b_lat=44.2685&state_b_lon=-89.6165"
    ```
 
 3. **Use the web interface:**
@@ -156,8 +182,13 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
    cd app/frontend
    npm install
    npm run dev
-   # Frontend runs on http://localhost:3000 (or 3100 in Docker)
-   # Navigate to http://localhost:3100/forecast to generate forecasts interactively
+   # Frontend runs on http://localhost:3000 (or http://localhost:3100 in Docker)
+
+   # Available frontend routes:
+   # - http://localhost:3000/ - Results dashboard (historical forecasts and metrics)
+   # - http://localhost:3000/forecast - Generate forecasts interactively
+   # - http://localhost:3000/playground - Multi-region comparison and scenario exploration
+   # - http://localhost:3000/live - Live monitoring with automatic event detection
    ```
 
 4. **Contribute:**
@@ -207,27 +238,90 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 
 4. **API & UI**: FastAPI endpoints expose forecasts programmatically, while a Next.js dashboard provides interactive exploration of historical data, forecasts, and model metadata.
 
+## API Endpoints
+
+### Core Forecasting
+- `POST /api/forecast` - Generate behavioral forecast with sub-indices breakdown
+- `GET /api/forecasting/data-sources` - List available public data sources
+- `GET /api/forecasting/models` - List available forecasting models
+- `GET /api/forecasting/regions` - List all supported regions
+- `GET /api/forecasting/status` - System component status
+- `GET /api/forecasting/history` - Historical forecasts (returns empty, database integration pending)
+
+### Playground & Comparison
+- `POST /api/playground/compare` - Multi-region forecast comparison with optional scenario adjustments
+
+### Live Monitoring
+- `GET /api/live/summary` - Live behavior index summary for specified regions
+- `POST /api/live/refresh` - Manually trigger refresh of live monitoring data
+
+### Public Data
+- `GET /api/public/{source}/latest` - Fetch latest data from public sources (wiki, osm, firms)
+- `GET /api/public/synthetic_score/{h3_res}/{date}` - Compute synthetic behavioral scores
+- `GET /api/public/stats` - Public data snapshot statistics
+
+### Visualization
+- `GET /api/visual/heatmap` - Heatmap data for all states and indices
+- `GET /api/visual/trends` - Trendline data with slope and breakout detection
+- `GET /api/visual/radar` - Radar/spider chart data for behavioral fingerprint
+- `GET /api/visual/convergence-graph` - Network visualization data for index convergence
+- `GET /api/visual/risk-gauge` - Risk gauge data for dial/meter visualization
+- `GET /api/visual/shock-timeline` - Shock timeline data for chronological visualization
+- `GET /api/visual/correlation-matrix` - Correlation matrix data for heatmap visualization
+- `GET /api/visual/state-comparison` - Comprehensive comparison data between two states
+
+### Data & Metadata
+- `GET /health` - Health check endpoint
+- `GET /api/forecasts` - Read forecast CSV data (with caching)
+- `GET /api/metrics` - Read metrics CSV data (with caching)
+- `GET /api/status` - Service metadata (version, commit)
+- `GET /api/cache/status` - Cache statistics (hits, misses, size)
+
+### API Documentation
+- `GET /docs` - Interactive OpenAPI/Swagger documentation
+- `GET /redoc` - Alternative API documentation interface
+
+## Frontend Routes
+
+The Next.js frontend provides the following routes:
+
+- `/` - Results dashboard displaying historical forecasts and metrics
+- `/forecast` - Interactive forecast generation interface
+- `/playground` - Multi-region comparison and scenario exploration
+- `/live` - Live monitoring dashboard with automatic event detection
+
+All routes are accessible at `http://localhost:3000` (or `http://localhost:3100` in Docker).
+
 ## Project Status
 
 The application is **production-ready** for its current feature set with:
-- 145+ tests passing (85% code coverage)
+- 240+ test functions passing (85% code coverage)
 - 62 supported regions (51 US states + District of Columbia + 11 global cities)
 - Behavior Index v2.5 with 9 sub-indices (economic, environmental, mobility, digital attention, public health, political, crime, misinformation, social cohesion)
 - **Intelligence Layer** with 7 components (shock detection, convergence analysis, risk classification, confidence monitoring, drift detection, correlation analytics, scenario simulation)
 - Complete location normalization system handling edge cases (Washington D.C. vs Washington state, incident location prioritization, city vs state disambiguation)
-- Full-stack implementation: FastAPI backend, Next.js frontend, Docker deployment
+- Full-stack implementation: FastAPI backend (2295+ lines), Next.js frontend (5 pages), Docker deployment
+- Comprehensive API with 20+ endpoints across forecasting, visualization, playground, live monitoring, and public data
 - Zero-known-bug state within test coverage
 
 **Note:** This project is proprietary. The repository is public for viewing and educational purposes only. See [License and Usage](#license-and-usage) for restrictions.
 
+## Current Limitations
+
+The following features are documented but not yet fully implemented:
+
+- `GET /api/forecasting/history` - Returns empty list (database integration pending)
+- Some data sources require API configuration (mobility, public health, search trends) and return empty data if not configured
+- Frontend visualizations are basic; advanced time-series charts and forecast confidence bands are planned
+
 ## What's Next
 
 Planned enhancements (subject to development priorities):
+- Database integration for historical forecast storage
 - Additional data source integrations (GDELT, OWID health data)
 - Advanced forecasting models (ARIMA, Prophet)
 - Multi-region batch processing
-- Forecast comparison tools
-- Frontend visualizations (time-series charts, forecast confidence bands)
+- Enhanced frontend visualizations (time-series charts, forecast confidence bands)
 - Forecast accuracy tracking and historical accuracy metrics
 
 For detailed roadmap milestones (Transparency Drop, Live Playground, Community Rails), see the [Roadmap](docs/ROADMAP.md).
