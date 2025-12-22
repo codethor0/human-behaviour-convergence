@@ -230,7 +230,7 @@ pytest tests/ --cov --cov-report=term-missing -v
 **Current State:**
 - Can build image: `docker build -t hbc-test .`
 - Can run tests: `docker run --rm hbc-test sh -c "pip install -r requirements-dev.txt && pytest tests/ -v"`
-- No standardized docker-compose test service
+- Docker-based testing uses docker-compose.yml test service
 
 **Gap:** Need dedicated test service in docker-compose.yml for easier test execution
 
