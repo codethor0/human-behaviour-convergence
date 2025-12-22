@@ -158,12 +158,12 @@ def validate_forecast_endpoint_invalid_coords() -> ValidationResult:
 def validate_forecast_endpoint_boundary() -> ValidationResult:
     """Validate POST /api/forecast with boundary values."""
     result = ValidationResult("/api/forecast (boundary)", "POST")
-    # Test minimum valid values
+    # Test minimum valid values (days_back must be >= 7 per API validation)
     payload = {
         "latitude": -90.0,
         "longitude": -180.0,
         "region_name": "Boundary Test",
-        "days_back": 1,  # Minimum
+        "days_back": 7,  # Minimum valid value
         "forecast_horizon": 1,  # Minimum
     }
     try:
