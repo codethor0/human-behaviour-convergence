@@ -1,7 +1,7 @@
 # Behavior Index Documentation
 
 **Date:** 2025-01-XX
-**Version:** 2.0 (Interpretable Design)
+**Version:** 2.5 (Interpretable Design)
 
 **Maintainer:** Thor Thor (codethor@gmail.com)
 
