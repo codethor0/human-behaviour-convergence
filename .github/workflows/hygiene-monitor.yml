@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Recent Branch Hygiene Runs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const { data: runs } = await github.rest.actions.listWorkflowRuns({
@@ -189,7 +189,7 @@ jobs:
         run: git fetch --all --prune
 
       - name: Generate Report
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CI_OK: ${{ needs.validate-configuration.outputs.ci_ok }}
           CODEQL_OK: ${{ needs.validate-configuration.outputs.codeql_ok }}
