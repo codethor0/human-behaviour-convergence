@@ -81,7 +81,7 @@ class TestInvariantI1NormalizedWeightSum:
         # Compute behavior index (triggers normalization)
         computer.compute_behavior_index(test_data)
 
-        # Calculate sum of normalized weights
+        # Calculate sum of normalized weights (include all weights)
         normalized_sum = (
             computer.economic_weight
             + computer.environmental_weight
@@ -89,6 +89,15 @@ class TestInvariantI1NormalizedWeightSum:
             + computer.digital_attention_weight
             + computer.health_weight
         )
+
+        if computer.political_weight > 0:
+            normalized_sum += computer.political_weight
+        if computer.crime_weight > 0:
+            normalized_sum += computer.crime_weight
+        if computer.misinformation_weight > 0:
+            normalized_sum += computer.misinformation_weight
+        if computer.social_cohesion_weight > 0:
+            normalized_sum += computer.social_cohesion_weight
 
         assert (
             abs(normalized_sum - 1.0) < 0.01
