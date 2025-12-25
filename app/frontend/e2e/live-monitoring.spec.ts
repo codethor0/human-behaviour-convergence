@@ -2,11 +2,26 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Live Monitoring - Selection Tests', () => {
   test.beforeEach(async ({ page }) => {
+    // Set up response listener BEFORE navigation
+    const regionsResponsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
+      { timeout: 30000 }
+    );
+    
     // Navigate to live monitoring page
     await page.goto('/live');
     
-    // Wait for regions to load
+    // Wait for regions API response
+    await regionsResponsePromise;
+    
+    // Wait for regions to load (UI element)
     await page.waitForSelector('[data-testid="live-selected-count"]', { timeout: 10000 });
+    
+    // Verify no error message is shown
+    const errorText = page.locator('text=/Failed to load/i');
+    await expect(errorText).not.toBeVisible({ timeout: 5000 }).catch(() => {
+      throw new Error('Regions failed to load');
+    });
     
     // Wait for initial data fetch to complete
     await page.waitForLoadState('networkidle');

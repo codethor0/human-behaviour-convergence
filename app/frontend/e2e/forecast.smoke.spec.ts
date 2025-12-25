@@ -2,17 +2,27 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Forecast Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to forecast page
-    await page.goto('/forecast');
-    
-    // Wait for regions API response (backend contract)
-    await page.waitForResponse(
+    // Set up response listener BEFORE navigation
+    const regionsResponsePromise = page.waitForResponse(
       (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
       { timeout: 30000 }
     );
     
+    // Navigate to forecast page
+    await page.goto('/forecast');
+    
+    // Wait for regions API response (backend contract)
+    await regionsResponsePromise;
+    
     // Wait for network to be idle
     await page.waitForLoadState('networkidle');
+    
+    // Verify no error message is shown
+    const errorText = page.locator('text=/Failed to load/i');
+    await expect(errorText).not.toBeVisible({ timeout: 5000 }).catch(() => {
+      // If error appears, fail the test
+      throw new Error('Regions failed to load');
+    });
   });
 
   test('Generate forecast and verify results sections exist', async ({ page }) => {
