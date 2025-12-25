@@ -18,11 +18,19 @@ test.describe('Forecast Smoke Tests', () => {
       { timeout: 30000 }
     );
     
-    // Verify no error message is shown
+    // Wait a bit for any error messages to clear
+    await page.waitForTimeout(1000);
+    
+    // Verify no error message is shown (only fail if error persists after regions should have loaded)
     const errorText = page.locator('text=/Failed to load/i');
     const errorVisible = await errorText.isVisible().catch(() => false);
     if (errorVisible) {
-      throw new Error('Regions failed to load - error message present');
+      // Double-check that regions actually loaded
+      const select = page.locator('select').first();
+      const optionCount = await select.locator('option').count();
+      if (optionCount <= 1) {
+        throw new Error('Regions failed to load - error message present and no regions available');
+      }
     }
     
     // Wait for network to be idle

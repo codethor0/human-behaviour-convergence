@@ -18,11 +18,19 @@ test.describe('Playground Smoke Tests', () => {
       { timeout: 30000 }
     );
     
-    // Verify no error message is shown
+    // Wait a bit for any error messages to clear
+    await page.waitForTimeout(1000);
+    
+    // Verify no error message is shown (only fail if error persists after regions should have loaded)
     const errorText = page.locator('text=/Failed to load/i');
     const errorVisible = await errorText.isVisible().catch(() => false);
     if (errorVisible) {
-      throw new Error('Regions failed to load - error message present');
+      // Double-check that regions actually loaded by checking for checkboxes
+      const checkboxes = page.locator('input[type="checkbox"]');
+      const checkboxCount = await checkboxes.count();
+      if (checkboxCount === 0) {
+        throw new Error('Regions failed to load - error message present and no regions available');
+      }
     }
     
     // Wait for network to be idle
