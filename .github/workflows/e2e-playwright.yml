@@ -109,8 +109,6 @@ jobs:
 
       - name: Run Playwright E2E tests
         working-directory: app/frontend
-        env:
-          PLAYWRIGHT_BROWSERS_PATH: 0
         run: |
           npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts --reporter=line
         continue-on-error: false
