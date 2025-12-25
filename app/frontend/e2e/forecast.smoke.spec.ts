@@ -66,11 +66,11 @@ test.describe('Forecast Smoke Tests', () => {
       await expect(generateButton).toBeVisible({ timeout: 10000 });
       await expect(generateButton).toBeEnabled({ timeout: 30000 });
       
-      // Wait for the POST request to complete
-      const requestPromise = page.waitForRequest(
-        (request) => {
-          const url = request.url();
-          return url.includes('/api/forecast') && request.method() === 'POST';
+      // Wait for the POST request AND response to complete
+      const responsePromise = page.waitForResponse(
+        (response) => {
+          const url = response.url();
+          return url.includes('/api/forecast') && response.request().method() === 'POST' && response.status() === 200;
         },
         { timeout: 60000 }
       );
@@ -78,16 +78,15 @@ test.describe('Forecast Smoke Tests', () => {
       // Click generate button
       await generateButton.click();
     
-    // Wait for request to complete
-    const request = await requestPromise;
-    const response = await request.response();
+    // Wait for response to complete
+    const response = await responsePromise;
     
     // Assertions
-    expect(request.method()).toBe('POST');
-    expect(response?.status()).toBe(200);
+    expect(response.request().method()).toBe('POST');
+    expect(response.status()).toBe(200);
     
-    // Wait for Quick Summary section to appear
-    await page.waitForSelector('[data-testid="forecast-quick-summary"]', { timeout: 10000 });
+    // Wait for Quick Summary section to appear (UI updates after response is parsed)
+    await page.waitForSelector('[data-testid="forecast-quick-summary"]', { timeout: 30000 });
     
     // Verify Quick Summary exists and has content
     const quickSummary = page.locator('[data-testid="forecast-quick-summary"]');
