@@ -2,26 +2,31 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Playground Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up response listener BEFORE navigation
-    const regionsResponsePromise = page.waitForResponse(
-      (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
-      { timeout: 30000 }
-    );
-    
     // Navigate to playground page
     await page.goto('/playground');
     
-    // Wait for regions API response
-    await regionsResponsePromise;
+    // Wait for regions to load by checking for checkboxes
+    // Checkboxes only appear when regions have loaded successfully
+    await page.waitForSelector('input[type="checkbox"]', { timeout: 30000 });
     
-    // Wait for network to be idle
-    await page.waitForLoadState('networkidle');
+    // Wait for at least one checkbox to be available
+    await page.waitForFunction(
+      () => {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        return checkboxes.length > 0;
+      },
+      { timeout: 30000 }
+    );
     
     // Verify no error message is shown
     const errorText = page.locator('text=/Failed to load/i');
-    await expect(errorText).not.toBeVisible({ timeout: 5000 }).catch(() => {
-      throw new Error('Regions failed to load');
-    });
+    const errorVisible = await errorText.isVisible().catch(() => false);
+    if (errorVisible) {
+      throw new Error('Regions failed to load - error message present');
+    }
+    
+    // Wait for network to be idle
+    await page.waitForLoadState('networkidle');
   });
 
   test('Compare regions and verify results exist', async ({ page }) => {

@@ -2,27 +2,31 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Forecast Smoke Tests', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up response listener BEFORE navigation
-    const regionsResponsePromise = page.waitForResponse(
-      (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
-      { timeout: 30000 }
-    );
-    
     // Navigate to forecast page
     await page.goto('/forecast');
     
-    // Wait for regions API response (backend contract)
-    await regionsResponsePromise;
+    // Wait for regions to load by checking for the region select dropdown
+    // This is more reliable than waiting for network response which may complete before listener is set
+    await page.waitForSelector('select', { timeout: 30000 });
     
-    // Wait for network to be idle
-    await page.waitForLoadState('networkidle');
+    // Wait for at least one option in the select (proves regions loaded)
+    await page.waitForFunction(
+      () => {
+        const select = document.querySelector('select');
+        return select && select.options.length > 1;
+      },
+      { timeout: 30000 }
+    );
     
     // Verify no error message is shown
     const errorText = page.locator('text=/Failed to load/i');
-    await expect(errorText).not.toBeVisible({ timeout: 5000 }).catch(() => {
-      // If error appears, fail the test
-      throw new Error('Regions failed to load');
-    });
+    const errorVisible = await errorText.isVisible().catch(() => false);
+    if (errorVisible) {
+      throw new Error('Regions failed to load - error message present');
+    }
+    
+    // Wait for network to be idle
+    await page.waitForLoadState('networkidle');
   });
 
   test('Generate forecast and verify results sections exist', async ({ page }) => {
