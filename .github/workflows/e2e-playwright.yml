@@ -113,7 +113,7 @@ jobs:
       - name: Run Playwright E2E tests
         working-directory: app/frontend
         run: |
-          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts --reporter=line
+          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts
         continue-on-error: false
 
       - name: Upload backend logs
