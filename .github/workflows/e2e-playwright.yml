@@ -2,21 +2,12 @@
 name: E2E Playwright Tests
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/frontend/**'
-      - 'app/backend/**'
-      - '.github/workflows/e2e-playwright.yml'
-      - 'app/frontend/e2e/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'app/frontend/**'
-      - 'app/backend/**'
-      - '.github/workflows/e2e-playwright.yml'
-      - 'app/frontend/e2e/**'
   workflow_dispatch: {}
+  pull_request:
+  push:
+    branches:
+      - main
+      - "ci-proof/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,7 +21,7 @@ jobs:
     name: E2E Playwright Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
