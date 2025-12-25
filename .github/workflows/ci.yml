@@ -135,6 +135,82 @@ jobs:
             find . -type f \( -name "*.tmp" -o -name "*.log" -o -name "*.swp" -o -name ".DS_Store" \) -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.venv/*" 2>/dev/null | head -5
           fi
 
+      - name: Check for Agent Artifacts and Prompt Files
+        run: |
+          echo "=== Checking for Agent Artifacts and Prompt Files ==="
+          ARTIFACT_PATTERNS=(
+            "*master_prompt*"
+            "*verify_*.sh"
+            "*agent*report*"
+            "*MASTER_PROMPT*"
+            "*_validation.sh"
+            "*_verify.sh"
+          )
+          
+          # Special patterns that should match .md files
+          REPORT_PATTERNS=(
+            "*_report.md"
+            "*_validation_report.md"
+            "*_verify_report.md"
+          )
+          
+          FOUND_ARTIFACTS=0
+          ARTIFACT_LIST=""
+          
+          for pattern in "${ARTIFACT_PATTERNS[@]}"; do
+            # Exclude virtual environments, build artifacts, and legitimate directories
+            MATCHES=$(find . -type f -iname "$pattern" \
+              -not -path "./.git/*" \
+              -not -path "./node_modules/*" \
+              -not -path "./.venv/*" \
+              -not -path "./.healthcheck-venv/*" \
+              -not -path "./.next/*" \
+              -not -path "./playwright-report/*" \
+              -not -path "./test-results/*" \
+              -not -path "*/__pycache__/*" \
+              -not -path "*/site-packages/*" \
+              2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
+            
+            if [ -n "$MATCHES" ]; then
+              echo "ERROR: Found agent artifact matching pattern '$pattern':"
+              echo "$MATCHES" | head -10
+              FOUND_ARTIFACTS=$((FOUND_ARTIFACTS + $(echo "$MATCHES" | wc -l)))
+              ARTIFACT_LIST="${ARTIFACT_LIST}${MATCHES}"$'\n'
+            fi
+          done
+          
+          # Check report patterns separately (these should match .md files)
+          for pattern in "${REPORT_PATTERNS[@]}"; do
+            MATCHES=$(find . -type f -iname "$pattern" \
+              -not -path "./.git/*" \
+              -not -path "./node_modules/*" \
+              -not -path "./.venv/*" \
+              -not -path "./.healthcheck-venv/*" \
+              -not -path "./.next/*" \
+              -not -path "./playwright-report/*" \
+              -not -path "./test-results/*" \
+              2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
+            
+            if [ -n "$MATCHES" ]; then
+              echo "ERROR: Found agent artifact matching pattern '$pattern':"
+              echo "$MATCHES" | head -10
+              FOUND_ARTIFACTS=$((FOUND_ARTIFACTS + $(echo "$MATCHES" | wc -l)))
+              ARTIFACT_LIST="${ARTIFACT_LIST}${MATCHES}"$'\n'
+            fi
+          done
+          
+          if [ "$FOUND_ARTIFACTS" -gt 0 ]; then
+            echo ""
+            echo "❌ FAIL: Found $FOUND_ARTIFACTS agent artifact(s) in repository"
+            echo "These files should not be committed. Remove them and update .gitignore if needed."
+            echo ""
+            echo "Found files:"
+            echo "$ARTIFACT_LIST" | sort -u
+            exit 1
+          else
+            echo "✅ PASS: No agent artifacts or prompt files found"
+          fi
+
       - name: Validate Architecture
         run: |
           echo "=== Validating Architecture ==="
@@ -339,6 +415,27 @@ jobs:
           pytest tests/ --cov=app --cov=hbc --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short -n auto
         continue-on-error: false
         timeout-minutes: 15
+
+      - name: Run invariant enforcement tests
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          echo "=== Running Invariant Enforcement Tests ==="
+          pytest tests/test_invariant_enforcement.py -v --tb=short || (echo "ERROR: Invariant enforcement tests failed" && exit 1)
+
+      - name: Run contract enforcement tests
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          echo "=== Running Contract Enforcement Tests ==="
+          pytest tests/test_contract_enforcement.py -v --tb=short || (echo "ERROR: Contract enforcement tests failed" && exit 1)
+
+      - name: Run version evolution tests
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          echo "=== Running Version Evolution Tests ==="
+          pytest tests/test_version_evolution.py -v --tb=short || (echo "ERROR: Version evolution tests failed" && exit 1)
 
       - name: Validate Test Coverage Threshold
         if: matrix.python-version == '3.12'
