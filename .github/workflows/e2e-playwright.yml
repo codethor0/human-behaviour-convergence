@@ -92,15 +92,18 @@ jobs:
         run: |
           PORT=3003 npm run dev > /tmp/frontend.log 2>&1 &
           echo $! > /tmp/frontend.pid
-          sleep 15
-          for i in {1..30}; do
-            if curl -f http://localhost:3003/live >/dev/null 2>&1; then
-              echo "Frontend is ready"
-              break
+          echo "Frontend PID: $(cat /tmp/frontend.pid)"
+          
+          # Wait for frontend to be ready (poll up to 60 seconds)
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:3003/forecast >/dev/null 2>&1; then
+              echo "Frontend is ready after ${i}s"
+              exit 0
             fi
-            if [ $i -eq 30 ]; then
-              echo "Frontend failed to start"
-              tail -50 /tmp/frontend.log
+            if [ $i -eq 60 ]; then
+              echo "Frontend failed to start after 60s"
+              echo "=== Frontend Log (last 100 lines) ==="
+              tail -100 /tmp/frontend.log || echo "No frontend log found"
               exit 1
             fi
             sleep 1
