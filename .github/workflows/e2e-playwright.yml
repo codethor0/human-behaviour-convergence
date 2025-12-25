@@ -57,7 +57,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: app/frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Start backend server
         working-directory: .
