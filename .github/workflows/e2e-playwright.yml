@@ -64,10 +64,24 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python -m uvicorn app.backend.app.main:app --host 127.0.0.1 --port 8100 > /tmp/backend.log 2>&1 &
+          python -m uvicorn app.backend.app.main:app --host 127.0.0.1 --port 8100 --log-level info > /tmp/backend.log 2>&1 &
           echo $! > /tmp/backend.pid
-          sleep 3
-          curl -f http://127.0.0.1:8100/health || exit 1
+          echo "Backend PID: $(cat /tmp/backend.pid)"
+
+          # Poll for healthcheck up to 60 seconds
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:8100/health >/dev/null 2>&1; then
+              echo "Backend healthcheck passed after ${i}s"
+              exit 0
+            fi
+            if [ $i -eq 60 ]; then
+              echo "Backend healthcheck failed after 60s"
+              echo "=== Backend Log (last 100 lines) ==="
+              tail -100 /tmp/backend.log || echo "No backend log found"
+              exit 1
+            fi
+            sleep 1
+          done
         continue-on-error: false
 
       - name: Start frontend server
@@ -101,6 +115,15 @@ jobs:
           npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts --reporter=line
         continue-on-error: false
 
+      - name: Upload backend logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: /tmp/backend.log
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,6 +131,7 @@ jobs:
           name: playwright-report
           path: app/frontend/playwright-report/
           retention-days: 7
+          if-no-files-found: warn
 
       - name: Show backend logs on failure
         if: failure()
