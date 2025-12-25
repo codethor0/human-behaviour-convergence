@@ -79,11 +79,11 @@ test.describe('Live Monitoring - Selection Tests', () => {
   test('Test 5: Exactly 3 regions selection', async ({ page }) => {
     // Clear all selections
     await page.click('[data-testid="live-clear-selection"]');
-    await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0');
+    await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0 regions');
     
     // Select exactly 3 regions
     await page.click('[data-testid="live-select-3"]');
-    await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 3');
+    await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 3 regions');
     
     // Wait for the request and capture it
     const requestPromise = page.waitForRequest(
