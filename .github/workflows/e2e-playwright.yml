@@ -158,6 +158,15 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: Upload test-results artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/frontend/test-results/
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: Show backend logs on failure
         if: failure()
         run: |
