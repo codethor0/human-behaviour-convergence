@@ -344,6 +344,7 @@ export default function PlaygroundPage() {
               borderRadius: 4,
               cursor: loading || selectedRegions.length === 0 ? 'not-allowed' : 'pointer',
             }}
+            data-testid="playground-compare-button"
           >
             {loading ? 'Generating Comparison...' : 'Compare Regions'}
           </button>
@@ -356,7 +357,7 @@ export default function PlaygroundPage() {
         )}
 
         {playgroundData && (
-          <section>
+          <section data-testid="playground-results">
             <h2>Comparison Results</h2>
 
             {playgroundData.config.scenario_applied && (

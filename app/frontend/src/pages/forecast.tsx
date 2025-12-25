@@ -538,6 +538,7 @@ export default function ForecastPage() {
                 disabled={loading}
                 style={loading ? { ...styles.button, ...styles.buttonDisabled } : styles.button}
                 aria-label={loading ? 'Generating forecast' : 'Generate forecast'}
+                data-testid="forecast-generate-button"
               >
                 {loading ? 'Generating...' : 'Generate Forecast'}
               </button>
@@ -545,7 +546,7 @@ export default function ForecastPage() {
           </div>
 
           {/* Quick Summary Panel */}
-          <div style={styles.card}>
+          <div style={styles.card} data-testid="forecast-quick-summary">
             <h2 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: '600' }}>Quick Summary</h2>
             {forecastData ? (
               <div style={{ ...styles.grid, ...styles.grid2Col, gap: '10px' }}>
@@ -646,7 +647,7 @@ export default function ForecastPage() {
 
             {/* Sub-Index Breakdown - 3x3 Grid */}
             {forecastData.explanations?.subindices && (
-              <div style={styles.card}>
+              <div style={styles.card} data-testid="forecast-subindex-breakdown">
                 <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Sub-Index Breakdown</h2>
                 <div style={{ ...styles.grid, ...styles.grid3Col, gap: '10px' }} className="grid-3-col">
                   {Object.entries(forecastData.explanations.subindices).map(([key, subIndex]) => {

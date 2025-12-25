@@ -208,6 +208,9 @@ export default function LivePage() {
             <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
               Select Regions (multi-select):
             </label>
+            <div style={{ marginBottom: 8 }}>
+              <span data-testid="live-selected-count">Selected: {selectedRegions.length} regions</span>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, maxHeight: 200, overflowY: 'auto', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}>
               {regions.map((region) => (
                 <label key={region.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -225,6 +228,35 @@ export default function LivePage() {
                   <span style={{ fontSize: 14 }}>{region.name}</span>
                 </label>
               ))}
+            </div>
+            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setSelectedRegions([])}
+                data-testid="live-clear-selection"
+                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Clear Selection
+              </button>
+              <button
+                onClick={() => {
+                  const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
+                  setSelectedRegions([sortedRegions[0]?.id].filter(Boolean));
+                }}
+                data-testid="live-select-1"
+                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Select 1
+              </button>
+              <button
+                onClick={() => {
+                  const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
+                  setSelectedRegions(sortedRegions.slice(0, 3).map(r => r.id));
+                }}
+                data-testid="live-select-3"
+                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+              >
+                Select 3
+              </button>
             </div>
           </div>
 
@@ -280,6 +312,7 @@ export default function LivePage() {
                 borderRadius: 4,
                 cursor: loading || selectedRegions.length === 0 ? 'not-allowed' : 'pointer',
               }}
+              data-testid="live-refresh"
             >
               {loading ? 'Refreshing...' : 'Refresh Now'}
             </button>
@@ -306,7 +339,7 @@ export default function LivePage() {
               {Object.entries(liveData.regions).map(([regionId, regionData]) => {
                 if ('status' in regionData && regionData.status === 'no_data') {
                   return (
-                    <div key={regionId} style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: 'white' }}>
+                    <div key={regionId} data-testid={`live-region-card-${regionId}`} style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: 'white' }}>
                       <h3 style={{ marginTop: 0 }}>{regionId}</h3>
                       <p style={{ color: '#666', fontSize: 14 }}>{regionData.message}</p>
                     </div>
@@ -318,7 +351,7 @@ export default function LivePage() {
                 const behaviorIndex = latest.behavior_index;
 
                 return (
-                  <div key={regionId} style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: 'white' }}>
+                  <div key={regionId} data-testid={`live-region-card-${regionId}`} style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: 'white' }}>
                     <h3 style={{ marginTop: 0, marginBottom: 8 }}>
                       {regionId}
                     </h3>
