@@ -110,10 +110,34 @@ jobs:
           done
         continue-on-error: false
 
+      - name: Proof of test files existence
+        working-directory: app/frontend
+        run: |
+          echo "=== Working Directory ==="
+          pwd
+          echo ""
+          echo "=== Root Directory Listing ==="
+          ls -la
+          echo ""
+          echo "=== app/frontend Directory Listing ==="
+          ls -la app/frontend 2>/dev/null || ls -la .
+          echo ""
+          echo "=== app/frontend/e2e Directory Listing ==="
+          ls -la app/frontend/e2e 2>/dev/null || ls -la e2e
+          echo ""
+          echo "=== Finding all .spec.ts files ==="
+          find app/frontend/e2e -maxdepth 1 -type f -name "*.spec.ts" -print 2>/dev/null || find e2e -maxdepth 1 -type f -name "*.spec.ts" -print
+
+      - name: Proof of Playwright discovery
+        working-directory: app/frontend
+        run: |
+          echo "=== Playwright test discovery ==="
+          npx playwright test --list
+
       - name: Run Playwright E2E tests
         working-directory: app/frontend
         run: |
-          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts
+          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts --reporter=line
         continue-on-error: false
 
       - name: Upload backend logs
