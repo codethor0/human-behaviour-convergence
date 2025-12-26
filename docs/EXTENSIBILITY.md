@@ -159,9 +159,7 @@ See `predictors/example_predictor.py` for a complete example using exponential s
 
 ## Template Repository
 
-For a standalone predictor project, use the template:
-
-- [human-behaviour-predictor-template](https://github.com/codethor0/human-behaviour-predictor-template)
+For a standalone predictor project, create your own repository based on this project's structure.
 
 ## Contributing
 
