@@ -498,6 +498,29 @@ jobs:
       - name: Check for emojis in Markdown and code files
         run: python3 .github/scripts/check_no_emoji.py
 
+  docs-link-check:
+    name: Docs link check
+    runs-on: ubuntu-latest
+    needs: pre-flight-checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Validate Script Exists
+        run: |
+          if [ ! -f ".github/scripts/validate_docs_links.py" ]; then
+            echo "ERROR: validate_docs_links.py not found"
+            exit 1
+          fi
+
+      - name: Validate internal markdown links
+        run: python3 .github/scripts/validate_docs_links.py
+
   lint-format:
     name: Lint & Format
     runs-on: ubuntu-latest
