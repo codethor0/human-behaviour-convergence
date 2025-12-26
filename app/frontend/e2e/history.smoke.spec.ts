@@ -54,19 +54,11 @@ test.describe('Forecast History Smoke Tests', () => {
     // Step 2: Navigate to history page
     await page.goto('/history');
 
-    // Step 3: Wait for page to be ready - wait for either loading indicator or container
-    // Use waitForFunction to wait for either loading to complete or container to appear
-    await page.waitForFunction(
-      () => {
-        const loading = document.querySelector('[data-testid="history-loading"]');
-        const container = document.querySelector('[data-testid="forecast-history-container"]');
-        // Page is ready when container exists OR loading doesn't exist
-        return container !== null || loading === null;
-      },
-      { timeout: 30000 }
-    );
+    // Step 3: Wait for page to load and network to be idle
+    await page.waitForLoadState('networkidle');
 
-    // Step 4: Wait for history container to be visible (after loading completes)
+    // Step 4: Wait for history container to be visible (it appears after loading completes)
+    // The container is only rendered when loading is false, so wait for it directly
     const historyContainer = page.getByTestId('forecast-history-container');
     await expect(historyContainer).toBeVisible({ timeout: 30000 });
 
@@ -116,15 +108,8 @@ test.describe('Forecast History Smoke Tests', () => {
   test('History page loads with filters', async ({ page }) => {
     await page.goto('/history');
 
-    // Wait for page to be ready
-    await page.waitForFunction(
-      () => {
-        const loading = document.querySelector('[data-testid="history-loading"]');
-        const container = document.querySelector('[data-testid="forecast-history-container"]');
-        return container !== null || loading === null;
-      },
-      { timeout: 30000 }
-    );
+    // Wait for page to load and network to be idle
+    await page.waitForLoadState('networkidle');
 
     // Wait for history container
     const historyContainer = page.getByTestId('forecast-history-container');
