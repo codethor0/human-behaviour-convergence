@@ -304,6 +304,7 @@ export default function LivePage() {
             )}
 
             <button
+              type="button"
               onClick={triggerRefresh}
               disabled={loading || selectedRegions.length === 0}
               style={{
