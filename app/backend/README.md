@@ -25,6 +25,26 @@ forecasts and historical data.
   - Each entry includes: `forecast_id`, `region_name`, `forecast_date`, `forecast_horizon`, `model_type`, `sources`, and optional `accuracy_score`
   - Accessible via web UI at `/history` route with interactive filters and sorting
 
+## Live Monitoring Endpoints
+
+- `GET /api/live/summary` – Get live behavior index summary for specified regions
+  - Query parameters:
+    - `regions` (optional): List of region IDs (e.g., `regions=us_dc&regions=us_mn`)
+    - `time_window_minutes` (default: 60): Time window for historical snapshots (1-1440 minutes)
+  - Returns live data including:
+    - Latest behavior index and sub-indices for each region
+    - Historical snapshots within the time window
+    - **Intelligence summary** with:
+      - `risk_tier`: Risk classification (Stable, Watchlist, Elevated, High, Critical)
+      - `top_contributing_indices`: Top 3 contributing indices with contribution scores
+      - `shock_status`: Shock detection status (None, RecentShock, OngoingShock)
+  - Accessible via web UI at `/live` route with Intelligence Summary panel
+
+- `POST /api/live/refresh` – Manually trigger refresh of live data for specified regions
+  - Query parameters:
+    - `regions` (optional): List of region IDs to refresh (if not provided, refreshes all regions)
+  - Returns refresh results with success status per region
+
 ## Data Endpoints
 
 - `GET /health` – Simple liveness check

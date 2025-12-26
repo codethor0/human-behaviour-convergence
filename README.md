@@ -294,6 +294,10 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 
 ### Live Monitoring
 - `GET /api/live/summary` - Live behavior index summary for specified regions
+  - Returns intelligence summary including:
+    - `risk_tier`: Risk classification (Stable, Watchlist, Elevated, High, Critical)
+    - `top_contributing_indices`: Top 3 contributing indices with contribution scores
+    - `shock_status`: Shock detection status (None, RecentShock, OngoingShock)
 - `POST /api/live/refresh` - Manually trigger refresh of live monitoring data
 
 ### Public Data
@@ -329,7 +333,8 @@ The Next.js frontend provides the following routes:
 - `/` - Results dashboard displaying historical forecasts and metrics
 - `/forecast` - Interactive forecast generation interface
 - `/playground` - Multi-region comparison and scenario exploration
-- `/live` - Live monitoring dashboard with automatic event detection
+- `/live` - Live monitoring dashboard with automatic event detection and Intelligence Summary panel
+  - Intelligence Summary displays risk tier, top contributing indices, and shock status for selected regions
 - `/history` - Forecast history page displaying all stored forecasts with interactive filtering (region substring, date range) and sorting (newest/oldest first)
 
 All routes are accessible at `http://localhost:3000` (or `http://localhost:3100` in Docker).

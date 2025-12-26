@@ -28,10 +28,17 @@ interface LiveSnapshot {
   event_flags: Record<string, boolean>;
 }
 
+interface IntelligenceData {
+  risk_tier: string;
+  top_contributing_indices: Array<{ name: string; contribution_score: number }>;
+  shock_status: string;
+}
+
 interface LiveRegionData {
   latest: LiveSnapshot;
   history: LiveSnapshot[];
   snapshot_count: number;
+  intelligence?: IntelligenceData;
 }
 
 interface LiveSummaryResponse {
@@ -250,8 +257,9 @@ export default function LivePage() {
                 type="button"
                 onClick={() => {
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
-                  if (sortedRegions.length > 0) {
-                    setSelectedRegions([sortedRegions[0].id]);
+                  const firstRegion = sortedRegions[0];
+                  if (firstRegion) {
+                    setSelectedRegions([firstRegion.id]);
                   }
                 }}
                 disabled={regions.length === 0}
@@ -352,6 +360,69 @@ export default function LivePage() {
         {liveData && (
           <section>
             <h2>Live Data</h2>
+
+            {/* Intelligence Summary Card */}
+            {Object.entries(liveData.regions).some(
+              ([_, data]) => 'intelligence' in data && (data as LiveRegionData).intelligence
+            ) && (
+              <div
+                data-testid="live-intel-summary"
+                style={{
+                  marginBottom: 24,
+                  padding: 20,
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  backgroundColor: '#f8f9fa',
+                }}
+              >
+                <h3 style={{ marginTop: 0, marginBottom: 16 }}>Intelligence Summary</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
+                  {Object.entries(liveData.regions).map(([regionId, regionData]) => {
+                    if ('status' in regionData || !regionData.intelligence) {
+                      return null;
+                    }
+                    const intel = regionData.intelligence;
+                    return (
+                      <div
+                        key={regionId}
+                        style={{
+                          padding: 16,
+                          border: '1px solid #ddd',
+                          borderRadius: 4,
+                          backgroundColor: 'white',
+                        }}
+                      >
+                        <h4 style={{ marginTop: 0, marginBottom: 12, fontSize: 14 }}>{regionId}</h4>
+                        <div style={{ marginBottom: 8 }}>
+                          <strong>Risk Tier:</strong>{' '}
+                          <span data-testid="live-intel-risk-tier" style={{ fontWeight: 'bold' }}>
+                            {intel.risk_tier}
+                          </span>
+                        </div>
+                        <div style={{ marginBottom: 8 }}>
+                          <strong>Shock Status:</strong>{' '}
+                          <span data-testid="live-intel-shock-status">
+                            {intel.shock_status}
+                          </span>
+                        </div>
+                        {intel.top_contributing_indices && intel.top_contributing_indices.length > 0 && (
+                          <div>
+                            <strong>Top Contributing Indices:</strong>
+                            <ul data-testid="live-intel-top-indices" style={{ margin: '8px 0 0 0', paddingLeft: 20, fontSize: 12 }}>
+                              {intel.top_contributing_indices.map((idx, i) => (
+                                <li key={i}>
+                                  {idx.name}: {idx.contribution_score.toFixed(3)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
               {Object.entries(liveData.regions).map(([regionId, regionData]) => {

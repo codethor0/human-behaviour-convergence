@@ -12,6 +12,8 @@ import structlog
 from app.core.explanations import generate_explanation
 from app.core.prediction import BehavioralForecaster
 from app.core.regions import get_all_regions, get_region_by_id
+from app.services.risk.classifier import RiskClassifier
+from app.services.shocks.detector import ShockDetector
 
 logger = structlog.get_logger("core.live_monitor")
 
@@ -103,6 +105,8 @@ class LiveMonitor:
         }
 
         self._forecaster = BehavioralForecaster()
+        self._risk_classifier = RiskClassifier()
+        self._shock_detector = ShockDetector()
 
     def refresh_region(self, region_id: str) -> Optional[LiveSnapshot]:
         """
@@ -346,7 +350,7 @@ class LiveMonitor:
             time_window_minutes: Time window for historical snapshots
 
         Returns:
-            Dictionary with summary data per region
+            Dictionary with summary data per region, including intelligence fields
         """
         if region_ids is None:
             # Get all regions with data
@@ -363,10 +367,15 @@ class LiveMonitor:
                 snapshots = self.get_snapshots(
                     region_id, time_window_minutes=time_window_minutes
                 )
+                
+                # Compute intelligence data
+                intelligence = self._compute_intelligence(latest, snapshots)
+                
                 summary["regions"][region_id] = {
                     "latest": latest.to_dict(),
                     "history": [s.to_dict() for s in snapshots],
                     "snapshot_count": len(snapshots),
+                    "intelligence": intelligence,
                 }
             else:
                 summary["regions"][region_id] = {
@@ -375,6 +384,103 @@ class LiveMonitor:
                 }
 
         return summary
+
+    def _compute_intelligence(
+        self, latest: LiveSnapshot, snapshots: List[LiveSnapshot]
+    ) -> Dict:
+        """
+        Compute intelligence summary for a region.
+
+        Args:
+            latest: Latest snapshot
+            snapshots: Historical snapshots for shock detection
+
+        Returns:
+            Dictionary with risk_tier, top_contributing_indices, and shock_status
+        """
+        import pandas as pd
+
+        # Calculate risk tier
+        risk_result = self._risk_classifier.classify_risk(
+            behavior_index=latest.behavior_index,
+            shock_events=None,  # Will be computed from snapshots
+            convergence_score=None,
+            trend_direction=None,
+        )
+        risk_tier = risk_result["tier"].capitalize()
+
+        # Calculate top contributing indices from sub_indices
+        # Contribution score = absolute value of sub_index (higher = more contribution)
+        top_indices = []
+        if latest.sub_indices:
+            index_contributions = [
+                {
+                    "name": name.replace("_", " ").title(),
+                    "contribution_score": abs(value),
+                }
+                for name, value in latest.sub_indices.items()
+                if isinstance(value, (int, float))
+            ]
+            # Sort by contribution score descending, take top 3
+            index_contributions.sort(key=lambda x: x["contribution_score"], reverse=True)
+            top_indices = index_contributions[:3]
+
+        # Detect shocks from history
+        shock_status = "None"
+        if len(snapshots) >= 7:  # Need enough history for shock detection
+            try:
+                # Convert snapshots to DataFrame for shock detection
+                history_data = []
+                for snapshot in snapshots:
+                    row = {
+                        "timestamp": snapshot.timestamp,
+                        "behavior_index": snapshot.behavior_index,
+                    }
+                    row.update(snapshot.sub_indices)
+                    history_data.append(row)
+
+                history_df = pd.DataFrame(history_data)
+                history_df["timestamp"] = pd.to_datetime(history_df["timestamp"])
+                history_df = history_df.set_index("timestamp").sort_index()
+
+                # Detect shocks
+                shocks = self._shock_detector.detect_shocks(history_df)
+
+                if shocks:
+                    # Check if there are recent shocks (within last 7 days)
+                    recent_cutoff = datetime.now() - timedelta(days=7)
+                    recent_shocks = [
+                        s
+                        for s in shocks
+                        if pd.to_datetime(s["timestamp"]) >= recent_cutoff
+                    ]
+
+                    if recent_shocks:
+                        # Check if any shock is ongoing (within last 24 hours)
+                        ongoing_cutoff = datetime.now() - timedelta(days=1)
+                        ongoing_shocks = [
+                            s
+                            for s in recent_shocks
+                            if pd.to_datetime(s["timestamp"]) >= ongoing_cutoff
+                        ]
+
+                        if ongoing_shocks:
+                            shock_status = "OngoingShock"
+                        else:
+                            shock_status = "RecentShock"
+            except Exception as e:
+                logger.debug(
+                    "Failed to detect shocks for intelligence summary",
+                    error=str(e),
+                    region_id=latest.region_id,
+                )
+                # Default to None on error
+
+        return {
+            "risk_tier": risk_tier,
+            "top_contributing_indices": top_indices,
+            "shock_status": shock_status,
+        }
 
 
 # Global instance (singleton pattern)
