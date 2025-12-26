@@ -111,6 +111,14 @@ jobs:
           done
         continue-on-error: false
 
+      - name: Verify CORS headers (temporary proof)
+        run: |
+          echo "=== CORS Header Verification ==="
+          curl -i http://127.0.0.1:8100/api/forecasting/regions -H "Origin: http://127.0.0.1:3003" 2>&1 | grep -i "access-control" || echo "No CORS headers found"
+          echo ""
+          echo "=== Full Response Headers ==="
+          curl -i http://127.0.0.1:8100/api/forecasting/regions -H "Origin: http://127.0.0.1:3003" 2>&1 | head -20
+
       - name: Proof of test files existence
         working-directory: app/frontend
         run: |
