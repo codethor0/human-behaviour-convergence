@@ -31,8 +31,14 @@ test.describe('Forecast History Smoke Tests', () => {
     }
 
     // Get the region name for later verification
+    // The option text might include "(US)" or other suffixes, so extract just the region name
+    // The format is typically "Region Name (Country)" or just "Region Name"
     const selectedOptionText = await options[1].textContent();
-    const regionName = selectedOptionText?.trim() || '';
+    let regionName = selectedOptionText?.trim() || '';
+    // Extract region name before "(" if present (e.g., "New York City (US)" -> "New York City")
+    if (regionName.includes('(')) {
+      regionName = regionName.split('(')[0].trim();
+    }
 
     // Wait for generate button to be enabled
     const generateButton = page.getByTestId('forecast-generate-button');
