@@ -98,7 +98,7 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
 
 ![diagram](diagram/behaviour-convergence.svg)
 
-**Note:** Architecture diagram is code-derived and verified against actual implementation. See [docs/reports/ARCHITECTURE_INVENTORY.md](./docs/reports/ARCHITECTURE_INVENTORY.md) for detailed component inventory.
+**Note:** Architecture diagram is code-derived and verified against actual implementation.
 
 ## Repository Structure
 
@@ -234,16 +234,16 @@ If you discover a security or privacy issue (including ethical concerns about th
   ```bash
   # Start backend (in one terminal)
   python -m uvicorn app.backend.app.main:app --host 127.0.0.1 --port 8100
-  
+
   # Start frontend (in another terminal)
   cd app/frontend
   PORT=3003 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8100 npm run dev
-  
+
   # Run E2E tests (in a third terminal)
   cd app/frontend
   npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts
   ```
-  
+
   **E2E Test Suite:**
   - Workflow: `.github/workflows/e2e-playwright.yml` (runs on push/PR + manual trigger)
   - Tests:
@@ -409,4 +409,3 @@ If this project helps you, consider supporting ongoing maintenance:
 **What you fund:** maintenance, docs, roadmap experiments, and new features.
 
 Thank you!
-
