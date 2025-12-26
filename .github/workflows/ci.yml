@@ -201,14 +201,14 @@ jobs:
           
           if [ "$FOUND_ARTIFACTS" -gt 0 ]; then
             echo ""
-            echo "❌ FAIL: Found $FOUND_ARTIFACTS agent artifact(s) in repository"
+            echo "FAIL: Found $FOUND_ARTIFACTS agent artifact(s) in repository"
             echo "These files should not be committed. Remove them and update .gitignore if needed."
             echo ""
             echo "Found files:"
             echo "$ARTIFACT_LIST" | sort -u
             exit 1
           else
-            echo "✅ PASS: No agent artifacts or prompt files found"
+            echo "PASS: No agent artifacts or prompt files found"
           fi
 
       - name: Validate Architecture
