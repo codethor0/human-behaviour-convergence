@@ -106,37 +106,35 @@ test.describe('Forecast History Smoke Tests', () => {
   });
 
   test('History page loads with filters', async ({ page }) => {
-    await page.goto('/history');
+    await page.goto('/history', { waitUntil: 'domcontentloaded' });
 
-    // Wait for page to load
-    await page.waitForLoadState('domcontentloaded');
-
-    // Check if we got a 404 page
+    // Check if we got a 404 page immediately
     const pageUrl = page.url();
     if (pageUrl.includes('404') || pageUrl.includes('_error')) {
       throw new Error(`Page returned 404 or error page. URL: ${pageUrl}`);
     }
 
-    // Take a screenshot for debugging if the page doesn't load
+    // Check what's actually on the page right now
     const bodyText = await page.textContent('body').catch(() => '');
     if (bodyText && (bodyText.includes('404') || bodyText.includes('Not Found'))) {
-      await page.screenshot({ path: 'test-results/history-404.png' });
+      await page.screenshot({ path: 'test-results/history-404.png' }).catch(() => {});
       throw new Error('Page returned 404 - route /history not found');
+    }
+
+    // Check if h1 exists immediately (before networkidle)
+    const h1Exists = await page.locator('h1').count();
+    if (h1Exists === 0) {
+      const actualBody = await page.textContent('body').catch(() => '');
+      await page.screenshot({ path: 'test-results/history-no-h1-initial.png' }).catch(() => {});
+      throw new Error(`No h1 found on page. Page body preview: ${actualBody.substring(0, 300)}`);
     }
 
     // Wait for network to be idle (API calls complete)
     await page.waitForLoadState('networkidle');
 
-    // First verify the page loaded at all - check for the h1 title
+    // Verify the h1 title is "Forecast History"
     const pageTitle = page.locator('h1:has-text("Forecast History")');
-    try {
-      await expect(pageTitle).toBeVisible({ timeout: 30000 });
-    } catch (e) {
-      // If h1 not found, take a screenshot and check what's actually on the page
-      await page.screenshot({ path: 'test-results/history-no-h1.png' });
-      const actualBody = await page.textContent('body').catch(() => '');
-      throw new Error(`h1 "Forecast History" not found. Page body preview: ${actualBody.substring(0, 200)}`);
-    }
+    await expect(pageTitle).toBeVisible({ timeout: 10000 });
 
     // Wait for history container (it appears after loading completes)
     const historyContainer = page.getByTestId('forecast-history-container');
