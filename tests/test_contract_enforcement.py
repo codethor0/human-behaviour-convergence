@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for contract enforcement and semantic drift detection."""
-import pytest
 
 from app.core.contracts import (
     ContractRegistry,
