@@ -397,7 +397,7 @@ jobs:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           echo "=== Validating Test Discovery ==="
-          if ! python -m pytest --collect-only -q tests/ > /dev/null 2>&1; then
+          if ! python -m pytest --collect-only -q tests/ 2>&1; then
             echo "ERROR: pytest cannot discover tests"
             exit 1
           fi
