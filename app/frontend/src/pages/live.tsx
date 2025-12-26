@@ -231,6 +231,7 @@ export default function LivePage() {
             </div>
             <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
               <button
+                type="button"
                 onClick={() => setSelectedRegions([])}
                 data-testid="live-clear-selection"
                 style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
@@ -238,6 +239,7 @@ export default function LivePage() {
                 Clear Selection
               </button>
               <button
+                type="button"
                 onClick={() => {
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
                   setSelectedRegions([sortedRegions[0]?.id].filter(Boolean));
@@ -248,6 +250,7 @@ export default function LivePage() {
                 Select 1
               </button>
               <button
+                type="button"
                 onClick={() => {
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
                   setSelectedRegions(sortedRegions.slice(0, 3).map(r => r.id));
