@@ -55,18 +55,20 @@ test.describe('Playground Smoke Tests', () => {
     
     if (!isChecked) {
       await firstCheckbox.check();
+      // Wait for checkbox state to update
+      await expect(firstCheckbox).toBeChecked({ timeout: 5000 });
     }
     
-    // Verify at least one region is selected
-    const checkedCount = await regionCheckboxes.filter({ has: page.locator(':checked') }).count();
-    if (checkedCount === 0) {
-      // If no checkboxes are checked, check the first one
-      await firstCheckbox.check();
-      const newCheckedCount = await regionCheckboxes.filter({ has: page.locator(':checked') }).count();
-      expect(newCheckedCount).toBeGreaterThan(0);
-    } else {
-      expect(checkedCount).toBeGreaterThan(0);
+    // Verify at least one region is selected by checking each checkbox's state
+    let checkedCount = 0;
+    const totalCheckboxes = await regionCheckboxes.count();
+    for (let i = 0; i < totalCheckboxes; i++) {
+      const checkbox = regionCheckboxes.nth(i);
+      if (await checkbox.isChecked()) {
+        checkedCount++;
+      }
     }
+    expect(checkedCount).toBeGreaterThan(0);
     
     // Wait for the POST request to complete
     const requestPromise = page.waitForRequest(
