@@ -54,15 +54,19 @@ test.describe('Forecast History Smoke Tests', () => {
     // Step 2: Navigate to history page
     await page.goto('/history');
 
-    // Step 3: Wait for loading to complete (either loading indicator disappears or container appears)
-    // First check if loading indicator exists, if so wait for it to disappear
-    const loadingIndicator = page.getByTestId('history-loading');
-    const loadingExists = await loadingIndicator.isVisible().catch(() => false);
-    if (loadingExists) {
-      await expect(loadingIndicator).not.toBeVisible({ timeout: 30000 });
-    }
+    // Step 3: Wait for page to be ready - wait for either loading indicator or container
+    // Use waitForFunction to wait for either loading to complete or container to appear
+    await page.waitForFunction(
+      () => {
+        const loading = document.querySelector('[data-testid="history-loading"]');
+        const container = document.querySelector('[data-testid="forecast-history-container"]');
+        // Page is ready when container exists OR loading doesn't exist
+        return container !== null || loading === null;
+      },
+      { timeout: 30000 }
+    );
 
-    // Step 4: Wait for history container to be visible
+    // Step 4: Wait for history container to be visible (after loading completes)
     const historyContainer = page.getByTestId('forecast-history-container');
     await expect(historyContainer).toBeVisible({ timeout: 30000 });
 
@@ -112,12 +116,15 @@ test.describe('Forecast History Smoke Tests', () => {
   test('History page loads with filters', async ({ page }) => {
     await page.goto('/history');
 
-    // Wait for loading to complete
-    const loadingIndicator = page.getByTestId('history-loading');
-    const loadingExists = await loadingIndicator.isVisible().catch(() => false);
-    if (loadingExists) {
-      await expect(loadingIndicator).not.toBeVisible({ timeout: 30000 });
-    }
+    // Wait for page to be ready
+    await page.waitForFunction(
+      () => {
+        const loading = document.querySelector('[data-testid="history-loading"]');
+        const container = document.querySelector('[data-testid="forecast-history-container"]');
+        return container !== null || loading === null;
+      },
+      { timeout: 30000 }
+    );
 
     // Wait for history container
     const historyContainer = page.getByTestId('forecast-history-container');
