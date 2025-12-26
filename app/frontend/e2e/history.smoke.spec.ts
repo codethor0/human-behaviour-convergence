@@ -129,16 +129,14 @@ test.describe('Forecast History Smoke Tests', () => {
       throw new Error(`No h1 found on page. Page body preview: ${actualBody.substring(0, 300)}`);
     }
 
-    // Wait for network to be idle (API calls complete)
-    await page.waitForLoadState('networkidle');
-
-    // Verify the h1 title is "Forecast History"
-    const pageTitle = page.locator('h1:has-text("Forecast History")');
-    await expect(pageTitle).toBeVisible({ timeout: 10000 });
-
-    // Wait for history container (it appears after loading completes)
+    // Wait for history container to be visible (more reliable than networkidle)
     const historyContainer = page.getByTestId('forecast-history-container');
     await expect(historyContainer).toBeVisible({ timeout: 30000 });
+
+    // Verify the h1 title is "Forecast History" using stable testid
+    const pageTitle = page.getByTestId('history-page-title');
+    await expect(pageTitle).toBeVisible({ timeout: 10000 });
+    await expect(pageTitle).toHaveText('Forecast History');
 
     // Verify limit select exists
     const limitSelect = page.getByTestId('history-limit-select');
