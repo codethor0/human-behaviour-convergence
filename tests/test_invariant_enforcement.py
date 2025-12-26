@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for invariant enforcement and regression guards."""
-import math
 import pytest
 
 from app.core.invariants import (
