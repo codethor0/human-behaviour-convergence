@@ -19,14 +19,12 @@
 
 ## CI Status
 
-- **E2E Playwright Tests** (`e2e-playwright.yml`): PASS - All 4 tests passing
-- **General CI** (`ci.yml`): FAIL - Test discovery failing (see workflow logs for details)
+Main branch workflows:
 
-Latest verified E2E run (all 4 tests passing):
-- https://github.com/codethor0/human-behaviour-convergence/actions/runs/20516185692
+- **CI** (`ci.yml`): See badge above for current status on `main`.
+- **E2E Playwright Tests** (`e2e-playwright.yml`): See badge above for current status on `main`.
 
-Latest CI run (test discovery issue):
-- https://github.com/codethor0/human-behaviour-convergence/actions/runs/20516147956
+All changes to `main` must keep both workflows green.
 
 ---
 
