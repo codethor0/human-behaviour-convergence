@@ -144,7 +144,7 @@ export default function HistoryPage() {
           ) : (
             <>
             {history.length === 0 ? (
-              <p>No forecast history found.</p>
+              <p data-testid="history-empty-state">No forecast history available yet.</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table
@@ -157,7 +157,7 @@ export default function HistoryPage() {
                         Region
                       </th>
                       <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: '8px 12px' }}>
-                        Forecast Date
+                        Created At
                       </th>
                       <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: '8px 12px' }}>
                         Horizon (days)

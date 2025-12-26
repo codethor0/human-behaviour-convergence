@@ -241,7 +241,7 @@ If you discover a security or privacy issue (including ethical concerns about th
 
   # Run E2E tests (in a third terminal)
   cd app/frontend
-  npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts
+  npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts e2e/history.smoke.spec.ts
   ```
 
   **E2E Test Suite:**
@@ -250,6 +250,7 @@ If you discover a security or privacy issue (including ethical concerns about th
     - `e2e/live-monitoring.spec.ts` - Live monitoring selection and refresh tests
     - `e2e/forecast.smoke.spec.ts` - Forecast generation and results verification
     - `e2e/playground.smoke.spec.ts` - Multi-region comparison tests
+    - `e2e/history.smoke.spec.ts` - Forecast history page loading and data round-trip verification
   - **Gotcha:** Use explicit `isChecked()` to count checked checkboxes. `Locator.filter({ has: page.locator(':checked') })` does **not** work on bare checkbox inputs.
 
 ## Application Roadmap
@@ -282,7 +283,10 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 - `GET /api/forecasting/models` - List available forecasting models
 - `GET /api/forecasting/regions` - List all supported regions
 - `GET /api/forecasting/status` - System component status
-- `GET /api/forecasting/history` - Historical forecasts (returns empty, database integration pending)
+- `GET /api/forecasting/history` - Historical forecasts with database integration
+  - Returns stored forecasts from SQLite database
+  - Supports filtering by `region_name` and pagination via `limit` parameter
+  - Each forecast includes region, creation date, horizon, model type, data sources, and accuracy metrics
 
 ### Playground & Comparison
 - `POST /api/playground/compare` - Multi-region forecast comparison with optional scenario adjustments
@@ -325,6 +329,7 @@ The Next.js frontend provides the following routes:
 - `/forecast` - Interactive forecast generation interface
 - `/playground` - Multi-region comparison and scenario exploration
 - `/live` - Live monitoring dashboard with automatic event detection
+- `/history` - Forecast history page displaying all stored forecasts with filtering and pagination
 
 All routes are accessible at `http://localhost:3000` (or `http://localhost:3100` in Docker).
 
@@ -346,14 +351,12 @@ The application is **production-ready** for its current feature set with:
 
 The following features are documented but not yet fully implemented:
 
-- `GET /api/forecasting/history` - Returns empty list (database integration pending)
 - Some data sources require API configuration (mobility, public health, search trends) and return empty data if not configured
 - Frontend visualizations are basic; advanced time-series charts and forecast confidence bands are planned
 
 ## What's Next
 
 Planned enhancements (subject to development priorities):
-- Database integration for historical forecast storage
 - Additional data source integrations (GDELT, OWID health data)
 - Advanced forecasting models (ARIMA, Prophet)
 - Multi-region batch processing

@@ -144,12 +144,49 @@ test.describe('Forecast History Smoke Tests', () => {
     const regionFilter = page.getByTestId('history-region-filter');
     await expect(regionFilter).toBeVisible();
 
-    // Verify table exists only if there's data (it might not exist if history is empty)
+    // Wait for loading to complete (container is visible, loading message should be gone)
+    await page.waitForFunction(
+      () => {
+        const loading = document.querySelector('[data-testid="history-loading"]');
+        return !loading || !loading.textContent?.includes('Loading');
+      },
+      { timeout: 30000 }
+    );
+
+    // Verify either empty state or table exists
+    const emptyState = page.getByTestId('history-empty-state');
     const historyTable = page.getByTestId('forecast-history-table');
-    const tableExists = await historyTable.isVisible().catch(() => false);
-    // Table is optional - if history is empty, we just verify the container exists
-    if (tableExists) {
+    
+    // Check which one is visible (wait a bit for rendering)
+    await page.waitForTimeout(500);
+    
+    const emptyStateVisible = await emptyState.isVisible().catch(() => false);
+    const tableVisible = await historyTable.isVisible().catch(() => false);
+
+    // Either empty state or table must be visible (but not both)
+    if (emptyStateVisible) {
+      await expect(emptyState).toBeVisible();
+      await expect(emptyState).toHaveText('No forecast history available yet.');
+      // When empty, table should not be visible
+      const tableCount = await historyTable.count();
+      expect(tableCount).toBe(0);
+    } else if (tableVisible) {
       await expect(historyTable).toBeVisible({ timeout: 30000 });
+      // When table exists, empty state should not be visible
+      const emptyStateCount = await emptyState.count();
+      expect(emptyStateCount).toBe(0);
+      // Verify table has at least one row
+      const historyRows = page.getByTestId('forecast-history-row');
+      const rowCount = await historyRows.count();
+      expect(rowCount).toBeGreaterThan(0);
+    } else {
+      // If neither is visible, check if we're still loading
+      const loading = page.getByTestId('history-loading');
+      const isLoading = await loading.isVisible().catch(() => false);
+      if (isLoading) {
+        throw new Error('Page is still loading after timeout');
+      }
+      throw new Error('Neither empty state nor history table is visible');
     }
   });
 });

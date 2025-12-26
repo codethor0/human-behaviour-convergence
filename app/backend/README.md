@@ -17,6 +17,8 @@ forecasts and historical data.
   - Query parameters: `region_name` (optional), `limit` (default: 100, max: 1000)
   - Returns list of historical forecast entries with metadata and accuracy scores
   - Forecasts are automatically saved to SQLite database when created via `POST /api/forecast`
+  - Each entry includes: `forecast_id`, `region_name`, `forecast_date`, `forecast_horizon`, `model_type`, `sources`, and optional `accuracy_score`
+  - Accessible via web UI at `/history` route
 
 ## Data Endpoints
 
