@@ -25,7 +25,9 @@ class VersionMismatch(Exception):
     """Exception raised when version mismatch is detected."""
 
     def __init__(self, component: str, expected: str, actual: str, message: str):
-        super().__init__(f"Version mismatch in {component}: expected {expected}, got {actual} - {message}")
+        super().__init__(
+            f"Version mismatch in {component}: expected {expected}, got {actual} - {message}"
+        )
         self.component = component
         self.expected = expected
         self.actual = actual
@@ -71,7 +73,9 @@ class DeprecationRegistry:
             "status": DeprecationStatus.DEPRECATED.value,
         }
 
-    def check_deprecation(self, contract_name: str, field_name: str, data: Dict[str, Any]) -> Optional[str]:
+    def check_deprecation(
+        self, contract_name: str, field_name: str, data: Dict[str, Any]
+    ) -> Optional[str]:
         """
         Check if a field is deprecated and log warning if used.
 
@@ -101,7 +105,11 @@ class DeprecationRegistry:
                 if deprecation["replacement"]:
                     warning_msg += f" Use '{deprecation['replacement']}' instead."
                 # Log without duplicating contract/field keys
-                log_data = {k: v for k, v in deprecation.items() if k not in ["contract", "field"]}
+                log_data = {
+                    k: v
+                    for k, v in deprecation.items()
+                    if k not in ["contract", "field"]
+                }
                 logger.warning(
                     "Deprecated field used",
                     contract=contract_name,
@@ -171,7 +179,10 @@ class VersionChecker:
             expected_parts = [int(x) for x in expected_version.split(".")]
             actual_parts = [int(x) for x in actual_version.split(".")]
         except (ValueError, AttributeError):
-            return False, f"Invalid version format: {expected_version} vs {actual_version}"
+            return (
+                False,
+                f"Invalid version format: {expected_version} vs {actual_version}",
+            )
 
         # Major version mismatch = incompatible
         if expected_parts[0] != actual_parts[0]:
@@ -183,7 +194,10 @@ class VersionChecker:
             }
             self._mismatches_detected.append(mismatch_info)
             logger.error("Major version mismatch detected", **mismatch_info)
-            return False, f"Major version mismatch: expected {expected_version}, got {actual_version}"
+            return (
+                False,
+                f"Major version mismatch: expected {expected_version}, got {actual_version}",
+            )
 
         # Minor version mismatch = may be incompatible
         if expected_parts[1] != actual_parts[1]:
@@ -195,12 +209,17 @@ class VersionChecker:
             }
             self._mismatches_detected.append(mismatch_info)
             logger.warning("Minor version mismatch detected", **mismatch_info)
-            return True, f"Minor version mismatch: expected {expected_version}, got {actual_version} (may cause issues)"
+            return (
+                True,
+                f"Minor version mismatch: expected {expected_version}, got {actual_version} (may cause issues)",
+            )
 
         # Patch version mismatch = compatible
         return True, None
 
-    def check_partial_upgrade(self, frontend_version: Optional[str] = None) -> Tuple[bool, Optional[str]]:
+    def check_partial_upgrade(
+        self, frontend_version: Optional[str] = None
+    ) -> Tuple[bool, Optional[str]]:
         """
         Check for partial upgrade scenarios.
 
@@ -218,7 +237,10 @@ class VersionChecker:
         )
 
         if not is_compatible:
-            return True, f"Partial upgrade detected: frontend {frontend_version} vs backend {self._backend_version} - {error}"
+            return (
+                True,
+                f"Partial upgrade detected: frontend {frontend_version} vs backend {self._backend_version} - {error}",
+            )
 
         return False, None
 
@@ -338,7 +360,9 @@ class MisuseDetector:
 
     def _record_misuse(self, category: str, message: str) -> None:
         """Record a misuse detection."""
-        self._misuse_detected.append({"category": category, "message": message, "timestamp": None})
+        self._misuse_detected.append(
+            {"category": category, "message": message, "timestamp": None}
+        )
 
     def get_misuse_detected(self) -> List[Dict[str, Any]]:
         """Get all detected misuse."""
@@ -361,9 +385,9 @@ def get_misuse_detector() -> MisuseDetector:
 # Initialize deprecations (currently none, but structure ready)
 def register_deprecations() -> None:
     """Register known deprecations."""
-    registry = get_deprecation_registry()
     # No deprecations currently, but structure is ready for future use
     # Example:
+    # registry = get_deprecation_registry()
     # registry.register_deprecation(
     #     "API-FORECAST-RESULT",
     #     "explanation",
