@@ -251,10 +251,10 @@ class ForecastDB:
             # Use parameterized query with validated sort_order
             # sort_order is validated above to be either "ASC" or "DESC"
             # Bandit false positive: sort_order is whitelist-validated, where_clause uses ? placeholders
-            query = (  # nosec B608
+            query = (
                 "SELECT * FROM forecasts "
-                f"WHERE {where_clause} "
-                f"ORDER BY timestamp {sort_order} "
+                f"WHERE {where_clause} "  # nosec B608
+                f"ORDER BY timestamp {sort_order} "  # nosec B608
                 "LIMIT ? OFFSET ?"
             )
 
