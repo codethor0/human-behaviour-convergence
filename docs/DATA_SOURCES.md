@@ -6,7 +6,7 @@ This document catalogs all data sources used by the Human Behaviour Convergence 
 
 Primary maintainer: **Thor Thor**
 Email: [codethor@gmail.com](mailto:codethor@gmail.com)
-LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/thor-thor0)
+LinkedIn: https://www.linkedin.com/in/thor-thor0 (may require manual verification due to anti-bot protection)
 
 ---
 

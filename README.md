@@ -397,7 +397,7 @@ See the [LICENSE](LICENSE) file for full terms.
 This project is maintained by **Thor Thor**.
 
 - Email: [codethor@gmail.com](mailto:codethor@gmail.com)
-- LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/thor-thor0)
+- LinkedIn: https://www.linkedin.com/in/thor-thor0 (may require manual verification due to anti-bot protection)
 
 ## Support
 

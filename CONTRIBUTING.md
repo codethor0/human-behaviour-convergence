@@ -137,4 +137,4 @@ By participating, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.
 
 Primary maintainer: **Thor Thor**
 Email: [codethor@gmail.com](mailto:codethor@gmail.com)
-LinkedIn: [https://www.linkedin.com/in/thor-thor0](https://www.linkedin.com/in/thor-thor0)
+LinkedIn: https://www.linkedin.com/in/thor-thor0 (may require manual verification due to anti-bot protection)
