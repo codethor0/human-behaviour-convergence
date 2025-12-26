@@ -121,22 +121,14 @@ test.describe('Forecast History Smoke Tests', () => {
       throw new Error('Page returned 404 - route /history not found');
     }
 
-    // Check if h1 exists immediately (before networkidle)
-    const h1Exists = await page.locator('h1').count();
-    if (h1Exists === 0) {
-      const actualBody = await page.textContent('body').catch(() => '');
-      await page.screenshot({ path: 'test-results/history-no-h1-initial.png' }).catch(() => {});
-      throw new Error(`No h1 found on page. Page body preview: ${actualBody.substring(0, 300)}`);
-    }
+    // Wait for h1 to be visible first (ensures page has loaded)
+    const pageTitle = page.getByTestId('history-page-title');
+    await expect(pageTitle).toBeVisible({ timeout: 30000 });
+    await expect(pageTitle).toHaveText('Forecast History');
 
-    // Wait for history container to be visible (more reliable than networkidle)
+    // Wait for history container to be visible (now that page is loaded)
     const historyContainer = page.getByTestId('forecast-history-container');
     await expect(historyContainer).toBeVisible({ timeout: 30000 });
-
-    // Verify the h1 title is "Forecast History" using stable testid
-    const pageTitle = page.getByTestId('history-page-title');
-    await expect(pageTitle).toBeVisible({ timeout: 10000 });
-    await expect(pageTitle).toHaveText('Forecast History');
 
     // Verify limit select exists
     const limitSelect = page.getByTestId('history-limit-select');
