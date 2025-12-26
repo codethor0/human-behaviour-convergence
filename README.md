@@ -1,7 +1,8 @@
 # Human Behaviour Convergence
 > Public-data-driven behavioral forecasting for population-scale analysis and planning.
 
-[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions)
+[![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml)
+[![E2E](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml)
 [![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
 [![Security](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml)
 [![codecov](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/main/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
@@ -13,6 +14,18 @@
 [![View SVG](https://img.shields.io/badge/View-SVG-blue)](https://codethor0.github.io/human-behaviour-convergence/diagram/behaviour-convergence.svg)
 [![Tip](https://img.shields.io/badge/Tip-support-brightgreen)](https://buy.stripe.com/00w6oA7kM4wc4co5RB3Nm01)
 [![Monthly](https://img.shields.io/badge/Monthly-subscribe-blue)](https://buy.stripe.com/7sY3cobB2bYEdMYa7R3Nm00)
+
+---
+
+## CI Status
+
+Main branch E2E Playwright Tests are currently green.
+
+- **E2E Playwright Tests** (`e2e-playwright.yml`): ✅ All 4 tests passing
+- **General CI** (`ci.yml`): See workflow status badge above
+
+Latest verified E2E run (all 4 tests passing):
+- https://github.com/codethor0/human-behaviour-convergence/actions/runs/20516047356
 
 ---
 
