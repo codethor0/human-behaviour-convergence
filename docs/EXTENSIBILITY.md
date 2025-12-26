@@ -173,7 +173,6 @@ For a standalone predictor project, use the template:
 
 ## Next Steps
 
-- Read the [Code Review Guide](./AI_CODE_REVIEW_GUIDE.md) for quality standards
 - Check [app-plan.md](./app-plan.md) for architecture details
 - Join discussions in GitHub Issues with the `community` label
 
