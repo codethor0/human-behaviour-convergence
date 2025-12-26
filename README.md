@@ -32,15 +32,15 @@ All changes to `main` must keep both workflows green.
 
 This project is a **public-data-driven behavioral forecasting application** that uses free, publicly available data sources to predict human behavioral patterns at population scale. The system combines economic indicators, environmental signals, and other public time-series data to produce behavioral forecasts that support research, planning, and policy scenario exploration.
 
-**Status:** Production-ready for current feature set — zero-known-bug state within test coverage
-**License:** Proprietary / All Rights Reserved — repository is public for viewing and educational purposes only
-**Data:** Public sources only — no individual user data, no proprietary datasets, fully aggregated
-**Ethics:** Strict privacy-first approach — see [ETHICS.md](./ETHICS.md) for details
-**Governance:** Automated enforcement of rules and invariants — see [GOVERNANCE_RULES.md](./GOVERNANCE_RULES.md) for details
+**Status:** Production-ready for current feature set. Zero-known-bug state within test coverage.
+**License:** Proprietary / All Rights Reserved. Repository is public for viewing and educational purposes only.
+**Data:** Public sources only. No individual user data, no proprietary datasets, fully aggregated.
+**Ethics:** Strict privacy-first approach. See [ETHICS.md](./ETHICS.md) for details.
+**Governance:** Automated enforcement of rules and invariants. See [GOVERNANCE_RULES.md](./GOVERNANCE_RULES.md) for details.
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
-**Interpretability:** Forecast explanations available — see [BEHAVIOR_INDEX.md](./docs/BEHAVIOR_INDEX.md) for details
-**Playground:** Interactive multi-region comparison and scenario exploration — see `/playground` route in the web UI
-**Live Monitoring:** Near real-time behavior index tracking with automatic event detection — see `/live` route in the web UI
+**Interpretability:** Forecast explanations available. See [BEHAVIOR_INDEX.md](./docs/BEHAVIOR_INDEX.md) for details.
+**Playground:** Interactive multi-region comparison and scenario exploration. See `/playground` route in the web UI.
+**Live Monitoring:** Near real-time behavior index tracking with automatic event detection. See `/live` route in the web UI.
 
 ### Scope and Non-Goals
 
@@ -58,7 +58,7 @@ This project is a **public-data-driven behavioral forecasting application** that
 
 ### Three-Layer Architecture
 
-1. **Signal Layer** — Public data sources providing time-series signals:
+1. **Signal Layer**: Public data sources providing time-series signals:
    - Economic indicators (market sentiment, volatility indices)
    - Environmental factors (weather patterns, climate anomalies)
    - Search interest trends (aggregated public data)
@@ -69,12 +69,12 @@ This project is a **public-data-driven behavioral forecasting application** that
    - Information integrity metrics (misinformation spread, sentiment volatility, narrative fragmentation)
    - Social cohesion indicators (community trust, mental health trends, intergroup tension)
 
-2. **Feature Layer** — Transforms signals into unified behavioral features:
+2. **Feature Layer**: Transforms signals into unified behavioral features:
    - Time-series feature engineering (lags, moving averages, normalization)
    - Multi-source fusion (combining signals into composite indices)
    - Regional aggregation and temporal alignment
 
-3. **Forecast Layer** — Forecasting models producing future behavioral states:
+3. **Forecast Layer**: Forecasting models producing future behavioral states:
    - Classical time-series models (exponential smoothing, ARIMA)
    - Forecast outputs over configurable time horizons
    - Confidence intervals and quality indicators
@@ -83,12 +83,12 @@ This project is a **public-data-driven behavioral forecasting application** that
 
 Advanced analytics and insights layer providing:
 
-- **Real-Time Event Shock Detection** — Detects sudden spikes and structural breaks across all indices using Z-score, delta, and EWMA methods
-- **Cross-Index Convergence Analysis** — Analyzes interactions between indices to detect reinforcing/conflicting signals and convergence patterns
-- **Risk Tier Classification** — Automatically classifies regions into risk tiers (Stable, Watchlist, Elevated, High, Critical)
-- **Forecast Confidence Monitoring** — Per-index confidence scores and model drift detection
-- **Correlation Analytics** — Computes relationships between indices using Pearson, Spearman, and Mutual Information
-- **Scenario Simulation** — Allows hypothetical scenario testing by modifying index values
+- **Real-Time Event Shock Detection**: Detects sudden spikes and structural breaks across all indices using Z-score, delta, and EWMA methods
+- **Cross-Index Convergence Analysis**: Analyzes interactions between indices to detect reinforcing/conflicting signals and convergence patterns
+- **Risk Tier Classification**: Automatically classifies regions into risk tiers (Stable, Watchlist, Elevated, High, Critical)
+- **Forecast Confidence Monitoring**: Per-index confidence scores and model drift detection
+- **Correlation Analytics**: Computes relationships between indices using Pearson, Spearman, and Mutual Information
+- **Scenario Simulation**: Allows hypothetical scenario testing by modifying index values
 
 See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md) for detailed documentation.
 
@@ -260,7 +260,7 @@ We are building **Behaviour Convergence Explorer**, an interactive web applicati
 - System status: [docs/SYSTEM_STATUS.md](./docs/SYSTEM_STATUS.md)
 - Data sources: [docs/DATA_SOURCES.md](./docs/DATA_SOURCES.md)
 - Roadmap milestones: [docs/ROADMAP.md](./docs/ROADMAP.md)
-- Current milestone: `app-v0.1` — public-data ingestion, forecasting engine, API endpoints, and dashboard
+- Current milestone: `app-v0.1`. Public-data ingestion, forecasting engine, API endpoints, and dashboard.
 - Tech stack: Next.js (TypeScript), FastAPI (Python), Pandas, Statsmodels
 - Principles: public data only, transparent ethics, extensible APIs, no individual tracking
 
