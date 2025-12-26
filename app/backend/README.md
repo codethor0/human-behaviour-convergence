@@ -115,3 +115,34 @@ pytest tests/test_api_backend.py
 The test-suite exercises cache eviction, CSV parsing edge cases, and response
 validation; keep these green before sending a PR. Continuous integration runs
 `pytest` with coverage enabled.
+
+## Docker E2E Smoke Tests
+
+The repository includes a Docker Compose setup for running the full stack in containers
+and validating it with Playwright E2E tests.
+
+**Quick start:**
+```bash
+# Build and start services
+docker compose up -d --build
+
+# Wait for healthchecks (or verify manually)
+curl -f http://localhost:8100/health  # Backend
+curl -f http://localhost:3100/        # Frontend
+
+# Run E2E smoke tests
+cd app/frontend
+PLAYWRIGHT_BASE_URL=http://localhost:3100 npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts
+
+# Cleanup
+docker compose down -v
+```
+
+**Configuration:**
+- Backend container: Port 8000 (exposed as 8100 on host)
+- Frontend container: Port 3000 (exposed as 3100 on host)
+- Frontend API base: `http://backend:8000` (internal Docker network)
+- Healthchecks: Backend `/health`, Frontend `/` (root page)
+
+The CI workflow includes a `docker-e2e` job that automatically validates the Docker stack
+on every push and pull request.

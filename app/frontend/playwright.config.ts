@@ -14,7 +14,7 @@ export default defineConfig({
     ['html', { outputFolder: 'playwright-report', open: 'never' }]
   ],
   use: {
-    baseURL: 'http://127.0.0.1:3003',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:3003',
     trace: 'on-first-retry',
   },
 

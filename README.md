@@ -253,6 +253,35 @@ If you discover a security or privacy issue (including ethical concerns about th
     - `e2e/history.smoke.spec.ts` - Forecast history page loading, data round-trip verification, and filter/sort functionality
   - **Gotcha:** Use explicit `isChecked()` to count checked checkboxes. `Locator.filter({ has: page.locator(':checked') })` does **not** work on bare checkbox inputs.
 
+- **Run Docker E2E smoke tests:**
+  ```bash
+  # Build and start Docker Compose stack
+  docker compose up -d --build
+
+  # Wait for services to be healthy (or check manually)
+  docker compose ps
+
+  # Verify backend health
+  curl -f http://localhost:8100/health
+
+  # Verify frontend health
+  curl -f http://localhost:3100/
+
+  # Run E2E smoke tests against Docker stack
+  cd app/frontend
+  PLAYWRIGHT_BASE_URL=http://localhost:3100 npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts
+
+  # Cleanup
+  docker compose down -v
+  ```
+
+  **Docker E2E Configuration:**
+  - Backend: `http://localhost:8100` (exposed from container port 8000)
+  - Frontend: `http://localhost:3100` (exposed from container port 3000)
+  - Frontend API base: `http://backend:8000` (internal Docker network)
+  - Healthchecks: Backend `/health`, Frontend `/` (root page)
+  - CI job: `.github/workflows/ci.yml` includes `docker-e2e` job that runs on every push/PR
+
 ## Application Roadmap
 
 We are building **Behaviour Convergence Explorer**, an interactive web application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard.
