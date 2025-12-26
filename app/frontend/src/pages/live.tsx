@@ -53,8 +53,15 @@ export default function LivePage() {
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
       const response = await fetch(`${base}/api/forecasting/regions`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Regions response is empty or invalid');
+      }
       setRegions(data);
+      setError(null); // Clear any previous error
       // Set default selections
       const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
         data.some((r: Region) => r.id === id)
@@ -65,6 +72,7 @@ export default function LivePage() {
     } catch (e) {
       console.error('Failed to fetch regions:', e);
       setError('Failed to load regions');
+      setRegions([]); // Ensure regions is empty on error
     }
   };
 
