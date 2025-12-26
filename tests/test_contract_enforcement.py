@@ -2,10 +2,6 @@
 """Tests for contract enforcement and semantic drift detection."""
 
 from app.core.contracts import (
-    ContractRegistry,
-    ContractViolation,
-    SemanticDriftDetector,
-    ViolationSeverity,
     get_contract_registry,
     get_observability,
     get_semantic_detector,

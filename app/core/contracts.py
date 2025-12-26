@@ -4,10 +4,8 @@
 This module provides contract validation, schema regression detection,
 and semantic drift detection for API and trace contracts.
 """
-import json
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
