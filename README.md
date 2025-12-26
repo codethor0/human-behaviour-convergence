@@ -218,6 +218,28 @@ If you discover a security or privacy issue (including ethical concerns about th
   pytest tests/ --cov
   ```
 
+- **Run E2E Playwright tests:**
+  ```bash
+  # Start backend (in one terminal)
+  python -m uvicorn app.backend.app.main:app --host 127.0.0.1 --port 8100
+  
+  # Start frontend (in another terminal)
+  cd app/frontend
+  PORT=3003 NEXT_PUBLIC_API_BASE=http://127.0.0.1:8100 npm run dev
+  
+  # Run E2E tests (in a third terminal)
+  cd app/frontend
+  npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts
+  ```
+  
+  **E2E Test Suite:**
+  - Workflow: `.github/workflows/e2e-playwright.yml` (runs on push/PR + manual trigger)
+  - Tests:
+    - `e2e/live-monitoring.spec.ts` - Live monitoring selection and refresh tests
+    - `e2e/forecast.smoke.spec.ts` - Forecast generation and results verification
+    - `e2e/playground.smoke.spec.ts` - Multi-region comparison tests
+  - **Gotcha:** Use explicit `isChecked()` to count checked checkboxes. `Locator.filter({ has: page.locator(':checked') })` does **not** work on bare checkbox inputs.
+
 ## Application Roadmap
 
 We are building **Behaviour Convergence Explorer**, an interactive web application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard.
