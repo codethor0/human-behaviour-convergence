@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { API_BASE } from '../lib/api';
+import { API_BASE } from '@/lib/api';
 
 interface HistoricalForecastItem {
   forecast_id: string;
