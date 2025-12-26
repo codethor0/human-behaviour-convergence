@@ -22,6 +22,9 @@ export default function HistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState(50);
   const [regionFilter, setRegionFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -29,9 +32,15 @@ export default function HistoryPage() {
       setError(null);
 
       try {
-        const params = new URLSearchParams({ limit: limit.toString() });
+        const params = new URLSearchParams({ limit: limit.toString(), sort_order: sortOrder });
         if (regionFilter.trim()) {
           params.append('region_name', regionFilter.trim());
+        }
+        if (dateFrom) {
+          params.append('date_from', dateFrom);
+        }
+        if (dateTo) {
+          params.append('date_to', dateTo);
         }
 
         const response = await fetch(`${API_BASE}/api/forecasting/history?${params.toString()}`);
@@ -56,7 +65,7 @@ export default function HistoryPage() {
     };
 
     fetchHistory();
-  }, [limit, regionFilter]);
+  }, [limit, regionFilter, dateFrom, dateTo, sortOrder]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -118,9 +127,41 @@ export default function HistoryPage() {
               type="text"
               value={regionFilter}
               onChange={(e) => setRegionFilter(e.target.value)}
-              placeholder="Region name..."
+              placeholder="Region name (substring)..."
               style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 4, minWidth: 200 }}
             />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>Date from:</span>
+            <input
+              data-testid="history-date-from"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 4 }}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>Date to:</span>
+            <input
+              data-testid="history-date-to"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 4 }}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>Sort order:</span>
+            <select
+              data-testid="history-sort-order"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as 'ASC' | 'DESC')}
+              style={{ padding: '4px 8px', border: '1px solid #ddd', borderRadius: 4 }}
+            >
+              <option value="DESC">Newest first</option>
+              <option value="ASC">Oldest first</option>
+            </select>
           </label>
         </div>
 

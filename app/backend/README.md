@@ -14,11 +14,16 @@ forecasts and historical data.
 - `GET /api/forecasting/models` – List available forecasting models
 - `GET /api/forecasting/status` – System health and component status
 - `GET /api/forecasting/history` – Historical forecasts
-  - Query parameters: `region_name` (optional), `limit` (default: 100, max: 1000)
+  - Query parameters:
+    - `region_name` (optional): Filter by region name using substring match
+    - `date_from` (optional): Filter by minimum timestamp (ISO format)
+    - `date_to` (optional): Filter by maximum timestamp (ISO format)
+    - `limit` (default: 100, max: 1000): Maximum number of records to return
+    - `sort_order` (default: "DESC"): Sort order - "ASC" (oldest first) or "DESC" (newest first)
   - Returns list of historical forecast entries with metadata and accuracy scores
   - Forecasts are automatically saved to SQLite database when created via `POST /api/forecast`
   - Each entry includes: `forecast_id`, `region_name`, `forecast_date`, `forecast_horizon`, `model_type`, `sources`, and optional `accuracy_score`
-  - Accessible via web UI at `/history` route
+  - Accessible via web UI at `/history` route with interactive filters and sorting
 
 ## Data Endpoints
 

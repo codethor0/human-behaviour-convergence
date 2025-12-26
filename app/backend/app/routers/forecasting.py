@@ -251,18 +251,32 @@ class HistoricalForecastItem(BaseModel):
 
 @router.get("/history", response_model=List[HistoricalForecastItem])
 def get_forecast_history(
-    region_name: Optional[str] = Query(None, description="Filter by region name"),
+    region_name: Optional[str] = Query(
+        None, description="Filter by region name (substring match)"
+    ),
+    date_from: Optional[str] = Query(
+        None, description="Filter by minimum timestamp (ISO format)"
+    ),
+    date_to: Optional[str] = Query(
+        None, description="Filter by maximum timestamp (ISO format)"
+    ),
     limit: int = Query(
         100, ge=1, le=1000, description="Maximum number of records to return"
+    ),
+    sort_order: str = Query(
+        "DESC", description="Sort order: ASC (oldest first) or DESC (newest first)"
     ),
 ) -> List[HistoricalForecastItem]:
     """
     Retrieve historical forecasts and their performance metrics.
 
     Args:
-        region_name: Optional filter by region name
+        region_name: Optional filter by region name (substring match)
+        date_from: Optional filter by minimum timestamp (ISO format)
+        date_to: Optional filter by maximum timestamp (ISO format)
         limit: Maximum number of historical forecasts to return
             (default: 100, max: 1000)
+        sort_order: Sort order, either "ASC" (oldest first) or "DESC" (newest first)
 
     Returns:
         List of historical forecast entries with metadata and accuracy scores
@@ -275,7 +289,13 @@ def get_forecast_history(
         from app.storage import ForecastDB
 
         db = ForecastDB()
-        forecasts = db.get_forecasts(region_name=region_name, limit=limit)
+        forecasts = db.get_forecasts(
+            region_name=region_name,
+            date_from=date_from,
+            date_to=date_to,
+            limit=limit,
+            sort_order=sort_order.upper(),
+        )
 
         result = []
         for f in forecasts:

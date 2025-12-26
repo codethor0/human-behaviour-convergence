@@ -203,43 +203,61 @@ class ForecastDB:
     def get_forecasts(
         self,
         region_name: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
+        sort_order: str = "DESC",
     ) -> List[Dict[str, Any]]:
         """
         Retrieve forecasts from the database.
 
         Args:
-            region_name: Optional filter by region name
+            region_name: Optional filter by region name (substring match)
+            date_from: Optional filter by minimum timestamp (ISO format)
+            date_to: Optional filter by maximum timestamp (ISO format)
             limit: Maximum number of records to return (default: 100)
             offset: Offset for pagination (default: 0)
+            sort_order: Sort order, either "ASC" or "DESC" (default: "DESC")
 
         Returns:
             List of forecast dictionaries
         """
+        if sort_order not in ("ASC", "DESC"):
+            sort_order = "DESC"
+
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
+            # Build WHERE clause dynamically
+            conditions = []
+            params = []
+
             if region_name:
-                cursor.execute(
-                    """
-                    SELECT * FROM forecasts
-                    WHERE region_name = ?
-                    ORDER BY timestamp DESC
-                    LIMIT ? OFFSET ?
-                    """,
-                    (region_name, limit, offset),
-                )
-            else:
-                cursor.execute(
-                    """
-                    SELECT * FROM forecasts
-                    ORDER BY timestamp DESC
-                    LIMIT ? OFFSET ?
-                    """,
-                    (limit, offset),
-                )
+                conditions.append("region_name LIKE ?")
+                params.append(f"%{region_name}%")
+
+            if date_from:
+                conditions.append("timestamp >= ?")
+                params.append(date_from)
+
+            if date_to:
+                conditions.append("timestamp <= ?")
+                params.append(date_to)
+
+            where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+            query = f"""
+                SELECT * FROM forecasts
+                WHERE {where_clause}
+                ORDER BY timestamp {sort_order}
+                LIMIT ? OFFSET ?
+            """
+
+            params.extend([limit, offset])
+
+            cursor.execute(query, params)
 
             rows = cursor.fetchall()
             forecasts = []
