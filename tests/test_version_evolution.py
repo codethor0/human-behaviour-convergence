@@ -1,13 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for version evolution, deprecation, and misuse detection."""
-import pytest
 
 from app.core.versioning import (
-    DeprecationRegistry,
-    DeprecationStatus,
-    MisuseDetector,
-    VersionChecker,
-    VersionMismatch,
     get_deprecation_registry,
     get_misuse_detector,
     get_version_checker,
@@ -214,7 +208,6 @@ class TestMetaVersionEvolution:
 
         # Simulate frontend expecting different version
         has_partial, error = checker.check_partial_upgrade(frontend_version="1.0.0")
-        mismatches = checker.get_mismatches()
         # May or may not detect depending on backend version
         assert isinstance(has_partial, bool)
 
