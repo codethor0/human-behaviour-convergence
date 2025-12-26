@@ -111,7 +111,11 @@ test.describe('Forecast History Smoke Tests', () => {
     // Wait for page to load and network to be idle
     await page.waitForLoadState('networkidle');
 
-    // Wait for history container
+    // First verify the page loaded at all - check for the h1 title
+    const pageTitle = page.locator('h1:has-text("Forecast History")');
+    await expect(pageTitle).toBeVisible({ timeout: 30000 });
+
+    // Wait for history container (it appears after loading completes)
     const historyContainer = page.getByTestId('forecast-history-container');
     await expect(historyContainer).toBeVisible({ timeout: 30000 });
 
