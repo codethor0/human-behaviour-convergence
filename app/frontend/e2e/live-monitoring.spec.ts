@@ -29,6 +29,14 @@ test.describe('Live Monitoring - Selection Tests', () => {
   });
 
   test('Test 4: Exactly 1 region selection', async ({ page }) => {
+    // Wait for regions to be loaded (checkboxes must exist)
+    await page.waitForSelector('input[type="checkbox"]', { timeout: 30000 });
+    const checkboxes = page.locator('input[type="checkbox"]');
+    const checkboxCount = await checkboxes.count();
+    if (checkboxCount === 0) {
+      throw new Error('No regions available - regions failed to load');
+    }
+    
     // Clear all selections
     await page.click('[data-testid="live-clear-selection"]');
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0 regions');
@@ -77,6 +85,14 @@ test.describe('Live Monitoring - Selection Tests', () => {
   });
 
   test('Test 5: Exactly 3 regions selection', async ({ page }) => {
+    // Wait for regions to be loaded (checkboxes must exist)
+    await page.waitForSelector('input[type="checkbox"]', { timeout: 30000 });
+    const checkboxes = page.locator('input[type="checkbox"]');
+    const checkboxCount = await checkboxes.count();
+    if (checkboxCount < 3) {
+      throw new Error(`Only ${checkboxCount} regions available, need at least 3`);
+    }
+    
     // Clear all selections
     await page.click('[data-testid="live-clear-selection"]');
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0 regions');
