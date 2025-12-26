@@ -137,10 +137,11 @@ export default function HistoryPage() {
           </section>
         )}
 
-        {loading ? (
-          <p data-testid="history-loading">Loading forecast history...</p>
-        ) : (
-          <div data-testid="forecast-history-container">
+        <div data-testid="forecast-history-container">
+          {loading ? (
+            <p data-testid="history-loading">Loading forecast history...</p>
+          ) : (
+            <>
             {history.length === 0 ? (
               <p>No forecast history found.</p>
             ) : (
@@ -202,8 +203,9 @@ export default function HistoryPage() {
                 </table>
               </div>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </main>
     </>
   );
