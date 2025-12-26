@@ -367,10 +367,10 @@ class LiveMonitor:
                 snapshots = self.get_snapshots(
                     region_id, time_window_minutes=time_window_minutes
                 )
-                
+
                 # Compute intelligence data
                 intelligence = self._compute_intelligence(latest, snapshots)
-                
+
                 summary["regions"][region_id] = {
                     "latest": latest.to_dict(),
                     "history": [s.to_dict() for s in snapshots],
@@ -422,7 +422,9 @@ class LiveMonitor:
                 if isinstance(value, (int, float))
             ]
             # Sort by contribution score descending, take top 3
-            index_contributions.sort(key=lambda x: x["contribution_score"], reverse=True)
+            index_contributions.sort(
+                key=lambda x: x["contribution_score"], reverse=True
+            )
             top_indices = index_contributions[:3]
 
         # Detect shocks from history
