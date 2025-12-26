@@ -241,22 +241,26 @@ export default function LivePage() {
               <button
                 type="button"
                 onClick={() => {
+                  if (regions.length === 0) return;
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
                   setSelectedRegions([sortedRegions[0]?.id].filter(Boolean));
                 }}
+                disabled={regions.length === 0}
                 data-testid="live-select-1"
-                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: regions.length === 0 ? '#ccc' : '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: regions.length === 0 ? 'not-allowed' : 'pointer' }}
               >
                 Select 1
               </button>
               <button
                 type="button"
                 onClick={() => {
+                  if (regions.length < 3) return;
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
                   setSelectedRegions(sortedRegions.slice(0, 3).map(r => r.id));
                 }}
+                disabled={regions.length < 3}
                 data-testid="live-select-3"
-                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                style={{ padding: '4px 8px', fontSize: 12, backgroundColor: regions.length < 3 ? '#ccc' : '#0070f3', color: 'white', border: 'none', borderRadius: 4, cursor: regions.length < 3 ? 'not-allowed' : 'pointer' }}
               >
                 Select 3
               </button>
