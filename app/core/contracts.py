@@ -15,7 +15,9 @@ logger = structlog.get_logger("core.contracts")
 class ContractViolation(Exception):
     """Exception raised when a contract is violated."""
 
-    def __init__(self, contract_name: str, message: str, details: Optional[Dict] = None):
+    def __init__(
+        self, contract_name: str, message: str, details: Optional[Dict] = None
+    ):
         super().__init__(f"Contract violation: {contract_name} - {message}")
         self.contract_name = contract_name
         self.message = message
@@ -113,18 +115,32 @@ class ContractRegistry:
         for field, expected_type in schema.items():
             if field in data:
                 actual_value = data[field]
-                if expected_type == "float" and not isinstance(actual_value, (int, float)):
-                    violations.append(f"Field {field} must be float, got {type(actual_value)}")
+                if expected_type == "float" and not isinstance(
+                    actual_value, (int, float)
+                ):
+                    violations.append(
+                        f"Field {field} must be float, got {type(actual_value)}"
+                    )
                 elif expected_type == "int" and not isinstance(actual_value, int):
-                    violations.append(f"Field {field} must be int, got {type(actual_value)}")
+                    violations.append(
+                        f"Field {field} must be int, got {type(actual_value)}"
+                    )
                 elif expected_type == "str" and not isinstance(actual_value, str):
-                    violations.append(f"Field {field} must be str, got {type(actual_value)}")
+                    violations.append(
+                        f"Field {field} must be str, got {type(actual_value)}"
+                    )
                 elif expected_type == "bool" and not isinstance(actual_value, bool):
-                    violations.append(f"Field {field} must be bool, got {type(actual_value)}")
+                    violations.append(
+                        f"Field {field} must be bool, got {type(actual_value)}"
+                    )
                 elif expected_type == "list" and not isinstance(actual_value, list):
-                    violations.append(f"Field {field} must be list, got {type(actual_value)}")
+                    violations.append(
+                        f"Field {field} must be list, got {type(actual_value)}"
+                    )
                 elif expected_type == "dict" and not isinstance(actual_value, dict):
-                    violations.append(f"Field {field} must be dict, got {type(actual_value)}")
+                    violations.append(
+                        f"Field {field} must be dict, got {type(actual_value)}"
+                    )
 
         # Check for removed fields (regression detection)
         if name in self._snapshots:
@@ -161,7 +177,9 @@ class ContractRegistry:
 
         return is_valid, error_msg, violations
 
-    def detect_regression(self, name: str, current_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    def detect_regression(
+        self, name: str, current_data: Dict[str, Any]
+    ) -> Tuple[bool, Optional[str]]:
         """
         Detect regression by comparing current data to snapshot.
 
@@ -186,8 +204,14 @@ class ContractRegistry:
             return True, f"Fields removed: {removed_fields}"
 
         # Detect renamed fields (heuristic: same count, different names)
-        if len(snapshot_fields) == len(current_fields) and snapshot_fields != current_fields:
-            return True, f"Field structure changed: {snapshot_fields} -> {current_fields}"
+        if (
+            len(snapshot_fields) == len(current_fields)
+            and snapshot_fields != current_fields
+        ):
+            return (
+                True,
+                f"Field structure changed: {snapshot_fields} -> {current_fields}",
+            )
 
         return False, None
 
@@ -253,7 +277,13 @@ class SemanticDriftDetector:
         Returns:
             Tuple of (has_drift, error_message)
         """
-        tier_order = {"stable": 0, "watchlist": 1, "elevated": 2, "high": 3, "critical": 4}
+        tier_order = {
+            "stable": 0,
+            "watchlist": 1,
+            "elevated": 2,
+            "high": 3,
+            "critical": 4,
+        }
         order1 = tier_order.get(tier1, -1)
         order2 = tier_order.get(tier2, -1)
 
@@ -270,8 +300,13 @@ class SemanticDriftDetector:
                 "tier2": tier2,
             }
             self._drift_detected.append(drift_info)
-            logger.warning("Semantic drift detected: risk tier monotonicity", **drift_info)
-            return True, f"Risk score {risk_score1} ({tier1}) < {risk_score2} ({tier2}) but tier order violated"
+            logger.warning(
+                "Semantic drift detected: risk tier monotonicity", **drift_info
+            )
+            return (
+                True,
+                f"Risk score {risk_score1} ({tier1}) < {risk_score2} ({tier2}) but tier order violated",
+            )
 
         return False, None
 
@@ -297,9 +332,13 @@ class SemanticDriftDetector:
             }
             self._drift_detected.append(drift_info)
             logger.warning(
-                "Semantic drift detected: confidence-volatility relationship", **drift_info
+                "Semantic drift detected: confidence-volatility relationship",
+                **drift_info,
             )
-            return True, f"High volatility ({volatility}) but high confidence ({confidence})"
+            return (
+                True,
+                f"High volatility ({volatility}) but high confidence ({confidence})",
+            )
 
         return False, None
 
@@ -325,7 +364,10 @@ class SemanticDriftDetector:
             }
             self._drift_detected.append(drift_info)
             logger.warning("Semantic drift detected: convergence meaning", **drift_info)
-            return True, f"High convergence score ({score}) but few reinforcing signals ({len(reinforcing_signals)})"
+            return (
+                True,
+                f"High convergence score ({score}) but few reinforcing signals ({len(reinforcing_signals)})",
+            )
 
         return False, None
 
@@ -369,7 +411,9 @@ class ContractObservability:
         """
         key = f"{contract_name}:{severity}"
         self._violation_counts[key] = self._violation_counts.get(key, 0) + 1
-        self._violation_by_severity[severity] = self._violation_by_severity.get(severity, 0) + 1
+        self._violation_by_severity[severity] = (
+            self._violation_by_severity.get(severity, 0) + 1
+        )
 
         logger.warning(
             "Contract violation recorded",

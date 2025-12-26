@@ -102,7 +102,9 @@ class TestContractRegistry:
 
         # Current data missing field2
         current_data = {"field1": "value"}
-        has_regression, error = registry.detect_regression("TEST-CONTRACT", current_data)
+        has_regression, error = registry.detect_regression(
+            "TEST-CONTRACT", current_data
+        )
         assert has_regression
         assert "Fields removed" in error
 
@@ -120,7 +122,9 @@ class TestContractRegistry:
         registry.snapshot("TEST-CONTRACT", snapshot_data)
 
         current_data = {"field1": "value", "field2": 42}
-        has_regression, error = registry.detect_regression("TEST-CONTRACT", current_data)
+        has_regression, error = registry.detect_regression(
+            "TEST-CONTRACT", current_data
+        )
         assert not has_regression
         assert error is None
 

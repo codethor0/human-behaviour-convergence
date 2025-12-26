@@ -74,21 +74,27 @@ class TestVersionChecker:
     def test_check_compatible_versions(self):
         """Compatible versions should pass."""
         checker = get_version_checker()
-        is_compatible, error = checker.check_version_compatibility("0.1.0", "0.1.0", "test")
+        is_compatible, error = checker.check_version_compatibility(
+            "0.1.0", "0.1.0", "test"
+        )
         assert is_compatible
         assert error is None
 
     def test_check_major_version_mismatch(self):
         """Major version mismatch should fail."""
         checker = get_version_checker()
-        is_compatible, error = checker.check_version_compatibility("1.0.0", "2.0.0", "test")
+        is_compatible, error = checker.check_version_compatibility(
+            "1.0.0", "2.0.0", "test"
+        )
         assert not is_compatible
         assert "major" in error.lower()
 
     def test_check_minor_version_mismatch(self):
         """Minor version mismatch should warn but be compatible."""
         checker = get_version_checker()
-        is_compatible, error = checker.check_version_compatibility("0.1.0", "0.2.0", "test")
+        is_compatible, error = checker.check_version_compatibility(
+            "0.1.0", "0.2.0", "test"
+        )
         assert is_compatible  # Minor versions are compatible but may cause issues
         assert error is not None
         assert "minor" in error.lower()
@@ -96,7 +102,9 @@ class TestVersionChecker:
     def test_check_patch_version_mismatch(self):
         """Patch version mismatch should be compatible."""
         checker = get_version_checker()
-        is_compatible, error = checker.check_version_compatibility("0.1.0", "0.1.1", "test")
+        is_compatible, error = checker.check_version_compatibility(
+            "0.1.0", "0.1.1", "test"
+        )
         assert is_compatible
         assert error is None
 
@@ -157,7 +165,10 @@ class TestMisuseDetector:
     def test_check_dangerous_parameters_extreme_values(self):
         """Extreme parameter values should warn."""
         detector = get_misuse_detector()
-        scenario_config = {"economic_stress_offset": 0.9, "environmental_stress_offset": -0.85}
+        scenario_config = {
+            "economic_stress_offset": 0.9,
+            "environmental_stress_offset": -0.85,
+        }
         has_misuse, warning = detector.check_dangerous_parameters(scenario_config)
         assert has_misuse
         assert warning is not None
@@ -166,14 +177,18 @@ class TestMisuseDetector:
     def test_check_misleading_defaults_valid(self):
         """Valid defaults should pass."""
         detector = get_misuse_detector()
-        has_misuse, warning = detector.check_misleading_defaults("New York", region_id="city_nyc")
+        has_misuse, warning = detector.check_misleading_defaults(
+            "New York", region_id="city_nyc"
+        )
         assert not has_misuse
         assert warning is None
 
     def test_check_misleading_defaults_invalid(self):
         """Unknown region without region_id should warn."""
         detector = get_misuse_detector()
-        has_misuse, warning = detector.check_misleading_defaults("Unknown", region_id=None)
+        has_misuse, warning = detector.check_misleading_defaults(
+            "Unknown", region_id=None
+        )
         assert has_misuse
         assert warning is not None
         assert "unknown" in warning.lower()
@@ -217,7 +232,9 @@ class TestMetaVersionEvolution:
         detector.clear_misuse()
 
         # Scenario 1: Extreme forecast horizon
-        has_misuse, _ = detector.check_configuration_combination(days_back=10, forecast_horizon=8)
+        has_misuse, _ = detector.check_configuration_combination(
+            days_back=10, forecast_horizon=8
+        )
         assert has_misuse
 
         # Scenario 2: Extreme parameters
@@ -255,7 +272,9 @@ class TestVersionEvolutionIntegration:
             "metadata": {},
             "explanation": "test",  # Deprecated field
         }
-        warning = registry.check_deprecation("API-FORECAST-RESULT", "explanation", result_dict)
+        warning = registry.check_deprecation(
+            "API-FORECAST-RESULT", "explanation", result_dict
+        )
         assert warning is not None
 
     def test_version_check_in_status_endpoint(self):
