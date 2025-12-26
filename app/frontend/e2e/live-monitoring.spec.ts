@@ -29,8 +29,11 @@ test.describe('Live Monitoring - Selection Tests', () => {
   });
 
   test('Test 4: Exactly 1 region selection', async ({ page }) => {
-    // Wait for regions to be loaded (checkboxes must exist)
-    await page.waitForSelector('input[type="checkbox"]', { timeout: 30000 });
+    // Wait for regions to be loaded - wait for select-1 button to be enabled (proves regions state is populated)
+    const select1Button = page.locator('[data-testid="live-select-1"]');
+    await expect(select1Button).toBeEnabled({ timeout: 30000 });
+    
+    // Verify checkboxes exist
     const checkboxes = page.locator('input[type="checkbox"]');
     const checkboxCount = await checkboxes.count();
     if (checkboxCount === 0) {
@@ -40,10 +43,6 @@ test.describe('Live Monitoring - Selection Tests', () => {
     // Clear all selections
     await page.click('[data-testid="live-clear-selection"]');
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0 regions');
-    
-    // Wait for select-1 button to be enabled (regions loaded)
-    const select1Button = page.locator('[data-testid="live-select-1"]');
-    await expect(select1Button).toBeEnabled({ timeout: 30000 });
     // Select exactly 1 region
     await select1Button.click();
     // Wait for state to update (React state update is async)
