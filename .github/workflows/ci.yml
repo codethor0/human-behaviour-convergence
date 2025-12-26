@@ -742,7 +742,10 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: app/frontend
-        run: npm ci
+        run: |
+          # Clean up any Docker-created files that might have permission issues
+          sudo rm -rf node_modules .next || true
+          npm ci
 
       - name: Install Playwright browsers
         working-directory: app/frontend
