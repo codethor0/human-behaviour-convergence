@@ -299,7 +299,7 @@ def check_factor_ranking_order_independence(
         return True, None  # Not enough factors to check ordering
     
     # Sort by signal strength (descending)
-    sorted_factors = sorted(signal_strengths, key=lambda x: x[1], reverse=True)
+    sorted(signal_strengths, key=lambda x: x[1], reverse=True)
     
     # Check that ranking is deterministic (all factors have distinct signal strengths or consistent ordering)
     # This is a weak check - full order independence requires testing with shuffled inputs
