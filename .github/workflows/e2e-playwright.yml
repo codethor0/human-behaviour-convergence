@@ -63,6 +63,7 @@ jobs:
         working-directory: .
         env:
           PYTHONPATH: ${{ github.workspace }}
+          ALLOWED_ORIGINS: http://localhost:3003,http://127.0.0.1:3003
         run: |
           python -m uvicorn app.backend.app.main:app --host 127.0.0.1 --port 8100 --log-level info > /tmp/backend.log 2>&1 &
           echo $! > /tmp/backend.pid
