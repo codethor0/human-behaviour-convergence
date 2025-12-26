@@ -495,7 +495,7 @@ jobs:
             exit 1
           fi
 
-      - name: Check for emojis in Markdown files
+      - name: Check for emojis in Markdown and code files
         run: python3 .github/scripts/check_no_emoji.py
 
   lint-format:

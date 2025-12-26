@@ -1185,7 +1185,7 @@ def main():
     failed = len(results) - passed
 
     for result in results:
-        status = "✓" if result.success and not result.validation_errors else "✗"
+        status = "PASS" if result.success and not result.validation_errors else "FAIL"
         print(f"{status} {result.method} {result.endpoint}")
         if result.validation_errors:
             for error in result.validation_errors:

@@ -8,9 +8,9 @@ This document describes the GitHub repository settings required for automated De
 
 **Path:** Repository Settings → General → Pull Requests → Allow auto-merge
 
-- ✅ Enable "Allow auto-merge"
-- ✅ Enable "Allow squash merging"
-- ✅ Set default merge method to "Squash and merge"
+- [OK] Enable "Allow auto-merge"
+- [OK] Enable "Allow squash merging"
+- [OK] Set default merge method to "Squash and merge"
 
 ### 2. Configure Auto-Merge Rules
 
@@ -29,7 +29,7 @@ Create rules for Dependabot PRs:
 
 **Path:** Repository Settings → General → Pull Requests
 
-- ✅ Enable "Automatically delete head branches"
+- [OK] Enable "Automatically delete head branches"
 
 This will automatically delete branches after PRs are merged.
 
@@ -37,9 +37,9 @@ This will automatically delete branches after PRs are merged.
 
 **Path:** Repository Settings → Security → Dependabot → Auto-merge
 
-- ✅ Enable "Allow auto-merge"
-- ✅ Enable "Merge only when CI is green"
-- ✅ Enable "Merge only when diff is non-breaking"
+- [OK] Enable "Allow auto-merge"
+- [OK] Enable "Merge only when CI is green"
+- [OK] Enable "Merge only when diff is non-breaking"
 
 **Note:** These settings are configured via `.github/dependabot.yml` and the branch hygiene workflow.
 
