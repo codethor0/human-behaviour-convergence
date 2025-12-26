@@ -46,7 +46,7 @@ def extract_links(file_path: Path) -> list[tuple[int, str, str]]:
     """Extract all markdown links from a file. Returns list of (line_num, link_text, target)."""
     links = []
     link_pattern = re.compile(r"!?\[(?P<text>[^\]]+)\]\((?P<target>[^)]+)\)")
-    
+
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             for line_num, line in enumerate(f, start=1):
@@ -56,7 +56,7 @@ def extract_links(file_path: Path) -> list[tuple[int, str, str]]:
                     links.append((line_num, link_text, target))
     except Exception as e:
         print(f"Error reading {file_path}: {e}", file=sys.stderr)
-    
+
     return links
 
 
@@ -77,19 +77,19 @@ def resolve_link_path(base_file: Path, target: str) -> tuple[Path | None, str]:
     else:
         path_part = target
         anchor = ""
-    
+
     # Pure anchor (starts with #)
     if target.startswith("#"):
         return (base_file, anchor.lstrip("#"))
-    
+
     # Empty path means current file
     if not path_part:
         return (base_file, anchor)
-    
+
     # Resolve relative path
     base_dir = base_file.parent
     resolved = (base_dir / path_part).resolve()
-    
+
     # Check if resolved path is within repo root
     repo_root = Path(__file__).parent.parent.parent
     try:
@@ -97,7 +97,7 @@ def resolve_link_path(base_file: Path, target: str) -> tuple[Path | None, str]:
     except ValueError:
         # Path outside repo - treat as broken
         return (None, anchor)
-    
+
     return (resolved, anchor)
 
 
@@ -112,14 +112,14 @@ def get_tracked_markdown_files(root: Path) -> list[Path]:
             check=True,
         )
         tracked_paths = [f.strip() for f in result.stdout.splitlines() if f.strip()]
-        
+
         md_files = []
         for path_str in tracked_paths:
             if path_str.endswith((".md", ".markdown")):
                 file_path = root / path_str
                 if file_path.exists():
                     md_files.append(file_path)
-        
+
         return md_files
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"[WARNING] Git command failed: {e}", file=sys.stderr)
@@ -128,9 +128,17 @@ def get_tracked_markdown_files(root: Path) -> list[Path]:
         for ext in (".md", ".markdown"):
             md_files.extend(root.glob(f"**/*{ext}"))
         # Exclude common build/dep directories
-        excluded_dirs = {".git", "node_modules", ".venv", ".next", "playwright-report", "test-results"}
+        excluded_dirs = {
+            ".git",
+            "node_modules",
+            ".venv",
+            ".next",
+            "playwright-report",
+            "test-results",
+        }
         md_files = [
-            f for f in md_files
+            f
+            for f in md_files
             if not any(part in excluded_dirs for part in f.relative_to(root).parts)
         ]
         return md_files
@@ -139,34 +147,34 @@ def get_tracked_markdown_files(root: Path) -> list[Path]:
 def main():
     root = Path(__file__).parent.parent.parent
     md_files = get_tracked_markdown_files(root)
-    
+
     violations = []
-    
+
     for md_file in sorted(md_files):
         rel_path = md_file.relative_to(root)
         links = extract_links(md_file)
-        
+
         for line_num, link_text, target in links:
             # Skip external links
             if is_external_link(target):
                 continue
-            
+
             # Resolve link path and anchor
             resolved_path, anchor = resolve_link_path(md_file, target)
-            
+
             # Check file existence
             if resolved_path is None:
                 violations.append(
                     f"{rel_path}:{line_num}: invalid link target: {target}"
                 )
                 continue
-            
+
             if not resolved_path.exists():
                 violations.append(
                     f"{rel_path}:{line_num}: missing target file: {target}"
                 )
                 continue
-            
+
             # Check anchor if present
             if anchor:
                 headings = extract_headings(resolved_path)
@@ -176,7 +184,7 @@ def main():
                     violations.append(
                         f"{rel_path}:{line_num}: missing heading anchor '{anchor}' in {target_rel}"
                     )
-    
+
     if violations:
         print("[FAIL] Broken internal markdown links found:")
         for violation in violations:
@@ -189,4 +197,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
