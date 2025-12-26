@@ -108,12 +108,35 @@ test.describe('Forecast History Smoke Tests', () => {
   test('History page loads with filters', async ({ page }) => {
     await page.goto('/history');
 
-    // Wait for page to load and network to be idle
+    // Wait for page to load
+    await page.waitForLoadState('domcontentloaded');
+
+    // Check if we got a 404 page
+    const pageUrl = page.url();
+    if (pageUrl.includes('404') || pageUrl.includes('_error')) {
+      throw new Error(`Page returned 404 or error page. URL: ${pageUrl}`);
+    }
+
+    // Take a screenshot for debugging if the page doesn't load
+    const bodyText = await page.textContent('body').catch(() => '');
+    if (bodyText && (bodyText.includes('404') || bodyText.includes('Not Found'))) {
+      await page.screenshot({ path: 'test-results/history-404.png' });
+      throw new Error('Page returned 404 - route /history not found');
+    }
+
+    // Wait for network to be idle (API calls complete)
     await page.waitForLoadState('networkidle');
 
     // First verify the page loaded at all - check for the h1 title
     const pageTitle = page.locator('h1:has-text("Forecast History")');
-    await expect(pageTitle).toBeVisible({ timeout: 30000 });
+    try {
+      await expect(pageTitle).toBeVisible({ timeout: 30000 });
+    } catch (e) {
+      // If h1 not found, take a screenshot and check what's actually on the page
+      await page.screenshot({ path: 'test-results/history-no-h1.png' });
+      const actualBody = await page.textContent('body').catch(() => '');
+      throw new Error(`h1 "Forecast History" not found. Page body preview: ${actualBody.substring(0, 200)}`);
+    }
 
     // Wait for history container (it appears after loading completes)
     const historyContainer = page.getByTestId('forecast-history-container');
