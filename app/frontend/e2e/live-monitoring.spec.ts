@@ -41,10 +41,12 @@ test.describe('Live Monitoring - Selection Tests', () => {
     await page.click('[data-testid="live-clear-selection"]');
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 0 regions');
     
+    // Wait for select-1 button to be enabled (regions loaded)
+    const select1Button = page.locator('[data-testid="live-select-1"]');
+    await expect(select1Button).toBeEnabled({ timeout: 30000 });
     // Select exactly 1 region
-    await page.click('[data-testid="live-select-1"]');
+    await select1Button.click();
     // Wait for state to update (React state update is async)
-    await page.waitForTimeout(500);
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 1 regions', { timeout: 10000 });
     
     // Wait for the request and capture it
@@ -104,9 +106,11 @@ test.describe('Live Monitoring - Selection Tests', () => {
       test.skip(`Only ${checkboxCount} regions available, need at least 3`);
       return;
     }
-    await page.click('[data-testid="live-select-3"]');
+    // Wait for select-3 button to be enabled (regions loaded)
+    const select3Button = page.locator('[data-testid="live-select-3"]');
+    await expect(select3Button).toBeEnabled({ timeout: 30000 });
+    await select3Button.click();
     // Wait for state to update (React state update is async)
-    await page.waitForTimeout(500);
     await expect(page.locator('[data-testid="live-selected-count"]')).toHaveText('Selected: 3 regions', { timeout: 10000 });
     
     // Wait for the request and capture it
