@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for forecasting API endpoints."""
+import os
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -158,3 +159,78 @@ class TestForecastingEndpoints:
             },
         )
         assert response.status_code == 422
+
+    @patch("app.backend.app.main.BehavioralForecaster")
+    def test_forecast_history_integration(self, mock_forecaster_class, tmp_path):
+        """Test that POST /api/forecast saves to DB and GET /api/forecasting/history retrieves it."""
+        # Set up temporary database path
+        db_path = tmp_path / "test_forecast_history.db"
+        os.environ["HBC_DB_PATH"] = str(db_path)
+
+        try:
+            # Mock the forecaster
+            mock_forecaster = MagicMock()
+            mock_result = {
+                "history": [
+                    {"timestamp": "2025-01-01", "behavior_index": 0.5},
+                    {"timestamp": "2025-01-02", "behavior_index": 0.6},
+                ],
+                "forecast": [
+                    {
+                        "timestamp": "2025-01-08",
+                        "prediction": 0.65,
+                        "lower_bound": 0.6,
+                        "upper_bound": 0.7,
+                    }
+                ],
+                "sources": ["yfinance (VIX/SPY)", "openmeteo.com (Weather)"],
+                "metadata": {
+                    "region_name": "New York City",
+                    "latitude": 40.7128,
+                    "longitude": -74.0060,
+                    "forecast_date": "2025-01-07T00:00:00",
+                    "forecast_horizon": 7,
+                    "historical_data_points": 2,
+                    "model_type": "ExponentialSmoothing (Holt-Winters)",
+                    "sources": ["yfinance (VIX/SPY)", "openmeteo.com (Weather)"],
+                },
+            }
+            mock_forecaster.forecast.return_value = mock_result
+            mock_forecaster_class.return_value = mock_forecaster
+
+            # Create a forecast
+            response = client.post(
+                "/api/forecast",
+                json={
+                    "latitude": 40.7128,
+                    "longitude": -74.0060,
+                    "region_name": "New York City",
+                    "days_back": 30,
+                    "forecast_horizon": 7,
+                },
+            )
+            assert response.status_code == 200
+
+            # Retrieve history
+            history_response = client.get("/api/forecasting/history")
+            assert history_response.status_code == 200
+            history_data = history_response.json()
+            assert isinstance(history_data, list)
+            assert len(history_data) > 0, "History should contain at least one forecast"
+
+            # Verify the saved forecast matches what we created
+            nyc_forecasts = [
+                f for f in history_data if f["region_name"] == "New York City"
+            ]
+            assert (
+                len(nyc_forecasts) > 0
+            ), "Should find New York City forecast in history"
+            forecast = nyc_forecasts[0]
+            assert forecast["latitude"] == 40.7128
+            assert forecast["longitude"] == -74.0060
+            assert forecast["forecast_horizon"] == 7
+            assert forecast["model_type"] == "ExponentialSmoothing (Holt-Winters)"
+        finally:
+            # Clean up environment variable
+            if "HBC_DB_PATH" in os.environ:
+                del os.environ["HBC_DB_PATH"]

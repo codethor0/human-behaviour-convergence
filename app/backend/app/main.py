@@ -1646,8 +1646,10 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
     # Store forecast in database (if available)
     try:
         db = ForecastDB()
+        # Ensure region_name is never None (use same fallback as forecaster call)
+        region_name_for_db = payload.region_name or "Unknown"
         db.save_forecast(
-            region_name=payload.region_name,
+            region_name=region_name_for_db,
             latitude=latitude,
             longitude=longitude,
             model_name=metadata.get("model_type", "ExponentialSmoothing"),
@@ -1667,7 +1669,9 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         )
     except Exception as e:
         # Database is optional, log but don't fail
-        logger.warning("Failed to save forecast to database", error=str(e))
+        logger.warning(
+            "Failed to save forecast to database", error=str(e), exc_info=True
+        )
 
     # Extract intelligence layer data from result
     shock_events = (

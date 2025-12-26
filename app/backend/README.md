@@ -14,7 +14,9 @@ forecasts and historical data.
 - `GET /api/forecasting/models` – List available forecasting models
 - `GET /api/forecasting/status` – System health and component status
 - `GET /api/forecasting/history` – Historical forecasts
-  (prepared for future database integration)
+  - Query parameters: `region_name` (optional), `limit` (default: 100, max: 1000)
+  - Returns list of historical forecast entries with metadata and accuracy scores
+  - Forecasts are automatically saved to SQLite database when created via `POST /api/forecast`
 
 ## Data Endpoints
 
