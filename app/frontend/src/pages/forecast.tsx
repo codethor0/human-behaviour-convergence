@@ -308,7 +308,9 @@ export default function ForecastPage() {
         { id: 'city_tokyo', name: 'Tokyo', country: 'JP', region_type: 'city', latitude: 35.6762, longitude: 139.6503 },
       ];
       setRegions(fallback);
-      setSelectedRegion(fallback[0]);
+      if (fallback.length > 0 && fallback[0]) {
+        setSelectedRegion(fallback[0]);
+      }
     }
   };
 
@@ -462,11 +464,15 @@ export default function ForecastPage() {
                         const otherRegions: Region[] = [];
 
                         regions.forEach((r) => {
-                          if (r.region_group && regionGroups.includes(r.region_group)) {
-                            if (!groupedRegions[r.region_group]) {
-                              groupedRegions[r.region_group] = [];
+                          const group = r.region_group;
+                          if (group && regionGroups.includes(group)) {
+                            if (!groupedRegions[group]) {
+                              groupedRegions[group] = [];
                             }
-                            groupedRegions[r.region_group].push(r);
+                            const groupArray = groupedRegions[group];
+                            if (groupArray) {
+                              groupArray.push(r);
+                            }
                           } else {
                             otherRegions.push(r);
                           }

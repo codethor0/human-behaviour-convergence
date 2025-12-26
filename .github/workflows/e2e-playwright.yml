@@ -94,7 +94,7 @@ jobs:
           PORT=3003 npm run dev > /tmp/frontend.log 2>&1 &
           echo $! > /tmp/frontend.pid
           echo "Frontend PID: $(cat /tmp/frontend.pid)"
-          
+
           # Wait for frontend to be ready (poll up to 60 seconds)
           for i in {1..60}; do
             if curl -fsS http://127.0.0.1:3003/forecast >/dev/null 2>&1; then
@@ -146,7 +146,7 @@ jobs:
       - name: Run Playwright E2E tests
         working-directory: app/frontend
         run: |
-          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts --reporter=line
+          npx playwright test e2e/live-monitoring.spec.ts e2e/forecast.smoke.spec.ts e2e/playground.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line
         continue-on-error: false
 
       - name: Upload backend logs

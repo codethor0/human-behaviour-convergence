@@ -54,6 +54,9 @@ export default function HomePage() {
           <Link href="/live" style={{ textDecoration: 'underline', color: '#0070f3' }}>
             Live Monitoring
           </Link>
+          <Link href="/history" data-testid="nav-forecast-history" style={{ textDecoration: 'underline', color: '#0070f3' }}>
+            Forecast History
+          </Link>
           <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
             Results Dashboard
           </Link>
