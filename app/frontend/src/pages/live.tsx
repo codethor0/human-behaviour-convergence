@@ -249,9 +249,10 @@ export default function LivePage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (regions.length === 0) return;
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
-                  setSelectedRegions([sortedRegions[0]?.id].filter(Boolean));
+                  if (sortedRegions.length > 0) {
+                    setSelectedRegions([sortedRegions[0].id]);
+                  }
                 }}
                 disabled={regions.length === 0}
                 data-testid="live-select-1"
@@ -262,9 +263,10 @@ export default function LivePage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (regions.length < 3) return;
                   const sortedRegions = [...regions].sort((a, b) => a.id.localeCompare(b.id));
-                  setSelectedRegions(sortedRegions.slice(0, 3).map(r => r.id));
+                  if (sortedRegions.length >= 3) {
+                    setSelectedRegions(sortedRegions.slice(0, 3).map(r => r.id));
+                  }
                 }}
                 disabled={regions.length < 3}
                 data-testid="live-select-3"
