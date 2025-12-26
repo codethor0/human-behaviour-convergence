@@ -4,7 +4,7 @@
 
 ## Overview
 
-The interactive demo is a fully client-side forecasting simulation that runs entirely in the browser. No backend required—perfect for GitHub Pages deployment!
+The interactive demo is a fully client-side forecasting simulation that runs entirely in the browser. No backend required. Perfect for GitHub Pages deployment.
 
 ---
 

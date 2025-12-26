@@ -23,10 +23,10 @@ Build an interactive application that provides access to public-data-driven beha
 ---
 
 ## Product Pillars
-1. **Explainability** — interactive diagram with tooltips, maturity colouring, and code links.
-2. **Exploration** — charts, filters, and downloadable synthetic results.
-3. **Transparency** — embedded ethics statements, audit logs for downloads.
-4. **Extensibility** — documented API endpoints, modular architecture.
+1. **Explainability**: Interactive diagram with tooltips, maturity colouring, and code links.
+2. **Exploration**: Charts, filters, and downloadable synthetic results.
+3. **Transparency**: Embedded ethics statements, audit logs for downloads.
+4. **Extensibility**: Documented API endpoints, modular architecture.
 
 ---
 
