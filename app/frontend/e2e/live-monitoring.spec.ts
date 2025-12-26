@@ -5,24 +5,24 @@ test.describe('Live Monitoring - Selection Tests', () => {
     // Navigate to live monitoring page
     await page.goto('/live');
     
+    // Wait for regions API response to complete
+    const regionsResponse = await page.waitForResponse(
+      (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
+      { timeout: 30000 }
+    );
+    
+    // Verify response has data
+    const responseData = await regionsResponse.json();
+    if (!Array.isArray(responseData) || responseData.length === 0) {
+      throw new Error(`Regions API returned invalid data: ${JSON.stringify(responseData).substring(0, 100)}`);
+    }
+    
     // Wait for regions to load by checking for the selected count element
-    // This element only appears when regions have loaded successfully
     await page.waitForSelector('[data-testid="live-selected-count"]', { timeout: 30000 });
     
-    // Wait a bit for any error messages to clear
-    await page.waitForTimeout(1000);
-    
-    // Verify no error message is shown (only fail if error persists after regions should have loaded)
-    const errorText = page.locator('text=/Failed to load/i');
-    const errorVisible = await errorText.isVisible().catch(() => false);
-    if (errorVisible) {
-      // Double-check that regions actually loaded by checking for checkboxes
-      const checkboxes = page.locator('input[type="checkbox"]');
-      const checkboxCount = await checkboxes.count();
-      if (checkboxCount === 0) {
-        throw new Error('Regions failed to load - error message present and no regions available');
-      }
-    }
+    // Wait for select-1 button to be enabled (proves regions state is populated)
+    const select1Button = page.locator('[data-testid="live-select-1"]');
+    await expect(select1Button).toBeEnabled({ timeout: 30000 });
     
     // Wait for initial data fetch to complete
     await page.waitForLoadState('networkidle');
