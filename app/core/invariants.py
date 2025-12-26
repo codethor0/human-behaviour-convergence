@@ -24,7 +24,9 @@ class EnforcementStrategy(Enum):
 class InvariantViolation(Exception):
     """Exception raised when a critical invariant is violated."""
 
-    def __init__(self, invariant_name: str, message: str, details: Optional[Dict] = None):
+    def __init__(
+        self, invariant_name: str, message: str, details: Optional[Dict] = None
+    ):
         super().__init__(f"Invariant violation: {invariant_name} - {message}")
         self.invariant_name = invariant_name
         self.message = message
@@ -151,7 +153,10 @@ def get_registry() -> InvariantRegistry:
 
 # Invariant check functions
 
-def check_weight_sum(weights: Dict[str, float], tolerance: float = 0.01) -> Tuple[bool, Optional[str]]:
+
+def check_weight_sum(
+    weights: Dict[str, float], tolerance: float = 0.01
+) -> Tuple[bool, Optional[str]]:
     """Check INV-001: Weight normalization."""
     total = sum(weights.values())
     diff = abs(total - 1.0)
@@ -160,7 +165,9 @@ def check_weight_sum(weights: Dict[str, float], tolerance: float = 0.01) -> Tupl
     return True, None
 
 
-def check_range_bounded(value: float, min_val: float, max_val: float) -> Tuple[bool, Optional[str]]:
+def check_range_bounded(
+    value: float, min_val: float, max_val: float
+) -> Tuple[bool, Optional[str]]:
     """Check INV-002, INV-003, INV-004: Range bounds."""
     if value < min_val or value > max_val:
         return False, f"Value {value} outside range [{min_val}, {max_val}]"
@@ -178,10 +185,15 @@ def check_contribution_reconciliation(
     components: Dict[str, Dict[str, float]], output: float, tolerance: float = 0.01
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-021: Contribution reconciliation."""
-    sum_contributions = sum(comp.get("contribution", 0.0) for comp in components.values())
+    sum_contributions = sum(
+        comp.get("contribution", 0.0) for comp in components.values()
+    )
     diff = abs(sum_contributions - output)
     if diff > tolerance:
-        return False, f"Contributions sum to {sum_contributions}, output is {output} (diff: {diff})"
+        return (
+            False,
+            f"Contributions sum to {sum_contributions}, output is {output} (diff: {diff})",
+        )
     return True, None
 
 
@@ -198,7 +210,10 @@ def check_risk_tier_monotonicity(
 
     # If score1 < score2, then order1 <= order2
     if risk_score1 < risk_score2 and order1 > order2:
-        return False, f"Risk score {risk_score1} ({tier1}) < {risk_score2} ({tier2}) but tier order violated"
+        return (
+            False,
+            f"Risk score {risk_score1} ({tier1}) < {risk_score2} ({tier2}) but tier order violated",
+        )
     return True, None
 
 
@@ -209,7 +224,10 @@ def check_confidence_volatility_consistency(
     # High volatility should produce lower confidence
     # This is enforced by the formula, but we check for obvious violations
     if volatility > 0.7 and confidence > 0.7:
-        return False, f"High volatility ({volatility}) but high confidence ({confidence})"
+        return (
+            False,
+            f"High volatility ({volatility}) but high confidence ({confidence})",
+        )
     return True, None
 
 
@@ -251,7 +269,7 @@ def check_volatility_classification_consistency(
         expected = "medium"
     else:
         expected = "high"
-    
+
     if volatility_classification != expected:
         return False, (
             f"Volatility classification '{volatility_classification}' inconsistent with "
@@ -279,14 +297,12 @@ def check_missing_factor_confidence(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-Q04: Missing factor data does not inflate confidence."""
     if not has_data and confidence > 0.5:
-        return False, (
-            f"Missing factor data but confidence {confidence} > 0.5"
-        )
+        return False, (f"Missing factor data but confidence {confidence} > 0.5")
     return True, None
 
 
 def check_factor_ranking_order_independence(
-    factors: List[Dict[str, Any]]
+    factors: List[Dict[str, Any]],
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-Q05: Factor ranking order-independent."""
     # Extract signal strengths
@@ -294,13 +310,13 @@ def check_factor_ranking_order_independence(
     for factor in factors:
         if "signal_strength" in factor:
             signal_strengths.append((factor["id"], factor["signal_strength"]))
-    
+
     if len(signal_strengths) < 2:
         return True, None  # Not enough factors to check ordering
-    
+
     # Sort by signal strength (descending)
     sorted(signal_strengths, key=lambda x: x[1], reverse=True)
-    
+
     # Check that ranking is deterministic (all factors have distinct signal strengths or consistent ordering)
     # This is a weak check - full order independence requires testing with shuffled inputs
     return True, None
@@ -314,13 +330,15 @@ def check_narrative_reconciliation(
     """Check INV-N01: Narrative must reconcile to top-N factor contributions."""
     if len(narrative_drivers) == 0:
         return True, None  # Empty narrative is valid
-    
+
     # Extract driver contributions
-    driver_contributions = {d["factor_id"]: abs(d.get("contribution", 0.0)) for d in narrative_drivers}
-    
+    driver_contributions = {
+        d["factor_id"]: abs(d.get("contribution", 0.0)) for d in narrative_drivers
+    }
+
     # Extract top factor contributions
     top_contributions = {f["id"]: abs(f.get("contribution", 0.0)) for f in top_factors}
-    
+
     # Check that narrative drivers are among top factors (within tolerance)
     for driver_id, driver_contrib in driver_contributions.items():
         if driver_id not in top_contributions:
@@ -331,7 +349,7 @@ def check_narrative_reconciliation(
                 f"Narrative driver {driver_id} contribution {driver_contrib} "
                 f"does not match top factor contribution {top_contrib}"
             )
-    
+
     return True, None
 
 
@@ -341,10 +359,10 @@ def check_narrative_ordering_deterministic(
     """Check INV-N02: Narrative ordering is deterministic."""
     if len(narrative_drivers) < 2:
         return True, None  # Not enough drivers to check ordering
-    
+
     # Extract driver scores
     driver_scores = [d.get("driver_score", 0.0) for d in narrative_drivers]
-    
+
     # Check that scores are in descending order
     for i in range(len(driver_scores) - 1):
         if driver_scores[i] < driver_scores[i + 1]:
@@ -352,7 +370,7 @@ def check_narrative_ordering_deterministic(
                 f"Narrative drivers not in descending order: "
                 f"score[{i}]={driver_scores[i]} < score[{i+1}]={driver_scores[i+1]}"
             )
-    
+
     return True, None
 
 
@@ -366,21 +384,30 @@ def check_narrative_directionality_consistency(
     if previous_index is not None:
         index_increased = behavior_index > previous_index
         index_decreased = behavior_index < previous_index
-        
+
         # Check if narrative contradicts trend
         if index_increased and "decreasing" in narrative_summary.lower():
             return False, "Narrative says decreasing but index increased"
         if index_decreased and "increasing" in narrative_summary.lower():
             return False, "Narrative says increasing but index decreased"
-    
+
     # Check that narrative mentions appropriate level for index value
     if behavior_index < 0.3:
-        if "high disruption" in narrative_summary.lower() or "elevated" in narrative_summary.lower():
-            return False, f"Narrative mentions high disruption but index is {behavior_index}"
+        if (
+            "high disruption" in narrative_summary.lower()
+            or "elevated" in narrative_summary.lower()
+        ):
+            return (
+                False,
+                f"Narrative mentions high disruption but index is {behavior_index}",
+            )
     elif behavior_index > 0.7:
         if "low disruption" in narrative_summary.lower():
-            return False, f"Narrative mentions low disruption but index is {behavior_index}"
-    
+            return (
+                False,
+                f"Narrative mentions low disruption but index is {behavior_index}",
+            )
+
     return True, None
 
 
@@ -390,7 +417,7 @@ def check_confidence_disclaimer_consistency(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-N04: Confidence disclaimer must reflect aggregate factor confidence."""
     disclaimer_lower = confidence_disclaimer.lower()
-    
+
     # Check that disclaimer matches confidence level
     if avg_factor_confidence >= 0.75:
         if "limited" in disclaimer_lower or "low" in disclaimer_lower:
@@ -402,7 +429,7 @@ def check_confidence_disclaimer_consistency(
             return False, (
                 f"Confidence disclaimer says high but average confidence is {avg_factor_confidence}"
             )
-    
+
     return True, None
 
 
@@ -413,11 +440,14 @@ def check_missing_data_confidence_consistency(
     """Check INV-N05: Missing data lowers certainty, never increases it."""
     if missing_data_ratio > 0.3:
         # High missing data should be mentioned in disclaimer
-        if "missing" not in confidence_disclaimer.lower() and "insufficient" not in confidence_disclaimer.lower():
+        if (
+            "missing" not in confidence_disclaimer.lower()
+            and "insufficient" not in confidence_disclaimer.lower()
+        ):
             return False, (
                 f"High missing data ratio {missing_data_ratio} not mentioned in confidence disclaimer"
             )
-    
+
     return True, None
 
 
@@ -430,20 +460,20 @@ def check_temporal_delta_reconciliation(
     """Check INV-T01: Temporal deltas must reconcile (sub-index deltas × weights ≈ global delta)."""
     if not sub_index_deltas or not sub_index_weights:
         return True, None  # Cannot check without data
-    
+
     # Calculate weighted sum of sub-index deltas
     weighted_sum = sum(
         sub_index_deltas.get(name, 0.0) * sub_index_weights.get(name, 0.0)
         for name in sub_index_deltas.keys()
     )
-    
+
     diff = abs(weighted_sum - global_delta)
     if diff > tolerance:
         return False, (
             f"Temporal delta reconciliation failed: weighted sum {weighted_sum} != global delta {global_delta}, "
             f"difference {diff} > tolerance {tolerance}"
         )
-    
+
     return True, None
 
 
@@ -456,13 +486,13 @@ def check_factor_delta_consistency(
     """Check INV-T02: Factor contribution delta must equal value_delta × weight."""
     expected_delta = value_delta * weight
     diff = abs(factor_delta - expected_delta)
-    
+
     if diff > tolerance:
         return False, (
             f"Factor delta inconsistency: contribution_delta {factor_delta} != value_delta {value_delta} × weight {weight}, "
             f"difference {diff} > tolerance {tolerance}"
         )
-    
+
     return True, None
 
 
@@ -473,11 +503,15 @@ def check_change_direction_consistency(
     """Check INV-T03: Change directions must be consistent (increasing global implies net positive sub-index changes)."""
     if global_direction == "stable":
         return True, None  # Stable is always consistent
-    
+
     # Count increasing vs decreasing sub-indices
-    increasing_count = sum(1 for d in sub_index_directions.values() if d == "increasing")
-    decreasing_count = sum(1 for d in sub_index_directions.values() if d == "decreasing")
-    
+    increasing_count = sum(
+        1 for d in sub_index_directions.values() if d == "increasing"
+    )
+    decreasing_count = sum(
+        1 for d in sub_index_directions.values() if d == "decreasing"
+    )
+
     if global_direction == "increasing":
         # Global increasing should have net positive sub-index changes
         if decreasing_count > increasing_count:
@@ -490,7 +524,7 @@ def check_change_direction_consistency(
             return False, (
                 f"Global decreasing but more increasing sub-indices ({increasing_count}) than decreasing ({decreasing_count})"
             )
-    
+
     return True, None
 
 
@@ -500,18 +534,18 @@ def check_signal_vs_noise_classification(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-T04: Signal vs noise classification must be consistent with change magnitude and quality."""
     contribution_delta = abs(factor_change.get("contribution_delta", 0.0))
-    
+
     # Large changes (>0.05) must be signal
     if contribution_delta > 0.05 and classification != "signal":
         return False, (
             f"Large change ({contribution_delta}) classified as noise, should be signal"
         )
-    
+
     # Very small changes (<0.01) should be noise
     if contribution_delta < 0.01 and classification != "noise":
         # Allow signal for very small changes if explicitly marked, but log warning
         return True, None  # Soft check, not hard fail
-    
+
     return True, None
 
 
@@ -527,11 +561,11 @@ def check_temporal_attribution_completeness(
         "change_narrative",
         "metadata",
     ]
-    
+
     for field in required_fields:
         if field not in temporal_attribution:
             return False, f"Temporal attribution missing required field: {field}"
-    
+
     return True, None
 
 
@@ -545,17 +579,17 @@ def check_elasticity_consistency(
     """Check INV-S01: Elasticity must equal (output_delta / input_delta) * factor_weight."""
     if abs(input_delta) < 1e-10:
         return True, None  # Cannot check if input_delta is zero
-    
+
     expected_elasticity = (output_delta / input_delta) * factor_weight
     diff = abs(elasticity - expected_elasticity)
-    
+
     if diff > tolerance:
         return False, (
             f"Elasticity inconsistency: elasticity {elasticity} != "
             f"(output_delta {output_delta} / input_delta {input_delta}) * weight {factor_weight}, "
             f"difference {diff} > tolerance {tolerance}"
         )
-    
+
     return True, None
 
 
@@ -565,7 +599,7 @@ def check_sensitivity_classification_consistency(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-S02: Sensitivity classification must match elasticity magnitude."""
     abs_elasticity = abs(elasticity)
-    
+
     if classification == "high":
         if abs_elasticity <= 0.5:
             return False, (
@@ -581,7 +615,7 @@ def check_sensitivity_classification_consistency(
             return False, (
                 f"Sensitivity classification 'low' but elasticity {abs_elasticity} > 0.2"
             )
-    
+
     return True, None
 
 
@@ -593,7 +627,7 @@ def check_scenario_bounds_validation(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-S03: Scenario perturbations must be within bounds [min_value, max_value]."""
     perturbed_value = base_value + perturbation
-    
+
     if perturbed_value < min_value:
         return False, (
             f"Scenario perturbation violates lower bound: {perturbed_value} < {min_value}"
@@ -602,7 +636,7 @@ def check_scenario_bounds_validation(
         return False, (
             f"Scenario perturbation violates upper bound: {perturbed_value} > {max_value}"
         )
-    
+
     return True, None
 
 
@@ -612,17 +646,17 @@ def check_sensitivity_ranking_order(
     """Check INV-S04: Sensitivity rankings must be ordered by absolute elasticity (descending)."""
     if len(sensitivity_rankings) < 2:
         return True, None  # Cannot check ordering with <2 items
-    
+
     for i in range(1, len(sensitivity_rankings)):
         prev_elasticity = abs(sensitivity_rankings[i - 1].get("elasticity", 0.0))
         curr_elasticity = abs(sensitivity_rankings[i].get("elasticity", 0.0))
-        
+
         if prev_elasticity < curr_elasticity:
             return False, (
                 f"Sensitivity ranking order violation: rank {i-1} elasticity {prev_elasticity} < "
                 f"rank {i} elasticity {curr_elasticity}"
             )
-    
+
     return True, None
 
 
@@ -637,11 +671,11 @@ def check_sensitivity_analysis_completeness(
         "sensitivity_narrative",
         "metadata",
     ]
-    
+
     for field in required_fields:
         if field not in sensitivity_analysis:
             return False, f"Sensitivity analysis missing required field: {field}"
-    
+
     return True, None
 
 
@@ -652,14 +686,14 @@ def check_alert_determinism(
     """Check INV-A01: Alerts must be deterministic (same inputs → same outputs)."""
     if len(alerts1) != len(alerts2):
         return False, f"Alert count mismatch: {len(alerts1)} != {len(alerts2)}"
-    
+
     # Check that alert IDs match
     ids1 = sorted([a.get("id") for a in alerts1])
     ids2 = sorted([a.get("id") for a in alerts2])
-    
+
     if ids1 != ids2:
         return False, f"Alert IDs mismatch: {ids1} != {ids2}"
-    
+
     return True, None
 
 
@@ -672,8 +706,12 @@ def check_alert_correctness(
     current_value = state.get("current_value")
     threshold = alert.get("threshold")
     comparison = alert.get("comparison")
-    
-    if alert_type == "threshold" and threshold is not None and current_value is not None:
+
+    if (
+        alert_type == "threshold"
+        and threshold is not None
+        and current_value is not None
+    ):
         if comparison == "greater_than":
             if alert.get("triggered") and current_value <= threshold:
                 return False, f"Alert triggered but {current_value} <= {threshold}"
@@ -681,15 +719,21 @@ def check_alert_correctness(
                 # Check persistence requirement
                 persistence_days = alert.get("persistence_days", 0)
                 if persistence_days == 0:
-                    return False, f"Alert not triggered but {current_value} > {threshold}"
+                    return (
+                        False,
+                        f"Alert not triggered but {current_value} > {threshold}",
+                    )
         elif comparison == "less_than":
             if alert.get("triggered") and current_value >= threshold:
                 return False, f"Alert triggered but {current_value} >= {threshold}"
             if not alert.get("triggered") and current_value < threshold:
                 persistence_days = alert.get("persistence_days", 0)
                 if persistence_days == 0:
-                    return False, f"Alert not triggered but {current_value} < {threshold}"
-    
+                    return (
+                        False,
+                        f"Alert not triggered but {current_value} < {threshold}",
+                    )
+
     return True, None
 
 
@@ -704,26 +748,31 @@ def check_non_spam_guarantee(
     if alert_definitions:
         for defn in alert_definitions:
             alert_defs_by_id[defn.get("id")] = defn
-    
+
     # Check that alerts respect persistence gates
     for alert in alerts:
         alert_id = alert.get("id")
         alert_def = alert_defs_by_id.get(alert_id) if alert_defs_by_id else None
-        
+
         if alert.get("type") == "threshold" and alert_def:
             required_persistence = alert_def.get("persistence_days", 0)
-            days_above_threshold = alert.get("persistence_days", 0)  # This is actually days_above_threshold from result
+            days_above_threshold = alert.get(
+                "persistence_days", 0
+            )  # This is actually days_above_threshold from result
             # Note: The alert result has "persistence_days" field which is actually days_above_threshold
             # We need to check against the definition's required persistence
-            if required_persistence > 0 and days_above_threshold < required_persistence + 1:
+            if (
+                required_persistence > 0
+                and days_above_threshold < required_persistence + 1
+            ):
                 return False, (
                     f"Alert {alert_id} triggered but persistence not met: "
                     f"{days_above_threshold} < {required_persistence + 1}"
                 )
-    
+
     # Rate limiting would be checked at a higher level (e.g., alert storage/notification)
     # This invariant checks that alerts themselves respect persistence gates
-    
+
     return True, None
 
 
@@ -736,7 +785,7 @@ def check_sensitivity_gating_respected(
     """Check INV-A04: Sensitivity-aware alerts must respect elasticity gates."""
     if not alert.get("sensitivity_aware", False):
         return True, None  # Not a sensitivity-aware alert
-    
+
     if alert.get("gated", False):
         # Alert was gated, check that gates were correctly applied
         if factor_elasticity is not None and abs(factor_elasticity) >= min_elasticity:
@@ -747,7 +796,7 @@ def check_sensitivity_gating_respected(
                     f"Sensitivity-aware alert gated but elasticity {factor_elasticity} >= {min_elasticity} "
                     f"and signal classification is 'signal'"
                 )
-    
+
     return True, None
 
 
@@ -758,13 +807,13 @@ def check_zero_numerical_drift_alerts(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-A05: Alert generation must not change numerical outputs."""
     diff = abs(behavior_index_before - behavior_index_after)
-    
+
     if diff > tolerance:
         return False, (
             f"Numerical drift detected: behavior index changed from {behavior_index_before} "
             f"to {behavior_index_after} (diff: {diff})"
         )
-    
+
     return True, None
 
 
@@ -776,21 +825,30 @@ def check_benchmark_determinism(
     # Check peer group analysis
     peer1 = benchmarks1.get("peer_group_analysis")
     peer2 = benchmarks2.get("peer_group_analysis")
-    
+
     if peer1 is None and peer2 is None:
         pass  # Both None, OK
     elif peer1 is None or peer2 is None:
         return False, "Peer group analysis mismatch: one is None, other is not"
-    elif abs(peer1.get("average_behavior_index", 0) - peer2.get("average_behavior_index", 0)) > 0.01:
+    elif (
+        abs(
+            peer1.get("average_behavior_index", 0)
+            - peer2.get("average_behavior_index", 0)
+        )
+        > 0.01
+    ):
         return False, "Peer group average mismatch"
-    
+
     # Check baseline
     baseline1 = benchmarks1.get("historical_baseline", {})
     baseline2 = benchmarks2.get("historical_baseline", {})
-    
-    if abs(baseline1.get("baseline_value", 0) - baseline2.get("baseline_value", 0)) > 0.01:
+
+    if (
+        abs(baseline1.get("baseline_value", 0) - baseline2.get("baseline_value", 0))
+        > 0.01
+    ):
         return False, "Baseline value mismatch"
-    
+
     return True, None
 
 
@@ -801,18 +859,18 @@ def check_peer_group_consistency(
     """Check INV-B02: Peer group averages must be consistent with input data."""
     if not peer_analysis or not peer_values:
         return True, None  # No data to check
-    
+
     expected_avg = sum(peer_values) / len(peer_values) if peer_values else 0.0
     actual_avg = peer_analysis.get("average_behavior_index")
-    
+
     if actual_avg is None:
         return True, None  # No average computed
-    
+
     if abs(expected_avg - actual_avg) > 0.01:
         return False, (
             f"Peer group average mismatch: expected {expected_avg}, got {actual_avg}"
         )
-    
+
     return True, None
 
 
@@ -823,19 +881,19 @@ def check_baseline_consistency(
     """Check INV-B03: Baseline statistics must be consistent with historical data."""
     if not baseline or not history:
         return True, None  # No data to check
-    
+
     baseline_value = baseline.get("baseline_value")
     if baseline_value is None:
         return True, None  # No baseline computed
-    
+
     # Compute expected baseline from history
     expected_avg = sum(history) / len(history) if history else 0.0
-    
+
     if abs(baseline_value - expected_avg) > 0.01:
         return False, (
             f"Baseline value mismatch: expected {expected_avg}, got {baseline_value}"
         )
-    
+
     return True, None
 
 
@@ -848,27 +906,27 @@ def check_deviation_correctness(
     baseline_value = baseline.get("baseline_value")
     if baseline_value is None:
         return True, None  # No baseline to check against
-    
+
     expected_absolute = current_value - baseline_value
     actual_absolute = deviation.get("absolute_deviation")
-    
+
     if actual_absolute is not None:
         if abs(expected_absolute - actual_absolute) > 1e-10:
             return False, (
                 f"Absolute deviation mismatch: expected {expected_absolute}, got {actual_absolute}"
             )
-    
+
     # Check relative deviation
     if abs(baseline_value) > 1e-10:
         expected_relative = (expected_absolute / baseline_value) * 100.0
         actual_relative = deviation.get("relative_deviation")
-        
+
         if actual_relative is not None:
             if abs(expected_relative - actual_relative) > 0.01:
                 return False, (
                     f"Relative deviation mismatch: expected {expected_relative}, got {actual_relative}"
                 )
-    
+
     return True, None
 
 
@@ -879,13 +937,13 @@ def check_zero_numerical_drift_benchmarks(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-B05: Benchmark generation must not change numerical outputs."""
     diff = abs(behavior_index_before - behavior_index_after)
-    
+
     if diff > tolerance:
         return False, (
             f"Numerical drift detected: behavior index changed from {behavior_index_before} "
             f"to {behavior_index_after} (diff: {diff})"
         )
-    
+
     return True, None
 
 
@@ -898,18 +956,21 @@ def check_provenance_completeness(
         "aggregate_provenance",
         "metadata",
     ]
-    
+
     for field in required_fields:
         if field not in provenance:
             return False, f"Provenance missing required field: {field}"
-    
+
     # Check sub-index provenances have required fields
     for sub_index_name, sub_prov in provenance.get("sub_index_provenances", {}).items():
         if "sub_index_name" not in sub_prov:
-            return False, f"Sub-index provenance missing sub_index_name: {sub_index_name}"
+            return (
+                False,
+                f"Sub-index provenance missing sub_index_name: {sub_index_name}",
+            )
         if "sources" not in sub_prov:
             return False, f"Sub-index provenance missing sources: {sub_index_name}"
-    
+
     return True, None
 
 
@@ -920,16 +981,16 @@ def check_freshness_consistency(
     """Check INV-P02: Freshness classification must match data age."""
     if data_age_hours is None:
         return True, None  # Cannot check if age unknown
-    
+
     # Import classify_freshness lazily to avoid circular imports
     from app.core.provenance import classify_freshness
-    
+
     # Check freshness classifications in source provenances
     for sub_prov in provenance.get("sub_index_provenances", {}).values():
         for source_prov in sub_prov.get("source_provenances", []):
             freshness = source_prov.get("freshness_classification")
             expected_freq = source_prov.get("expected_update_frequency_hours")
-            
+
             if freshness and expected_freq:
                 # Verify classification matches age
                 expected_freshness = classify_freshness(data_age_hours, expected_freq)
@@ -938,7 +999,7 @@ def check_freshness_consistency(
                         f"Freshness inconsistency: classified as {freshness} but "
                         f"data age {data_age_hours}h suggests {expected_freshness}"
                     )
-    
+
     return True, None
 
 
@@ -954,7 +1015,7 @@ def check_coverage_confidence_relationship(
             f"Coverage-confidence inconsistency: low coverage ({coverage_ratio}) "
             f"but high confidence ({confidence})"
         )
-    
+
     return True, None
 
 
@@ -970,7 +1031,7 @@ def check_bias_disclosure_required(
         # This is not necessarily a violation - some factors may genuinely have no biases
         # But we log it as a potential gap
         return True, None  # Soft check, don't fail
-    
+
     return True, None
 
 
@@ -981,13 +1042,13 @@ def check_zero_numerical_drift_provenance(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-P05: Provenance generation must not change numerical outputs."""
     diff = abs(behavior_index_before - behavior_index_after)
-    
+
     if diff > tolerance:
         return False, (
             f"Numerical drift detected: behavior index changed from {behavior_index_before} "
             f"to {behavior_index_after} (diff: {diff})"
         )
-    
+
     return True, None
 
 
@@ -1063,7 +1124,9 @@ def check_notification_rate_limits(
     from datetime import datetime
 
     try:
-        last_time = datetime.fromisoformat(last_notification_time.replace("Z", "+00:00"))
+        last_time = datetime.fromisoformat(
+            last_notification_time.replace("Z", "+00:00")
+        )
         current = datetime.fromisoformat(current_time.replace("Z", "+00:00"))
         hours_since = (current - last_time).total_seconds() / 3600.0
 
@@ -1103,7 +1166,9 @@ def check_executive_summary_determinism(
     # Compare key fields that should be identical for same inputs
     if summary1.get("current_status") != summary2.get("current_status"):
         return False, "Current status differs between summaries"
-    if summary1.get("action_recommendation", {}).get("recommendation") != summary2.get("action_recommendation", {}).get("recommendation"):
+    if summary1.get("action_recommendation", {}).get("recommendation") != summary2.get(
+        "action_recommendation", {}
+    ).get("recommendation"):
         return False, "Action recommendation differs between summaries"
     return True, None
 
@@ -1132,7 +1197,10 @@ def check_no_hidden_analytics(
     backend_bi = backend_outputs.get("behavior_index")
     if summary_bi is not None and backend_bi is not None:
         if abs(summary_bi - backend_bi) > 1e-6:
-            return False, f"Summary behavior index {summary_bi} does not match backend {backend_bi}"
+            return (
+                False,
+                f"Summary behavior index {summary_bi} does not match backend {backend_bi}",
+            )
     return True, None
 
 
@@ -1176,7 +1244,10 @@ def check_config_immutability(
     critical_keys = ["environment", "app_name", "aws_region"]
     for key in critical_keys:
         if config_before.get(key) != config_after.get(key):
-            return False, f"Configuration changed: {key} changed from {config_before.get(key)} to {config_after.get(key)}"
+            return (
+                False,
+                f"Configuration changed: {key} changed from {config_before.get(key)} to {config_after.get(key)}",
+            )
     return True, None
 
 
@@ -1252,13 +1323,13 @@ def check_early_warnings_derivable(
         "factor_quality",
         "alert_persistence",
     ]
-    
+
     warnings = early_warnings.get("warnings", [])
     for warning in warnings:
         warning_type = warning.get("type")
         if warning_type not in allowed_signal_types:
             return False, f"Early warning uses unknown signal type: {warning_type}"
-    
+
     return True, None
 
 
@@ -1269,13 +1340,16 @@ def check_early_warning_confidence_gating(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-EW02: No early warning without sufficient confidence & coverage."""
     confidence = early_warning.get("confidence", 0.0)
-    
+
     if confidence < min_confidence:
-        return False, f"Early warning confidence {confidence} below minimum {min_confidence}"
-    
+        return (
+            False,
+            f"Early warning confidence {confidence} below minimum {min_confidence}",
+        )
+
     if coverage_ratio is not None and coverage_ratio < 0.5:
         return False, f"Coverage ratio {coverage_ratio} too low for early warning"
-    
+
     return True, None
 
 
@@ -1285,10 +1359,13 @@ def check_interaction_effects_labeled(
     """Check INV-EW03: Interaction effects must be labeled as hypotheses."""
     interaction_type = interaction.get("interaction_type", "")
     note = interaction.get("note", "")
-    
-    if "hypothesis" not in interaction_type.lower() and "hypothesis" not in note.lower():
+
+    if (
+        "hypothesis" not in interaction_type.lower()
+        and "hypothesis" not in note.lower()
+    ):
         return False, "Interaction effect not labeled as hypothesis"
-    
+
     return True, None
 
 
@@ -1300,11 +1377,11 @@ def check_no_notification_escalation_without_persistence(
     # This is a soft check - we verify that if an early warning exists,
     # it doesn't automatically trigger alerts without persistence
     warning_type = early_warning.get("type", "")
-    
+
     # Alert persistence warnings are allowed (they're about persistence)
     if warning_type == "alert_persistence":
         return True, None
-    
+
     # Other warnings should not escalate without persistence
     # This is enforced at the alert composition layer, not here
     # So we just verify the structure
@@ -1338,11 +1415,14 @@ def check_policy_does_not_affect_analytics(
     # Compare numerical outputs (behavior index, sub-indices, etc.)
     behavior_index_before = analytics_result_before.get("behavior_index")
     behavior_index_after = analytics_result_after.get("behavior_index")
-    
+
     if behavior_index_before is not None and behavior_index_after is not None:
         if abs(behavior_index_before - behavior_index_after) > 1e-10:
-            return False, "Policy affected analytics computation (behavior index changed)"
-    
+            return (
+                False,
+                "Policy affected analytics computation (behavior index changed)",
+            )
+
     return True, None
 
 
@@ -1357,8 +1437,11 @@ def check_policy_evaluation_determinism(
     # If contexts are identical, results should be identical
     if context1 == context2:
         if result1 != result2:
-            return False, "Policy evaluation not deterministic (same context, different results)"
-    
+            return (
+                False,
+                "Policy evaluation not deterministic (same context, different results)",
+            )
+
     return True, None
 
 
@@ -1371,13 +1454,13 @@ def check_rbac_enforced_on_policy_actions(
     """Check INV-POL03: RBAC must be enforced on all policy actions."""
     # Check if user has required role
     has_required_role = any(role in user_roles for role in required_roles)
-    
+
     if not has_required_role:
         return False, (
             f"User {user_id} lacks required role for action {action}. "
             f"Required: {required_roles}, Has: {user_roles}"
         )
-    
+
     return True, None
 
 
@@ -1387,11 +1470,11 @@ def check_policy_bounds_not_exceeded(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-POL04: Policy bounds must not be exceeded."""
     from app.core.policy import PolicyValidator
-    
+
     is_valid, error = PolicyValidator.validate_policy(policy)
     if not is_valid:
         return False, error
-    
+
     return True, None
 
 
@@ -1420,16 +1503,16 @@ def check_preview_never_mutates_state(
     # Compare critical state (policies, alerts, etc.)
     policies_before = state_before.get("policies", {})
     policies_after = state_after.get("policies", {})
-    
+
     if policies_before != policies_after:
         return False, "Preview mutated policy state"
-    
+
     alerts_before = state_before.get("alerts", [])
     alerts_after = state_after.get("alerts", [])
-    
+
     if alerts_before != alerts_after:
         return False, "Preview mutated alert state"
-    
+
     return True, None
 
 
@@ -1441,11 +1524,11 @@ def check_preview_results_derivable(
     # Verify that preview result references only current analytics
     if "preview_valid" not in preview_result:
         return False, "Preview result missing preview_valid flag"
-    
+
     # Check that preview uses current context
     if "current_alert_count" not in preview_result:
         return False, "Preview result not derivable from current analytics"
-    
+
     return True, None
 
 
@@ -1457,10 +1540,10 @@ def check_activation_only_after_preview(
     """Check INV-PREV03: Activation only allowed after preview."""
     if not preview_performed:
         return False, f"Policy {policy_id} must be previewed before activation"
-    
+
     if preview_result and not preview_result.get("preview_valid"):
         return False, "Preview must be valid before activation"
-    
+
     return True, None
 
 
@@ -1473,13 +1556,13 @@ def check_rbac_enforced_on_preview_activation(
     """Check INV-PREV04: RBAC must be enforced on preview and activation."""
     # Check if user has required role
     has_required_role = any(role in user_roles for role in required_roles)
-    
+
     if not has_required_role:
         return False, (
             f"User {user_id} lacks required role for action {action}. "
             f"Required: {required_roles}, Has: {user_roles}"
         )
-    
+
     return True, None
 
 
@@ -1505,14 +1588,14 @@ def check_preview_clearly_labeled_non_active(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-UXP01: Preview UI must clearly label previews as non-active."""
     preview_label = ui_state.get("preview_label", "")
-    
+
     if "preview" in preview_label.lower() and "not active" in preview_label.lower():
         return True, None
-    
+
     if "preview" in preview_label.lower():
         # Acceptable if clearly indicates preview status
         return True, None
-    
+
     return False, "Preview not clearly labeled as non-active"
 
 
@@ -1522,10 +1605,10 @@ def check_activation_disabled_without_preview(
     """Check INV-UXP02: Activation UI must be disabled without preview."""
     has_preview = ui_state.get("has_preview", False)
     activation_enabled = ui_state.get("activation_enabled", False)
-    
+
     if not has_preview and activation_enabled:
         return False, "Activation enabled without preview"
-    
+
     return True, None
 
 
@@ -1537,10 +1620,10 @@ def check_ui_state_reflects_backend_truth(
     # Compare critical state (policy active status, alert counts, etc.)
     ui_policy_active = ui_state.get("policy_active", False)
     backend_policy_active = backend_state.get("policy_active", False)
-    
+
     if ui_policy_active != backend_policy_active:
         return False, "UI policy active status does not match backend"
-    
+
     return True, None
 
 
@@ -1551,12 +1634,12 @@ def check_rbac_reflected_in_ui_controls(
 ) -> Tuple[bool, Optional[str]]:
     """Check INV-UXP04: RBAC must be reflected in UI controls."""
     has_required_role = any(role in user_roles for role in required_roles)
-    
+
     # Check that UI controls match RBAC permissions
     activation_visible = ui_controls.get("activation_visible", False)
     if activation_visible and not has_required_role:
         return False, "Activation control visible without required role"
-    
+
     return True, None
 
 
@@ -1638,7 +1721,9 @@ def register_all_invariants() -> None:
         "Component contributions must sum to output ± tolerance",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda components, output, tol=0.01: check_contribution_reconciliation(components, output, tol),
+        lambda components, output, tol=0.01: check_contribution_reconciliation(
+            components, output, tol
+        ),
     )
 
     # Logical invariants
@@ -1648,7 +1733,9 @@ def register_all_invariants() -> None:
         "Risk tier must be monotonic with respect to risk score",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda score1, tier1, score2, tier2: check_risk_tier_monotonicity(score1, tier1, score2, tier2),
+        lambda score1, tier1, score2, tier2: check_risk_tier_monotonicity(
+            score1, tier1, score2, tier2
+        ),
     )
 
     registry.register(
@@ -1695,7 +1782,9 @@ def register_all_invariants() -> None:
         "Volatility classification must match numeric volatility score",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda vol_score, vol_class: check_volatility_classification_consistency(vol_score, vol_class),
+        lambda vol_score, vol_class: check_volatility_classification_consistency(
+            vol_score, vol_class
+        ),
     )
 
     registry.register(
@@ -1732,7 +1821,9 @@ def register_all_invariants() -> None:
         "Narrative drivers must reconcile to top-N factor contributions",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda drivers, factors, tol=0.01: check_narrative_reconciliation(drivers, factors, tol),
+        lambda drivers, factors, tol=0.01: check_narrative_reconciliation(
+            drivers, factors, tol
+        ),
     )
 
     registry.register(
@@ -1750,7 +1841,9 @@ def register_all_invariants() -> None:
         "Narrative must not contradict numerical directionality",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda summary, index, prev=None: check_narrative_directionality_consistency(summary, index, prev),
+        lambda summary, index, prev=None: check_narrative_directionality_consistency(
+            summary, index, prev
+        ),
     )
 
     registry.register(
@@ -1759,7 +1852,9 @@ def register_all_invariants() -> None:
         "Confidence disclaimer must reflect aggregate factor confidence",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda disclaimer, avg_conf: check_confidence_disclaimer_consistency(disclaimer, avg_conf),
+        lambda disclaimer, avg_conf: check_confidence_disclaimer_consistency(
+            disclaimer, avg_conf
+        ),
     )
 
     registry.register(
@@ -1768,7 +1863,9 @@ def register_all_invariants() -> None:
         "Missing data must lower certainty, never increase it",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda disclaimer, missing_ratio: check_missing_data_confidence_consistency(disclaimer, missing_ratio),
+        lambda disclaimer, missing_ratio: check_missing_data_confidence_consistency(
+            disclaimer, missing_ratio
+        ),
     )
 
     # Temporal attribution invariants
@@ -1778,7 +1875,9 @@ def register_all_invariants() -> None:
         "Temporal deltas must reconcile (sub-index deltas × weights ≈ global delta)",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda global_delta, sub_deltas, weights, tol=0.01: check_temporal_delta_reconciliation(global_delta, sub_deltas, weights, tol),
+        lambda global_delta, sub_deltas, weights, tol=0.01: check_temporal_delta_reconciliation(
+            global_delta, sub_deltas, weights, tol
+        ),
     )
 
     registry.register(
@@ -1787,7 +1886,9 @@ def register_all_invariants() -> None:
         "Factor contribution delta must equal value_delta × weight",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda contrib_delta, val_delta, weight, tol=0.01: check_factor_delta_consistency(contrib_delta, val_delta, weight, tol),
+        lambda contrib_delta, val_delta, weight, tol=0.01: check_factor_delta_consistency(
+            contrib_delta, val_delta, weight, tol
+        ),
     )
 
     registry.register(
@@ -1796,7 +1897,9 @@ def register_all_invariants() -> None:
         "Change directions must be consistent (increasing global implies net positive sub-index changes)",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda global_dir, sub_dirs: check_change_direction_consistency(global_dir, sub_dirs),
+        lambda global_dir, sub_dirs: check_change_direction_consistency(
+            global_dir, sub_dirs
+        ),
     )
 
     registry.register(
@@ -1805,7 +1908,9 @@ def register_all_invariants() -> None:
         "Signal vs noise classification must be consistent with change magnitude and quality",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda change, classification: check_signal_vs_noise_classification(change, classification),
+        lambda change, classification: check_signal_vs_noise_classification(
+            change, classification
+        ),
     )
 
     registry.register(
@@ -1824,7 +1929,9 @@ def register_all_invariants() -> None:
         "Elasticity must equal (output_delta / input_delta) * factor_weight",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda elasticity, output_delta, input_delta, weight, tol=0.01: check_elasticity_consistency(elasticity, output_delta, input_delta, weight, tol),
+        lambda elasticity, output_delta, input_delta, weight, tol=0.01: check_elasticity_consistency(
+            elasticity, output_delta, input_delta, weight, tol
+        ),
     )
 
     registry.register(
@@ -1833,7 +1940,9 @@ def register_all_invariants() -> None:
         "Sensitivity classification must match elasticity magnitude",
         0.0,
         EnforcementStrategy.SOFT_FAIL,
-        lambda elasticity, classification: check_sensitivity_classification_consistency(elasticity, classification),
+        lambda elasticity, classification: check_sensitivity_classification_consistency(
+            elasticity, classification
+        ),
     )
 
     registry.register(
@@ -1842,7 +1951,9 @@ def register_all_invariants() -> None:
         "Scenario perturbations must be within bounds [min_value, max_value]",
         0.0,
         EnforcementStrategy.HARD_FAIL,
-        lambda base, pert, min_val, max_val: check_scenario_bounds_validation(base, pert, min_val, max_val),
+        lambda base, pert, min_val, max_val: check_scenario_bounds_validation(
+            base, pert, min_val, max_val
+        ),
     )
 
     registry.register(
@@ -1925,7 +2036,9 @@ def register_all_invariants() -> None:
         "Peer group averages must be consistent with input data",
         0.01,
         EnforcementStrategy.SOFT_FAIL,
-        lambda peer_analysis, peer_values: check_peer_group_consistency(peer_analysis, peer_values),
+        lambda peer_analysis, peer_values: check_peer_group_consistency(
+            peer_analysis, peer_values
+        ),
     )
 
     registry.register(
@@ -1943,7 +2056,9 @@ def register_all_invariants() -> None:
         "Deviation calculations must be mathematically correct",
         1e-10,
         EnforcementStrategy.SOFT_FAIL,
-        lambda current, baseline, deviation: check_deviation_correctness(current, baseline, deviation),
+        lambda current, baseline, deviation: check_deviation_correctness(
+            current, baseline, deviation
+        ),
     )
 
     registry.register(

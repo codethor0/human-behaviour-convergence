@@ -156,7 +156,9 @@ class TestInvariantCheckFunctions:
 
     def test_check_risk_tier_monotonicity_valid(self):
         """Monotonic tiers should pass."""
-        is_valid, error = check_risk_tier_monotonicity(0.3, "watchlist", 0.6, "elevated")
+        is_valid, error = check_risk_tier_monotonicity(
+            0.3, "watchlist", 0.6, "elevated"
+        )
         assert is_valid
         assert error is None
 
@@ -164,20 +166,26 @@ class TestInvariantCheckFunctions:
         """Non-monotonic tiers should fail."""
         # score1=0.3 (elevated, order=2) < score2=0.6 (watchlist, order=1)
         # This violates monotonicity: lower score but higher tier
-        is_valid, error = check_risk_tier_monotonicity(0.3, "elevated", 0.6, "watchlist")
+        is_valid, error = check_risk_tier_monotonicity(
+            0.3, "elevated", 0.6, "watchlist"
+        )
         assert not is_valid
         assert error is not None
         assert "violated" in error.lower()
 
     def test_check_confidence_volatility_consistency_valid(self):
         """Consistent confidence-volatility should pass."""
-        is_valid, error = check_confidence_volatility_consistency(0.3, 0.8)  # Low vol, high conf
+        is_valid, error = check_confidence_volatility_consistency(
+            0.3, 0.8
+        )  # Low vol, high conf
         assert is_valid
         assert error is None
 
     def test_check_confidence_volatility_consistency_invalid(self):
         """Inconsistent confidence-volatility should fail."""
-        is_valid, error = check_confidence_volatility_consistency(0.8, 0.8)  # High vol, high conf
+        is_valid, error = check_confidence_volatility_consistency(
+            0.8, 0.8
+        )  # High vol, high conf
         assert not is_valid
         assert error is not None
 
