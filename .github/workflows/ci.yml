@@ -521,6 +521,9 @@ jobs:
       - name: Validate internal markdown links
         run: python3 .github/scripts/validate_docs_links.py
 
+      - name: Validate external markdown links
+        run: python3 .github/scripts/validate_external_links.py
+
   lint-format:
     name: Lint & Format
     runs-on: ubuntu-latest
