@@ -108,22 +108,12 @@ test.describe('Forecast History Smoke Tests', () => {
   test('History page loads with filters', async ({ page }) => {
     await page.goto('/history');
 
-    // Wait for page to load
-    await page.waitForLoadState('domcontentloaded');
-
-    // First verify the page loaded at all - check for any h1 or main content
-    // If page doesn't load, we'll get a timeout here
-    const pageContent = page.locator('main, body');
-    await expect(pageContent).toBeVisible({ timeout: 10000 });
-
-    // Check if we got a 404 or error page
-    const pageText = await page.textContent('body');
-    if (pageText && (pageText.includes('404') || pageText.includes('Not Found'))) {
-      throw new Error('Page returned 404 - route /history not found');
-    }
-
-    // Wait for network to be idle (API calls complete)
+    // Wait for page to load and network to be idle
     await page.waitForLoadState('networkidle');
+
+    // First verify the page loaded at all - check for the h1 title
+    const pageTitle = page.locator('h1:has-text("Forecast History")');
+    await expect(pageTitle).toBeVisible({ timeout: 30000 });
 
     // Wait for history container (it appears after loading completes)
     const historyContainer = page.getByTestId('forecast-history-container');
