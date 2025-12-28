@@ -285,7 +285,7 @@ jobs:
             fs.writeFileSync('hygiene-report.md', report);
 
       - name: Upload Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: hygiene-report
           path: hygiene-report.md

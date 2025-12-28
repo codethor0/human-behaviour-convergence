@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload artifacts (PR only)
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rendered-diagram
           path: |
