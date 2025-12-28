@@ -723,6 +723,8 @@ jobs:
           for i in {1..90}; do
             if curl -f http://localhost:3100/ >/dev/null 2>&1; then
               echo "Frontend healthcheck passed after ${i}s"
+              # Additional wait to ensure Next.js is fully ready
+              sleep 5
               exit 0
             fi
             if [ $i -eq 90 ]; then
@@ -732,6 +734,12 @@ jobs:
             fi
             sleep 1
           done
+
+      - name: Verify backend API is accessible from host
+        run: |
+          echo "Verifying backend API is accessible..."
+          curl -f http://localhost:8100/health || (echo "Backend API not accessible" && docker compose logs backend && exit 1)
+          echo "Backend API is accessible"
 
       - name: Setup Node.js
         uses: actions/setup-node@v6

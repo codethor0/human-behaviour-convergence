@@ -13,7 +13,7 @@ services:
       - CACHE_MAX_SIZE=100
       - CACHE_TTL_MINUTES=5
       - LOG_LEVEL=INFO
-      - ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100,http://frontend:3000
+      - ALLOWED_ORIGINS=http://localhost:3100,http://127.0.0.1:3100,http://frontend:3000,http://localhost:3000
       - FRED_API_KEY=${FRED_API_KEY:-}
       - MOBILITY_API_ENDPOINT=${MOBILITY_API_ENDPOINT:-}
       - MOBILITY_API_KEY=${MOBILITY_API_KEY:-}
