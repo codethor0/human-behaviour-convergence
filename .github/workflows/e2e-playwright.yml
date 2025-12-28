@@ -167,6 +167,15 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
+      - name: Ensure test-results directory exists
+        if: always()
+        working-directory: app/frontend
+        run: |
+          mkdir -p test-results
+          # Create a placeholder file to ensure directory is not empty for artifact upload
+          echo "# Test results directory" > test-results/README.md
+          echo "# Playwright outputs traces and screenshots here on failures/retries" >> test-results/README.md
+
       - name: Upload test-results artifacts
         if: always()
         uses: actions/upload-artifact@v4
