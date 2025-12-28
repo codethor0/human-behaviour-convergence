@@ -765,7 +765,25 @@ jobs:
           PLAYWRIGHT_BASE_URL: http://localhost:3100
           NEXT_PUBLIC_API_BASE: http://localhost:8100
         run: |
-          npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line
+          set +e
+          LOG="/tmp/docker-e2e-playwright.log"
+          
+          npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line,html 2>&1 | tee "$LOG"
+          code=${PIPESTATUS[0]}
+          
+          if [ "$code" -ne 0 ]; then
+            # Extract a compact failure summary that will show up in the Annotations tab.
+            summary="$(grep -nE 'FAIL|Error:|Timeout|expect\(|net::|page\.goto|strict mode|locator' "$LOG" | head -n 40 || true)"
+            # Encode newlines for GitHub annotation rendering
+            export SUMMARY="$summary"
+            python3 - <<'PY'
+import os,sys
+s=os.environ.get("SUMMARY","")
+print("::error title=Docker E2E Playwright Failure Summary::" + s.replace("%","%25").replace("\n","%0A").replace("\r","%0D"))
+PY
+          fi
+          
+          exit "$code"
 
       - name: Ensure test-results directory exists
         if: always()
