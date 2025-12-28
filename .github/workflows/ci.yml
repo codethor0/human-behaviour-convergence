@@ -767,13 +767,32 @@ jobs:
         run: |
           npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line
 
-      - name: Upload Playwright artifacts on failure
-        if: failure()
+      - name: Ensure test-results directory exists
+        if: always()
+        working-directory: app/frontend
+        run: |
+          mkdir -p test-results
+          # Create a placeholder file to ensure directory is not empty for artifact upload
+          echo "# Test results directory" > test-results/README.md
+          echo "# Playwright outputs traces and screenshots here on failures/retries" >> test-results/README.md
+
+      - name: Upload Playwright report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: docker-e2e-playwright-report
           path: app/frontend/playwright-report/
           retention-days: 7
+          if-no-files-found: warn
+
+      - name: Upload test-results artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-e2e-test-results
+          path: app/frontend/test-results/
+          retention-days: 7
+          if-no-files-found: warn
 
       - name: Cleanup Docker Compose
         if: always()
