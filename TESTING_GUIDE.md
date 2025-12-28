@@ -93,6 +93,20 @@ curl -X POST "http://localhost:8000/api/playground/compare" \
   - `normalized_location.region_id = "us_wa"`
   - Definite match (not ambiguous)
 
+## CI Artifact Contract
+
+### E2E Playwright Workflow Artifacts
+
+The E2E Playwright Tests workflow (`.github/workflows/e2e-playwright.yml`) uploads three artifacts on every run (success or failure) via `if: always()`:
+
+1. **backend-log**: Backend server logs (`/tmp/backend.log`)
+2. **playwright-report**: HTML test report (`app/frontend/playwright-report/`)
+3. **test-results**: Playwright test results directory (`app/frontend/test-results/`)
+
+The `test-results` artifact is guaranteed to exist (CI creates the directory with a placeholder file) to avoid "no files found" warnings. Playwright only writes traces/screenshots to this directory on test failures or retries, so the placeholder ensures deterministic artifact upload.
+
+**Note:** Do not remove the "Ensure test-results directory exists" step in the workflow; it prevents annotation warnings and ensures the artifact contract is maintained.
+
 ## Next Steps
 
 1. Run the test script to verify all fixes
