@@ -77,6 +77,15 @@ test.describe('Forecast Smoke Tests', () => {
       
       // Wait for select to be visible
       await expect(page.locator('select')).toBeVisible({ timeout: 30_000 });
+      
+      // Wait for at least one option in the select (proves regions loaded)
+      await page.waitForFunction(
+        () => {
+          const select = document.querySelector('select');
+          return select && select.options.length > 1;
+        },
+        { timeout: 30000 }
+      );
     } catch (error) {
       // Emit diagnostics before failing
       const diag = [
@@ -87,15 +96,7 @@ test.describe('Forecast Smoke Tests', () => {
       
       console.error(`DOCKER_E2E_DIAGNOSTICS\n${diag}`);
       throw error;
-    
-    // Wait for at least one option in the select (proves regions loaded)
-    await page.waitForFunction(
-      () => {
-        const select = document.querySelector('select');
-        return select && select.options.length > 1;
-      },
-      { timeout: 30000 }
-    );
+    }
     
     // Verify regions API call completed successfully by checking network response
     const regionsResponse = await page.waitForResponse(
