@@ -46,9 +46,13 @@ test.describe('Forecast Smoke Tests', () => {
     page.on('response', async (res) => {
       try {
         const url = res.url();
-        if (!url.includes('/api/')) return;
         const status = res.status();
-        if (status >= 400) {
+        if (status === 404) {
+          // Capture all 404s (not just /api/) to identify missing resources
+          const body = (await res.text().catch(() => '')).slice(0, 200);
+          apiFailures.push(`404 ${url} :: ${body}`);
+        } else if (status >= 400 && url.includes('/api/')) {
+          // Capture other API failures
           const body = (await res.text().catch(() => '')).slice(0, 400);
           apiFailures.push(`${status} ${url} :: ${body}`);
         }
@@ -91,7 +95,7 @@ test.describe('Forecast Smoke Tests', () => {
       const diag = [
         `ConsoleErrors(${consoleErrors.length}): ${consoleErrors.slice(0,5).join(' | ')}`,
         `PageErrors(${pageErrors.length}): ${pageErrors.slice(0,5).join(' | ')}`,
-        `ApiFailures(${apiFailures.length}): ${apiFailures.slice(0,5).join(' | ')}`
+        `ApiFailures(${apiFailures.length}): ${apiFailures.slice(0,10).join(' | ')}`
       ].join('\n');
       
       console.error(`DOCKER_E2E_DIAGNOSTICS\n${diag}`);
