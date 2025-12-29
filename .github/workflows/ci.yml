@@ -776,18 +776,12 @@ jobs:
             summary="$(grep -nE 'FAIL|Error:|Timeout|expect\(|net::|page\.goto|strict mode|locator' "$LOG" | head -n 40 || true)"
             
             # Extract diagnostics block if present
-            diag_block="$(awk '
-              /DOCKER_E2E_DIAGNOSTICS/ {flag=1; c=0}
-              flag {print; c++}
-              (flag && c>=60) {exit}
-            ' "$LOG" || true)"
+            diag_block="$(awk '/DOCKER_E2E_DIAGNOSTICS/ {flag=1; c=0} flag {print; c++} (flag && c>=60) {exit}' "$LOG" || true)"
             
             if [ -n "$diag_block" ]; then
               summary="${summary}\n\n=== DOCKER_E2E_DIAGNOSTICS ===\n${diag_block}"
             else
-              python3 - <<'PY'
-print("::error title=DIAGNOSTICS_MARKER_NOT_FOUND::DOCKER_E2E_DIAGNOSTICS not found in /tmp/docker-e2e-playwright.log")
-PY
+              python3 -c "print('::error title=DIAGNOSTICS_MARKER_NOT_FOUND::DOCKER_E2E_DIAGNOSTICS not found in /tmp/docker-e2e-playwright.log')"
             fi
             
             # Encode newlines for GitHub annotation rendering
