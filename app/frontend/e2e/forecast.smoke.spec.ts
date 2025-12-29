@@ -33,8 +33,17 @@ test.describe('Forecast Smoke Tests', () => {
     // Navigate to forecast page
     await page.goto('/forecast');
     
-    // Wait for "Loading regions..." to disappear, then wait for select to be visible
-    await expect(page.getByText('Loading regions...')).toHaveCount(0, { timeout: 30_000 });
+    // Wait for select element to exist first (may show "Loading regions..." initially)
+    await page.waitForSelector('select', { timeout: 30_000 });
+    
+    // Wait for "Loading regions..." text to disappear (if it exists)
+    const loadingText = page.getByText('Loading regions...');
+    const loadingExists = await loadingText.isVisible().catch(() => false);
+    if (loadingExists) {
+      await expect(loadingText).toHaveCount(0, { timeout: 30_000 });
+    }
+    
+    // Wait for select to be visible
     await expect(page.locator('select')).toBeVisible({ timeout: 30_000 });
     
     // Wait for at least one option in the select (proves regions loaded)
