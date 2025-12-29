@@ -1,13 +1,41 @@
 import { test, expect } from '@playwright/test';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
+
+async function waitForRegionsReady(request: any) {
+  const url = `${API_BASE}/api/forecasting/regions`;
+  const started = Date.now();
+  let lastErr = '';
+  while (Date.now() - started < 60_000) {
+    try {
+      const res = await request.get(url, { timeout: 10_000 });
+      const status = res.status();
+      if (status === 200) {
+        const json = await res.json().catch(() => null);
+        if (Array.isArray(json) && json.length > 0) return;
+        lastErr = `regions shape invalid: ${JSON.stringify(json)?.slice(0,200)}`;
+      } else {
+        lastErr = `regions status=${status}`;
+      }
+    } catch (e: any) {
+      lastErr = `regions request error: ${String(e).slice(0,200)}`;
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  throw new Error(`Backend not ready: ${lastErr}`);
+}
+
 test.describe('Forecast Smoke Tests', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, request }) => {
+    // Wait for backend to be ready before navigating
+    await waitForRegionsReady(request);
+    
     // Navigate to forecast page
     await page.goto('/forecast');
     
-    // Wait for regions to load by checking for the region select dropdown
-    // This is more reliable than waiting for network response which may complete before listener is set
-    await page.waitForSelector('select', { timeout: 30000 });
+    // Wait for "Loading regions..." to disappear, then wait for select to be visible
+    await expect(page.getByText('Loading regions...')).toHaveCount(0, { timeout: 30_000 });
+    await expect(page.locator('select')).toBeVisible({ timeout: 30_000 });
     
     // Wait for at least one option in the select (proves regions loaded)
     await page.waitForFunction(
@@ -18,20 +46,20 @@ test.describe('Forecast Smoke Tests', () => {
       { timeout: 30000 }
     );
     
-    // Wait a bit for any error messages to clear
-    await page.waitForTimeout(1000);
-    
-    // Verify no error message is shown (only fail if error persists after regions should have loaded)
-    const errorText = page.locator('text=/Failed to load/i');
-    const errorVisible = await errorText.isVisible().catch(() => false);
-    if (errorVisible) {
-      // Double-check that regions actually loaded
-      const select = page.locator('select').first();
-      const optionCount = await select.locator('option').count();
-      if (optionCount <= 1) {
-        throw new Error('Regions failed to load - error message present and no regions available');
+    // Verify regions API call completed successfully by checking network response
+    const regionsResponse = await page.waitForResponse(
+      (response) => response.url().includes('/api/forecasting/regions') && response.status() === 200,
+      { timeout: 30_000 }
+    ).catch(async () => {
+      // On failure, capture diagnostic info
+      const response = await page.request.get(`${API_BASE}/api/forecasting/regions`).catch(() => null);
+      if (response) {
+        const status = response.status();
+        const body = await response.text().catch(() => '');
+        throw new Error(`Regions API failed: status=${status} body=${body.slice(0, 200)}`);
       }
-    }
+      throw new Error('Regions API request failed or timed out');
+    });
     
     // Wait for network to be idle
     await page.waitForLoadState('networkidle');
