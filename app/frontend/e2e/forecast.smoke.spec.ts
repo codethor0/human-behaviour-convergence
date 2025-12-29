@@ -30,21 +30,63 @@ test.describe('Forecast Smoke Tests', () => {
     // Wait for backend to be ready before navigating
     await waitForRegionsReady(request);
     
+    // Instrument page to capture browser-side errors
+    const apiFailures: string[] = [];
+    const consoleErrors: string[] = [];
+    const pageErrors: string[] = [];
+    
+    page.on('pageerror', (err) => {
+      pageErrors.push(String(err));
+    });
+    
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+    
+    page.on('response', async (res) => {
+      try {
+        const url = res.url();
+        if (!url.includes('/api/')) return;
+        const status = res.status();
+        if (status >= 400) {
+          const body = (await res.text().catch(() => '')).slice(0, 400);
+          apiFailures.push(`${status} ${url} :: ${body}`);
+        }
+      } catch {}
+    });
+    
+    page.on('requestfailed', (req) => {
+      const url = req.url();
+      if (!url.includes('/api/')) return;
+      apiFailures.push(`REQUEST_FAILED ${url} :: ${req.failure()?.errorText || ''}`);
+    });
+    
     // Navigate to forecast page
     await page.goto('/forecast');
     
     // Wait for select element to exist first (may show "Loading regions..." initially)
-    await page.waitForSelector('select', { timeout: 30_000 });
-    
-    // Wait for "Loading regions..." text to disappear (if it exists)
-    const loadingText = page.getByText('Loading regions...');
-    const loadingExists = await loadingText.isVisible().catch(() => false);
-    if (loadingExists) {
-      await expect(loadingText).toHaveCount(0, { timeout: 30_000 });
-    }
-    
-    // Wait for select to be visible
-    await expect(page.locator('select')).toBeVisible({ timeout: 30_000 });
+    try {
+      await page.waitForSelector('select', { timeout: 30_000 });
+      
+      // Wait for "Loading regions..." text to disappear (if it exists)
+      const loadingText = page.getByText('Loading regions...');
+      const loadingExists = await loadingText.isVisible().catch(() => false);
+      if (loadingExists) {
+        await expect(loadingText).toHaveCount(0, { timeout: 30_000 });
+      }
+      
+      // Wait for select to be visible
+      await expect(page.locator('select')).toBeVisible({ timeout: 30_000 });
+    } catch (error) {
+      // Emit diagnostics before failing
+      const diag = [
+        `ConsoleErrors(${consoleErrors.length}): ${consoleErrors.slice(0,5).join(' | ')}`,
+        `PageErrors(${pageErrors.length}): ${pageErrors.slice(0,5).join(' | ')}`,
+        `ApiFailures(${apiFailures.length}): ${apiFailures.slice(0,5).join(' | ')}`
+      ].join('\n');
+      
+      console.error(`DOCKER_E2E_DIAGNOSTICS\n${diag}`);
+      throw error;
     
     // Wait for at least one option in the select (proves regions loaded)
     await page.waitForFunction(
