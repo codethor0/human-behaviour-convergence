@@ -34,6 +34,7 @@ test.describe('Forecast Smoke Tests', () => {
     const apiFailures: string[] = [];
     const consoleErrors: string[] = [];
     const pageErrors: string[] = [];
+    const notFoundUrls: Set<string> = new Set();
     
     page.on('pageerror', (err) => {
       pageErrors.push(String(err));
@@ -43,33 +44,33 @@ test.describe('Forecast Smoke Tests', () => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
     
-    const failedRequests = new Set<string>();
-    
-    page.on('requestfailed', (req) => {
-      const url = req.url();
-      if (!failedRequests.has(url)) {
-        failedRequests.add(url);
-        apiFailures.push(`REQUEST_FAILED ${url} :: ${req.failure()?.errorText || ''}`);
+    page.on('response', async (res) => {
+      try {
+        const status = res.status();
+        if (status === 404) {
+          const url = res.url();
+          // Avoid unbounded growth; just remember a few distinct values.
+          if (notFoundUrls.size < 10) {
+            notFoundUrls.add(`${status} ${url}`);
+          }
+        } else if (status >= 400) {
+          const url = res.url();
+          const body = (await res.text().catch(() => '')).slice(0, 400);
+          if (apiFailures.length < 10) {
+            apiFailures.push(`${status} ${url} :: ${body}`);
+          }
+        }
+      } catch {
+        // ignore
       }
     });
     
-    page.on('response', async (res) => {
-      try {
-        const url = res.url();
-        const status = res.status();
-        if (status === 404) {
-          // Capture all 404s (not just /api/) to identify missing resources
-          if (!failedRequests.has(url)) {
-            failedRequests.add(url);
-            // Don't await text() to avoid blocking - just capture URL
-            apiFailures.push(`404 ${url}`);
-          }
-        } else if (status >= 400 && url.includes('/api/')) {
-          // Capture other API failures
-          const body = (await res.text().catch(() => '')).slice(0, 400);
-          apiFailures.push(`${status} ${url} :: ${body}`);
-        }
-      } catch {}
+    page.on('requestfailed', (req) => {
+      const url = req.url();
+      const failure = req.failure()?.errorText || '';
+      if (apiFailures.length < 10) {
+        apiFailures.push(`REQUEST_FAILED ${url} :: ${failure}`);
+      }
     });
     
     // Navigate to forecast page
