@@ -38,7 +38,6 @@ services:
       - "3100:3000"
     environment:
       - NEXT_PUBLIC_API_BASE=http://localhost:8100
-      - HOSTNAME=0.0.0.0
     depends_on:
       backend:
         condition: service_healthy
