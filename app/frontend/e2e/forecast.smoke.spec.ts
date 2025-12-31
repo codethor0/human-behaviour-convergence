@@ -99,10 +99,13 @@ test.describe('Forecast Smoke Tests', () => {
       );
     } catch (error) {
       // Emit diagnostics before failing
+      const notFoundList = Array.from(notFoundUrls).slice(0, 5);
+      
       const diag = [
         `ConsoleErrors(${consoleErrors.length}): ${consoleErrors.slice(0,5).join(' | ')}`,
         `PageErrors(${pageErrors.length}): ${pageErrors.slice(0,5).join(' | ')}`,
-        `ApiFailures(${apiFailures.length}): ${apiFailures.slice(0,10).join(' | ')}`
+        `ApiFailures(${apiFailures.length}): ${apiFailures.slice(0,5).join(' || ')}`,
+        `NotFoundUrls(${notFoundList.length}): ${notFoundList.join(' || ')}`
       ].join('\n');
       
       console.error(`DOCKER_E2E_DIAGNOSTICS\n${diag}`);
