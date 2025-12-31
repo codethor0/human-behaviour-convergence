@@ -19,4 +19,5 @@ COPY app/frontend ./
 EXPOSE 3000
 
 # Use dev mode for local development (can be overridden in docker-compose)
-CMD ["npm", "run", "dev"]
+# Bind to 0.0.0.0 to make Next.js accessible from outside the container
+CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0"]
