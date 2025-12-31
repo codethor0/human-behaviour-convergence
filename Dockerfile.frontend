@@ -18,6 +18,8 @@ COPY app/frontend ./
 
 EXPOSE 3000
 
+# Set HOSTNAME to 0.0.0.0 so Next.js binds to all interfaces (required for Docker)
+ENV HOSTNAME=0.0.0.0
+
 # Use dev mode for local development (can be overridden in docker-compose)
-# Bind to 0.0.0.0 to make Next.js accessible from outside the container
-CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0"]
+CMD ["npm", "run", "dev"]
