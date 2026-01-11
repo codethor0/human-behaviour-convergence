@@ -295,9 +295,12 @@ class BehavioralForecaster:
                 sources.append("mobility API")
 
             # Fetch GDELT events data (digital attention)
-            gdelt_tone = self.gdelt_fetcher.fetch_event_tone(days_back=days_back)
-            if not gdelt_tone.empty:
+            gdelt_tone, gdelt_status = self.gdelt_fetcher.fetch_event_tone(
+                days_back=days_back
+            )
+            if gdelt_status.ok and not gdelt_tone.empty:
                 sources.append("GDELT (Global Events)")
+            # Always store GDELT status in metadata (even if failed)
 
             # Fetch OWID health data
             # Try to map region to country (simplified: use region_name
@@ -415,6 +418,9 @@ class BehavioralForecaster:
                         "latitude": latitude,
                         "longitude": longitude,
                         "error": "No data available",
+                        "sources_status": {
+                            "gdelt": gdelt_status.to_dict(),
+                        },
                     },
                 }
 
@@ -447,6 +453,9 @@ class BehavioralForecaster:
                         "latitude": latitude,
                         "longitude": longitude,
                         "error": "Harmonized data is empty",
+                        "sources_status": {
+                            "gdelt": gdelt_status.to_dict(),
+                        },
                     },
                 }
 
@@ -502,6 +511,9 @@ class BehavioralForecaster:
                         "longitude": longitude,
                         "warning": "Insufficient data for forecasting",
                         "data_points": len(history),
+                        "sources_status": {
+                            "gdelt": gdelt_status.to_dict(),
+                        },
                     },
                 }
 
@@ -537,6 +549,9 @@ class BehavioralForecaster:
                         "longitude": longitude,
                         "warning": "Empty time series",
                         "data_points": len(history),
+                        "sources_status": {
+                            "gdelt": gdelt_status.to_dict(),
+                        },
                     },
                 }
 
@@ -799,6 +814,10 @@ class BehavioralForecaster:
                     "confidence_level": 0.95,
                     "sources": sources,
                     "_harmonized_df": harmonized_for_details,  # Store for extraction
+                }
+                # Add source status metadata
+                metadata["sources_status"] = {
+                    "gdelt": gdelt_status.to_dict(),
                 }
 
                 # Cache result
