@@ -10,6 +10,8 @@ from typing import Any, Dict
 import pandas as pd
 import structlog
 
+from app.services.calibration.config import BEHAVIOR_INDEX_WEIGHTS
+
 logger = structlog.get_logger("core.behavior_index")
 
 
@@ -31,15 +33,19 @@ class BehaviorIndexComputer:
 
     def __init__(
         self,
-        economic_weight: float = 0.25,
-        environmental_weight: float = 0.25,
-        mobility_weight: float = 0.20,
-        digital_attention_weight: float = 0.15,
-        health_weight: float = 0.15,
-        political_weight: float = 0.15,
-        crime_weight: float = 0.15,
-        misinformation_weight: float = 0.10,
-        social_cohesion_weight: float = 0.15,
+        economic_weight: float = BEHAVIOR_INDEX_WEIGHTS["economic_weight"],
+        environmental_weight: float = BEHAVIOR_INDEX_WEIGHTS["environmental_weight"],
+        mobility_weight: float = BEHAVIOR_INDEX_WEIGHTS["mobility_weight"],
+        digital_attention_weight: float = BEHAVIOR_INDEX_WEIGHTS[
+            "digital_attention_weight"
+        ],
+        health_weight: float = BEHAVIOR_INDEX_WEIGHTS["health_weight"],
+        political_weight: float = BEHAVIOR_INDEX_WEIGHTS["political_weight"],
+        crime_weight: float = BEHAVIOR_INDEX_WEIGHTS["crime_weight"],
+        misinformation_weight: float = BEHAVIOR_INDEX_WEIGHTS["misinformation_weight"],
+        social_cohesion_weight: float = BEHAVIOR_INDEX_WEIGHTS[
+            "social_cohesion_weight"
+        ],
     ):
         """
         Initialize the Behavior Index computer.
@@ -730,7 +736,7 @@ class BehaviorIndexComputer:
         return contributions
 
     def get_subindex_details(
-        self, df: pd.DataFrame, row_idx: int
+        self, df: pd.DataFrame, row_idx: int, include_quality_metrics: bool = False
     ) -> Dict[str, Dict[str, Any]]:
         """
         Extract component-level details for each sub-index from a DataFrame row.
@@ -738,6 +744,7 @@ class BehaviorIndexComputer:
         Args:
             df: DataFrame with sub-index columns and component metadata in attrs
             row_idx: Index of the row to extract details for
+            include_quality_metrics: If True, include quality metrics (confidence, volatility, etc.) for each component
 
         Returns:
             Dictionary mapping sub-index names to their component breakdowns
@@ -772,39 +779,121 @@ class BehaviorIndexComputer:
 
             economic_val = float(row.get("economic_stress", 0.5))
             economic_val = economic_val if math.isfinite(economic_val) else 0.5
+
+            components_list = []
+            for name, val, weight, source in zip(
+                component_names,
+                component_values,
+                component_weights,
+                component_sources,
+            ):
+                contribution = (
+                    float(val) * float(weight)
+                    if math.isfinite(float(val)) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                component_dict = {
+                    "id": name,
+                    "label": name.replace("_", " ").title(),
+                    "value": float(val) if math.isfinite(float(val)) else 0.5,
+                    "weight": (float(weight) if math.isfinite(float(weight)) else 0.0),
+                    "contribution": contribution,
+                    "source": source,
+                }
+
+                # Add quality metrics if requested
+                if include_quality_metrics:
+                    try:
+                        from app.core.factor_quality import (
+                            compute_factor_quality_metrics,
+                        )
+
+                        # Get the series for this component from df
+                        component_series = None
+                        if name == "market_volatility" and "stress_index" in df.columns:
+                            component_series = df["stress_index"]
+                        elif (
+                            name == "consumer_sentiment"
+                            and "fred_consumer_sentiment" in df.columns
+                        ):
+                            component_series = df["fred_consumer_sentiment"]
+                        elif (
+                            name == "unemployment_rate"
+                            and "fred_unemployment" in df.columns
+                        ):
+                            component_series = df["fred_unemployment"]
+                        elif (
+                            name == "jobless_claims"
+                            and "fred_jobless_claims" in df.columns
+                        ):
+                            component_series = df["fred_jobless_claims"]
+
+                        if component_series is not None and len(component_series) > 0:
+                            quality_metrics = compute_factor_quality_metrics(
+                                component_series
+                            )
+                            component_dict.update(quality_metrics)
+                        else:
+                            # Default quality metrics if series not available
+                            component_dict.update(
+                                {
+                                    "confidence": 0.5,
+                                    "volatility_classification": "unknown",
+                                    "persistence": 0.5,
+                                    "trend": "stable",
+                                    "signal_strength": 0.5,
+                                }
+                            )
+                    except Exception:
+                        # If quality metrics fail, use defaults
+                        component_dict.update(
+                            {
+                                "confidence": 0.5,
+                                "volatility_classification": "unknown",
+                                "persistence": 0.5,
+                                "trend": "stable",
+                                "signal_strength": 0.5,
+                            }
+                        )
+
+                components_list.append(component_dict)
+
+            # Calculate reconciliation: sum of contributions should equal value
+            component_sum = sum(c.get("contribution", 0.0) for c in components_list)
+            reconciliation_diff = abs(component_sum - economic_val)
             details["economic_stress"] = {
                 "value": economic_val,
-                "components": [
-                    {
-                        "id": name,
-                        "label": name.replace("_", " ").title(),
-                        "value": float(val) if math.isfinite(float(val)) else 0.5,
-                        "weight": (
-                            float(weight) if math.isfinite(float(weight)) else 0.0
-                        ),
-                        "source": source,
-                    }
-                    for name, val, weight, source in zip(
-                        component_names,
-                        component_values,
-                        component_weights,
-                        component_sources,
-                    )
-                ],
+                "components": components_list,
+                "reconciliation": {
+                    "sum": float(component_sum),
+                    "output": float(economic_val),
+                    "difference": float(reconciliation_diff),
+                    "valid": reconciliation_diff <= 0.01,
+                },
             }
         else:
             # Fallback
+            fallback_val = float(row.get("economic_stress", 0.5))
+            fallback_component_val = float(row.get("stress_index", 0.5))
+            fallback_contribution = fallback_component_val * 1.0
             details["economic_stress"] = {
-                "value": float(row.get("economic_stress", 0.5)),
+                "value": fallback_val,
                 "components": [
                     {
                         "id": "market_volatility",
                         "label": "Market Volatility",
-                        "value": float(row.get("stress_index", 0.5)),
+                        "value": fallback_component_val,
                         "weight": 1.0,
+                        "contribution": fallback_contribution,
                         "source": "yfinance",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(fallback_contribution),
+                    "output": float(fallback_val),
+                    "difference": float(abs(fallback_contribution - fallback_val)),
+                    "valid": abs(fallback_contribution - fallback_val) <= 0.01,
+                },
             }
 
         # Environmental stress components
@@ -813,44 +902,85 @@ class BehaviorIndexComputer:
             component_weights = df.attrs["_environmental_component_weights"]
             component_sources = df.attrs["_environmental_component_sources"]
 
-            discomfort_val = row.get("discomfort_score", 0.5)
-            discomfort_float = (
-                float(discomfort_val) if pd.notna(discomfort_val) else 0.5
-            )
-            discomfort_float = (
-                discomfort_float if math.isfinite(discomfort_float) else 0.5
-            )
-            details["environmental_stress"] = {
-                "value": (
-                    float(row.get("environmental_stress", 0.5))
-                    if math.isfinite(float(row.get("environmental_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            env_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                # Get the actual component value
+                if name == "weather_discomfort":
+                    component_val = row.get("discomfort_score", 0.5)
+                elif name == "earthquake_intensity":
+                    component_val = row.get("usgs_earthquake_intensity", 0.0)
+                else:
+                    component_val = 0.5
+
+                component_float = (
+                    float(component_val)
+                    if pd.notna(component_val)
+                    else (0.0 if name == "earthquake_intensity" else 0.5)
+                )
+                component_float = (
+                    component_float
+                    if math.isfinite(component_float)
+                    else (0.0 if name == "earthquake_intensity" else 0.5)
+                )
+
+                contribution = (
+                    component_float * float(weight)
+                    if math.isfinite(component_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                env_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
-                        "value": discomfort_float,
+                        "value": component_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            env_val = (
+                float(row.get("environmental_stress", 0.5))
+                if math.isfinite(float(row.get("environmental_stress", 0.5)))
+                else 0.5
+            )
+            env_component_sum = sum(c.get("contribution", 0.0) for c in env_components)
+            env_reconciliation_diff = abs(env_component_sum - env_val)
+            details["environmental_stress"] = {
+                "value": env_val,
+                "components": env_components,
+                "reconciliation": {
+                    "sum": float(env_component_sum),
+                    "output": float(env_val),
+                    "difference": float(env_reconciliation_diff),
+                    "valid": env_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            env_fallback_val = float(row.get("environmental_stress", 0.5))
+            env_fallback_component_val = float(row.get("discomfort_score", 0.5))
+            env_fallback_contribution = env_fallback_component_val * 1.0
             details["environmental_stress"] = {
-                "value": float(row.get("environmental_stress", 0.5)),
+                "value": env_fallback_val,
                 "components": [
                     {
                         "id": "weather_discomfort",
                         "label": "Weather Discomfort",
-                        "value": float(row.get("discomfort_score", 0.5)),
+                        "value": env_fallback_component_val,
                         "weight": 1.0,
+                        "contribution": env_fallback_contribution,
                         "source": "Open-Meteo",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(env_fallback_contribution),
+                    "output": float(env_fallback_val),
+                    "difference": float(
+                        abs(env_fallback_contribution - env_fallback_val)
+                    ),
+                    "valid": abs(env_fallback_contribution - env_fallback_val) <= 0.01,
+                },
             }
 
         # Mobility activity components
@@ -862,37 +992,66 @@ class BehaviorIndexComputer:
             mobility_val = row.get("mobility_index", 0.5)
             mobility_float = float(mobility_val) if pd.notna(mobility_val) else 0.5
             mobility_float = mobility_float if math.isfinite(mobility_float) else 0.5
-            details["mobility_activity"] = {
-                "value": (
-                    float(row.get("mobility_activity", 0.5))
-                    if math.isfinite(float(row.get("mobility_activity", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            mob_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                contribution = (
+                    mobility_float * float(weight)
+                    if math.isfinite(mobility_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                mob_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
                         "value": mobility_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            mob_val = (
+                float(row.get("mobility_activity", 0.5))
+                if math.isfinite(float(row.get("mobility_activity", 0.5)))
+                else 0.5
+            )
+            mob_component_sum = sum(c.get("contribution", 0.0) for c in mob_components)
+            mob_reconciliation_diff = abs(mob_component_sum - mob_val)
+            details["mobility_activity"] = {
+                "value": mob_val,
+                "components": mob_components,
+                "reconciliation": {
+                    "sum": float(mob_component_sum),
+                    "output": float(mob_val),
+                    "difference": float(mob_reconciliation_diff),
+                    "valid": mob_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            mob_fallback_val = float(row.get("mobility_activity", 0.5))
+            mob_fallback_component_val = float(row.get("mobility_index", 0.5))
+            mob_fallback_contribution = mob_fallback_component_val * 1.0
             details["mobility_activity"] = {
-                "value": float(row.get("mobility_activity", 0.5)),
+                "value": mob_fallback_val,
                 "components": [
                     {
                         "id": "mobility_index",
                         "label": "Mobility Index",
-                        "value": float(row.get("mobility_index", 0.5)),
+                        "value": mob_fallback_component_val,
                         "weight": 1.0,
+                        "contribution": mob_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(mob_fallback_contribution),
+                    "output": float(mob_fallback_val),
+                    "difference": float(
+                        abs(mob_fallback_contribution - mob_fallback_val)
+                    ),
+                    "valid": abs(mob_fallback_contribution - mob_fallback_val) <= 0.01,
+                },
             }
 
         # Digital attention components
@@ -901,40 +1060,81 @@ class BehaviorIndexComputer:
             component_weights = df.attrs["_digital_component_weights"]
             component_sources = df.attrs["_digital_component_sources"]
 
-            search_val = row.get("search_interest_score", 0.5)
-            search_float = float(search_val) if pd.notna(search_val) else 0.5
-            search_float = search_float if math.isfinite(search_float) else 0.5
-            details["digital_attention"] = {
-                "value": (
-                    float(row.get("digital_attention", 0.5))
-                    if math.isfinite(float(row.get("digital_attention", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            dig_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                # Get the actual component value
+                if name == "search_interest":
+                    component_val = row.get("search_interest_score", 0.5)
+                elif name == "gdelt_tone":
+                    component_val = row.get("gdelt_tone_score", 0.5)
+                else:
+                    component_val = 0.5
+
+                component_float = (
+                    float(component_val) if pd.notna(component_val) else 0.5
+                )
+                component_float = (
+                    component_float if math.isfinite(component_float) else 0.5
+                )
+
+                contribution = (
+                    component_float * float(weight)
+                    if math.isfinite(component_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                dig_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
-                        "value": search_float,
+                        "value": component_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            dig_val = (
+                float(row.get("digital_attention", 0.5))
+                if math.isfinite(float(row.get("digital_attention", 0.5)))
+                else 0.5
+            )
+            dig_component_sum = sum(c.get("contribution", 0.0) for c in dig_components)
+            dig_reconciliation_diff = abs(dig_component_sum - dig_val)
+            details["digital_attention"] = {
+                "value": dig_val,
+                "components": dig_components,
+                "reconciliation": {
+                    "sum": float(dig_component_sum),
+                    "output": float(dig_val),
+                    "difference": float(dig_reconciliation_diff),
+                    "valid": dig_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            dig_fallback_val = float(row.get("digital_attention", 0.5))
+            dig_fallback_component_val = float(row.get("search_interest_score", 0.5))
+            dig_fallback_contribution = dig_fallback_component_val * 1.0
             details["digital_attention"] = {
-                "value": float(row.get("digital_attention", 0.5)),
+                "value": dig_fallback_val,
                 "components": [
                     {
                         "id": "search_interest",
                         "label": "Search Interest",
-                        "value": float(row.get("search_interest_score", 0.5)),
+                        "value": dig_fallback_component_val,
                         "weight": 1.0,
+                        "contribution": dig_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(dig_fallback_contribution),
+                    "output": float(dig_fallback_val),
+                    "difference": float(
+                        abs(dig_fallback_contribution - dig_fallback_val)
+                    ),
+                    "valid": abs(dig_fallback_contribution - dig_fallback_val) <= 0.01,
+                },
             }
 
         # Public health stress components
@@ -943,40 +1143,84 @@ class BehaviorIndexComputer:
             component_weights = df.attrs["_health_component_weights"]
             component_sources = df.attrs["_health_component_sources"]
 
-            health_val = row.get("health_risk_index", 0.5)
-            health_float = float(health_val) if pd.notna(health_val) else 0.5
-            health_float = health_float if math.isfinite(health_float) else 0.5
-            details["public_health_stress"] = {
-                "value": (
-                    float(row.get("public_health_stress", 0.5))
-                    if math.isfinite(float(row.get("public_health_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            health_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                # Get the actual component value
+                if name == "health_risk_index":
+                    component_val = row.get("health_risk_index", 0.5)
+                elif name == "owid_health_stress":
+                    component_val = row.get("owid_health_stress", 0.5)
+                else:
+                    component_val = 0.5
+
+                component_float = (
+                    float(component_val) if pd.notna(component_val) else 0.5
+                )
+                component_float = (
+                    component_float if math.isfinite(component_float) else 0.5
+                )
+
+                contribution = (
+                    component_float * float(weight)
+                    if math.isfinite(component_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                health_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
-                        "value": health_float,
+                        "value": component_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            health_val = (
+                float(row.get("public_health_stress", 0.5))
+                if math.isfinite(float(row.get("public_health_stress", 0.5)))
+                else 0.5
+            )
+            health_component_sum = sum(
+                c.get("contribution", 0.0) for c in health_components
+            )
+            health_reconciliation_diff = abs(health_component_sum - health_val)
+            details["public_health_stress"] = {
+                "value": health_val,
+                "components": health_components,
+                "reconciliation": {
+                    "sum": float(health_component_sum),
+                    "output": float(health_val),
+                    "difference": float(health_reconciliation_diff),
+                    "valid": health_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            health_fallback_val = float(row.get("public_health_stress", 0.5))
+            health_fallback_component_val = float(row.get("health_risk_index", 0.5))
+            health_fallback_contribution = health_fallback_component_val * 1.0
             details["public_health_stress"] = {
-                "value": float(row.get("public_health_stress", 0.5)),
+                "value": health_fallback_val,
                 "components": [
                     {
                         "id": "health_risk_index",
                         "label": "Health Risk Index",
-                        "value": float(row.get("health_risk_index", 0.5)),
+                        "value": health_fallback_component_val,
                         "weight": 1.0,
+                        "contribution": health_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(health_fallback_contribution),
+                    "output": float(health_fallback_val),
+                    "difference": float(
+                        abs(health_fallback_contribution - health_fallback_val)
+                    ),
+                    "valid": abs(health_fallback_contribution - health_fallback_val)
+                    <= 0.01,
+                },
             }
 
         # Political stress components
@@ -988,37 +1232,65 @@ class BehaviorIndexComputer:
             political_val = row.get("political_stress", 0.5)
             political_float = float(political_val) if pd.notna(political_val) else 0.5
             political_float = political_float if math.isfinite(political_float) else 0.5
-            details["political_stress"] = {
-                "value": (
-                    float(row.get("political_stress", 0.5))
-                    if math.isfinite(float(row.get("political_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            pol_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                contribution = (
+                    political_float * float(weight)
+                    if math.isfinite(political_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                pol_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
                         "value": political_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            pol_val = (
+                float(row.get("political_stress", 0.5))
+                if math.isfinite(float(row.get("political_stress", 0.5)))
+                else 0.5
+            )
+            pol_component_sum = sum(c.get("contribution", 0.0) for c in pol_components)
+            pol_reconciliation_diff = abs(pol_component_sum - pol_val)
+            details["political_stress"] = {
+                "value": pol_val,
+                "components": pol_components,
+                "reconciliation": {
+                    "sum": float(pol_component_sum),
+                    "output": float(pol_val),
+                    "difference": float(pol_reconciliation_diff),
+                    "valid": pol_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            pol_fallback_val = float(row.get("political_stress", 0.5))
+            pol_fallback_contribution = pol_fallback_val * 1.0
             details["political_stress"] = {
-                "value": float(row.get("political_stress", 0.5)),
+                "value": pol_fallback_val,
                 "components": [
                     {
                         "id": "political_stress",
                         "label": "Political Stress",
-                        "value": float(row.get("political_stress", 0.5)),
+                        "value": pol_fallback_val,
                         "weight": 1.0,
+                        "contribution": pol_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(pol_fallback_contribution),
+                    "output": float(pol_fallback_val),
+                    "difference": float(
+                        abs(pol_fallback_contribution - pol_fallback_val)
+                    ),
+                    "valid": abs(pol_fallback_contribution - pol_fallback_val) <= 0.01,
+                },
             }
 
         # Crime stress components
@@ -1030,37 +1302,68 @@ class BehaviorIndexComputer:
             crime_val = row.get("crime_stress", 0.5)
             crime_float = float(crime_val) if pd.notna(crime_val) else 0.5
             crime_float = crime_float if math.isfinite(crime_float) else 0.5
-            details["crime_stress"] = {
-                "value": (
-                    float(row.get("crime_stress", 0.5))
-                    if math.isfinite(float(row.get("crime_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            crime_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                contribution = (
+                    crime_float * float(weight)
+                    if math.isfinite(crime_float) and math.isfinite(float(weight))
+                    else 0.0
+                )
+                crime_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
                         "value": crime_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            crime_val = (
+                float(row.get("crime_stress", 0.5))
+                if math.isfinite(float(row.get("crime_stress", 0.5)))
+                else 0.5
+            )
+            crime_component_sum = sum(
+                c.get("contribution", 0.0) for c in crime_components
+            )
+            crime_reconciliation_diff = abs(crime_component_sum - crime_val)
+            details["crime_stress"] = {
+                "value": crime_val,
+                "components": crime_components,
+                "reconciliation": {
+                    "sum": float(crime_component_sum),
+                    "output": float(crime_val),
+                    "difference": float(crime_reconciliation_diff),
+                    "valid": crime_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            crime_fallback_val = float(row.get("crime_stress", 0.5))
+            crime_fallback_contribution = crime_fallback_val * 1.0
             details["crime_stress"] = {
-                "value": float(row.get("crime_stress", 0.5)),
+                "value": crime_fallback_val,
                 "components": [
                     {
                         "id": "crime_stress",
                         "label": "Crime Stress",
-                        "value": float(row.get("crime_stress", 0.5)),
+                        "value": crime_fallback_val,
                         "weight": 1.0,
+                        "contribution": crime_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(crime_fallback_contribution),
+                    "output": float(crime_fallback_val),
+                    "difference": float(
+                        abs(crime_fallback_contribution - crime_fallback_val)
+                    ),
+                    "valid": abs(crime_fallback_contribution - crime_fallback_val)
+                    <= 0.01,
+                },
             }
 
         # Misinformation stress components
@@ -1076,37 +1379,69 @@ class BehaviorIndexComputer:
             misinformation_float = (
                 misinformation_float if math.isfinite(misinformation_float) else 0.5
             )
-            details["misinformation_stress"] = {
-                "value": (
-                    float(row.get("misinformation_stress", 0.5))
-                    if math.isfinite(float(row.get("misinformation_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            misinfo_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                contribution = (
+                    misinformation_float * float(weight)
+                    if math.isfinite(misinformation_float)
+                    and math.isfinite(float(weight))
+                    else 0.0
+                )
+                misinfo_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
                         "value": misinformation_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            misinfo_val = (
+                float(row.get("misinformation_stress", 0.5))
+                if math.isfinite(float(row.get("misinformation_stress", 0.5)))
+                else 0.5
+            )
+            misinfo_component_sum = sum(
+                c.get("contribution", 0.0) for c in misinfo_components
+            )
+            misinfo_reconciliation_diff = abs(misinfo_component_sum - misinfo_val)
+            details["misinformation_stress"] = {
+                "value": misinfo_val,
+                "components": misinfo_components,
+                "reconciliation": {
+                    "sum": float(misinfo_component_sum),
+                    "output": float(misinfo_val),
+                    "difference": float(misinfo_reconciliation_diff),
+                    "valid": misinfo_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            misinfo_fallback_val = float(row.get("misinformation_stress", 0.5))
+            misinfo_fallback_contribution = misinfo_fallback_val * 1.0
             details["misinformation_stress"] = {
-                "value": float(row.get("misinformation_stress", 0.5)),
+                "value": misinfo_fallback_val,
                 "components": [
                     {
                         "id": "misinformation_stress",
                         "label": "Misinformation Stress",
-                        "value": float(row.get("misinformation_stress", 0.5)),
+                        "value": misinfo_fallback_val,
                         "weight": 1.0,
+                        "contribution": misinfo_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(misinfo_fallback_contribution),
+                    "output": float(misinfo_fallback_val),
+                    "difference": float(
+                        abs(misinfo_fallback_contribution - misinfo_fallback_val)
+                    ),
+                    "valid": abs(misinfo_fallback_contribution - misinfo_fallback_val)
+                    <= 0.01,
+                },
             }
 
         # Social cohesion stress components
@@ -1122,37 +1457,66 @@ class BehaviorIndexComputer:
             social_cohesion_float = (
                 social_cohesion_float if math.isfinite(social_cohesion_float) else 0.5
             )
-            details["social_cohesion_stress"] = {
-                "value": (
-                    float(row.get("social_cohesion_stress", 0.5))
-                    if math.isfinite(float(row.get("social_cohesion_stress", 0.5)))
-                    else 0.5
-                ),
-                "components": [
+            soc_components = []
+            for name, weight, source in zip(
+                component_names, component_weights, component_sources
+            ):
+                contribution = (
+                    social_cohesion_float * float(weight)
+                    if math.isfinite(social_cohesion_float)
+                    and math.isfinite(float(weight))
+                    else 0.0
+                )
+                soc_components.append(
                     {
                         "id": name,
                         "label": name.replace("_", " ").title(),
                         "value": social_cohesion_float,
                         "weight": float(weight),
+                        "contribution": contribution,
                         "source": source,
                     }
-                    for name, weight, source in zip(
-                        component_names, component_weights, component_sources
-                    )
-                ],
+                )
+            soc_val = (
+                float(row.get("social_cohesion_stress", 0.5))
+                if math.isfinite(float(row.get("social_cohesion_stress", 0.5)))
+                else 0.5
+            )
+            soc_component_sum = sum(c.get("contribution", 0.0) for c in soc_components)
+            soc_reconciliation_diff = abs(soc_component_sum - soc_val)
+            details["social_cohesion_stress"] = {
+                "value": soc_val,
+                "components": soc_components,
+                "reconciliation": {
+                    "sum": float(soc_component_sum),
+                    "output": float(soc_val),
+                    "difference": float(soc_reconciliation_diff),
+                    "valid": soc_reconciliation_diff <= 0.01,
+                },
             }
         else:
+            soc_fallback_val = float(row.get("social_cohesion_stress", 0.5))
+            soc_fallback_contribution = soc_fallback_val * 1.0
             details["social_cohesion_stress"] = {
-                "value": float(row.get("social_cohesion_stress", 0.5)),
+                "value": soc_fallback_val,
                 "components": [
                     {
                         "id": "social_cohesion_stress",
                         "label": "Social Cohesion Stress",
-                        "value": float(row.get("social_cohesion_stress", 0.5)),
+                        "value": soc_fallback_val,
                         "weight": 1.0,
+                        "contribution": soc_fallback_contribution,
                         "source": "default",
                     }
                 ],
+                "reconciliation": {
+                    "sum": float(soc_fallback_contribution),
+                    "output": float(soc_fallback_val),
+                    "difference": float(
+                        abs(soc_fallback_contribution - soc_fallback_val)
+                    ),
+                    "valid": abs(soc_fallback_contribution - soc_fallback_val) <= 0.01,
+                },
             }
 
         return details

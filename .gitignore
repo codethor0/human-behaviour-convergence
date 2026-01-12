@@ -42,16 +42,25 @@ node_modules/
 .next/
 out/
 
+# Frontend test artifacts
+playwright-report/
+test-results/
+*.tsbuildinfo
+
 # Tools
 .ruff_cache/
 .mypy_cache/
 .cache/
 *.sqlite
-# Note: data/hbc.db is tracked for demo purposes, but other .db files should be ignored
+# Database files (runtime state, not committed)
+data/*.db
+data/*.sqlite
+data/*.sqlite3
 
 # Env and secrets
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 *.crt

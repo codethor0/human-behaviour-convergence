@@ -110,6 +110,33 @@ class ConvergenceEngine:
             ),
         }
 
+        # Add trace for explainability
+        try:
+            from app.core.trace import create_convergence_trace
+
+            # Extract correlations from matrix for trace
+            correlations = []
+            for i, col1 in enumerate(available_columns):
+                for j, col2 in enumerate(available_columns):
+                    if (
+                        i < j
+                        and col1 in correlation_matrix.index
+                        and col2 in correlation_matrix.columns
+                    ):
+                        corr_value = correlation_matrix.loc[col1, col2]
+                        if not pd.isna(corr_value):
+                            correlations.append(float(corr_value))
+
+            result["trace"] = create_convergence_trace(
+                score=float(convergence_score),
+                correlations=correlations,
+                indices=available_columns,
+                correlation_matrix=result["correlation_matrix"],
+            )
+        except Exception as e:
+            logger.warning("Failed to create convergence trace", error=str(e))
+            result["trace"] = {"reconciliation": {"valid": False, "error": str(e)}}
+
         logger.info(
             "Convergence analysis completed",
             score=convergence_score,
@@ -329,10 +356,31 @@ class ConvergenceEngine:
 
     def _empty_convergence(self) -> Dict:
         """Return empty convergence result."""
-        return {
+        result = {
             "score": 0.0,
             "reinforcing_signals": [],
             "conflicting_signals": [],
             "patterns": [],
             "correlation_matrix": {},
         }
+        # Add minimal trace for empty result
+        try:
+            from app.core.trace import create_convergence_trace
+
+            result["trace"] = create_convergence_trace(
+                score=0.0,
+                reinforcing_signals=[],
+                conflicting_signals=[],
+                patterns=[],
+                correlation_matrix={},
+            )
+        except Exception:
+            result["trace"] = {
+                "reconciliation": {
+                    "valid": True,
+                    "sum": 0.0,
+                    "output": 0.0,
+                    "difference": 0.0,
+                }
+            }
+        return result

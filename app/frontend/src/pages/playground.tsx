@@ -61,18 +61,35 @@ export default function PlaygroundPage() {
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
       const response = await fetch(`${base}/api/forecasting/regions`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
-      setRegions(data);
-      // Set default selections
-      const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
-        data.some((r: Region) => r.id === id)
-      );
-      if (defaultIds.length > 0) {
-        setSelectedRegions(defaultIds);
+
+      // Validate that data is an array
+      if (!Array.isArray(data)) {
+        throw new Error(`Invalid response format: expected array, got ${typeof data}`);
+      }
+
+      if (data.length > 0) {
+        setRegions(data);
+        setError(null); // Clear any previous error
+        // Set default selections
+        const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
+          data.some((r: Region) => r.id === id)
+        );
+        if (defaultIds.length > 0) {
+          setSelectedRegions(defaultIds);
+        }
+      } else {
+        throw new Error('Regions endpoint returned empty array');
       }
     } catch (e) {
       console.error('Failed to fetch regions:', e);
       setError('Failed to load regions');
+      setRegions([]); // Ensure regions is empty on error
     }
   };
 
@@ -137,7 +154,7 @@ export default function PlaygroundPage() {
       <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 1400, margin: '0 auto' }}>
         <h1>Live Playground</h1>
         <p style={{ color: '#555', marginBottom: 24 }}>
-          Compare behavioral forecasts across multiple regions and explore "what-if" scenarios.
+          Compare behavioral forecasts across multiple regions and explore &quot;what-if&quot; scenarios.
           <strong style={{ display: 'block', marginTop: 8, color: '#dc3545' }}>
             Experimental Feature: Scenario adjustments are post-processing transformations for exploration only.
           </strong>
@@ -427,41 +444,46 @@ export default function PlaygroundPage() {
                             <tr>
                               <td style={{ padding: 4 }}>Economic Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {typeof (subIndices as Record<string, unknown>).economic_stress === 'number'
-                                  ? (subIndices as Record<string, number>).economic_stress.toFixed(3)
-                                  : 'N/A'}
+                                {(() => {
+                                  const val = (subIndices as Record<string, unknown>).economic_stress;
+                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
+                                })()}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Environmental Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {typeof (subIndices as Record<string, unknown>).environmental_stress === 'number'
-                                  ? (subIndices as Record<string, number>).environmental_stress.toFixed(3)
-                                  : 'N/A'}
+                                {(() => {
+                                  const val = (subIndices as Record<string, unknown>).environmental_stress;
+                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
+                                })()}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Mobility Activity:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {typeof (subIndices as Record<string, unknown>).mobility_activity === 'number'
-                                  ? (subIndices as Record<string, number>).mobility_activity.toFixed(3)
-                                  : 'N/A'}
+                                {(() => {
+                                  const val = (subIndices as Record<string, unknown>).mobility_activity;
+                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
+                                })()}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Digital Attention:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {typeof (subIndices as Record<string, unknown>).digital_attention === 'number'
-                                  ? (subIndices as Record<string, number>).digital_attention.toFixed(3)
-                                  : 'N/A'}
+                                {(() => {
+                                  const val = (subIndices as Record<string, unknown>).digital_attention;
+                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
+                                })()}
                               </td>
                             </tr>
                             <tr>
                               <td style={{ padding: 4 }}>Public Health Stress:</td>
                               <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {typeof (subIndices as Record<string, unknown>).public_health_stress === 'number'
-                                  ? (subIndices as Record<string, number>).public_health_stress.toFixed(3)
-                                  : 'N/A'}
+                                {(() => {
+                                  const val = (subIndices as Record<string, unknown>).public_health_stress;
+                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
+                                })()}
                               </td>
                             </tr>
                           </tbody>

@@ -13,15 +13,30 @@ logger = structlog.get_logger("risk.classifier")
 
 
 class RiskClassifier:
-    """Classifies regions into risk tiers."""
+    """Classifies regions into risk tiers.
 
-    # Risk tier thresholds
+    Canonical driver: behavior_index (0.0-1.0) is used directly to determine risk tier.
+    Risk score (with adjustments) is still computed for analysis but tier is determined
+    by behavior_index to ensure consistency with text labels.
+    """
+
+    # Risk tier thresholds (based on behavior_index)
+    # Simplified, monotonic scheme for consistent labeling
     TIER_THRESHOLDS = {
         "stable": 0.0,
-        "watchlist": 0.3,
-        "elevated": 0.5,
-        "high": 0.7,
-        "critical": 0.85,
+        "low": 0.0,  # Alias for stable
+        "elevated": 0.30,
+        "high": 0.50,
+        "critical": 0.70,
+    }
+
+    # Text labels for each tier (for summary/explanation consistency)
+    TIER_LABELS = {
+        "stable": "stable",
+        "low": "low disruption",
+        "elevated": "moderate disruption",
+        "high": "high disruption",
+        "critical": "severe disruption",
     }
 
     def __init__(self):
@@ -83,14 +98,14 @@ class RiskClassifier:
         # Adjust for trend
         trend_adjustment = self._calculate_trend_adjustment(trend_direction)
 
-        # Calculate final risk score
+        # Calculate final risk score (for analysis, but tier is determined by behavior_index)
         final_risk = (
             base_risk + shock_adjustment + convergence_adjustment + trend_adjustment
         )
         final_risk = max(0.0, min(1.0, final_risk))  # Clip to [0, 1]
 
-        # Determine tier
-        tier = self._determine_tier(final_risk)
+        # Determine tier using behavior_index as canonical driver (for consistency with text labels)
+        tier = self._determine_tier(behavior_index)
 
         # Get contributing factors
         contributing_factors = self._get_contributing_factors(
@@ -106,6 +121,26 @@ class RiskClassifier:
             "trend_adjustment": float(trend_adjustment),
             "contributing_factors": contributing_factors,
         }
+
+        # Add trace for explainability
+        try:
+            from app.core.trace import create_risk_trace
+
+            result["trace"] = create_risk_trace(
+                tier=tier,
+                risk_score=float(final_risk),
+                base_risk=float(base_risk),
+                shock_adjustment=float(shock_adjustment),
+                convergence_adjustment=float(convergence_adjustment),
+                trend_adjustment=float(trend_adjustment),
+                shock_events=shock_events or [],
+                convergence_score=convergence_score,
+                trend_direction=trend_direction,
+            )
+        except Exception as e:
+            # If trace creation fails, log but don't break the API
+            logger.warning("Failed to create risk trace", error=str(e))
+            result["trace"] = {"reconciliation": {"valid": False, "error": str(e)}}
 
         logger.info(
             "Risk classification completed",
@@ -156,18 +191,30 @@ class RiskClassifier:
         else:
             return 0.0
 
-    def _determine_tier(self, risk_score: float) -> str:
-        """Determine risk tier from risk score."""
-        if risk_score >= self.TIER_THRESHOLDS["critical"]:
+    def _determine_tier(self, behavior_index: float) -> str:
+        """
+        Determine risk tier from behavior_index.
+
+        Canonical mapping (monotonic):
+        - 0.0-0.29: low
+        - 0.30-0.49: elevated
+        - 0.50-0.69: high
+        - 0.70-1.0: critical
+        """
+        if behavior_index >= self.TIER_THRESHOLDS["critical"]:
             return "critical"
-        elif risk_score >= self.TIER_THRESHOLDS["high"]:
+        elif behavior_index >= self.TIER_THRESHOLDS["high"]:
             return "high"
-        elif risk_score >= self.TIER_THRESHOLDS["elevated"]:
+        elif behavior_index >= self.TIER_THRESHOLDS["elevated"]:
             return "elevated"
-        elif risk_score >= self.TIER_THRESHOLDS["watchlist"]:
-            return "watchlist"
         else:
+            # Use "stable" for very low behavior_index (< 0.30)
+            # "low" is an alias, but "stable" is preferred for consistency with tests
             return "stable"
+
+    def get_tier_label(self, tier: str) -> str:
+        """Get human-readable label for a risk tier."""
+        return self.TIER_LABELS.get(tier, tier)
 
     def _get_contributing_factors(
         self,

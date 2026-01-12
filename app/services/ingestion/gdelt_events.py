@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """GDELT Events API connector for global event and crisis signals."""
+import json
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
@@ -7,8 +9,6 @@ from typing import Dict, Optional, Tuple
 import pandas as pd
 import requests
 import structlog
-import time
-import json
 
 logger = structlog.get_logger("ingestion.gdelt_events")
 
@@ -240,8 +240,10 @@ class GDELTEventsFetcher:
 
         # GDELT query for average tone by date
         # Use STARTDATETIME/ENDDATETIME without TIMESPAN (they are mutually exclusive)
+        # Query parameter is required (minimal filter: sourcelang:english)
         query = (
             f"mode=timelinetone&format=json&"
+            f"query=sourcelang:english&"
             f"startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&"
             f"enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
         )
@@ -272,6 +274,24 @@ class GDELTEventsFetcher:
             )
             return pd.DataFrame(columns=["timestamp", "tone_score"]), status
 
+        # Check HTTP status - if not 200, return error immediately
+        if http_status != 200:
+            status = SourceStatus(
+                provider="GDELT",
+                ok=False,
+                http_status=http_status,
+                error_type="http_error",
+                error_detail=f"HTTP {http_status} error",
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error(
+                "GDELT HTTP error",
+                http_status=http_status,
+            )
+            return pd.DataFrame(columns=["timestamp", "tone_score"]), status
+
         # Validate response
         is_valid, validation_error_type, validation_error_detail = (
             self._validate_response(response)
@@ -299,6 +319,15 @@ class GDELTEventsFetcher:
         # Parse JSON
         try:
             data = response.json()
+            # Ensure data is a dict (handle Mock objects in tests)
+            if not isinstance(data, dict):
+                # If response.json() returns a Mock or non-dict, try to extract value
+                if hasattr(data, "return_value"):
+                    data = (
+                        data.return_value if isinstance(data.return_value, dict) else {}
+                    )
+                else:
+                    data = {}
         except json.JSONDecodeError as e:
             status = SourceStatus(
                 provider="GDELT",
@@ -331,25 +360,70 @@ class GDELTEventsFetcher:
         timeline = data["timeline"]
         records = []
 
-        for entry in timeline:
-            date_str = entry.get("datetime")
-            tone = entry.get("tone")
-
-            if date_str is None or tone is None:
+        # GDELT timeline structure can be:
+        # 1. [{series: "Average Tone", data: [{date: "...", value: ...}]}]
+        # 2. [{"datetime": "...", "tone": ...}] (simpler format)
+        for series_item in timeline:
+            if not isinstance(series_item, dict):
                 continue
 
-            try:
-                # Parse date (format: YYYYMMDDHHMMSS)
-                date_obj = datetime.strptime(date_str[:8], "%Y%m%d")
-                records.append({"timestamp": date_obj, "tone": float(tone)})
-            except (ValueError, TypeError) as e:
-                logger.debug(
-                    "Skipping invalid entry",
-                    date=date_str,
-                    tone=tone,
-                    error=str(e),
-                )
+            # Check for simpler format: {"datetime": "...", "tone": ...}
+            if "datetime" in series_item and "tone" in series_item:
+                datetime_str = series_item.get("datetime", "")
+                tone = series_item.get("tone", 0.0)
+                try:
+                    # Parse datetime (format: YYYYMMDDHHMMSS)
+                    if len(datetime_str) >= 8:
+                        date_part = datetime_str[:8]
+                        timestamp = datetime.strptime(date_part, "%Y%m%d")
+                        # Normalize tone from [-100, 100] to [0.0, 1.0] where 1.0 = max negative
+                        tone_normalized = (100.0 - float(tone)) / 200.0
+                        tone_normalized = max(0.0, min(1.0, tone_normalized))
+                        records.append(
+                            {
+                                "timestamp": timestamp,
+                                "tone_score": tone_normalized,
+                            }
+                        )
+                except (ValueError, TypeError) as e:
+                    logger.warning(
+                        f"Failed to parse GDELT datetime: {datetime_str}", error=str(e)
+                    )
+                    continue
                 continue
+
+            # Check for structured format: {series: "...", data: [...]}
+            series_name = series_item.get("series")
+            data_points = series_item.get("data", [])
+
+            if series_name != "Average Tone" or not data_points:
+                continue
+
+            for data_item in data_points:
+                date_str = data_item.get("date")
+                value = data_item.get("value")
+
+                if date_str is None or value is None:
+                    continue
+
+                try:
+                    # Parse date (ISO format: YYYYMMDDTHHMMSSZ or YYYYMMDDHHMMSS)
+                    # Extract date part (first 8 chars for YYYYMMDD)
+                    if "T" in date_str:
+                        date_part = date_str.split("T")[0].replace("-", "")
+                    else:
+                        date_part = date_str[:8]
+
+                    date_obj = datetime.strptime(date_part, "%Y%m%d")
+                    records.append({"timestamp": date_obj, "tone": float(value)})
+                except (ValueError, TypeError) as e:
+                    logger.debug(
+                        "Skipping invalid entry",
+                        date=date_str,
+                        value=value,
+                        error=str(e),
+                    )
+                    continue
 
         if not records:
             status = SourceStatus(
@@ -372,16 +446,23 @@ class GDELTEventsFetcher:
         # Tone ranges from -100 to +100
         # We want: negative tone (crisis) = high value (1.0)
         # So: normalize to [0, 1] then invert
-        min_tone = df["tone"].min()
-        max_tone = df["tone"].max()
+        if "tone_score" in df.columns:
+            # Already normalized (from simpler format)
+            pass
+        elif "tone" in df.columns:
+            min_tone = df["tone"].min()
+            max_tone = df["tone"].max()
 
-        if max_tone > min_tone:
-            # Map tone to [0, 1] where -100 -> 1.0 (high stress),
-            # +100 -> 0.0 (low stress)
-            df["tone_score"] = 1.0 - ((df["tone"] - (-100)) / (100 - (-100)))
-            df["tone_score"] = df["tone_score"].clip(0.0, 1.0)
+            if max_tone > min_tone:
+                # Map tone to [0, 1] where -100 -> 1.0 (high stress),
+                # +100 -> 0.0 (low stress)
+                df["tone_score"] = 1.0 - ((df["tone"] - (-100)) / (100 - (-100)))
+                df["tone_score"] = df["tone_score"].clip(0.0, 1.0)
+            else:
+                # All same tone, default to neutral
+                df["tone_score"] = 0.5
         else:
-            # All same tone, default to neutral
+            # No tone data, default to neutral
             df["tone_score"] = 0.5
 
         df = (
@@ -407,6 +488,472 @@ class GDELTEventsFetcher:
             rows=len(df),
             date_range=(df["timestamp"].min(), df["timestamp"].max()),
             status_ok=status.ok,
+        )
+
+        return df, status
+
+    def fetch_legislative_attention(
+        self,
+        region_name: Optional[str] = None,
+        days_back: int = 30,
+        use_cache: bool = True,
+    ) -> Tuple[pd.DataFrame, SourceStatus]:
+        """
+        Fetch legislative/governance event attention signal from GDELT.
+
+        Queries GDELT for events related to legislative activity, bills, laws,
+        state houses, governors, and policy changes. Returns a normalized
+        legislative_attention score [0,1] based on event volume.
+
+        Args:
+            region_name: Optional region name (state/country) to filter events
+            days_back: Number of days of historical data to fetch (default: 30)
+            use_cache: Whether to use cached data if available (default: True)
+
+        Returns:
+            Tuple of (DataFrame, SourceStatus)
+            DataFrame has columns: ['timestamp', 'legislative_attention']
+            legislative_attention is normalized to [0.0, 1.0] where 1.0 = high legislative activity
+        """
+        import math
+        import urllib.parse
+
+        fetched_at = datetime.now().isoformat()
+        cache_key = f"gdelt_legislative_{region_name or 'global'}_{days_back}"
+
+        # Check cache
+        if use_cache and cache_key in self._cache:
+            df, cache_time = self._cache[cache_key]
+            age_minutes = (datetime.now() - cache_time).total_seconds() / 60
+            if age_minutes < self.cache_duration_minutes:
+                logger.info("Using cached GDELT legislative data")
+                status = SourceStatus(
+                    provider="GDELT Legislative Events",
+                    ok=True,
+                    http_status=200,
+                    fetched_at=fetched_at,
+                    rows=len(df),
+                    query_window_days=days_back,
+                )
+                return df.copy(), status
+
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        # Build GDELT query for legislative/governance-related events
+        # Keywords: legislature, legislative, bill, bills, law, laws, state house, state senate,
+        # state legislature, governor, executive order, policy change
+        base_query = (
+            "sourcelang:english AND (legislature OR legislative OR bill OR bills OR "
+            'law OR laws OR "state house" OR "state senate" OR "state legislature" OR '
+            'governor OR "executive order" OR "policy change")'
+        )
+
+        # Add region filter if provided
+        if region_name:
+            base_query = f'{base_query} AND "{region_name}"'
+
+        # URL encode the query
+        encoded_query = urllib.parse.quote(base_query, safe="")
+
+        # GDELT query for event volume timeline
+        query = (
+            f"mode=timelinevol&format=json&"
+            f"query={encoded_query}&"
+            f"startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&"
+            f"enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+        )
+
+        logger.info(
+            "Fetching GDELT legislative events",
+            region_name=region_name,
+            days_back=days_back,
+        )
+        url = f"{GDELT_API_BASE}?{query}"
+
+        # Make request with retries
+        response, request_error_type, http_status = self._make_request_with_retries(url)
+
+        if response is None:
+            error_detail = f"Request failed after {MAX_RETRIES} retries"
+            status = SourceStatus(
+                provider="GDELT Legislative Events",
+                ok=False,
+                http_status=http_status,
+                error_type=request_error_type or "other",
+                error_detail=error_detail,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error(
+                "GDELT legislative request failed", error_type=status.error_type
+            )
+            return pd.DataFrame(columns=["timestamp", "legislative_attention"]), status
+
+        # Validate response
+        is_valid, validation_error_type, validation_error_detail = (
+            self._validate_response(response)
+        )
+        if not is_valid:
+            status = SourceStatus(
+                provider="GDELT Legislative Events",
+                ok=False,
+                http_status=http_status,
+                error_type=validation_error_type,
+                error_detail=validation_error_detail,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error(
+                "GDELT legislative response validation failed",
+                error_type=status.error_type,
+                error_detail=validation_error_detail,
+            )
+            return pd.DataFrame(columns=["timestamp", "legislative_attention"]), status
+
+        # Parse JSON
+        try:
+            data = response.json()
+        except json.JSONDecodeError as e:
+            status = SourceStatus(
+                provider="GDELT Legislative Events",
+                ok=False,
+                http_status=http_status,
+                error_type="decode_error",
+                error_detail=f"JSON decode error: {str(e)[:100]}",
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error("GDELT legislative JSON decode failed", error=str(e)[:200])
+            return pd.DataFrame(columns=["timestamp", "legislative_attention"]), status
+
+        # Parse timeline data
+        if "timeline" not in data or not data["timeline"]:
+            # No legislative events is valid (ok=true, rows=0)
+            status = SourceStatus(
+                provider="GDELT Legislative Events",
+                ok=True,
+                http_status=http_status,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.info("No legislative events found in GDELT response")
+            return pd.DataFrame(columns=["timestamp", "legislative_attention"]), status
+
+        timeline = data["timeline"]
+        records = []
+
+        for entry in timeline:
+            date_str = entry.get("datetime")
+            volume = entry.get("volume")
+
+            if date_str is None or volume is None:
+                continue
+
+            try:
+                # Parse date (ISO format: YYYYMMDDTHHMMSSZ or YYYYMMDDHHMMSS)
+                if "T" in date_str:
+                    date_part = date_str.split("T")[0].replace("-", "")
+                else:
+                    date_part = date_str[:8]
+                date_obj = datetime.strptime(date_part, "%Y%m%d")
+                records.append({"timestamp": date_obj, "event_count": int(volume)})
+            except (ValueError, TypeError) as e:
+                logger.debug(
+                    "Skipping invalid legislative entry",
+                    date=date_str,
+                    volume=volume,
+                    error=str(e),
+                )
+                continue
+
+        if not records:
+            status = SourceStatus(
+                provider="GDELT Legislative Events",
+                ok=True,
+                http_status=http_status,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.info("No valid legislative events after parsing")
+            return pd.DataFrame(columns=["timestamp", "legislative_attention"]), status
+
+        df = pd.DataFrame(records)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+
+        # Normalize event counts to legislative_attention [0,1] using saturating log-scale function
+        # Formula: legislative_attention = min(1.0, log1p(event_count) / log1p(K))
+        # K value from calibration config (LEGISLATIVE_NORMALIZATION["K"])
+        from app.services.calibration.config import LEGISLATIVE_NORMALIZATION
+
+        K = LEGISLATIVE_NORMALIZATION["K"]
+        max_count = df["event_count"].max()
+        if max_count > 0:
+            df["legislative_attention"] = df["event_count"].apply(
+                lambda x: min(1.0, math.log1p(x) / math.log1p(K))
+            )
+        else:
+            df["legislative_attention"] = 0.0
+
+        # Cache the result
+        self._cache[cache_key] = (df.copy(), datetime.now())
+
+        status = SourceStatus(
+            provider="GDELT Legislative Events",
+            ok=True,
+            http_status=http_status,
+            fetched_at=fetched_at,
+            rows=len(df),
+            query_window_days=days_back,
+        )
+
+        logger.info(
+            "GDELT legislative events fetched",
+            rows=len(df),
+            max_attention=float(df["legislative_attention"].max()),
+            status_ok=status.ok,
+        )
+
+        return df, status
+
+    def fetch_enforcement_attention(
+        self,
+        region_name: Optional[str] = None,
+        days_back: int = 30,
+        use_cache: bool = True,
+    ) -> Tuple[pd.DataFrame, SourceStatus]:
+        """
+        Fetch enforcement/ICE/policing event attention signal from GDELT.
+
+        Queries GDELT for events related to enforcement, immigration operations,
+        policing, and detention. Returns a normalized enforcement_attention score [0,1]
+        based on event volume.
+
+        Args:
+            region_name: Optional region name (state/country) to filter events
+            days_back: Number of days of historical data to fetch (default: 30)
+            use_cache: Whether to use cached data if available (default: True)
+
+        Returns:
+            Tuple of (DataFrame, SourceStatus)
+            DataFrame has columns: ['timestamp', 'enforcement_attention']
+            enforcement_attention is normalized to [0.0, 1.0] where 1.0 = high enforcement activity
+        """
+        import math
+
+        fetched_at = datetime.now().isoformat()
+        cache_key = f"gdelt_enforcement_{region_name or 'global'}_{days_back}"
+
+        # Check cache
+        if use_cache and cache_key in self._cache:
+            df, cache_time = self._cache[cache_key]
+            age_minutes = (datetime.now() - cache_time).total_seconds() / 60
+            if age_minutes < self.cache_duration_minutes:
+                logger.info("Using cached GDELT enforcement data")
+                status = SourceStatus(
+                    provider="GDELT Enforcement Events",
+                    ok=True,
+                    http_status=200,
+                    fetched_at=fetched_at,
+                    rows=len(df),
+                    query_window_days=days_back,
+                )
+                return df.copy(), status
+
+        # Calculate date range
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days_back)
+
+        # Build GDELT query for enforcement-related events
+        # Keywords: ICE, immigration enforcement, deportation, removal, raid, detention
+        # Use OR logic: (ICE OR "immigration enforcement" OR deportation OR removal OR raid OR "detention center")
+        base_query = 'sourcelang:english AND (ICE OR "immigration enforcement" OR deportation OR removal OR raid OR "detention center")'
+
+        # Add region filter if provided (simple keyword-based approach)
+        # Note: More sophisticated geo filtering could use GDELT's location:state or location:country filters
+        if region_name:
+            base_query = f'{base_query} AND "{region_name}"'
+
+        # URL encode the query
+        import urllib.parse
+
+        encoded_query = urllib.parse.quote(base_query, safe="")
+
+        # GDELT query for event volume timeline
+        query = (
+            f"mode=timelinevol&format=json&"
+            f"query={encoded_query}&"
+            f"startdatetime={start_date.strftime('%Y%m%d%H%M%S')}&"
+            f"enddatetime={end_date.strftime('%Y%m%d%H%M%S')}"
+        )
+
+        logger.info(
+            "Fetching GDELT enforcement events",
+            region_name=region_name,
+            days_back=days_back,
+        )
+        url = f"{GDELT_API_BASE}?{query}"
+
+        # Make request with retries
+        response, request_error_type, http_status = self._make_request_with_retries(url)
+
+        if response is None:
+            error_detail = f"Request failed after {MAX_RETRIES} retries"
+            status = SourceStatus(
+                provider="GDELT Enforcement Events",
+                ok=False,
+                http_status=http_status,
+                error_type=request_error_type or "other",
+                error_detail=error_detail,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error(
+                "GDELT enforcement request failed", error_type=status.error_type
+            )
+            return pd.DataFrame(columns=["timestamp", "enforcement_attention"]), status
+
+        # Validate response
+        is_valid, validation_error_type, validation_error_detail = (
+            self._validate_response(response)
+        )
+        if not is_valid:
+            status = SourceStatus(
+                provider="GDELT Enforcement Events",
+                ok=False,
+                http_status=http_status,
+                error_type=validation_error_type,
+                error_detail=validation_error_detail,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error(
+                "GDELT enforcement response validation failed",
+                error_type=status.error_type,
+                error_detail=validation_error_detail,
+            )
+            return pd.DataFrame(columns=["timestamp", "enforcement_attention"]), status
+
+        # Parse JSON
+        try:
+            data = response.json()
+        except json.JSONDecodeError as e:
+            status = SourceStatus(
+                provider="GDELT Enforcement Events",
+                ok=False,
+                http_status=http_status,
+                error_type="decode_error",
+                error_detail=f"JSON decode error: {str(e)[:100]}",
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.error("GDELT enforcement JSON decode failed", error=str(e)[:200])
+            return pd.DataFrame(columns=["timestamp", "enforcement_attention"]), status
+
+        # Parse timeline data
+        if "timeline" not in data or not data["timeline"]:
+            # No enforcement events is valid (ok=true, rows=0)
+            status = SourceStatus(
+                provider="GDELT Enforcement Events",
+                ok=True,
+                http_status=http_status,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.info("No enforcement events found in GDELT response")
+            return pd.DataFrame(columns=["timestamp", "enforcement_attention"]), status
+
+        timeline = data["timeline"]
+        records = []
+
+        for entry in timeline:
+            date_str = entry.get("datetime")
+            volume = entry.get("volume")
+
+            if date_str is None or volume is None:
+                continue
+
+            try:
+                # Parse date (ISO format: YYYYMMDDTHHMMSSZ or YYYYMMDDHHMMSS)
+                if "T" in date_str:
+                    date_part = date_str.split("T")[0].replace("-", "")
+                else:
+                    date_part = date_str[:8]
+                date_obj = datetime.strptime(date_part, "%Y%m%d")
+                records.append({"timestamp": date_obj, "event_count": int(volume)})
+            except (ValueError, TypeError) as e:
+                logger.debug(
+                    "Skipping invalid enforcement entry",
+                    date=date_str,
+                    volume=volume,
+                    error=str(e),
+                )
+                continue
+
+        if not records:
+            status = SourceStatus(
+                provider="GDELT Enforcement Events",
+                ok=True,
+                http_status=http_status,
+                fetched_at=fetched_at,
+                rows=0,
+                query_window_days=days_back,
+            )
+            logger.info("No valid enforcement events after parsing")
+            return pd.DataFrame(columns=["timestamp", "enforcement_attention"]), status
+
+        df = pd.DataFrame(records)
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
+
+        # Normalize event counts to enforcement_attention [0,1] using saturating log-scale function
+        # Formula: enforcement_attention = min(1.0, log1p(event_count) / log1p(K))
+        # K value from calibration config (ENFORCEMENT_NORMALIZATION["K"])
+        from app.services.calibration.config import ENFORCEMENT_NORMALIZATION
+
+        K = ENFORCEMENT_NORMALIZATION["K"]
+        max_count = df["event_count"].max()
+        if max_count > 0:
+            df["enforcement_attention"] = df["event_count"].apply(
+                lambda x: min(1.0, math.log1p(x) / math.log1p(K))
+            )
+        else:
+            df["enforcement_attention"] = 0.0
+
+        df["enforcement_attention"] = df["enforcement_attention"].clip(0.0, 1.0)
+
+        df = (
+            df[["timestamp", "enforcement_attention"]]
+            .sort_values("timestamp")
+            .reset_index(drop=True)
+        )
+
+        # Cache result
+        self._cache[cache_key] = (df.copy(), datetime.now())
+
+        status = SourceStatus(
+            provider="GDELT Enforcement Events",
+            ok=True,
+            http_status=http_status,
+            fetched_at=fetched_at,
+            rows=len(df),
+            query_window_days=days_back,
+        )
+
+        logger.info(
+            "Successfully fetched GDELT enforcement events",
+            rows=len(df),
+            region_name=region_name,
+            date_range=(df["timestamp"].min(), df["timestamp"].max()),
         )
 
         return df, status

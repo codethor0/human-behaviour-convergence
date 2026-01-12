@@ -23,6 +23,7 @@ class ForecastMonitor:
             drift_threshold: Threshold for drift detection (default: 0.15)
         """
         self.drift_threshold = drift_threshold
+        self._confidence_traces: Dict[str, Dict] = {}  # Store traces by index name
 
     def calculate_confidence(
         self,
@@ -95,6 +96,27 @@ class ForecastMonitor:
             )
 
             confidence_scores[index_col] = float(np.clip(confidence, 0.0, 1.0))
+
+            # Create trace for explainability
+            try:
+                from app.core.trace import create_confidence_trace
+
+                self._confidence_traces[index_col] = create_confidence_trace(
+                    index=index_col,
+                    confidence=confidence_scores[index_col],
+                    completeness=completeness,
+                    stability=stability,
+                    forecast_accuracy=forecast_accuracy,
+                    data_points=len(series),
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to create confidence trace for {index_col}", error=str(e)
+                )
+                # Create minimal trace on error
+                self._confidence_traces[index_col] = {
+                    "reconciliation": {"valid": False, "error": str(e)}
+                }
 
         logger.info(
             "Confidence scores calculated",
@@ -212,3 +234,15 @@ class ForecastMonitor:
         # This is a placeholder - in production, you'd compare forecast to actuals
         # For now, return a default score
         return 0.7
+
+    def get_confidence_trace(self, index_name: str) -> Optional[Dict]:
+        """
+        Get confidence trace for a specific index.
+
+        Args:
+            index_name: Name of the index (e.g., "economic_stress")
+
+        Returns:
+            Trace dictionary or None if not found
+        """
+        return self._confidence_traces.get(index_name)

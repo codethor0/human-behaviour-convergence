@@ -33,6 +33,7 @@ class ShockDetector:
         self.z_score_threshold = z_score_threshold
         self.delta_threshold = delta_threshold
         self.window_size = window_size
+        self._shock_traces: Dict[str, Dict] = {}  # Store traces by index name
 
     def detect_shocks(
         self,
@@ -93,7 +94,39 @@ class ShockDetector:
 
             # Combine and deduplicate shocks
             all_shocks = z_score_shocks + delta_shocks + ewma_shocks
-            shock_events.extend(self._merge_shocks(all_shocks))
+            merged_shocks = self._merge_shocks(all_shocks)
+            shock_events.extend(merged_shocks)
+
+            # Create trace for explainability
+            try:
+                from app.core.trace import create_shock_trace
+
+                # Get shocks for this index
+                index_shocks = [s for s in merged_shocks if s.get("index") == index_col]
+                z_score_shocks_for_index = [
+                    s for s in z_score_shocks if s.get("index") == index_col
+                ]
+                delta_shocks_for_index = [
+                    s for s in delta_shocks if s.get("index") == index_col
+                ]
+                ewma_shocks_for_index = [
+                    s for s in ewma_shocks if s.get("index") == index_col
+                ]
+
+                self._shock_traces[index_col] = create_shock_trace(
+                    shocks=index_shocks,
+                    z_score_shocks=z_score_shocks_for_index,
+                    delta_shocks=delta_shocks_for_index,
+                    ewma_shocks=ewma_shocks_for_index,
+                    index=index_col,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to create shock trace for {index_col}", error=str(e)
+                )
+                self._shock_traces[index_col] = {
+                    "reconciliation": {"valid": False, "error": str(e)}
+                }
 
         # Sort by timestamp
         shock_events.sort(key=lambda x: x["timestamp"])
@@ -105,6 +138,18 @@ class ShockDetector:
         )
 
         return shock_events
+
+    def get_shock_trace(self, index_name: str) -> Optional[Dict]:
+        """
+        Get shock trace for a specific index.
+
+        Args:
+            index_name: Name of the index (e.g., "economic_stress")
+
+        Returns:
+            Trace dictionary or None if not found
+        """
+        return self._shock_traces.get(index_name)
 
     def _detect_z_score_shocks(self, series: pd.Series, index_name: str) -> List[Dict]:
         """Detect shocks using Z-score method."""
