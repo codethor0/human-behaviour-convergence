@@ -80,6 +80,7 @@ class LiveMonitor:
         max_snapshots_per_region: int = 100,
         refresh_interval_minutes: int = 30,
         historical_days: int = 30,
+        max_regions: Optional[int] = None,
     ):
         """
         Initialize the live monitor.
@@ -88,10 +89,12 @@ class LiveMonitor:
             max_snapshots_per_region: Maximum number of snapshots to keep per region
             refresh_interval_minutes: How often to refresh data (in minutes)
             historical_days: Number of historical days to use for forecasts
+            max_regions: Optional maximum number of regions to track
         """
         self.max_snapshots_per_region = max_snapshots_per_region
         self.refresh_interval_minutes = refresh_interval_minutes
         self.historical_days = historical_days
+        self._max_regions = max_regions
 
         # In-memory storage: region_id -> list of LiveSnapshot (most recent first)
         self._snapshots: Dict[str, List[LiveSnapshot]] = {}
@@ -484,6 +487,14 @@ class LiveMonitor:
             "shock_status": shock_status,
         }
 
+    def reset(self) -> None:
+        """
+        Reset all in-memory state for this LiveMonitor instance.
+
+        Used in tests and process lifetime reset paths.
+        """
+        self._snapshots.clear()
+
 
 # Global instance (singleton pattern)
 _live_monitor_instance: Optional[LiveMonitor] = None
@@ -495,3 +506,9 @@ def get_live_monitor() -> LiveMonitor:
     if _live_monitor_instance is None:
         _live_monitor_instance = LiveMonitor()
     return _live_monitor_instance
+
+
+def reset_live_monitor() -> None:
+    """Reset the global LiveMonitor singleton instance."""
+    global _live_monitor_instance
+    _live_monitor_instance = None

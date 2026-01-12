@@ -15,6 +15,7 @@ except ImportError:
     ExponentialSmoothing = None
 
 from app.services.ingestion import (
+    CISAKEVFetcher,
     CrimeSafetyStressFetcher,
     DataHarmonizer,
     EnvironmentalImpactFetcher,
@@ -23,6 +24,9 @@ from app.services.ingestion import (
     MarketSentimentFetcher,
     MisinformationStressFetcher,
     MobilityFetcher,
+    NWSAlertsFetcher,
+    OpenFEMAEmergencyManagementFetcher,
+    OpenStatesLegislativeFetcher,
     OWIDHealthFetcher,
     PoliticalStressFetcher,
     PublicHealthFetcher,
@@ -32,6 +36,13 @@ from app.services.ingestion import (
 )
 
 logger = structlog.get_logger("core.prediction")
+
+# Minimum history window for reliable forecasting
+# Forecasts require at least MIN_HISTORY_DAYS of data to produce meaningful results.
+# If days_back < MIN_HISTORY_DAYS, the system will either:
+# - Extend the internal window to MIN_HISTORY_DAYS (preserving forecast_horizon), OR
+# - Return an explicit "insufficient_history" flag in metadata
+MIN_HISTORY_DAYS = 14  # Minimum days of history required for stable forecasts
 
 
 class BehavioralForecaster:
@@ -90,6 +101,10 @@ class BehavioralForecaster:
         self.health_fetcher = health_fetcher or PublicHealthFetcher()
         self.mobility_fetcher = mobility_fetcher or MobilityFetcher()
         self.gdelt_fetcher = gdelt_fetcher or GDELTEventsFetcher()
+        self.openfema_fetcher = OpenFEMAEmergencyManagementFetcher()
+        self.openstates_fetcher = OpenStatesLegislativeFetcher()
+        self.nws_alerts_fetcher = NWSAlertsFetcher()
+        self.cisa_kev_fetcher = CISAKEVFetcher()
         self.owid_fetcher = owid_fetcher or OWIDHealthFetcher()
         self.usgs_fetcher = usgs_fetcher or USGSEarthquakeFetcher()
         self.political_fetcher = political_fetcher or PoliticalStressFetcher()
@@ -114,6 +129,15 @@ class BehavioralForecaster:
         self.forecast_monitor = ForecastMonitor()
         self.correlation_engine = CorrelationEngine()
         self._cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, Dict]] = {}
+        self._max_cache_size: Optional[int] = None
+
+    def reset_cache(self) -> None:
+        """
+        Reset all in-memory forecast caches used by this BehavioralForecaster.
+
+        Intended for tests and process-lifetime reset paths.
+        """
+        self._cache.clear()
 
     def _is_us_state(self, region_name: str) -> bool:
         """Check if region_name is a US state."""
@@ -272,12 +296,15 @@ class BehavioralForecaster:
             if not weather_data.empty:
                 sources.append("openmeteo.com (Weather)")
 
-            # Fetch search trends data
-            search_data = self.search_fetcher.fetch_search_interest(
-                query="behavioral patterns", days_back=days_back
+            # Fetch search trends data (Wikipedia Pageviews - no key required)
+            search_data, search_status = self.search_fetcher.fetch_search_interest(
+                query="behavioral patterns",
+                days_back=days_back,
+                region_name=region_name,
             )
-            if not search_data.empty:
-                sources.append("search trends API")
+            if search_status.ok and not search_data.empty:
+                sources.append("Wikimedia Pageviews (Search Trends)")
+            # Always store search trends status in metadata (even if failed)
 
             # Fetch public health data
             # Derive region code from coordinates if possible (placeholder)
@@ -287,12 +314,13 @@ class BehavioralForecaster:
             if not health_data.empty:
                 sources.append("public health API")
 
-            # Fetch mobility data
-            mobility_data = self.mobility_fetcher.fetch_mobility_index(
+            # Fetch mobility data (TSA passenger throughput - no key required)
+            mobility_data, mobility_status = self.mobility_fetcher.fetch_mobility_index(
                 latitude=latitude, longitude=longitude, days_back=days_back
             )
-            if not mobility_data.empty:
-                sources.append("mobility API")
+            if mobility_status.ok and not mobility_data.empty:
+                sources.append("TSA Passenger Throughput (Mobility)")
+            # Always store mobility status in metadata (even if failed)
 
             # Fetch GDELT events data (digital attention)
             gdelt_tone, gdelt_status = self.gdelt_fetcher.fetch_event_tone(
@@ -301,6 +329,44 @@ class BehavioralForecaster:
             if gdelt_status.ok and not gdelt_tone.empty:
                 sources.append("GDELT (Global Events)")
             # Always store GDELT status in metadata (even if failed)
+
+            # Fetch OpenFEMA emergency management data
+            openfema_declarations, openfema_status = (
+                self.openfema_fetcher.fetch_disaster_declarations(
+                    region_name=region_name, days_back=days_back
+                )
+            )
+            if openfema_status.ok and not openfema_declarations.empty:
+                sources.append("OpenFEMA (Emergency Management)")
+            # Always store OpenFEMA status in metadata (even if failed)
+
+            # Fetch OpenStates legislative activity data
+            openstates_activity, openstates_status = (
+                self.openstates_fetcher.fetch_legislative_activity(
+                    region_name=region_name, days_back=days_back
+                )
+            )
+            if openstates_status.ok and not openstates_activity.empty:
+                sources.append("OpenStates (Legislative Activity)")
+            # Always store OpenStates status in metadata (even if failed)
+
+            # Fetch NWS weather alerts data
+            nws_alerts, nws_alerts_status = (
+                self.nws_alerts_fetcher.fetch_weather_alerts(
+                    latitude=latitude, longitude=longitude, days_back=days_back
+                )
+            )
+            if nws_alerts_status.ok and not nws_alerts.empty:
+                sources.append("NWS (Weather Alerts)")
+            # Always store NWS alerts status in metadata (even if failed)
+
+            # Fetch CISA KEV cyber risk data
+            cisa_kev_data, cisa_kev_status = self.cisa_kev_fetcher.fetch_kev_catalog(
+                days_back=days_back
+            )
+            if cisa_kev_status.ok and not cisa_kev_data.empty:
+                sources.append("CISA KEV (Cyber Risk)")
+            # Always store CISA KEV status in metadata (even if failed)
 
             # Fetch OWID health data
             # Try to map region to country (simplified: use region_name
@@ -322,6 +388,58 @@ class BehavioralForecaster:
             )
             if not usgs_earthquakes.empty:
                 sources.append("USGS (Earthquakes)")
+
+            # Fetch legislative activity signal from GDELT (no-key fallback)
+            legislative_data = pd.DataFrame()
+            legislative_status = None
+            try:
+                legislative_data, legislative_status = (
+                    self.gdelt_fetcher.fetch_legislative_attention(
+                        region_name=region_name, days_back=days_back
+                    )
+                )
+                if legislative_status.ok and not legislative_data.empty:
+                    sources.append("GDELT Legislative Events")
+            except Exception as e:
+                logger.warning("Failed to fetch legislative data", error=str(e))
+                # Create empty status for metadata
+                from app.services.ingestion.gdelt_events import SourceStatus
+
+                legislative_status = SourceStatus(
+                    provider="GDELT Legislative Events",
+                    ok=False,
+                    error_type="exception",
+                    error_detail=str(e)[:100],
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
+                )
+
+            # Fetch enforcement/ICE event signal from GDELT (for adjustment of political/social stress)
+            enforcement_data = pd.DataFrame()
+            enforcement_status = None
+            try:
+                enforcement_data, enforcement_status = (
+                    self.gdelt_fetcher.fetch_enforcement_attention(
+                        region_name=region_name, days_back=days_back
+                    )
+                )
+                if enforcement_status.ok and not enforcement_data.empty:
+                    sources.append("GDELT Enforcement Events")
+            except Exception as e:
+                logger.warning("Failed to fetch enforcement data", error=str(e))
+                # Create empty status for metadata
+                from app.services.ingestion.gdelt_events import SourceStatus
+
+                enforcement_status = SourceStatus(
+                    provider="GDELT Enforcement Events",
+                    ok=False,
+                    error_type="exception",
+                    error_detail=str(e)[:100],
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
+                )
 
             # Fetch political stress data (for US states only)
             political_data = pd.DataFrame()
@@ -420,6 +538,7 @@ class BehavioralForecaster:
                         "error": "No data available",
                         "sources_status": {
                             "gdelt": gdelt_status.to_dict(),
+                            "openfema_emergency_management": openfema_status.to_dict(),
                         },
                     },
                 }
@@ -455,9 +574,195 @@ class BehavioralForecaster:
                         "error": "Harmonized data is empty",
                         "sources_status": {
                             "gdelt": gdelt_status.to_dict(),
+                            "openfema_emergency_management": openfema_status.to_dict(),
                         },
                     },
                 }
+
+            # Compute legislative_stress from GDELT legislative_attention (and optionally OpenStates)
+            legislative_stress = 0.0
+            max_legislative_attention = 0.0
+            openstates_signal = 0.0
+
+            if (
+                not legislative_data.empty
+                and "legislative_attention" in legislative_data.columns
+            ):
+                # Use GDELT legislative_attention as base signal
+                max_legislative_attention = float(
+                    legislative_data["legislative_attention"].max()
+                )
+                legislative_stress = max_legislative_attention
+
+                # Optionally blend with OpenStates if available
+                if openstates_status.ok and not openstates_activity.empty:
+                    # Normalize OpenStates signal to [0,1] if it has a legislative_stress column
+                    if "legislative_stress" in openstates_activity.columns:
+                        openstates_signal = float(
+                            openstates_activity["legislative_stress"].max()
+                        )
+                        # Blend: 70% GDELT, 30% OpenStates
+                        legislative_stress = min(
+                            1.0, 0.7 * legislative_stress + 0.3 * openstates_signal
+                        )
+                        logger.info(
+                            "Blended legislative stress",
+                            gdelt_attention=max_legislative_attention,
+                            openstates_signal=openstates_signal,
+                            blended_stress=legislative_stress,
+                        )
+
+            # Apply enforcement signal adjustment to political_stress and social_cohesion_stress
+            # Bounded adjustment: enforcement_attention contributes up to +0.25 to political_stress, +0.20 to social_cohesion_stress
+            enforcement_summary = f"No enforcement events in last {days_back}d (enforcement_attention=0.0)"
+            max_enforcement_attention = 0.0
+            enforcement_attention_applied = False
+            if (
+                not enforcement_data.empty
+                and "enforcement_attention" in enforcement_data.columns
+            ):
+                # Merge enforcement_attention into harmonized data
+                enforcement_df = enforcement_data[
+                    ["timestamp", "enforcement_attention"]
+                ].copy()
+                enforcement_df["timestamp"] = pd.to_datetime(
+                    enforcement_df["timestamp"], utc=True
+                )
+                if enforcement_df["timestamp"].dt.tz is not None:
+                    enforcement_df["timestamp"] = enforcement_df[
+                        "timestamp"
+                    ].dt.tz_localize(None)
+                    enforcement_df = enforcement_df.set_index("timestamp").sort_index()
+
+                    # Align enforcement_attention with harmonized timestamps
+                    harmonized["timestamp"] = pd.to_datetime(
+                        harmonized["timestamp"], utc=True
+                    )
+                if harmonized["timestamp"].dt.tz is not None:
+                    harmonized["timestamp"] = harmonized["timestamp"].dt.tz_localize(
+                        None
+                    )
+                    harmonized_indexed = harmonized.set_index("timestamp").sort_index()
+
+                    # Reindex enforcement to match harmonized timestamps (forward-fill for alignment)
+                    enforcement_aligned = (
+                        enforcement_df.reindex(harmonized_indexed.index)[
+                            "enforcement_attention"
+                        ]
+                        .ffill()
+                        .fillna(0.0)
+                    )
+
+                # Apply bounded adjustments: alpha=0.15 for political, beta=0.10 for social_cohesion
+                # Cap total adjustment at +0.25 for political_stress, +0.20 for social_cohesion_stress
+                alpha = 0.15  # Adjustment coefficient for political_stress
+                beta = 0.10  # Adjustment coefficient for social_cohesion_stress
+
+                if "political_stress" in harmonized_indexed.columns:
+                    adjustment_political = (enforcement_aligned * alpha).clip(0.0, 0.25)
+                    harmonized_indexed["political_stress"] = (
+                        harmonized_indexed["political_stress"].fillna(0.0)
+                        + adjustment_political
+                    ).clip(0.0, 1.0)
+
+                if "social_cohesion_stress" in harmonized_indexed.columns:
+                    adjustment_social = (enforcement_aligned * beta).clip(0.0, 0.20)
+                    harmonized_indexed["social_cohesion_stress"] = (
+                        harmonized_indexed["social_cohesion_stress"].fillna(0.0)
+                        + adjustment_social
+                    ).clip(0.0, 1.0)
+
+                    # Reset index back
+                    harmonized = harmonized_indexed.reset_index()
+
+                # Recompute behavior_index to reflect adjusted stress values
+                harmonized = (
+                    self.harmonizer.behavior_index_computer.compute_behavior_index(
+                        harmonized
+                    )
+                )
+
+                max_enforcement_attention = float(enforcement_aligned.max())
+                event_count = len(enforcement_data)
+                enforcement_summary = (
+                    f"{event_count} enforcement-related events in last {days_back}d "
+                    f"(max enforcement_attention={max_enforcement_attention:.2f}, "
+                    f"adjustments: political_stress +{alpha*max_enforcement_attention:.2f} max, "
+                    f"social_cohesion_stress +{beta*max_enforcement_attention:.2f} max)"
+                )
+                enforcement_attention_applied = True
+
+                logger.info(
+                    "Applied enforcement signal adjustment",
+                    enforcement_events=event_count,
+                    max_enforcement_attention=max_enforcement_attention,
+                    enforcement_summary=enforcement_summary,
+                )
+
+            # PHASE 3.1: Apply shock multiplier to political_stress and social_cohesion_stress
+            # When shock_events > 15, multiply these sub-indices to reflect crisis reality
+            # Compute shock count from behavior_index in harmonized DataFrame (before history extraction)
+            from app.services.calibration.config import SHOCK_MULTIPLIER
+
+            if (
+                "timestamp" in harmonized.columns
+                and "behavior_index" in harmonized.columns
+            ):
+                harmonized_temp_indexed = harmonized.set_index("timestamp")
+                try:
+                    shock_events_prelim_sub = self.shock_detector.detect_shocks(
+                        harmonized_temp_indexed
+                    )
+                    shock_count_sub = (
+                        len(shock_events_prelim_sub)
+                        if isinstance(shock_events_prelim_sub, list)
+                        else 0
+                    )
+
+                    if shock_count_sub >= SHOCK_MULTIPLIER["threshold"]:
+                        # Calculate multiplier for sub-indices (1.25x to 1.5x range)
+                        sub_multiplier = min(
+                            1.0
+                            + (shock_count_sub / 100.0)
+                            * SHOCK_MULTIPLIER["multiplier_per_shock"]
+                            * 100,
+                            1.5,  # Cap at 1.5x for sub-indices
+                        )
+
+                        # Apply multiplier to political_stress and social_cohesion_stress
+                        if "political_stress" in harmonized.columns:
+                            harmonized["political_stress"] = (
+                                harmonized["political_stress"] * sub_multiplier
+                            ).clip(0.0, 0.99)
+                        if "social_cohesion_stress" in harmonized.columns:
+                            harmonized["social_cohesion_stress"] = (
+                                harmonized["social_cohesion_stress"] * sub_multiplier
+                            ).clip(0.0, 0.99)
+
+                        logger.info(
+                            "Applied shock multiplier to political/social_cohesion stress",
+                            shock_count=shock_count_sub,
+                            multiplier=sub_multiplier,
+                            political_stress_max=(
+                                float(harmonized["political_stress"].max())
+                                if "political_stress" in harmonized.columns
+                                else 0.0
+                            ),
+                            social_cohesion_stress_max=(
+                                float(harmonized["social_cohesion_stress"].max())
+                                if "social_cohesion_stress" in harmonized.columns
+                                else 0.0
+                            ),
+                        )
+
+                        # Recompute behavior_index to reflect adjusted stress values
+                        harmonized = self.harmonizer.behavior_index_computer.compute_behavior_index(
+                            harmonized
+                        )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to apply shock multiplier to sub-indices", error=str(e)
+                    )
 
             # Prepare history data with sub-indices
             # Keep full harmonized DataFrame for component extraction
@@ -489,8 +794,10 @@ class BehavioralForecaster:
                 history["timestamp"] = history["timestamp"].dt.tz_localize(None)
             history = history.sort_values("timestamp").reset_index(drop=True)
 
-            # Ensure we have enough data points for forecasting (minimum 7 days)
-            if len(history) < 7:
+            # Window integrity: Ensure we have enough data points for forecasting
+            # MIN_HISTORY_DAYS defines the minimum viable history window for stable forecasts.
+            # If days_back < MIN_HISTORY_DAYS, we return an explicit "insufficient_history" flag.
+            if len(history) < MIN_HISTORY_DAYS:
                 logger.warning(
                     "Insufficient historical data for forecasting",
                     data_points=len(history),
@@ -501,21 +808,28 @@ class BehavioralForecaster:
                     history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
                         "%Y-%m-%dT%H:%M:%S"
                     )
-                return {
-                    "history": history_dict.to_dict("records"),
-                    "forecast": [],
-                    "sources": sources,
-                    "metadata": {
-                        "region_name": region_name,
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "warning": "Insufficient data for forecasting",
-                        "data_points": len(history),
-                        "sources_status": {
-                            "gdelt": gdelt_status.to_dict(),
+                    # Explicit "insufficient history" response with clear flag
+                    return {
+                        "history": history_dict.to_dict("records"),
+                        "forecast": [],
+                        "sources": sources,
+                        "metadata": {
+                            "region_name": region_name,
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "warning": "Insufficient data for forecasting",
+                            "data_points": len(history),
+                            "flags": {
+                                "insufficient_history": True,
+                                "min_history_days_required": MIN_HISTORY_DAYS,
+                                "actual_data_points": len(history),
+                            },
+                            "sources_status": {
+                                "gdelt": gdelt_status.to_dict(),
+                                "openfema_emergency_management": openfema_status.to_dict(),
+                            },
                         },
-                    },
-                }
+                    }
 
             # Extract behavior_index time series
             if "behavior_index" not in history.columns:
@@ -529,6 +843,43 @@ class BehavioralForecaster:
                 history["behavior_index"], errors="coerce"
             ).fillna(0.5)
             history["behavior_index"] = history["behavior_index"].clip(0.0, 1.0)
+
+            # CRITICAL: Apply Shock Multiplier to align with reality
+            # High shock events (e.g., 55 in MN) must produce high risk scores
+            # Compute shock count early for multiplier application
+            history_indexed = history.set_index("timestamp")
+            shock_events_prelim = self.shock_detector.detect_shocks(history_indexed)
+            shock_count = (
+                len(shock_events_prelim) if isinstance(shock_events_prelim, list) else 0
+            )
+
+            shock_multiplier_applied = False
+            if shock_count >= SHOCK_MULTIPLIER["threshold"]:
+                # Calculate multiplier: base + (shock_count / 100) * multiplier_per_shock * 100
+                # Example: 55 shocks = 1.0 + (55/100) * 0.01 * 100 = 1.55x
+                multiplier = (
+                    SHOCK_MULTIPLIER["base_multiplier"]
+                    + (shock_count / 100.0)
+                    * SHOCK_MULTIPLIER["multiplier_per_shock"]
+                    * 100
+                )
+                # Apply multiplier: behavior_index = min(base_index * multiplier, max_behavior_index)
+                history["behavior_index"] = (
+                    history["behavior_index"] * multiplier
+                ).clip(0.0, SHOCK_MULTIPLIER["max_behavior_index"])
+                shock_multiplier_applied = True
+
+                logger.info(
+                    "Shock multiplier applied",
+                    shock_count=shock_count,
+                    multiplier=multiplier,
+                    behavior_index_before_multiplier=(
+                        history["behavior_index"].iloc[-1] / multiplier
+                        if multiplier > 0
+                        else 0.0
+                    ),
+                    behavior_index_after_multiplier=history["behavior_index"].iloc[-1],
+                )
 
             behavior_ts = history.set_index("timestamp")["behavior_index"]
 
@@ -551,6 +902,7 @@ class BehavioralForecaster:
                         "data_points": len(history),
                         "sources_status": {
                             "gdelt": gdelt_status.to_dict(),
+                            "openfema_emergency_management": openfema_status.to_dict(),
                         },
                     },
                 }
@@ -816,22 +1168,162 @@ class BehavioralForecaster:
                     "_harmonized_df": harmonized_for_details,  # Store for extraction
                 }
                 # Add source status metadata
-                metadata["sources_status"] = {
+                sources_status_dict = {
                     "gdelt": gdelt_status.to_dict(),
+                    "openfema_emergency_management": openfema_status.to_dict(),
+                    "openstates_legislative": openstates_status.to_dict(),
+                    "nws_alerts": nws_alerts_status.to_dict(),
+                    "cisa_kev": cisa_kev_status.to_dict(),
+                    "search_trends": search_status.to_dict(),
+                    "mobility_patterns": mobility_status.to_dict(),
                 }
+                # Always include legislative_status and enforcement_status in sources_status (even if None/empty)
+                if legislative_status is not None:
+                    sources_status_dict["gdelt_legislative"] = (
+                        legislative_status.to_dict()
+                    )
+                    # Always include openstates_status for legislative_activity (even if missing key)
+                    sources_status_dict["openstates_legislative"] = (
+                        openstates_status.to_dict()
+                    )
+                if enforcement_status is not None:
+                    sources_status_dict["gdelt_enforcement"] = (
+                        enforcement_status.to_dict()
+                    )
+                    metadata["sources_status"] = sources_status_dict
 
-                # Cache result
-                self._cache[cache_key] = (history, forecast_df, metadata)
+                    # Guardrail: Detect if behavior_index is suspiciously all zeros when sources have data
+                    # This indicates a pipeline bug, not real-world conditions
+                    max_bi = (
+                        float(history["behavior_index"].max())
+                        if not history.empty and "behavior_index" in history.columns
+                        else 0.0
+                    )
+                    has_source_data = any(
+                        status.get("ok", False) and status.get("rows", 0) > 0
+                        for status in sources_status_dict.values()
+                        if isinstance(status, dict)
+                    )
 
-                logger.info(
-                    "Forecast generated successfully",
-                    region_name=region_name,
-                    forecast_points=len(forecast_df),
-                    prediction_range=(
-                        forecast_df["prediction"].min(),
-                        forecast_df["prediction"].max(),
-                    ),
-                )
+                if (
+                    max_bi == 0.0
+                    and has_source_data
+                    and len(history) >= MIN_HISTORY_DAYS
+                ):
+                    logger.error(
+                        "Pipeline integrity failure: behavior_index is all zeros despite source data",
+                        data_points=len(history),
+                        sources_with_data=sum(
+                            1
+                            for status in sources_status_dict.values()
+                            if isinstance(status, dict)
+                            and status.get("ok", False)
+                            and status.get("rows", 0) > 0
+                        ),
+                    )
+                    # Fallback: use a safe default (0.4 = moderate baseline) rather than 0.0
+                    # This prevents misleading "zero stress" when data exists but aggregation failed
+                    history["behavior_index"] = 0.4
+                    behavior_ts = history.set_index("timestamp")["behavior_index"]
+                    # Flag this in metadata for transparency
+                    metadata.setdefault("flags", {})["behavior_index_fallback"] = True
+                    metadata.setdefault("flags", {})[
+                        "fallback_reason"
+                    ] = "behavior_index was all zeros despite source data"
+
+                # Add shock multiplier metadata to integrity section
+                if "integrity" not in metadata:
+                    metadata["integrity"] = {}
+                if shock_multiplier_applied:
+                    metadata["integrity"]["shock_multiplier_applied"] = True
+                    metadata["integrity"]["shock_count"] = shock_count
+                    metadata["integrity"]["shock_multiplier_value"] = multiplier
+                else:
+                    metadata["integrity"]["shock_multiplier_applied"] = False
+                    metadata["integrity"]["shock_count"] = shock_count
+
+                # Add legislative and enforcement metadata
+                # Note: metadata["sources"] is a list of source names, not a dict
+                # Use metadata["source_signals"] or similar for signal-level metadata
+                if "source_signals" not in metadata:
+                    metadata["source_signals"] = {}
+                if "gdelt" not in metadata["source_signals"]:
+                    metadata["source_signals"]["gdelt"] = {}
+                    metadata["source_signals"]["gdelt"]["legislative_attention"] = {
+                        "value": max_legislative_attention,
+                        "normalized": True,
+                        "window_days": days_back,
+                        "region_filter": region_name or "global",
+                        "applied": True,
+                    }
+                    metadata["source_signals"]["gdelt"]["enforcement_attention"] = {
+                        "value": max_enforcement_attention,
+                        "normalized": True,
+                        "window_days": days_back,
+                        "region_filter": region_name or "global",
+                        "applied": enforcement_attention_applied,
+                    }
+
+                # Add to dimensions drivers (if dimensions exist in harmonized data)
+                if "dimensions" not in metadata:
+                    metadata["dimensions"] = {}
+
+                    # Add legislative_activity dimension
+                    metadata["dimensions"]["legislative_activity"] = {
+                        "value": legislative_stress,
+                        "label": "legislative activity",
+                        "drivers": {
+                            "gdelt_legislative_attention": max_legislative_attention,
+                        },
+                    }
+                if openstates_status.ok and openstates_signal > 0:
+                    metadata["dimensions"]["legislative_activity"]["drivers"][
+                        "openstates_events"
+                    ] = openstates_signal
+
+                if "political_stress" not in metadata["dimensions"]:
+                    metadata["dimensions"]["political_stress"] = {"drivers": {}}
+                elif "drivers" not in metadata["dimensions"]["political_stress"]:
+                    metadata["dimensions"]["political_stress"]["drivers"] = {}
+                    # Add legislative_stress as a driver of political_stress
+                    metadata["dimensions"]["political_stress"]["drivers"][
+                        "legislative_activity"
+                    ] = legislative_stress
+                    metadata["dimensions"]["political_stress"]["drivers"][
+                        "enforcement_attention"
+                    ] = max_enforcement_attention
+
+                if "social_cohesion_stress" not in metadata["dimensions"]:
+                    metadata["dimensions"]["social_cohesion_stress"] = {"drivers": {}}
+                elif "drivers" not in metadata["dimensions"]["social_cohesion_stress"]:
+                    metadata["dimensions"]["social_cohesion_stress"]["drivers"] = {}
+                    metadata["dimensions"]["social_cohesion_stress"]["drivers"][
+                        "enforcement_attention"
+                    ] = max_enforcement_attention
+
+                # Add enforcement summary to intelligence layer
+                if enforcement_summary:
+                    if "intelligence" not in metadata:
+                        metadata["intelligence"] = {}
+                    metadata["intelligence"][
+                        "enforcement_summary"
+                    ] = enforcement_summary
+                    metadata["intelligence"][
+                        "enforcement_attention"
+                    ] = max_enforcement_attention
+
+                    # Cache result
+                    self._cache[cache_key] = (history, forecast_df, metadata)
+
+                    logger.info(
+                        "Forecast generated successfully",
+                        region_name=region_name,
+                        forecast_points=len(forecast_df),
+                        prediction_range=(
+                            forecast_df["prediction"].min(),
+                            forecast_df["prediction"].max(),
+                        ),
+                    )
 
                 # Convert timestamps to ISO strings for API response
                 history_dict = history.copy()
@@ -871,18 +1363,18 @@ class BehavioralForecaster:
                     history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
                         "%Y-%m-%dT%H:%M:%S"
                     )
-                return {
-                    "history": history_dict.to_dict("records"),
-                    "forecast": [],
-                    "sources": sources,
-                    "metadata": {
-                        "region_name": region_name,
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "error": f"Model fitting failed: {str(e)}",
-                    },
-                    **self._empty_intelligence_data(),  # Add empty intelligence data
-                }
+                    return {
+                        "history": history_dict.to_dict("records"),
+                        "forecast": [],
+                        "sources": sources,
+                        "metadata": {
+                            "region_name": region_name,
+                            "latitude": latitude,
+                            "longitude": longitude,
+                            "error": f"Model fitting failed: {str(e)}",
+                        },
+                        **self._empty_intelligence_data(),  # Add empty intelligence data
+                    }
 
         except Exception as e:
             logger.error("Error generating forecast", error=str(e), exc_info=True)
