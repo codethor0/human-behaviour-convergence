@@ -69,4 +69,4 @@ Since the backend is running, you can:
 
 ## Recent Updates
 
-- **2026-01-12:** Forecast page regression resolved (a3b5235e225028d4e31063b9e708a9956ef6ced7). Backend, frontend, and integrity gate green; CI and E2E workflows passing on main.
+- **2026-01-12:** Forecast page regression resolved (770ded4). Backend, frontend, and integrity gate green; CI and E2E workflows passing on main.

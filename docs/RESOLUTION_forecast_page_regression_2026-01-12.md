@@ -115,7 +115,7 @@ The regression was caused by a combination of:
 
 After running the ship script and pushing:
 
-- **Commit:** `a3b5235e225028d4e31063b9e708a9956ef6ced7`
+- **Commit:** `770ded4` (source fixes) + `0c719da` (docs)
 - **Branch:** `main`
 
 GitHub Actions status on `main`:
