@@ -69,4 +69,5 @@ Since the backend is running, you can:
 
 ## Recent Updates
 
+- **2026-01-12:** State lifetime semantics stabilized (61b05c7). Added reset_cache() to BehavioralForecaster, reset() to LiveMonitor, and reset_live_monitor() function. All 11 tests in test_state_lifetime.py now pass.
 - **2026-01-12:** Forecast page regression resolved (770ded4). Backend, frontend, and integrity gate green; CI and E2E workflows passing on main.
