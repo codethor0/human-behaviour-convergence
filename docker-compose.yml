@@ -9,6 +9,9 @@ services:
     volumes:
       - .:/app
       - ./data:/app/data
+    env_file:
+      - .env
+    # env_file is optional - .env may not exist
     environment:
       - CACHE_MAX_SIZE=100
       - CACHE_TTL_MINUTES=5
@@ -21,8 +24,9 @@ services:
       - PUBLIC_HEALTH_API_KEY=${PUBLIC_HEALTH_API_KEY:-}
       - SEARCH_TRENDS_API_ENDPOINT=${SEARCH_TRENDS_API_ENDPOINT:-}
       - SEARCH_TRENDS_API_KEY=${SEARCH_TRENDS_API_KEY:-}
+      - OPENSTATES_API_KEY=${OPENSTATES_API_KEY:-}
       - HBC_DB_PATH=${HBC_DB_PATH:-/app/data/hbc.db}
-    command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
