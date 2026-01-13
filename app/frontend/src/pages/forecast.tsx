@@ -9,15 +9,6 @@ import {
   runForecast as apiRunForecast,
 } from '../lib/api';
 
-interface ForecastRequest {
-  region_id?: string;
-  latitude?: number;
-  longitude?: number;
-  region_name: string;
-  days_back: number;
-  forecast_horizon: number;
-}
-
 interface SubIndices {
   economic_stress?: number;
   environmental_stress?: number;
