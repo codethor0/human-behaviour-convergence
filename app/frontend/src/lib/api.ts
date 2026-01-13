@@ -38,13 +38,25 @@ export async function api<T>(
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
 
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+  } catch (networkError: unknown) {
+    // Catch network errors (CORS failures, connection refused, etc.)
+    const errorMessage =
+      networkError instanceof Error
+        ? networkError.message
+        : String(networkError);
+    throw new Error(
+      `Network error: ${errorMessage} — Check that backend is running at ${API_BASE} and CORS is configured correctly`
+    );
+  }
 
   if (!res.ok) {
     let detail = "";

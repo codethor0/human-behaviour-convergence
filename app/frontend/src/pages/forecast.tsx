@@ -365,6 +365,8 @@ export default function ForecastPage() {
       setForecastData(data);
     } catch (e: unknown) {
       console.error('Forecast request failed', e);
+      // Error message from api() helper already includes structured details
+      // (HTTP status, network error context, etc.)
       setError(e instanceof Error ? e.message : 'Failed to generate forecast');
     } finally {
       setLoading(false);
