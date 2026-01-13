@@ -1,12 +1,11 @@
 """Tests for GDELT Events connector."""
 
 from unittest.mock import Mock, patch
+
 import pandas as pd
 import requests
-from app.services.ingestion.gdelt_events import (
-    GDELTEventsFetcher,
-    SourceStatus,
-)
+
+from app.services.ingestion.gdelt_events import GDELTEventsFetcher, SourceStatus
 
 
 class TestGDELTEventsFetcher:

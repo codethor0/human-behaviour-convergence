@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: MIT-0
+import importlib.metadata
 from typing import Any, Dict, Type
 
 """
 Plugin registry for behavioral predictors.
 Allows dynamic discovery and loading of predictor plugins via entry points.
 """
-
-import importlib.metadata
 
 PREDICTOR_ENTRY_POINT = "human_behaviour_predictor"
 

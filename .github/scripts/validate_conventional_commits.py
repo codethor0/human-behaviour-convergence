@@ -48,7 +48,7 @@ def get_commit_message():
     try:
         with open(".git/COMMIT_EDITMSG") as f:
             return f.read().strip()
-    except:
+    except Exception:
         pass
 
     # Final fallback: stdin
