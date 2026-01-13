@@ -94,17 +94,17 @@ app.include_router(forecasting.router)
 app.include_router(playground.router)
 app.include_router(live.router)
 
-# Configure CORS from environment (comma-separated)
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
-).split(",")
+# Configure CORS - dev-friendly: allow all origins for local development
+# In production, set ALLOWED_ORIGINS env var to restrict to specific domains
+ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
+ALLOWED_ORIGINS = ALLOWED_ORIGINS_ENV.split(",") if ALLOWED_ORIGINS_ENV else ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,  # No authentication, no credentials needed
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_origins=ALLOWED_ORIGINS,  # ["*"] for dev, specific origins for prod
+    allow_credentials=False,  # Required when allow_origins=["*"]
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers (required for Content-Type preflight)
     max_age=600,
 )
 
