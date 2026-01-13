@@ -37,14 +37,19 @@ def _get_fetcher_classes():
     from app.services.ingestion.openfema_emergency_management import (
         OpenFEMAEmergencyManagementFetcher,
     )
-    from app.services.ingestion.openstates_legislative import (
-        OpenStatesLegislativeFetcher,
-    )
+
+    # Optional connector - only import if available
+    try:
+        from app.services.ingestion.openstates_legislative import (
+            OpenStatesLegislativeFetcher,
+        )
+    except ImportError:
+        OpenStatesLegislativeFetcher = None  # type: ignore[assignment]
     from app.services.ingestion.public_health import PublicHealthFetcher
     from app.services.ingestion.search_trends import SearchTrendsFetcher
     from app.services.ingestion.weather import EnvironmentalImpactFetcher
 
-    return {
+    result = {
         "MarketSentimentFetcher": MarketSentimentFetcher,
         "EnvironmentalImpactFetcher": EnvironmentalImpactFetcher,
         "SearchTrendsFetcher": SearchTrendsFetcher,
@@ -52,8 +57,11 @@ def _get_fetcher_classes():
         "MobilityFetcher": MobilityFetcher,
         "GDELTEventsFetcher": GDELTEventsFetcher,
         "OpenFEMAEmergencyManagementFetcher": OpenFEMAEmergencyManagementFetcher,
-        "OpenStatesLegislativeFetcher": OpenStatesLegislativeFetcher,
     }
+    # Only include optional connectors if available
+    if OpenStatesLegislativeFetcher is not None:
+        result["OpenStatesLegislativeFetcher"] = OpenStatesLegislativeFetcher
+    return result
 
 
 def _check_missing_env_vars(required_vars: List[str]) -> List[str]:
