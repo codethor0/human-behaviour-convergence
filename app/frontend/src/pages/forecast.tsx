@@ -1,6 +1,15 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import {
+  fetchRegions as apiFetchRegions,
+  fetchDataSources as apiFetchDataSources,
+  runForecast as apiRunForecast,
+  type Region as APIRegion,
+  type ForecastRequest as APIForecastRequest,
+} from '../lib/api';
 
 interface ForecastRequest {
   region_id?: string;
@@ -281,25 +290,19 @@ export default function ForecastPage() {
 
   const fetchDataSources = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const response = await fetch(`${base}/api/forecasting/data-sources`);
-      const data = await response.json();
+      setError(null);
+      const data = await apiFetchDataSources();
       setDataSources(data);
     } catch (e) {
       console.error('Failed to fetch data sources:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load data sources');
     }
   };
 
   const fetchRegions = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const response = await fetch(`${base}/api/forecasting/regions`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      setError(null);
+      const data = await apiFetchRegions();
 
       // Validate that data is an array
       if (!Array.isArray(data)) {
@@ -319,6 +322,7 @@ export default function ForecastPage() {
       }
     } catch (e) {
       console.error('Failed to fetch regions:', e);
+      setError(e instanceof Error ? e.message : 'Failed to load regions');
       // Use fallback regions to ensure UI is usable
       const fallback: Region[] = [
         { id: 'city_nyc', name: 'New York City', country: 'US', region_type: 'city', latitude: 40.7128, longitude: -74.0060 },
@@ -342,8 +346,7 @@ export default function ForecastPage() {
         throw new Error('Please select a region');
       }
 
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const request: ForecastRequest = {
+      const request: APIForecastRequest = {
         region_id: selectedRegion.id,
         region_name: selectedRegion.name,
         latitude: selectedRegion.latitude,
@@ -352,29 +355,7 @@ export default function ForecastPage() {
         forecast_horizon: forecastHorizon,
       };
 
-      const response = await fetch(`${base}/api/forecast`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'Forecast request failed';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-        } catch {
-          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        }
-        throw new Error(errorMessage);
-      }
-
-      let data: ForecastResponse;
-      try {
-        data = await response.json();
-      } catch (e) {
-        throw new Error('Invalid JSON response from server');
-      }
+      const data = await apiRunForecast(request);
 
       // Validate and sanitize response data
       if (!data) {
@@ -394,6 +375,7 @@ export default function ForecastPage() {
 
       setForecastData(data);
     } catch (e: unknown) {
+      console.error('Forecast request failed', e);
       setError(e instanceof Error ? e.message : 'Failed to generate forecast');
     } finally {
       setLoading(false);

@@ -1,6 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { fetchRegions as apiFetchRegions, type Region as APIRegion } from '../lib/api';
 
 interface Region {
   id: string;
@@ -58,17 +61,12 @@ export default function LivePage() {
 
   const fetchRegions = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const response = await fetch(`${base}/api/forecasting/regions`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const data = await response.json();
+      setError(null);
+      const data = await apiFetchRegions();
       if (!Array.isArray(data) || data.length === 0) {
         throw new Error('Regions response is empty or invalid');
       }
       setRegions(data);
-      setError(null); // Clear any previous error
       // Set default selections
       const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
         data.some((r: Region) => r.id === id)
@@ -77,8 +75,8 @@ export default function LivePage() {
         setSelectedRegions(defaultIds);
       }
     } catch (e) {
-      console.error('Failed to fetch regions:', e);
-      setError('Failed to load regions');
+      console.error('Live: failed to load regions', e);
+      setError(e instanceof Error ? e.message : 'Failed to load regions');
       setRegions([]); // Ensure regions is empty on error
     }
   };

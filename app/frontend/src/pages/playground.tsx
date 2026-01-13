@@ -1,6 +1,9 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { fetchRegions as apiFetchRegions, type Region as APIRegion } from '../lib/api';
 
 interface Region {
   id: string;
@@ -59,14 +62,8 @@ export default function PlaygroundPage() {
 
   const fetchRegions = async () => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const response = await fetch(`${base}/api/forecasting/regions`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      setError(null);
+      const data = await apiFetchRegions();
 
       // Validate that data is an array
       if (!Array.isArray(data)) {
@@ -75,7 +72,6 @@ export default function PlaygroundPage() {
 
       if (data.length > 0) {
         setRegions(data);
-        setError(null); // Clear any previous error
         // Set default selections
         const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
           data.some((r: Region) => r.id === id)
@@ -87,8 +83,8 @@ export default function PlaygroundPage() {
         throw new Error('Regions endpoint returned empty array');
       }
     } catch (e) {
-      console.error('Failed to fetch regions:', e);
-      setError('Failed to load regions');
+      console.error('Playground: failed to load regions', e);
+      setError(e instanceof Error ? e.message : 'Failed to load regions');
       setRegions([]); // Ensure regions is empty on error
     }
   };
