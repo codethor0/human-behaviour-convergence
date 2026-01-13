@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for USGS Earthquake connector."""
 import pandas as pd
+import pytest
 import responses
 
 from app.services.ingestion.usgs_earthquakes import USGSEarthquakeFetcher
@@ -9,6 +10,7 @@ from app.services.ingestion.usgs_earthquakes import USGSEarthquakeFetcher
 class TestUSGSEarthquakeFetcher:
     """Test USGS earthquake fetcher."""
 
+    @pytest.mark.network
     def test_fetch_earthquake_intensity_returns_dataframe(self):
         """Test fetch_earthquake_intensity() returns DataFrame with correct schema."""
         fetcher = USGSEarthquakeFetcher()
@@ -61,6 +63,7 @@ class TestUSGSEarthquakeFetcher:
         assert isinstance(df, pd.DataFrame)
         assert len(df) >= 0  # May be empty if parsing fails, which is OK
 
+    @pytest.mark.network
     def test_fetch_earthquake_intensity_handles_empty_response(self):
         """Test that fetch_earthquake_intensity() handles empty API response."""
         fetcher = USGSEarthquakeFetcher()
