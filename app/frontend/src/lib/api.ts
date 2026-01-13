@@ -6,7 +6,7 @@
  * Do not hardcode API URLs elsewhere.
  */
 
-const API_BASE =
+export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8100";
 
 export interface Region {
@@ -72,7 +72,3 @@ export async function runForecast(body: ForecastRequest): Promise<any> {
     body: JSON.stringify(body),
   });
 }
-
-// Export API_BASE for backwards compatibility if needed
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8100";

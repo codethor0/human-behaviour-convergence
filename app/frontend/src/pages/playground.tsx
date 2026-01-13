@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { fetchRegions as apiFetchRegions, type Region as APIRegion } from '../lib/api';
+import { fetchRegions as apiFetchRegions } from '../lib/api';
 
 interface Region {
   id: string;

@@ -7,7 +7,6 @@ import {
   fetchRegions as apiFetchRegions,
   fetchDataSources as apiFetchDataSources,
   runForecast as apiRunForecast,
-  type Region as APIRegion,
   type ForecastRequest as APIForecastRequest,
 } from '../lib/api';
 
