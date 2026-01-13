@@ -64,7 +64,7 @@ def should_exclude_file(file_path: Path, root: Path) -> bool:
     """Check if file should be excluded from checking."""
     rel_path = file_path.relative_to(root)
     parts = rel_path.parts
-    
+
     # Check if any part of the path matches excluded directories
     for part in parts[:-1]:  # Exclude filename itself
         if part in EXCLUDED_DIRS:
@@ -72,18 +72,18 @@ def should_exclude_file(file_path: Path, root: Path) -> bool:
         # Check for hidden directories (except .github which we want to check)
         if part.startswith(".") and part != ".github":
             return True
-    
+
     # Exclude specific audit report files that document emojis as findings
     if "REPO_HEALTH_AUDIT" in file_path.name or "ISSUE_STATUS_REPORT" in file_path.name:
         return True
-    
+
     return False
 
 
 def get_tracked_files(root: Path) -> list[Path]:
     """Get list of tracked files matching allowed extensions."""
     import subprocess
-    
+
     try:
         # Get all tracked files from git
         result = subprocess.run(
@@ -94,7 +94,7 @@ def get_tracked_files(root: Path) -> list[Path]:
             check=True,
         )
         tracked_paths = [f.strip() for f in result.stdout.splitlines() if f.strip()]
-        
+
         files_to_check = []
         for path_str in tracked_paths:
             file_path = root / path_str
@@ -104,7 +104,7 @@ def get_tracked_files(root: Path) -> list[Path]:
                 if not should_exclude_file(file_path, root):
                     if file_path.exists():
                         files_to_check.append(file_path)
-        
+
         return files_to_check
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         # Fallback: walk filesystem if git not available
@@ -119,11 +119,11 @@ def get_tracked_files(root: Path) -> list[Path]:
 
 def main():
     root = Path(__file__).parent.parent.parent
-    
+
     files_to_check = get_tracked_files(root)
-    
+
     found_emojis = False
-    
+
     for file_path in sorted(files_to_check):
         violations = check_file(file_path)
         if violations:
@@ -135,7 +135,9 @@ def main():
 
     if found_emojis:
         print("\n[FAIL] CI FAILED: Emojis detected in tracked files.")
-        print("Please remove all emojis to maintain professional documentation and code.")
+        print(
+            "Please remove all emojis to maintain professional documentation and code."
+        )
         sys.exit(1)
     else:
         print("[PASS] No emojis found in tracked files.")

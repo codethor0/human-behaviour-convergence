@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: PROPRIETARY
 /**
  * Policy Management Page
- * 
+ *
  * Provides UI for:
  * - Viewing policies
  * - Creating/editing policies
  * - Previewing policy impact
  * - Activating policies
- * 
+ *
  * All preview operations are read-only and never mutate state.
  */
 import { useState, useEffect } from 'react';
@@ -90,7 +90,7 @@ export default function PoliciesPage() {
     try {
       setPreviewing(true);
       setError(null);
-      
+
       // Get policy definition (simplified - in production, fetch from API)
       const policy = {
         alert_thresholds: {

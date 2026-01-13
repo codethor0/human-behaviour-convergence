@@ -915,15 +915,19 @@ def _generate_explanation(
     Returns:
         Human-readable explanation string
     """
-    if behavior_index < 0.3:
+    # Align with RiskClassifier tier thresholds (0.0-0.29: low, 0.30-0.49: elevated, 0.50-0.69: high, 0.70-1.0: critical)
+    if behavior_index < 0.30:
         level = "low"
         interpretation = "stable, normal behavioral patterns"
-    elif behavior_index < 0.6:
+    elif behavior_index < 0.50:
         level = "moderate"
         interpretation = "mixed signals or partial disruption"
-    else:
+    elif behavior_index < 0.70:
         level = "high"
         interpretation = "significant behavioral stress or disruption"
+    else:
+        level = "critical"
+        interpretation = "severe disruption or systemic stress"
 
     explanation = (
         f"Behavior Index is {level} ({behavior_index:.2f}), "
@@ -970,7 +974,13 @@ def _generate_explanation(
 
 
 def _extract_sub_indices(record: Dict[str, Any]) -> Optional[SubIndices]:
-    """Extract sub-indices from a record if available."""
+    """Extract sub-indices from a record, filling missing fields with synthetic baselines.
+
+    STRICT FORMATTER: Always returns all 9 fields to ensure UI displays all cards.
+    Missing/None values are filled with SYNTHETIC_DEFAULTS from config.py.
+    """
+    from app.services.calibration.config import SYNTHETIC_DEFAULTS
+
     sub_index_keys = [
         "economic_stress",
         "environmental_stress",
@@ -983,33 +993,54 @@ def _extract_sub_indices(record: Dict[str, Any]) -> Optional[SubIndices]:
     if all(key in record for key in required_keys):
         import math
 
-        def safe_float(val):
+        def safe_float(val, default: float = 0.5):
             """Safely convert value to float, handling NaN and None."""
             if val is None:
-                return None
+                return default
             try:
                 fval = float(val)
                 if math.isnan(fval):
-                    return None
+                    return default
                 return fval
             except (ValueError, TypeError):
-                return None
+                return default
 
-        political_stress = safe_float(record.get("political_stress"))
-        crime_stress = safe_float(record.get("crime_stress"))
-        misinformation_stress = safe_float(record.get("misinformation_stress"))
-        social_cohesion_stress = safe_float(record.get("social_cohesion_stress"))
+        # Required fields (use record value or 0.5 as fallback)
+        economic_stress = safe_float(record.get("economic_stress"), 0.5)
+        environmental_stress = safe_float(record.get("environmental_stress"), 0.5)
+        mobility_activity = safe_float(record.get("mobility_activity"), 0.5)
+        digital_attention = safe_float(record.get("digital_attention"), 0.5)
+        public_health_stress = safe_float(record.get("public_health_stress"), 0.5)
 
+        # Optional fields: Use record value if present, otherwise synthetic baseline
+        political_stress = safe_float(
+            record.get("political_stress"),
+            SYNTHETIC_DEFAULTS.get("political_stress_baseline", 0.35),
+        )
+        crime_stress = safe_float(
+            record.get("crime_stress"),
+            SYNTHETIC_DEFAULTS.get("crime_stress_baseline", 0.35),
+        )
+        misinformation_stress = safe_float(
+            record.get("misinformation_stress"),
+            SYNTHETIC_DEFAULTS.get("misinformation_stress_baseline", 0.35),
+        )
+        social_cohesion_stress = safe_float(
+            record.get("social_cohesion_stress"),
+            SYNTHETIC_DEFAULTS.get("social_cohesion_stress_baseline", 0.35),
+        )
+
+        # STRICT: Always return all 9 fields (no None values)
         return SubIndices(
-            economic_stress=float(record["economic_stress"]),
-            environmental_stress=float(record["environmental_stress"]),
-            mobility_activity=float(record["mobility_activity"]),
-            digital_attention=float(record["digital_attention"]),
-            public_health_stress=float(record["public_health_stress"]),
-            political_stress=political_stress,
-            crime_stress=crime_stress,
-            misinformation_stress=misinformation_stress,
-            social_cohesion_stress=social_cohesion_stress,
+            economic_stress=economic_stress,
+            environmental_stress=environmental_stress,
+            mobility_activity=mobility_activity,
+            digital_attention=digital_attention,
+            public_health_stress=public_health_stress,
+            political_stress=political_stress,  # Always present (synthetic baseline if missing)
+            crime_stress=crime_stress,  # Always present (synthetic baseline if missing)
+            misinformation_stress=misinformation_stress,  # Always present (synthetic baseline if missing)
+            social_cohesion_stress=social_cohesion_stress,  # Always present (synthetic baseline if missing)
         )
     return None
 
@@ -1607,12 +1638,19 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 },
             }
 
+        # Get risk_tier from result for explanation alignment
+        risk_tier_for_explanation = None
+        risk_tier_data = result.get("risk_tier", {})
+        if isinstance(risk_tier_data, dict):
+            risk_tier_for_explanation = risk_tier_data.get("tier")
+
         try:
             explanations_dict = generate_explanation(
                 behavior_index=latest_behavior_index,
                 sub_indices=sub_indices_dict,
                 subindex_details=subindex_details_dict,
                 region_name=payload.region_name,
+                risk_tier=risk_tier_for_explanation,
             )
 
             # Convert to Pydantic models

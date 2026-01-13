@@ -146,17 +146,17 @@ jobs:
             "*_validation.sh"
             "*_verify.sh"
           )
-          
+
           # Special patterns that should match .md files
           REPORT_PATTERNS=(
             "*_report.md"
             "*_validation_report.md"
             "*_verify_report.md"
           )
-          
+
           FOUND_ARTIFACTS=0
           ARTIFACT_LIST=""
-          
+
           for pattern in "${ARTIFACT_PATTERNS[@]}"; do
             # Exclude virtual environments, build artifacts, and legitimate directories
             MATCHES=$(find . -type f -iname "$pattern" \
@@ -170,7 +170,7 @@ jobs:
               -not -path "*/__pycache__/*" \
               -not -path "*/site-packages/*" \
               2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
-            
+
             if [ -n "$MATCHES" ]; then
               echo "ERROR: Found agent artifact matching pattern '$pattern':"
               echo "$MATCHES" | head -10
@@ -178,7 +178,7 @@ jobs:
               ARTIFACT_LIST="${ARTIFACT_LIST}${MATCHES}"$'\n'
             fi
           done
-          
+
           # Check report patterns separately (these should match .md files)
           for pattern in "${REPORT_PATTERNS[@]}"; do
             MATCHES=$(find . -type f -iname "$pattern" \
@@ -190,7 +190,7 @@ jobs:
               -not -path "./playwright-report/*" \
               -not -path "./test-results/*" \
               2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
-            
+
             if [ -n "$MATCHES" ]; then
               echo "ERROR: Found agent artifact matching pattern '$pattern':"
               echo "$MATCHES" | head -10
@@ -198,7 +198,7 @@ jobs:
               ARTIFACT_LIST="${ARTIFACT_LIST}${MATCHES}"$'\n'
             fi
           done
-          
+
           if [ "$FOUND_ARTIFACTS" -gt 0 ]; then
             echo ""
             echo "FAIL: Found $FOUND_ARTIFACTS agent artifact(s) in repository"
@@ -767,28 +767,28 @@ jobs:
         run: |
           set +e
           LOG="/tmp/docker-e2e-playwright.log"
-          
+
           npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line,html 2>&1 | tee "$LOG"
           code=${PIPESTATUS[0]}
-          
+
           if [ "$code" -ne 0 ]; then
             # Extract a compact failure summary that will show up in the Annotations tab.
             summary="$(grep -nE 'FAIL|Error:|Timeout|expect\(|net::|page\.goto|strict mode|locator' "$LOG" | head -n 40 || true)"
-            
+
             # Extract diagnostics block if present
             diag_block="$(awk '/DOCKER_E2E_DIAGNOSTICS/ {flag=1; c=0} flag {print; c++} (flag && c>=60) {exit}' "$LOG" || true)"
-            
+
             if [ -n "$diag_block" ]; then
               summary="${summary}\n\n=== DOCKER_E2E_DIAGNOSTICS ===\n${diag_block}"
             else
               python3 -c "print('::error title=DIAGNOSTICS_MARKER_NOT_FOUND::DOCKER_E2E_DIAGNOSTICS not found in /tmp/docker-e2e-playwright.log')"
             fi
-            
+
             # Encode newlines for GitHub annotation rendering
             export SUMMARY="$summary"
             python3 -c "import os; s=os.environ.get('SUMMARY',''); print('::error title=Docker E2E Playwright Failure Summary::' + s.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))"
           fi
-          
+
           exit "$code"
 
       - name: Ensure test-results directory exists

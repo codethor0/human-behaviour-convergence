@@ -3,7 +3,6 @@
 CI check: Validate internal markdown links point to existing files and headings.
 Exit code 1 if any broken internal links found.
 """
-import os
 import re
 import subprocess
 import sys

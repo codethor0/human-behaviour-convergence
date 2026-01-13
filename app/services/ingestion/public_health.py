@@ -8,6 +8,8 @@ import pandas as pd
 import requests_cache
 import structlog
 
+from app.services.ingestion.health_owid import OWIDHealthFetcher
+
 logger = structlog.get_logger("ingestion.public_health")
 
 
@@ -37,6 +39,11 @@ class PublicHealthFetcher:
         self.session = requests_cache.CachedSession(
             ".cache/public_health_cache",
             expire_after=timedelta(minutes=cache_duration_minutes),
+        )
+
+        # OWID fetcher for no-key fallback
+        self.owid_fetcher = OWIDHealthFetcher(
+            cache_duration_minutes=cache_duration_minutes
         )
 
     def fetch_health_risk_index(
@@ -94,11 +101,40 @@ class PublicHealthFetcher:
             api_key = os.getenv("PUBLIC_HEALTH_API_KEY", "")
 
             if not api_endpoint or not api_key:
-                logger.warning(
-                    "Public health API not configured, returning empty DataFrame",
+                # No-key fallback: use OWID public health data
+                logger.info(
+                    "Public health API not configured, using OWID fallback",
                     region_code=region_code,
                 )
-                # Return empty DataFrame with correct structure
+                # Map region_code to country name (simplified)
+                country_name = "United States"  # Default
+                if region_code:
+                    # Simple mapping - could be extended
+                    if region_code.upper() in ["US", "USA", "UNITED STATES"]:
+                        country_name = "United States"
+
+                owid_data = self.owid_fetcher.fetch_health_stress_index(
+                    country=country_name,
+                    days_back=days_back,
+                    use_cache=use_cache,
+                )
+
+                if not owid_data.empty:
+                    # OWID returns health_stress_index, rename to health_risk_index for consistency
+                    result = owid_data.rename(
+                        columns={"health_stress_index": "health_risk_index"}
+                    )
+                    # Update cache
+                    self._cache = result.copy()
+                    self._cache_key = cache_key
+                    self._cache_timestamp = datetime.now()
+                    logger.info(
+                        "Successfully fetched public health data from OWID",
+                        rows=len(result),
+                    )
+                    return result
+
+                # If OWID also fails, return empty DataFrame
                 return pd.DataFrame(
                     columns=["timestamp", "health_risk_index"],
                     dtype=float,

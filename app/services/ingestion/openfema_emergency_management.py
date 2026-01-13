@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: PROPRIETARY
 """OpenFEMA Emergency Management API connector for disaster declarations."""
+import json
+import time
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
-import json
 import pandas as pd
 import requests
 import structlog
-import time
+
+from app.services.ingestion.gdelt_events import SourceStatus
 
 logger = structlog.get_logger("ingestion.openfema")
 
@@ -19,8 +21,6 @@ MAX_RETRIES = 3
 INITIAL_BACKOFF = 1.0  # seconds
 MAX_BACKOFF = 10.0  # seconds
 
-# Import SourceStatus from gdelt_events (reuse pattern)
-from app.services.ingestion.gdelt_events import SourceStatus
 
 # State name to abbreviation mapping (common US states)
 STATE_ABBREV_MAP = {
@@ -140,7 +140,7 @@ class OpenFEMAEmergencyManagementFetcher:
                         backoff = min(backoff * 2, MAX_BACKOFF)
                         continue
                     return response, error_type, http_status
-            except requests.exceptions.Timeout as e:
+            except requests.exceptions.Timeout:
                 error_type = "timeout"
                 if attempt < MAX_RETRIES - 1:
                     logger.warning(
@@ -438,7 +438,10 @@ class OpenFEMAEmergencyManagementFetcher:
                 rows=0,
                 query_window_days=days_back,
             )
-            logger.warning("OpenFEMA response is not array or object", response_type=type(data).__name__)
+            logger.warning(
+                "OpenFEMA response is not array or object",
+                response_type=type(data).__name__,
+            )
             return pd.DataFrame(columns=["timestamp", "declaration_count"]), status
 
         # Log which format was used (if wrapper was detected)
@@ -530,7 +533,9 @@ class OpenFEMAEmergencyManagementFetcher:
         logger.info(
             "Successfully fetched OpenFEMA disaster declarations",
             rows=len(df),
-            date_range=(df["timestamp"].min(), df["timestamp"].max()) if not df.empty else None,
+            date_range=(
+                (df["timestamp"].min(), df["timestamp"].max()) if not df.empty else None
+            ),
             status_ok=status.ok,
         )
 

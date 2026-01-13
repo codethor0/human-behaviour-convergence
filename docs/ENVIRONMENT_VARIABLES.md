@@ -128,6 +128,15 @@ These environment variables are optional. The system will function without them,
 - **Required:** No
 - **Usage:** `app/services/ingestion/search_trends.py`
 
+### OpenStates Legislative Activity
+
+#### `OPENSTATES_API_KEY`
+- **Default:** `""` (empty string)
+- **Description:** API key for OpenStates legislative activity data
+- **Required:** Yes (for legislative_activity source)
+- **Get key:** https://openstates.org/api/register/
+- **Usage:** `app/services/ingestion/openstates_legislative.py`
+
 ### NASA FIRMS Active Fires
 
 #### `FIRMS_MAP_KEY`
@@ -166,15 +175,27 @@ HBC_DB_PATH=data/hbc.db
 # Frontend Configuration
 NEXT_PUBLIC_API_BASE=http://localhost:8100
 
-# Optional Data Source API Keys
+# Data Source API Keys
+# OpenStates Legislative Activity (Required for legislative_activity source)
+OPENSTATES_API_KEY=
+
+# FRED Economic Data (Optional)
 FRED_API_KEY=
+
+# NASA FIRMS Active Fires (Optional)
+FIRMS_MAP_KEY=
+
+# Mobility Data (Optional)
 MOBILITY_API_ENDPOINT=
 MOBILITY_API_KEY=
+
+# Public Health Data (Optional)
 PUBLIC_HEALTH_API_ENDPOINT=
 PUBLIC_HEALTH_API_KEY=
+
+# Search Trends Data (Optional)
 SEARCH_TRENDS_API_ENDPOINT=
 SEARCH_TRENDS_API_KEY=
-FIRMS_MAP_KEY=
 ```
 
 ## Notes

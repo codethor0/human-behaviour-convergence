@@ -225,6 +225,21 @@ If you discover a security or privacy issue (including ethical concerns about th
   pip install -r requirements.txt
   pip install -r requirements-dev.txt  # for testing
   ```
+- **Setting API Keys:**
+  To enable all data sources (especially for Docker):
+  1. Copy `.env.example` to `.env`:
+     ```bash
+     cp .env.example .env
+     ```
+  2. Edit `.env` and set your API keys (see `.env.example` for all available keys)
+  3. For OpenStates (required for legislative activity):
+     - Get key at: https://openstates.org/api/register/
+     - Set `OPENSTATES_API_KEY=your_key_here` in `.env`
+  4. If using Docker, restart containers:
+     ```bash
+     docker compose up -d --build
+     ```
+  See `docs/ENVIRONMENT_VARIABLES.md` for full documentation of all environment variables.
 - **Run tests:**
   ```bash
   pytest tests/ --cov

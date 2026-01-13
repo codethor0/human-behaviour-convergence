@@ -682,6 +682,7 @@ def generate_explanation(
     sub_indices: Dict[str, float],
     subindex_details: Optional[Dict[str, Dict]] = None,
     region_name: Optional[str] = None,
+    risk_tier: Optional[str] = None,
 ) -> Dict:
     """
     Generate a comprehensive explanation for a Behavior Index forecast.
@@ -691,29 +692,40 @@ def generate_explanation(
         sub_indices: Dictionary mapping sub-index names to values
         subindex_details: Optional dictionary with component-level details
         region_name: Optional region name for context
+        risk_tier: Optional risk tier (low, elevated, high, critical) to align text
 
     Returns:
         Dictionary with summary, subindices explanations, and component details
     """
-    # Classify overall behavior index
-    overall_level = _classify_level(behavior_index)
+    # Map risk tier to summary text (aligned with RiskClassifier.TIER_LABELS)
+    TIER_SUMMARY_MAP = {
+        "low": "Behavior Index indicates low disruption, with most indicators showing stability.",
+        "elevated": "Behavior Index indicates moderate disruption, with some stress factors present.",
+        "high": "Behavior Index indicates high disruption, with multiple stress factors elevated.",
+        "critical": "Behavior Index indicates severe disruption, with systemic stress and multiple elevated factors.",
+    }
 
-    # Generate high-level summary
-    if overall_level == "high":
-        summary = (
-            "Behavior Index indicates high disruption, with multiple stress "
-            "factors elevated."
-        )
-    elif overall_level == "moderate":
-        summary = (
-            "Behavior Index indicates moderate disruption, with some stress "
-            "factors present."
-        )
+    # Use risk_tier if provided, otherwise fall back to legacy _classify_level
+    if risk_tier and risk_tier in TIER_SUMMARY_MAP:
+        summary = TIER_SUMMARY_MAP[risk_tier]
     else:
-        summary = (
-            "Behavior Index indicates low disruption, with most indicators "
-            "showing stability."
-        )
+        # Fallback: classify by behavior_index (legacy behavior)
+        overall_level = _classify_level(behavior_index)
+        if overall_level == "high":
+            summary = (
+                "Behavior Index indicates high disruption, with multiple stress "
+                "factors elevated."
+            )
+        elif overall_level == "moderate":
+            summary = (
+                "Behavior Index indicates moderate disruption, with some stress "
+                "factors present."
+            )
+        else:
+            summary = (
+                "Behavior Index indicates low disruption, with most indicators "
+                "showing stability."
+            )
 
     # Add region context if available
     if region_name:

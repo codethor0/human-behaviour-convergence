@@ -7,6 +7,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
 from app.core.regions import get_all_regions
+from app.services.ingestion.source_registry import get_all_sources, get_source_statuses
 
 router = APIRouter(prefix="/api/forecasting", tags=["forecasting"])
 
@@ -48,86 +49,63 @@ def get_data_sources() -> List[DataSourceInfo]:
     """
     List all available public data sources for forecasting.
 
+    Generated from single source of truth registry.
+
+    NOTE: This endpoint is fault-tolerant - if source registry fails,
+    returns empty list rather than blocking the region selector.
+
     Returns:
         List of data source information including name, description, status,
         and parameters
     """
-    return [
-        DataSourceInfo(
-            name="economic_indicators",
-            description=(
-                "Market sentiment indicators from public financial data "
-                "(volatility index, market indices)"
-            ),
-            status="active",
-            available=True,
-            parameters={
+    try:
+        sources = get_all_sources()
+        statuses = get_source_statuses()
+
+        result = []
+        for source_id, source_def in sorted(sources.items()):
+            status_info = statuses.get(
+                source_id, {"status": "unknown", "ok": False, "error_type": "unknown"}
+            )
+
+            # Map registry status to DataSourceInfo format
+            status = status_info.get("status", "unknown")
+            available = status_info.get("ok", False)
+
+            parameters = {
                 "type": "time_series",
                 "frequency": "daily",
-                "refresh_rate": "5 minutes",
-            },
-        ),
-        DataSourceInfo(
-            name="weather_patterns",
-            description=(
-                "Environmental data including temperature, precipitation, "
-                "and wind patterns"
-            ),
-            status="active",
-            available=True,
-            parameters={
-                "type": "time_series",
-                "frequency": "daily",
-                "requires": "latitude, longitude",
-                "refresh_rate": "30 minutes",
-            },
-        ),
-        DataSourceInfo(
-            name="search_trends",
-            description=(
-                "Digital attention signals from search interest trends "
-                "(requires API configuration)"
-            ),
-            status="active",
-            available=False,
-            parameters={
-                "type": "time_series",
-                "frequency": "daily",
-                "requires": "query parameter, API credentials",
                 "refresh_rate": "60 minutes",
-            },
-        ),
-        DataSourceInfo(
-            name="public_health",
-            description=(
-                "Public health indicators from aggregated health statistics "
-                "(requires API configuration)"
-            ),
-            status="active",
-            available=False,
-            parameters={
-                "type": "time_series",
-                "frequency": "daily",
-                "requires": "region_code (optional), API credentials",
-                "refresh_rate": "24 hours",
-            },
-        ),
-        DataSourceInfo(
-            name="mobility_patterns",
-            description=(
-                "Mobility and activity pattern data from public APIs "
-                "(requires API configuration)"
-            ),
-            status="active",
-            available=False,
-            parameters={
-                "type": "time_series",
-                "frequency": "daily",
-                "requires": "region_code or coordinates, API credentials",
-                "refresh_rate": "60 minutes",
-            },
-        ),
-    ]
+            }
+
+            if source_def.required_env_vars:
+                parameters["requires"] = ", ".join(source_def.required_env_vars)
+
+            if status_info.get("error_type") == "missing_key":
+                parameters["required_env_vars"] = ", ".join(
+                    source_def.required_env_vars
+                )
+
+            result.append(
+                DataSourceInfo(
+                    name=source_id,
+                    description=source_def.description,
+                    status=status,
+                    available=available,
+                    parameters=parameters,
+                )
+            )
+
+        return result
+    except Exception as e:
+        # Fail gracefully - don't block region selector if data sources fail
+        import structlog
+
+        logger = structlog.get_logger("routers.forecasting")
+        logger.warning(
+            "Failed to fetch data sources, returning empty list", error=str(e)
+        )
+        return []  # Return empty list instead of blocking
 
 
 @router.get("/regions", response_model=List[RegionInfo])
@@ -135,22 +113,34 @@ def get_regions() -> List[RegionInfo]:
     """
     List all available regions for forecasting.
 
+    This endpoint MUST always return a valid list of regions, even if empty.
+    It does not depend on external APIs or data sources, ensuring reliability.
+
     Returns:
         List of region information including global cities and US states.
     """
-    regions = get_all_regions()
-    return [
-        RegionInfo(
-            id=region.id,
-            name=region.name,
-            country=region.country,
-            region_type=region.region_type,
-            latitude=region.latitude,
-            longitude=region.longitude,
-            region_group=region.region_group,
-        )
-        for region in regions
-    ]
+    try:
+        regions = get_all_regions()
+        return [
+            RegionInfo(
+                id=region.id,
+                name=region.name,
+                country=region.country,
+                region_type=region.region_type,
+                latitude=region.latitude,
+                longitude=region.longitude,
+                region_group=region.region_group,
+            )
+            for region in regions
+        ]
+    except Exception as e:
+        # Log error but return empty list rather than failing the request
+        # This ensures the endpoint is always available
+        import structlog
+
+        logger = structlog.get_logger("routers.forecasting")
+        logger.error("Failed to get regions list", error=str(e), exc_info=True)
+        return []  # Return empty list on error - frontend will use fallback
 
 
 @router.get("/models", response_model=List[ModelInfo])

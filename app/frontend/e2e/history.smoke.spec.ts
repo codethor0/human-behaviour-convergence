@@ -162,10 +162,10 @@ test.describe('Forecast History Smoke Tests', () => {
     // Verify either empty state or table exists
     const emptyState = page.getByTestId('history-empty-state');
     const historyTable = page.getByTestId('forecast-history-table');
-    
+
     // Check which one is visible (wait a bit for rendering)
     await page.waitForTimeout(500);
-    
+
     const emptyStateVisible = await emptyState.isVisible().catch(() => false);
     const tableVisible = await historyTable.isVisible().catch(() => false);
 

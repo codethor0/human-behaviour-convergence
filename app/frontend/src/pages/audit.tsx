@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: PROPRIETARY
 /**
  * Audit Log Viewer Page
- * 
+ *
  * Provides read-only UI for viewing policy audit logs:
  * - Policy changes (create, update, activate, deactivate, rollback)
  * - Preview vs activation trail
  * - Filter by tenant, user, action, time
- * 
+ *
  * All operations are read-only. No mutations allowed.
  */
 import { useState, useEffect } from 'react';
@@ -43,12 +43,12 @@ export default function AuditPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams();
       if (filters.policy_id) params.append('policy_id', filters.policy_id);
       if (filters.action) params.append('action', filters.action);
       if (filters.user_id) params.append('user_id', filters.user_id);
-      
+
       const response = await fetch(`${apiBase}/api/audit?${params.toString()}`);
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error');

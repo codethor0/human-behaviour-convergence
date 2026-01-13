@@ -294,14 +294,32 @@ export default function ForecastPage() {
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
       const response = await fetch(`${base}/api/forecasting/regions`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
-      setRegions(data);
-      const defaultRegion = data.find((r: Region) => r.id === 'city_nyc') || data[0];
-      if (defaultRegion) {
-        setSelectedRegion(defaultRegion);
+
+      // Validate that data is an array
+      if (!Array.isArray(data)) {
+        throw new Error(`Invalid response format: expected array, got ${typeof data}`);
+      }
+
+      // Only set regions if we have valid data
+      if (data.length > 0) {
+        setRegions(data);
+        const defaultRegion = data.find((r: Region) => r.id === 'city_nyc') || data[0];
+        if (defaultRegion) {
+          setSelectedRegion(defaultRegion);
+        }
+      } else {
+        // Empty array - use fallback
+        throw new Error('Regions endpoint returned empty array');
       }
     } catch (e) {
       console.error('Failed to fetch regions:', e);
+      // Use fallback regions to ensure UI is usable
       const fallback: Region[] = [
         { id: 'city_nyc', name: 'New York City', country: 'US', region_type: 'city', latitude: 40.7128, longitude: -74.0060 },
         { id: 'city_london', name: 'London', country: 'GB', region_type: 'city', latitude: 51.5074, longitude: -0.1278 },
@@ -592,21 +610,34 @@ export default function ForecastPage() {
           <div style={styles.card}>
             <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Data Sources</h2>
             <div style={{ ...styles.grid, ...styles.grid4Col }} className="grid-4-col">
-              {dataSources.map((source) => (
-                <div key={source.name} style={{ ...styles.metricCard, padding: '8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}>
-                    {source.name.replace(/_/g, ' ')}
+              {dataSources.map((source) => {
+                // Determine status badge: active if status=active AND available=true, otherwise degraded
+                const isActive = source.status === 'active' && source.available === true;
+                const needsKey = source.status === 'needs_key' || (source.available === false && source.status !== 'error');
+                const statusText = isActive ? 'active' : (needsKey ? 'needs key' : source.status || 'degraded');
+                const requiredVars = source.parameters?.required_env_vars || source.parameters?.requires || '';
+                return (
+                  <div key={source.name} style={{ ...styles.metricCard, padding: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '600', marginBottom: '4px' }}>
+                      {source.name.replace(/_/g, ' ')}
+                    </div>
+                    <span
+                      style={{
+                        ...styles.badge,
+                        ...(isActive ? styles.badgeLow : (needsKey ? styles.badgeModerate : styles.badgeHigh)),
+                      }}
+                      title={needsKey && requiredVars ? `Set: ${requiredVars}` : undefined}
+                    >
+                      {statusText}
+                    </span>
+                    {needsKey && requiredVars && (
+                      <div style={{ fontSize: '10px', color: '#666', marginTop: '4px' }}>
+                        Set: {requiredVars}
+                      </div>
+                    )}
                   </div>
-                  <span
-                    style={{
-                      ...styles.badge,
-                      ...(source.status === 'active' ? styles.badgeLow : styles.badgeHigh),
-                    }}
-                  >
-                    {source.status}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
