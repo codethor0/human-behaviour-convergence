@@ -9,6 +9,9 @@
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8100";
 
+// RequestInit is a built-in TypeScript type from the Fetch API
+// No explicit import needed - it's part of lib.dom.d.ts
+
 export interface Region {
   id: string;
   name: string;
@@ -30,6 +33,7 @@ export interface ForecastRequest {
 
 export async function api<T>(
   path: string,
+  // eslint-disable-next-line no-undef
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE}${path}`;
