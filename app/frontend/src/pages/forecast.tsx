@@ -7,7 +7,6 @@ import {
   fetchRegions as apiFetchRegions,
   fetchDataSources as apiFetchDataSources,
   runForecast as apiRunForecast,
-  type ForecastRequest as APIForecastRequest,
 } from '../lib/api';
 
 interface ForecastRequest {
@@ -345,7 +344,7 @@ export default function ForecastPage() {
         throw new Error('Please select a region');
       }
 
-      const request: APIForecastRequest = {
+      const request = {
         region_id: selectedRegion.id,
         region_name: selectedRegion.name,
         latitude: selectedRegion.latitude,
