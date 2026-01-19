@@ -282,10 +282,34 @@ class BehavioralForecaster:
             fred_jobless_claims = self.fred_fetcher.fetch_jobless_claims(
                 days_back=days_back
             )
+            # Extended economic metrics (GDP growth, CPI inflation)
+            # Note: These use longer lookback (365 days) for YoY calculations
+            fred_gdp_growth = pd.DataFrame()
+            fred_cpi_inflation = pd.DataFrame()
+            try:
+                fred_gdp_growth = self.fred_fetcher.fetch_gdp_growth(
+                    days_back=365  # Quarterly data, need longer window
+                )
+                if not fred_gdp_growth.empty:
+                    sources.append("FRED (GDP Growth)")
+            except Exception as e:
+                logger.debug("Failed to fetch GDP growth", error=str(e))
+
+            try:
+                fred_cpi_inflation = self.fred_fetcher.fetch_cpi_inflation(
+                    days_back=365  # Need 12 months for YoY calculation
+                )
+                if not fred_cpi_inflation.empty:
+                    sources.append("FRED (CPI Inflation)")
+            except Exception as e:
+                logger.debug("Failed to fetch CPI inflation", error=str(e))
+
             if (
                 not fred_consumer_sentiment.empty
                 or not fred_unemployment.empty
                 or not fred_jobless_claims.empty
+                or not fred_gdp_growth.empty
+                or not fred_cpi_inflation.empty
             ):
                 sources.append("FRED (Economic Indicators)")
 
@@ -548,6 +572,10 @@ class BehavioralForecaster:
                 fred_consumer_sentiment=fred_consumer_sentiment,
                 fred_unemployment=fred_unemployment,
                 fred_jobless_claims=fred_jobless_claims,
+                fred_gdp_growth=fred_gdp_growth if not fred_gdp_growth.empty else None,
+                fred_cpi_inflation=(
+                    fred_cpi_inflation if not fred_cpi_inflation.empty else None
+                ),
                 weather_data=weather_data,
                 search_data=search_data,
                 health_data=health_data,

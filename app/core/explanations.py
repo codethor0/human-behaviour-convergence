@@ -677,6 +677,212 @@ def _explain_public_health_stress(
     }
 
 
+def _explain_political_stress(
+    value: float,
+    components: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate explanation for political stress sub-index."""
+    level = _classify_level(value)
+
+    if level == "high":
+        reason = "Political stress is elevated, indicating significant political uncertainty or volatility."
+    elif level == "moderate":
+        reason = "Political stress is moderate, with some political tension present."
+    else:
+        reason = "Political stress is low, suggesting relative political stability."
+
+    component_explanations = []
+    if components:
+        for comp in components:
+            comp_id = comp.get("id", "")
+            comp_label = comp.get("label", comp_id.replace("_", " ").title())
+            comp_value = comp.get("value", 0.5)
+            comp_weight = comp.get("weight", 0.0)
+            direction = _get_direction(comp_value)
+            importance = _get_importance(comp_weight, comp_value)
+
+            if direction == "up":
+                explanation = (
+                    f"{comp_label} is elevated, contributing to political stress."
+                )
+            elif direction == "down":
+                explanation = f"{comp_label} is low, indicating political stability."
+            else:
+                explanation = f"{comp_label} is within typical range."
+
+            component_explanations.append(
+                {
+                    "id": comp_id,
+                    "label": comp_label,
+                    "direction": direction,
+                    "importance": importance,
+                    "explanation": explanation,
+                }
+            )
+
+    return {
+        "level": level,
+        "reason": reason,
+        "components": component_explanations,
+    }
+
+
+def _explain_crime_stress(
+    value: float,
+    components: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate explanation for crime stress sub-index."""
+    level = _classify_level(value)
+
+    if level == "high":
+        reason = (
+            "Crime stress is elevated, indicating increased public safety concerns."
+        )
+    elif level == "moderate":
+        reason = "Crime stress is moderate, with some public safety concerns present."
+    else:
+        reason = "Crime stress is low, suggesting relative public safety."
+
+    component_explanations = []
+    if components:
+        for comp in components:
+            comp_id = comp.get("id", "")
+            comp_label = comp.get("label", comp_id.replace("_", " ").title())
+            comp_value = comp.get("value", 0.5)
+            comp_weight = comp.get("weight", 0.0)
+            direction = _get_direction(comp_value)
+            importance = _get_importance(comp_weight, comp_value)
+
+            if direction == "up":
+                explanation = f"{comp_label} is elevated, contributing to crime stress."
+            elif direction == "down":
+                explanation = (
+                    f"{comp_label} is low, indicating public safety stability."
+                )
+            else:
+                explanation = f"{comp_label} is within typical range."
+
+            component_explanations.append(
+                {
+                    "id": comp_id,
+                    "label": comp_label,
+                    "direction": direction,
+                    "importance": importance,
+                    "explanation": explanation,
+                }
+            )
+
+    return {
+        "level": level,
+        "reason": reason,
+        "components": component_explanations,
+    }
+
+
+def _explain_misinformation_stress(
+    value: float,
+    components: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate explanation for misinformation stress sub-index."""
+    level = _classify_level(value)
+
+    if level == "high":
+        reason = "Misinformation stress is elevated, indicating increased narrative fragmentation and confusion."
+    elif level == "moderate":
+        reason = "Misinformation stress is moderate, with some narrative fragmentation present."
+    else:
+        reason = (
+            "Misinformation stress is low, suggesting coherent information environment."
+        )
+
+    component_explanations = []
+    if components:
+        for comp in components:
+            comp_id = comp.get("id", "")
+            comp_label = comp.get("label", comp_id.replace("_", " ").title())
+            comp_value = comp.get("value", 0.5)
+            comp_weight = comp.get("weight", 0.0)
+            direction = _get_direction(comp_value)
+            importance = _get_importance(comp_weight, comp_value)
+
+            if direction == "up":
+                explanation = (
+                    f"{comp_label} is elevated, contributing to misinformation stress."
+                )
+            elif direction == "down":
+                explanation = f"{comp_label} is low, indicating information coherence."
+            else:
+                explanation = f"{comp_label} is within typical range."
+
+            component_explanations.append(
+                {
+                    "id": comp_id,
+                    "label": comp_label,
+                    "direction": direction,
+                    "importance": importance,
+                    "explanation": explanation,
+                }
+            )
+
+    return {
+        "level": level,
+        "reason": reason,
+        "components": component_explanations,
+    }
+
+
+def _explain_social_cohesion_stress(
+    value: float,
+    components: Optional[List[Dict]] = None,
+) -> Dict:
+    """Generate explanation for social cohesion stress sub-index."""
+    level = _classify_level(value)
+
+    if level == "high":
+        reason = "Social cohesion stress is elevated, indicating increased community tension and trust issues."
+    elif level == "moderate":
+        reason = (
+            "Social cohesion stress is moderate, with some community tension present."
+        )
+    else:
+        reason = "Social cohesion stress is low, suggesting strong community trust and cohesion."
+
+    component_explanations = []
+    if components:
+        for comp in components:
+            comp_id = comp.get("id", "")
+            comp_label = comp.get("label", comp_id.replace("_", " ").title())
+            comp_value = comp.get("value", 0.5)
+            comp_weight = comp.get("weight", 0.0)
+            direction = _get_direction(comp_value)
+            importance = _get_importance(comp_weight, comp_value)
+
+            if direction == "up":
+                explanation = (
+                    f"{comp_label} is elevated, contributing to social cohesion stress."
+                )
+            elif direction == "down":
+                explanation = f"{comp_label} is low, indicating community stability."
+            else:
+                explanation = f"{comp_label} is within typical range."
+
+            component_explanations.append(
+                {
+                    "id": comp_id,
+                    "label": comp_label,
+                    "direction": direction,
+                    "importance": importance,
+                    "explanation": explanation,
+                }
+            )
+
+    return {
+        "level": level,
+        "reason": reason,
+        "components": component_explanations,
+    }
+
+
 def generate_explanation(
     behavior_index: float,
     sub_indices: Dict[str, float],
@@ -783,6 +989,48 @@ def generate_explanation(
     subindex_explanations["public_health_stress"] = _explain_public_health_stress(
         sub_indices.get("public_health_stress", 0.5),
         health_components,
+    )
+
+    # Political stress
+    political_components = None
+    if subindex_details and "political_stress" in subindex_details:
+        political_components = subindex_details["political_stress"].get(
+            "components", []
+        )
+    subindex_explanations["political_stress"] = _explain_political_stress(
+        sub_indices.get("political_stress", 0.5),
+        political_components,
+    )
+
+    # Crime stress
+    crime_components = None
+    if subindex_details and "crime_stress" in subindex_details:
+        crime_components = subindex_details["crime_stress"].get("components", [])
+    subindex_explanations["crime_stress"] = _explain_crime_stress(
+        sub_indices.get("crime_stress", 0.5),
+        crime_components,
+    )
+
+    # Misinformation stress
+    misinformation_components = None
+    if subindex_details and "misinformation_stress" in subindex_details:
+        misinformation_components = subindex_details["misinformation_stress"].get(
+            "components", []
+        )
+    subindex_explanations["misinformation_stress"] = _explain_misinformation_stress(
+        sub_indices.get("misinformation_stress", 0.5),
+        misinformation_components,
+    )
+
+    # Social cohesion stress
+    social_cohesion_components = None
+    if subindex_details and "social_cohesion_stress" in subindex_details:
+        social_cohesion_components = subindex_details["social_cohesion_stress"].get(
+            "components", []
+        )
+    subindex_explanations["social_cohesion_stress"] = _explain_social_cohesion_stress(
+        sub_indices.get("social_cohesion_stress", 0.5),
+        social_cohesion_components,
     )
 
     return {

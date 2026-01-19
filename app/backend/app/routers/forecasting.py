@@ -20,6 +20,9 @@ class DataSourceInfo(BaseModel):
     status: str
     available: bool
     parameters: Dict[str, str]
+    optional: Optional[bool] = None
+    env_var: Optional[str] = None
+    message: Optional[str] = None
 
 
 class ModelInfo(BaseModel):
@@ -71,6 +74,17 @@ def get_data_sources() -> List[DataSourceInfo]:
             # Map registry status to DataSourceInfo format
             status = status_info.get("status", "unknown")
             available = status_info.get("ok", False)
+            error_type = status_info.get("error_type")
+
+            # Normalize status: if needs_key and source can run without key (optional), show as "inactive"
+            is_optional = source_def.can_run_without_key or (
+                source_def.requires_key and error_type == "missing_key"
+            )
+
+            # General normalization for optional sources
+            if status == "needs_key" and is_optional:
+                # Mark optional sources that need keys as "inactive" instead of "needs_key"
+                status = "inactive"
 
             parameters = {
                 "type": "time_series",
@@ -81,10 +95,45 @@ def get_data_sources() -> List[DataSourceInfo]:
             if source_def.required_env_vars:
                 parameters["requires"] = ", ".join(source_def.required_env_vars)
 
-            if status_info.get("error_type") == "missing_key":
+            if error_type == "missing_key":
                 parameters["required_env_vars"] = ", ".join(
                     source_def.required_env_vars
                 )
+
+            # FRED is always treated as active (public data source, no key UX)
+            is_fred = source_id == "fred_economic" or "fred" in source_id.lower()
+            message = None  # Initialize message
+
+            if is_fred:
+                # FRED is always active, no key-related messages
+                status = "active"
+                available = True
+                message = None
+            else:
+                # Set optional, env_var, and message for better frontend rendering (non-FRED sources)
+                # Provide helpful message for inactive optional sources that require keys
+                if (
+                    status == "inactive"
+                    and source_def.requires_key
+                    and error_type == "missing_key"
+                ):
+                    env_var = (
+                        source_def.required_env_vars[0]
+                        if source_def.required_env_vars
+                        else None
+                    )
+                    if env_var:
+                        message = f"Set {env_var} on the backend to enable enriched metrics from this source."
+
+            # Set optional for all sources (used in DataSourceInfo)
+            optional = source_def.can_run_without_key or (
+                source_def.requires_key and error_type == "missing_key"
+            )
+            env_var = (
+                source_def.required_env_vars[0]
+                if source_def.required_env_vars
+                else None
+            )
 
             result.append(
                 DataSourceInfo(
@@ -93,6 +142,9 @@ def get_data_sources() -> List[DataSourceInfo]:
                     status=status,
                     available=available,
                     parameters=parameters,
+                    optional=optional if optional else None,
+                    env_var=env_var,
+                    message=message,
                 )
             )
 
