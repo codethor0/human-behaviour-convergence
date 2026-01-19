@@ -232,11 +232,11 @@
 
 **Status:**
 - **Behavior Index Invariants:** Partial enforcement — critical invariants tested, consistency invariants require CI
-- **GATE A (Infrastructure):** ✅ GREEN — CORS normalized, dev loop verified, forecast contract preserved
+- **GATE A (Infrastructure):** [GREEN] — CORS normalized, dev loop verified, forecast contract preserved
 
 ## GATE A STATUS (2025-01-XX)
 
-**Current State:** ✅ LOCKED
+**Current State:** [LOCKED]
 
 **Last Verified:** 2025-01-XX
 
@@ -338,7 +338,7 @@ curl -sS -X POST http://localhost:8100/api/forecast ... | jq '.history | length,
 
 ## GATE G STATUS (2026-01-19)
 
-**Current State:** ✅ LOCKED
+**Current State:** [LOCKED]
 
 **Last Verified:** 2026-01-19
 

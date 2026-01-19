@@ -2,7 +2,7 @@
 
 ## Current Architecture: Grafana-First Analytics
 
-**Status:** ✅ PRODUCTION-READY
+**Status:** [PRODUCTION-READY]
 
 The application has migrated to a **Grafana-first analytics model** where:
 - **Primary Analytics Surface:** Grafana dashboards (embedded in frontend pages)
@@ -14,21 +14,21 @@ The application has migrated to a **Grafana-first analytics model** where:
 All services run via `docker compose` and are managed through `ops/dev_watch_docker.sh`:
 
 1. **Backend (FastAPI)** - `http://localhost:8100`
-   - Status: ✅ Running and healthy
+   - Status: [OK] Running and healthy
    - Health: `GET /health` → `{"status":"ok"}`
    - Metrics: `GET /metrics` (Prometheus format)
 
 2. **Frontend (Next.js)** - `http://localhost:3100`
-   - Status: ✅ Running and healthy
+   - Status: [OK] Running and healthy
    - Pages: `/forecast`, `/playground`, `/live` (all embed Grafana dashboards)
 
 3. **Prometheus** - `http://localhost:9090`
-   - Status: ✅ Running
+   - Status: [OK] Running
    - Scraping: Backend metrics every 15s
    - Targets: Backend at `backend:8000/metrics`
 
 4. **Grafana** - `http://localhost:3001`
-   - Status: ✅ Running and healthy
+   - Status: [OK] Running and healthy
    - Dashboards: Auto-provisioned from `infrastructure/grafana/dashboards/`
      - Global Behavior Index (UID: `behavior-index-global`)
      - Sub-Index Deep Dive (UID: `subindex-deep-dive`)
@@ -152,7 +152,7 @@ The system classifies regions into four operational risk categories:
 
 ### Runbooks & Operator Workflow
 
-**Status:** ✅ Comprehensive operational documentation
+**Status:** [OK] Comprehensive operational documentation
 
 Operators have access to complete runbooks for alert response and troubleshooting:
 
@@ -192,7 +192,7 @@ Operators have access to complete runbooks for alert response and troubleshootin
 
 ### Deployment & Environment Configuration
 
-**Status:** ✅ Comprehensive deployment documentation
+**Status:** [OK] Comprehensive deployment documentation
 
 The system supports deployment across three environments with appropriate security configurations:
 
@@ -276,7 +276,7 @@ Currently implemented connectors:
 
 ### Frontend Improvements
 
-- ✅ **COMPLETED:** Migrated to Grafana-first architecture (all 3 pages embed dashboards)
+- [COMPLETED] Migrated to Grafana-first architecture (all 3 pages embed dashboards)
 - Additional specialized Grafana dashboards (regional comparisons, historical trends)
 - Grafana alert rules for behavior index thresholds
 - Optimized dashboard refresh strategies based on data update frequency
@@ -284,9 +284,9 @@ Currently implemented connectors:
 
 ### Operations and Infrastructure
 
-- ✅ **COMPLETED:** Gate verification scripts (`ops/verify_gate_a.sh`, `ops/verify_gate_grafana.sh`)
-- ✅ **COMPLETED:** CI/CD workflow (`.github/workflows/gates.yml`) runs gates on push/PR
-- ✅ **COMPLETED:** Grafana alert rules provisioned automatically
+- [COMPLETED] Gate verification scripts (`ops/verify_gate_a.sh`, `ops/verify_gate_grafana.sh`)
+- [COMPLETED] CI/CD workflow (`.github/workflows/gates.yml`) runs gates on push/PR
+- [COMPLETED] Grafana alert rules provisioned automatically
 - Test classification: Standardize marks for core vs network-dependent tests
 - Refine ops/check_integrity.sh once test marks are standardized
 - Enhanced monitoring and observability for production deployments
