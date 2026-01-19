@@ -321,10 +321,10 @@ class SlackChannel(NotificationChannel):
 
             # Format Slack message
             severity_emoji = {
-                "low": "⚠️",
-                "medium": "🔶",
-                "high": "🔴",
-            }.get(alert.get("severity", "medium"), "🔶")
+                "low": "[WARN]",
+                "medium": "[ALERT]",
+                "high": "[CRITICAL]",
+            }.get(alert.get("severity", "medium"), "[ALERT]")
 
             text = (
                 f"{severity_emoji} *Alert: {alert.get('label', alert.get('id', 'Unknown'))}*\n"

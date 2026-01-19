@@ -1141,6 +1141,17 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             status_code=400,
             detail="Either region_id or both latitude and longitude must be provided",
         )
+    else:
+        # Try to find matching region by coordinates (for metrics labeling)
+        # This is a best-effort lookup to enable proper region labeling in metrics
+        from app.backend.app.routers.forecasting import get_regions
+        all_regions = get_regions()
+        for region_info in all_regions:
+            # Match if coordinates are very close (within 0.01 degrees)
+            if (abs(region_info.latitude - latitude) < 0.01 and 
+                abs(region_info.longitude - longitude) < 0.01):
+                payload.region_id = region_info.id
+                break
 
     # Validate inputs
     try:
@@ -1176,13 +1187,25 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
 
     try:
         forecaster = BehavioralForecaster()
-        result = forecaster.forecast(
-            latitude=latitude,
-            longitude=longitude,
-            region_name=payload.region_name or "Unknown",
-            days_back=days_back,
-            forecast_horizon=forecast_horizon,
-        )
+        
+        # Time the forecast computation for metrics
+        if forecast_duration_histogram is not None:
+            with forecast_duration_histogram.labels(region=payload.region_id or "unknown").time():
+                result = forecaster.forecast(
+                    latitude=latitude,
+                    longitude=longitude,
+                    region_name=payload.region_name or "Unknown",
+                    days_back=days_back,
+                    forecast_horizon=forecast_horizon,
+                )
+        else:
+            result = forecaster.forecast(
+                latitude=latitude,
+                longitude=longitude,
+                region_name=payload.region_name or "Unknown",
+                days_back=days_back,
+                forecast_horizon=forecast_horizon,
+            )
     except Exception as e:
         logger.error("Forecast generation failed", error=str(e), exc_info=True)
         # Do not leak internal error details to clients
