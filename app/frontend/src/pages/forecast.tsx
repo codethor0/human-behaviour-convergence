@@ -162,18 +162,29 @@ const styles = {
   },
 };
 
+// Custom heights for specific dashboards that need more vertical space
+const dashboardHeights: Record<string, string> = {
+  'subindex-deep-dive': '1200px', // Increased for Sub-Index Deep Dive to show all panels without cropping
+};
+
 // Grafana Dashboard Embed Component
 function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid: string; title: string; regionId?: string }) {
   const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
   const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
   const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv${regionParam}`;
+  
+  // Use custom height if defined for this dashboard, otherwise use default from styles.iframe
+  const customHeight = dashboardHeights[dashboardUid];
+  const iframeStyle = customHeight 
+    ? { ...styles.iframe, height: customHeight }
+    : styles.iframe;
 
   return (
     <div style={styles.card}>
       <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>{title}</h2>
       <iframe
         src={src}
-        style={styles.iframe}
+        style={iframeStyle}
         title={title}
         allow="fullscreen"
       />
