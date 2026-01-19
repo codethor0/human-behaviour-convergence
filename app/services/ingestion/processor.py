@@ -63,6 +63,8 @@ class DataHarmonizer:
         fred_consumer_sentiment: Optional[pd.DataFrame] = None,
         fred_unemployment: Optional[pd.DataFrame] = None,
         fred_jobless_claims: Optional[pd.DataFrame] = None,
+        fred_gdp_growth: Optional[pd.DataFrame] = None,
+        fred_cpi_inflation: Optional[pd.DataFrame] = None,
         gdelt_tone: Optional[pd.DataFrame] = None,
         owid_health: Optional[pd.DataFrame] = None,
         usgs_earthquakes: Optional[pd.DataFrame] = None,
@@ -116,6 +118,10 @@ class DataHarmonizer:
             fred_unemployment = pd.DataFrame()
         if fred_jobless_claims is None:
             fred_jobless_claims = pd.DataFrame()
+        if fred_gdp_growth is None:
+            fred_gdp_growth = pd.DataFrame()
+        if fred_cpi_inflation is None:
+            fred_cpi_inflation = pd.DataFrame()
         if gdelt_tone is None:
             gdelt_tone = pd.DataFrame()
         if owid_health is None:
@@ -140,6 +146,8 @@ class DataHarmonizer:
             and fred_consumer_sentiment.empty
             and fred_unemployment.empty
             and fred_jobless_claims.empty
+            and fred_gdp_growth.empty
+            and fred_cpi_inflation.empty
             and gdelt_tone.empty
             and owid_health.empty
             and usgs_earthquakes.empty
@@ -262,6 +270,24 @@ class DataHarmonizer:
             fred_jc = fred_jc.set_index("timestamp").sort_index()
             dataframes.append(fred_jc)
             names.append("fred_jobless_claims")
+
+        if not fred_gdp_growth.empty:
+            fred_gdp = fred_gdp_growth.copy()
+            fred_gdp["timestamp"] = pd.to_datetime(fred_gdp["timestamp"], utc=True)
+            if fred_gdp["timestamp"].dt.tz is not None:
+                fred_gdp["timestamp"] = fred_gdp["timestamp"].dt.tz_localize(None)
+            fred_gdp = fred_gdp.set_index("timestamp").sort_index()
+            dataframes.append(fred_gdp)
+            names.append("fred_gdp_growth")
+
+        if not fred_cpi_inflation.empty:
+            fred_cpi = fred_cpi_inflation.copy()
+            fred_cpi["timestamp"] = pd.to_datetime(fred_cpi["timestamp"], utc=True)
+            if fred_cpi["timestamp"].dt.tz is not None:
+                fred_cpi["timestamp"] = fred_cpi["timestamp"].dt.tz_localize(None)
+            fred_cpi = fred_cpi.set_index("timestamp").sort_index()
+            dataframes.append(fred_cpi)
+            names.append("fred_cpi_inflation")
 
         if not gdelt_tone.empty:
             gdelt_df = gdelt_tone.copy()
@@ -434,6 +460,19 @@ class DataHarmonizer:
             fred_jc_aligned = pd.DataFrame(index=date_range)
 
         # Reindex new data sources (use indexed versions from dataframes list)
+        if "fred_gdp_growth" in names:
+            fred_gdp_idx = names.index("fred_gdp_growth")
+            fred_gdp_df = dataframes[fred_gdp_idx]
+            fred_gdp_aligned = fred_gdp_df.reindex(date_range)
+        else:
+            fred_gdp_aligned = pd.DataFrame(index=date_range)
+
+        if "fred_cpi_inflation" in names:
+            fred_cpi_idx = names.index("fred_cpi_inflation")
+            fred_cpi_df = dataframes[fred_cpi_idx]
+            fred_cpi_aligned = fred_cpi_df.reindex(date_range)
+        else:
+            fred_cpi_aligned = pd.DataFrame(index=date_range)
         if "gdelt_tone" in names:
             gdelt_idx = names.index("gdelt_tone")
             gdelt_df = dataframes[gdelt_idx]
@@ -507,6 +546,12 @@ class DataHarmonizer:
         )
         fred_jobless_claims_val = fred_jc_aligned.get(
             "jobless_claims", pd.Series(index=date_range, dtype=float)
+        )
+        fred_gdp_growth_stress_val = fred_gdp_aligned.get(
+            "gdp_growth_stress", pd.Series(index=date_range, dtype=float)
+        )
+        fred_cpi_inflation_stress_val = fred_cpi_aligned.get(
+            "cpi_inflation_stress", pd.Series(index=date_range, dtype=float)
         )
         gdelt_tone_val = gdelt_aligned.get(
             "tone_score", pd.Series(index=date_range, dtype=float)
@@ -590,6 +635,8 @@ class DataHarmonizer:
                 "fred_consumer_sentiment": fred_consumer_sentiment_val.values,
                 "fred_unemployment": fred_unemployment_val.values,
                 "fred_jobless_claims": fred_jobless_claims_val.values,
+                "fred_gdp_growth_stress": fred_gdp_growth_stress_val.values,
+                "fred_cpi_inflation_stress": fred_cpi_inflation_stress_val.values,
                 "gdelt_tone_score": gdelt_tone_val.values,
                 "owid_health_stress": owid_health_val.values,
                 "usgs_earthquake_intensity": usgs_earthquake_val.values,
@@ -624,6 +671,14 @@ class DataHarmonizer:
         merged["fred_jobless_claims"] = merged["fred_jobless_claims"].ffill(
             limit=30
         )  # Weekly data
+        # GDP growth: quarterly data, forward-fill up to 90 days
+        merged["fred_gdp_growth_stress"] = merged["fred_gdp_growth_stress"].ffill(
+            limit=90
+        )
+        # CPI inflation: monthly data, forward-fill up to 90 days
+        merged["fred_cpi_inflation_stress"] = merged["fred_cpi_inflation_stress"].ffill(
+            limit=90
+        )
         # New data sources: interpolate continuous signals
         merged["gdelt_tone_score"] = merged["gdelt_tone_score"].interpolate(
             method="linear", limit_direction="both"

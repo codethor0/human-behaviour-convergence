@@ -70,10 +70,13 @@ data/*.sqlite3
 coverage/
 reports/
 
-# Internal artifacts (moved to docs/reports/)
-# Note: docs/reports/ and docs/archive/ are now tracked
-# *_REPORT.md
-# *_AUDIT.md
-# *_SUMMARY.md
-# *master_prompt*.md
-# *MASTER_PROMPT*.md
+# Verification and ops artifacts
+ops/regression_results/
+tmp/
+logs/
+
+# AI/prompt artifacts
+*_FINAL_RUN_REPORT*.md
+*_MASTER_PROMPT*.md
+*MASTER_E2E*.md
+docs/grafana_prometheus_plan.md

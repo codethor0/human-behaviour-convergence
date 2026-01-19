@@ -2,7 +2,7 @@
 **Status:** PERMANENT / NON-REVERSIBLE
 **Authority:** Controller
 **Effective Date:** 2025-01-XX
-**Master Prompt:** v4 (Maximum Strength / Future-Proof)
+**Governance Version:** v4 (Maximum Strength / Future-Proof)
 
 ---
 
@@ -10,7 +10,7 @@
 
 **Decision:** ACCEPT (WITH GOVERNANCE LOCKS)
 **Date:** 2025-01-XX
-**Verification Level:** Master Prompt v3 → v4
+**Verification Level:** Governance v3 → v4
 
 **Acceptance Basis:**
 - All blocking conditions satisfied
@@ -120,7 +120,7 @@
 
 ---
 
-## MASTER PROMPT v4 — CANONICAL RULES
+## GOVERNANCE FRAMEWORK v4 — CANONICAL RULES
 
 **Trust Level:** ZERO
 **Bug Tolerance:** ZERO (including semantic bugs)
@@ -253,7 +253,7 @@ Acceptance is only possible when:
 
 ## GOVERNANCE HISTORY
 
-**2025-01-XX:** Master Prompt v4 established, governance rules codified
+**2025-01-XX:** Governance Framework v4 established, rules codified
 **2025-01-XX:** Behavior Index v2.5 formal verification completed
 **2025-01-XX:** Weight normalization semantics explicitly documented
 **2025-01-XX:** Version contract declared for v2.5

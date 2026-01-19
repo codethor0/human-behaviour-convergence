@@ -42,6 +42,7 @@ services:
       - "3100:3000"
     environment:
       - NEXT_PUBLIC_API_BASE=http://localhost:8100
+      - NEXT_PUBLIC_GRAFANA_URL=http://localhost:3001
     depends_on:
       backend:
         condition: service_healthy
@@ -77,6 +78,47 @@ services:
     networks:
       - default
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: human-behaviour-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - backend
+    networks:
+      - default
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: human-behaviour-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./infrastructure/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting
+      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - default
+
 volumes:
   pytest_cache:
   htmlcov:
+  prometheus_data:
+  grafana_data:

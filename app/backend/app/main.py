@@ -13,10 +13,24 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import structlog
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
+
+# Prometheus client (optional dependency for metrics)
+try:
+    from prometheus_client import (
+        Gauge,
+        Counter,
+        Histogram,
+        generate_latest,
+        CONTENT_TYPE_LATEST,
+    )
+
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
 
 from app.core.behavior_index import BehaviorIndexComputer
 from app.core.explanations import generate_explanation
@@ -26,7 +40,7 @@ from app.core.regions import get_region_by_id
 from app.storage import ForecastDB
 
 # Use relative import to ensure package-local router resolution
-from .routers import forecasting, live, playground, public
+from .routers import forecasting, live, playground, public, sources
 
 logger = structlog.get_logger("backend.main")
 
@@ -88,25 +102,88 @@ RESULTS_DIR = _find_results_dir(Path(__file__))
 
 app = FastAPI(title="Behavior Convergence API", version="0.1.0")
 
+# Dev-friendly CORS for local + Docker; can tighten later via env
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all origins in dev
+    allow_credentials=False,  # must be False when using "*" for origins
+    allow_methods=["*"],  # allow OPTIONS, POST, GET, etc.
+    allow_headers=["*"],  # allow Content-Type and others for JSON POST
+)
+
+# ============================================================================
+# PROMETHEUS METRICS DEFINITIONS (optional, gracefully degrades if not available)
+# ============================================================================
+
+if PROMETHEUS_AVAILABLE:
+    # Behavior Index metrics
+    behavior_index_gauge = Gauge(
+        "behavior_index", "Current behavior index value for a region", ["region"]
+    )
+
+    parent_subindex_gauge = Gauge(
+        "parent_subindex_value", "Parent sub-index value", ["region", "parent"]
+    )
+
+    child_subindex_gauge = Gauge(
+        "child_subindex_value", "Child sub-index value", ["region", "parent", "child"]
+    )
+
+    # Pipeline health metrics
+    forecast_duration_histogram = Histogram(
+        "forecast_computation_duration_seconds",
+        "Time taken to compute a forecast",
+        ["region"],
+    )
+
+    forecasts_generated_counter = Counter(
+        "forecasts_generated_total",
+        "Total number of forecasts generated",
+        ["region", "status"],
+    )
+
+    # Quick Summary metrics
+    forecast_last_updated_gauge = Gauge(
+        "forecast_last_updated_timestamp_seconds",
+        "Timestamp of last forecast generation for a region",
+        ["region"],
+    )
+
+    forecast_history_points_gauge = Gauge(
+        "forecast_history_points",
+        "Number of historical data points used in forecast",
+        ["region"],
+    )
+
+    forecast_points_generated_gauge = Gauge(
+        "forecast_points_generated",
+        "Number of forecast points generated",
+        ["region"],
+    )
+
+    # Data Sources status metric
+    data_source_status_gauge = Gauge(
+        "data_source_status",
+        "Status of data sources (1=active, 0=inactive)",
+        ["source"],
+    )
+else:
+    behavior_index_gauge = None
+    parent_subindex_gauge = None
+    child_subindex_gauge = None
+    forecast_duration_histogram = None
+    forecasts_generated_counter = None
+    forecast_last_updated_gauge = None
+    forecast_history_points_gauge = None
+    forecast_points_generated_gauge = None
+    data_source_status_gauge = None
+
 # Register routers
 app.include_router(public.router)
 app.include_router(forecasting.router)
 app.include_router(playground.router)
 app.include_router(live.router)
-
-# Configure CORS - dev-friendly: allow all origins for local development
-# In production, set ALLOWED_ORIGINS env var to restrict to specific domains
-ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
-ALLOWED_ORIGINS = ALLOWED_ORIGINS_ENV.split(",") if ALLOWED_ORIGINS_ENV else ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,  # ["*"] for dev, specific origins for prod
-    allow_credentials=False,  # Required when allow_origins=["*"]
-    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
-    allow_headers=["*"],  # Allow all headers (required for Content-Type preflight)
-    max_age=600,
-)
+app.include_router(sources.router)
 
 # Enable gzip compression for large responses
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -144,6 +221,17 @@ def startup_event() -> None:
         _refresh_thread.start()
         logger.info("Started background refresh thread for live monitoring")
 
+    # Initialize data source status metrics
+    if PROMETHEUS_AVAILABLE and data_source_status_gauge is not None:
+        try:
+            from app.services.ingestion.source_registry import get_all_sources
+            sources = get_all_sources()
+            for source_id in sources.keys():
+                data_source_status_gauge.labels(source=source_id).set(1)
+            logger.info("Initialized data source status metrics", count=len(sources))
+        except Exception as e:
+            logger.warning("Failed to initialize data source metrics", error=str(e))
+
 
 @app.on_event("shutdown")
 def shutdown_event() -> None:
@@ -159,6 +247,17 @@ def shutdown_event() -> None:
 def health() -> Dict[str, str]:
     """Health check endpoint returning a simple ok status."""
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+def metrics():
+    """
+    Prometheus metrics endpoint.
+    Returns metrics in Prometheus text format for scraping.
+    """
+    if not PROMETHEUS_AVAILABLE:
+        raise HTTPException(status_code=501, detail="Prometheus client not available")
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 def _cleanup_expired_cache() -> None:
@@ -734,6 +833,9 @@ class Explanations(BaseModel):
 
     summary: str
     subindices: Dict[str, SubIndexExplanation]
+    subindices_details: Optional[Dict[str, Dict[str, Any]]] = (
+        None  # Child indices grouped by parent
+    )
 
 
 class ShockEvent(BaseModel):
@@ -1080,6 +1182,17 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             status_code=400,
             detail="Either region_id or both latitude and longitude must be provided",
         )
+    else:
+        # Try to find matching region by coordinates (for metrics labeling)
+        # This is a best-effort lookup to enable proper region labeling in metrics
+        from app.backend.app.routers.forecasting import get_regions
+        all_regions = get_regions()
+        for region_info in all_regions:
+            # Match if coordinates are very close (within 0.01 degrees)
+            if (abs(region_info.latitude - latitude) < 0.01 and 
+                abs(region_info.longitude - longitude) < 0.01):
+                payload.region_id = region_info.id
+                break
 
     # Validate inputs
     try:
@@ -1115,13 +1228,25 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
 
     try:
         forecaster = BehavioralForecaster()
-        result = forecaster.forecast(
-            latitude=latitude,
-            longitude=longitude,
-            region_name=payload.region_name or "Unknown",
-            days_back=days_back,
-            forecast_horizon=forecast_horizon,
-        )
+        
+        # Time the forecast computation for metrics
+        if forecast_duration_histogram is not None:
+            with forecast_duration_histogram.labels(region=payload.region_id or "unknown").time():
+                result = forecaster.forecast(
+                    latitude=latitude,
+                    longitude=longitude,
+                    region_name=payload.region_name or "Unknown",
+                    days_back=days_back,
+                    forecast_horizon=forecast_horizon,
+                )
+        else:
+            result = forecaster.forecast(
+                latitude=latitude,
+                longitude=longitude,
+                region_name=payload.region_name or "Unknown",
+                days_back=days_back,
+                forecast_horizon=forecast_horizon,
+            )
     except Exception as e:
         logger.error("Forecast generation failed", error=str(e), exc_info=True)
         # Do not leak internal error details to clients
@@ -1557,13 +1682,22 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
     # Generate structured explanations
     explanations_obj = None
     if latest_sub_indices:
-        # Convert sub_indices to dict
+        # Convert sub_indices to dict - STRICT: Always include all 9 parent indices
         sub_indices_dict = {
             "economic_stress": latest_sub_indices.economic_stress,
             "environmental_stress": latest_sub_indices.environmental_stress,
             "mobility_activity": latest_sub_indices.mobility_activity,
             "digital_attention": latest_sub_indices.digital_attention,
             "public_health_stress": latest_sub_indices.public_health_stress,
+            # Always include all 9 parent indices (even if weights are 0)
+            "political_stress": getattr(latest_sub_indices, "political_stress", 0.5),
+            "crime_stress": getattr(latest_sub_indices, "crime_stress", 0.5),
+            "misinformation_stress": getattr(
+                latest_sub_indices, "misinformation_stress", 0.5
+            ),
+            "social_cohesion_stress": getattr(
+                latest_sub_indices, "social_cohesion_stress", 0.5
+            ),
         }
 
         # Get subindex details for latest record if available
@@ -1653,6 +1787,65 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 risk_tier=risk_tier_for_explanation,
             )
 
+            # Build subindices_details with child indices (vNext)
+            subindices_details_structure = None
+            if harmonized_df is not None and len(harmonized_df) > 0:
+                try:
+                    # index_computer is already in scope (created at line 1183/1190)
+                    # harmonized_df is still in scope even after deletion from result_metadata
+                    # Get child indices from latest row using get_sub_indices_dict
+                    latest_row = harmonized_df.iloc[-1]
+                    all_sub_indices = index_computer.get_sub_indices_dict(latest_row)
+
+                    # Define child index mappings by parent (vNext + Batch 1)
+                    # Import CHILD_INDEX_SPEC from behavior_index for canonical taxonomy
+                    from app.core.behavior_index import CHILD_INDEX_SPEC
+
+                    child_mappings = {}
+                    for parent_key in CHILD_INDEX_SPEC:
+                        # Only include children that are computed (filter out [BATCH_2+] not yet implemented)
+                        # For Batch 1, we compute: household_financial_stress, heatwave_stress, news_polarization_stress, cyber_incident_velocity, critical_vulnerability_pressure
+                        computed_children = []
+                        for child_key in CHILD_INDEX_SPEC[parent_key]:
+                            # Include all children that exist in all_sub_indices
+                            if child_key in all_sub_indices:
+                                computed_children.append(child_key)
+                        if computed_children:
+                            child_mappings[parent_key] = computed_children
+
+                    # Build subindices_details structure
+                    subindices_details_structure = {}
+                    for parent_key, child_keys in child_mappings.items():
+                        children = {}
+                        for child_key in child_keys:
+                            if child_key in all_sub_indices:
+                                child_value = all_sub_indices[child_key]
+                                # Classify level
+                                if child_value <= 0.33:
+                                    label = "low"
+                                elif child_value <= 0.66:
+                                    label = "moderate"
+                                else:
+                                    label = "high"
+
+                                children[child_key] = {
+                                    "value": float(child_value),
+                                    "label": label,
+                                    "confidence": 0.8,  # Default confidence
+                                    "velocity": 0.0,  # Default velocity (could compute from trend)
+                                    "drivers": [
+                                        f"{child_key.replace('_', ' ')} signal"
+                                    ],
+                                }
+
+                        if children:
+                            subindices_details_structure[parent_key] = {
+                                "children": children
+                            }
+                except Exception as e:
+                    logger.warning("Failed to build subindices_details", error=str(e))
+                    subindices_details_structure = None
+
             # Convert to Pydantic models
             explanations_obj = Explanations(
                 summary=explanations_dict["summary"],
@@ -1666,6 +1859,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                     )
                     for key, val in explanations_dict["subindices"].items()
                 },
+                subindices_details=subindices_details_structure,
             )
         except Exception as e:
             # If explanation generation fails, log but don't break the response
@@ -1775,6 +1969,71 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 "Failed to create correlation analysis", error=str(e), exc_info=True
             )
             correlations = None
+
+    # Update Prometheus metrics (if available)
+    if PROMETHEUS_AVAILABLE and behavior_index_gauge is not None:
+        try:
+            # Update behavior index gauge
+            behavior_index_gauge.labels(region=payload.region_id).set(
+                latest_behavior_index
+            )
+
+            # Update parent sub-index gauges
+            if latest_sub_indices and parent_subindex_gauge is not None:
+                for parent_key in [
+                    "economic_stress",
+                    "environmental_stress",
+                    "mobility_activity",
+                    "digital_attention",
+                    "public_health_stress",
+                    "political_stress",
+                    "crime_stress",
+                    "misinformation_stress",
+                    "social_cohesion_stress",
+                ]:
+                    parent_value = getattr(latest_sub_indices, parent_key, None)
+                    if parent_value is not None:
+                        parent_subindex_gauge.labels(
+                            region=payload.region_id, parent=parent_key
+                        ).set(parent_value)
+
+            # Update child sub-index gauges
+            if child_subindex_gauge is not None and subindices_details_structure:
+                for parent_key, parent_data in subindices_details_structure.items():
+                    children = parent_data.get("children", {})
+                    for child_key, child_data in children.items():
+                        child_value = child_data.get("value")
+                        if child_value is not None:
+                            child_subindex_gauge.labels(
+                                region=payload.region_id,
+                                parent=parent_key,
+                                child=child_key,
+                            ).set(child_value)
+
+            # Increment forecast generation counter
+            if forecasts_generated_counter is not None:
+                forecasts_generated_counter.labels(
+                    region=payload.region_id, status="success"
+                ).inc()
+
+            # Update Quick Summary metrics
+            if forecast_last_updated_gauge is not None:
+                import time
+                forecast_last_updated_gauge.labels(region=payload.region_id).set(
+                    time.time()
+                )
+
+            if forecast_history_points_gauge is not None:
+                forecast_history_points_gauge.labels(region=payload.region_id).set(
+                    len(history_records)
+                )
+
+            if forecast_points_generated_gauge is not None:
+                forecast_points_generated_gauge.labels(region=payload.region_id).set(
+                    len(forecast_records)
+                )
+        except Exception as e:
+            logger.warning("Failed to update Prometheus metrics", error=str(e))
 
     return ForecastResult(
         history=history_records,

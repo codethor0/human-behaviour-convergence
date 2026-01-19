@@ -26,11 +26,22 @@ This document describes all environment variables used by the Human Behaviour Co
 
 ## CORS Configuration
 
-### `ALLOWED_ORIGINS`
+### `BEHAVIOR_API_CORS_ORIGINS`
+- **Default:** `*` (all origins allowed in development)
+- **Description:** Comma-separated list of allowed CORS origins for the backend API
+- **Usage:** FastAPI CORS middleware configuration in `app/backend/app/main.py`
+- **Environment-Specific Values:**
+  - **Development:** `*` (permissive, allows all origins)
+  - **Staging:** `https://staging.yourdomain.com,https://staging-frontend.yourdomain.com`
+  - **Production:** `https://yourdomain.com,https://www.yourdomain.com`
+- **Security Note:** Always use specific origins in staging and production (never `*`)
+- **Example (Production):** `BEHAVIOR_API_CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com`
+
+### `ALLOWED_ORIGINS` (DEPRECATED)
+- **Status:** Replaced by `BEHAVIOR_API_CORS_ORIGINS`
 - **Default:** `http://localhost:3000,http://127.0.0.1:3000`
-- **Description:** Comma-separated list of allowed CORS origins
-- **Usage:** FastAPI CORS middleware configuration
-- **Example:** `http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100`
+- **Description:** Legacy CORS configuration (still works but prefer `BEHAVIOR_API_CORS_ORIGINS`)
+- **Migration:** Use `BEHAVIOR_API_CORS_ORIGINS` for new deployments
 
 ## Cache Configuration
 
@@ -76,6 +87,17 @@ This document describes all environment variables used by the Human Behaviour Co
 - **Usage:** Next.js frontend API calls
 - **Note:** Must be prefixed with `NEXT_PUBLIC_` to be accessible in browser
 
+### `NEXT_PUBLIC_GRAFANA_URL`
+- **Default:** `http://localhost:3001`
+- **Description:** Base URL for the Grafana instance (used for embedding dashboards in the frontend)
+- **Usage:** Frontend dashboard embedding in `/forecast`, `/playground`, `/live` pages
+- **Environment-Specific Values:**
+  - **Development:** `http://localhost:3001`
+  - **Staging:** `https://staging-grafana.yourdomain.com`
+  - **Production:** `https://grafana.yourdomain.com`
+- **Note:** Must be prefixed with `NEXT_PUBLIC_` to be accessible in browser
+- **Security:** Ensure Grafana is properly secured when publicly accessible
+
 ## Optional Data Source API Keys
 
 These environment variables are optional. The system will function without them, but with limited data sources.
@@ -85,9 +107,17 @@ These environment variables are optional. The system will function without them,
 #### `FRED_API_KEY`
 - **Default:** `None`
 - **Description:** API key for Federal Reserve Economic Data (FRED)
-- **Required:** No (system works without it)
+- **Required:** No (system works without it, but economic stress calculations will use only market data)
 - **Get key:** https://fred.stlouisfed.org/docs/api/api_key.html
 - **Usage:** `app/services/ingestion/economic_fred.py`
+- **Data Provided:**
+  - Consumer Sentiment Index (UMCSENT)
+  - Unemployment Rate (UNRATE)
+  - Initial Jobless Claims (ICSA)
+  - Real GDP Growth Rate (A191RL1Q225SBEA) - quarterly, annualized %
+  - Consumer Price Index / Inflation Rate (CPIAUCSL) - monthly, YoY % change
+- **Rate Limits:** 120 requests per 120 seconds (free tier)
+- **Notes:** GDP growth and CPI inflation require longer lookback windows (365 days) for quarterly/monthly data and YoY calculations
 
 ### Mobility Data Source
 
@@ -174,6 +204,7 @@ HBC_DB_PATH=data/hbc.db
 
 # Frontend Configuration
 NEXT_PUBLIC_API_BASE=http://localhost:8100
+NEXT_PUBLIC_GRAFANA_URL=http://localhost:3001
 
 # Data Source API Keys
 # OpenStates Legislative Activity (Required for legislative_activity source)
@@ -198,9 +229,48 @@ SEARCH_TRENDS_API_ENDPOINT=
 SEARCH_TRENDS_API_KEY=
 ```
 
+## Environment-Specific Configuration
+
+### Local Development
+- Uses permissive defaults (CORS `*`, localhost URLs)
+- No `.env` file required
+- All services accessible on `localhost`
+- Admin credentials can be default (admin/admin for Grafana)
+
+### Staging
+- Tighter CORS (specific origins only)
+- Real domain names or stable IPs
+- Secrets from secrets manager
+- SSL/TLS recommended
+- Example:
+  ```bash
+  BEHAVIOR_API_CORS_ORIGINS=https://staging.yourdomain.com
+  NEXT_PUBLIC_GRAFANA_URL=https://staging-grafana.yourdomain.com
+  GF_SECURITY_ADMIN_PASSWORD=<from-secrets-manager>
+  ```
+
+### Production
+- Strictest CORS (specific origins only)
+- HTTPS required
+- Secrets from secrets manager (required)
+- High availability configuration
+- Monitoring and alerting configured
+- Example:
+  ```bash
+  BEHAVIOR_API_CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+  NEXT_PUBLIC_GRAFANA_URL=https://grafana.yourdomain.com
+  ENVIRONMENT=production
+  LOG_LEVEL=WARNING
+  GF_SECURITY_ADMIN_PASSWORD=<strong-password-from-secrets>
+  ```
+
+**See:** `docs/DEPLOYMENT_GUIDE.md` for complete environment-specific configuration
+
 ## Notes
 
 - All environment variables have sensible defaults and the application will run without any configuration
 - Optional API keys can be added incrementally as data sources are integrated
 - The `.env` file is gitignored for security (see `.gitignore`)
 - Docker Compose sets some environment variables automatically (see `docker-compose.yml`)
+- **Security:** Never commit secrets or production credentials to version control
+- **Secrets Management:** Use AWS Secrets Manager, HashiCorp Vault, or Kubernetes Secrets in staging/production

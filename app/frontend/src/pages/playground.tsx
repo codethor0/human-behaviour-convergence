@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { fetchRegions as apiFetchRegions } from '../lib/api';
+import { useRegions } from '../hooks/useRegions';
 
 interface Region {
   id: string;
@@ -15,501 +15,273 @@ interface Region {
   region_group?: string;
 }
 
-interface ForecastResponse {
-  history: Array<Record<string, unknown>>;
-  forecast: Array<Record<string, unknown>>;
-  sources: string[];
-  metadata: Record<string, unknown>;
-  explanations?: Record<string, unknown>;
-}
+const styles = {
+  container: {
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+    maxWidth: '1600px',
+    margin: '0 auto',
+    padding: '12px',
+    backgroundColor: '#f5f5f5',
+    minHeight: '100vh',
+  },
+  header: {
+    backgroundColor: '#fff',
+    padding: '10px 16px',
+    marginBottom: '12px',
+    borderRadius: '8px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  nav: {
+    display: 'flex',
+    gap: '24px',
+    alignItems: 'center',
+    flexWrap: 'wrap' as const,
+  },
+  navLink: {
+    textDecoration: 'none',
+    color: '#0070f3',
+    fontSize: '14px',
+    fontWeight: '500',
+    padding: '6px 0',
+    borderBottom: '2px solid transparent',
+  },
+  navLinkActive: {
+    borderBottomColor: '#0070f3',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    padding: '14px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    marginBottom: '12px',
+  },
+  infoCard: {
+    backgroundColor: '#e7f3ff',
+    border: '1px solid #b3d9ff',
+    borderRadius: '8px',
+    padding: '12px',
+    marginBottom: '12px',
+    fontSize: '14px',
+    color: '#004085',
+    lineHeight: '1.5',
+  },
+  label: {
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  input: {
+    padding: '8px 12px',
+    fontSize: '14px',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
+    width: '100%',
+  },
+  button: {
+    padding: '10px 20px',
+    fontSize: '14px',
+    fontWeight: '600',
+    backgroundColor: '#0070f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+  },
+  iframe: {
+    width: '100%',
+    height: '600px',
+    border: 'none',
+    borderRadius: '8px',
+  },
+};
 
-interface PlaygroundResult {
-  region_id: string;
-  region_name: string;
-  forecast: ForecastResponse;
-  explanations?: Record<string, unknown>;
-  scenario_applied?: boolean;
-  scenario_description?: string;
-}
+// Grafana Dashboard Embed Component
+function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid: string; title: string; regionId?: string }) {
+  const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
+  const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
+  const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv${regionParam}`;
 
-interface PlaygroundResponse {
-  config: {
-    historical_days: number;
-    forecast_horizon_days: number;
-    include_explanations: boolean;
-    scenario_applied: boolean;
-  };
-  results: PlaygroundResult[];
-  errors: Array<{ region_id: string; error: string }>;
+  return (
+    <div style={styles.card}>
+      <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>{title}</h2>
+      <iframe
+        src={src}
+        style={styles.iframe}
+        title={title}
+        allow="fullscreen"
+      />
+    </div>
+  );
 }
 
 export default function PlaygroundPage() {
-  const [regions, setRegions] = useState<Region[]>([]);
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-  const [daysBack, setDaysBack] = useState(30);
-  const [forecastHorizon, setForecastHorizon] = useState(7);
-  const [includeExplanations, setIncludeExplanations] = useState(true);
-  const [scenario, setScenario] = useState<{
-    economic_stress_offset?: number;
-    environmental_stress_offset?: number;
-    mobility_activity_offset?: number;
-    digital_attention_offset?: number;
-    public_health_stress_offset?: number;
-  } | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [playgroundData, setPlaygroundData] = useState<PlaygroundResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { regions, loading: regionsLoading, error: regionsError, reload: reloadRegions } = useRegions();
+  const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
 
-  const fetchRegions = async () => {
-    try {
-      setError(null);
-      const data = await apiFetchRegions();
-
-      // Validate that data is an array
-      if (!Array.isArray(data)) {
-        throw new Error(`Invalid response format: expected array, got ${typeof data}`);
-      }
-
-      if (data.length > 0) {
-        setRegions(data);
-        // Set default selections
-        const defaultIds = ['us_dc', 'us_mn', 'city_nyc'].filter(id =>
-          data.some((r: Region) => r.id === id)
-        );
-        if (defaultIds.length > 0) {
-          setSelectedRegions(defaultIds);
-        }
-      } else {
-        throw new Error('Regions endpoint returned empty array');
-      }
-    } catch (e) {
-      console.error('Playground: failed to load regions', e);
-      setError(e instanceof Error ? e.message : 'Failed to load regions');
-      setRegions([]); // Ensure regions is empty on error
-    }
-  };
-
-  const runComparison = async () => {
-    if (selectedRegions.length === 0) {
-      setError('Please select at least one region');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setPlaygroundData(null);
-
-    try {
-      const base = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-      const request: {
-        regions: string[];
-        historical_days: number;
-        forecast_horizon_days: number;
-        include_explanations: boolean;
-        scenario?: Record<string, number>;
-      } = {
-        regions: selectedRegions,
-        historical_days: daysBack,
-        forecast_horizon_days: forecastHorizon,
-        include_explanations: includeExplanations,
-      };
-
-      if (scenario && Object.keys(scenario).length > 0) {
-        request.scenario = scenario;
-      }
-
-      const response = await fetch(`${base}/api/playground/compare`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Playground comparison failed');
-      }
-
-      const data: PlaygroundResponse = await response.json();
-      setPlaygroundData(data);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to generate comparison');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Set default region when regions load successfully
   useEffect(() => {
-    fetchRegions();
-  }, []);
+    if (!regionsLoading && regions.length > 0 && !selectedRegion) {
+      const defaultRegion = regions.find((r: Region) => r.id === 'us_dc') ||
+                           regions.find((r: Region) => r.id === 'us_mn') ||
+                           regions[0];
+      if (defaultRegion) {
+        setSelectedRegion(defaultRegion);
+      }
+    }
+  }, [regions, regionsLoading, selectedRegion]);
 
   return (
     <>
       <Head>
-        <title>Playground - Behavior Convergence Explorer</title>
+        <title>Live Playground - Behavior Convergence Explorer</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <main style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 1400, margin: '0 auto' }}>
-        <h1>Live Playground</h1>
-        <p style={{ color: '#555', marginBottom: 24 }}>
-          Compare behavioral forecasts across multiple regions and explore &quot;what-if&quot; scenarios.
-          <strong style={{ display: 'block', marginTop: 8, color: '#dc3545' }}>
-            Experimental Feature: Scenario adjustments are post-processing transformations for exploration only.
-          </strong>
-        </p>
+      <div style={styles.container}>
+        {/* Header Navigation */}
+        <header style={styles.header}>
+          <nav style={styles.nav}>
+            <Link href="/forecast" style={styles.navLink}>
+              Behavior Forecast
+            </Link>
+            <Link href="/playground" style={{ ...styles.navLink, ...styles.navLinkActive }}>
+              Live Playground
+            </Link>
+            <Link href="/live" style={styles.navLink}>
+              Live Monitoring
+            </Link>
+            <Link href="/" style={styles.navLink}>
+              Results Dashboard
+            </Link>
+          </nav>
+        </header>
 
-        <nav style={{ marginBottom: 32, display: 'flex', gap: 16 }}>
-          <Link href="/forecast" style={{ textDecoration: 'underline', color: '#0070f3' }}>
-            Single Forecast
-          </Link>
-          <Link href="/live" style={{ textDecoration: 'underline', color: '#0070f3' }}>
-            Live Monitoring
-          </Link>
-          <Link href="/" style={{ textDecoration: 'underline', color: '#0070f3' }}>
-            Results Dashboard
-          </Link>
-        </nav>
+        {/* Info Banner */}
+        <div style={styles.infoCard}>
+          <strong>Interactive Analytics Playground</strong>
+          <br />
+          Explore behavior indices and sub-indices across regions using live Grafana dashboards.
+          Select a region below to update the visualizations in real-time.
+        </div>
 
-        <section style={{ marginBottom: 32, padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: '#f8f9fa' }}>
-          <h2 style={{ marginTop: 0 }}>Configuration</h2>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-              Select Regions (multi-select):
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, maxHeight: 200, overflowY: 'auto', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}>
-              {regions.map((region) => (
-                <label key={region.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedRegions.includes(region.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRegions([...selectedRegions, region.id]);
-                      } else {
-                        setSelectedRegions(selectedRegions.filter(id => id !== region.id));
-                      }
-                    }}
-                  />
-                  <span style={{ fontSize: 14 }}>{region.name}</span>
-                </label>
-              ))}
-            </div>
-            <p style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-              Selected: {selectedRegions.length} region{selectedRegions.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-              Historical Days: {daysBack}
-            </label>
-            <input
-              type="range"
-              min="7"
-              max="365"
-              value={daysBack}
-              onChange={(e) => setDaysBack(parseInt(e.target.value))}
-              style={{ width: '100%', maxWidth: 400 }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-              Forecast Horizon (days): {forecastHorizon}
-            </label>
-            <input
-              type="range"
-              min="1"
-              max="30"
-              value={forecastHorizon}
-              onChange={(e) => setForecastHorizon(parseInt(e.target.value))}
-              style={{ width: '100%', maxWidth: 400 }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={includeExplanations}
-                onChange={(e) => setIncludeExplanations(e.target.checked)}
-              />
-              <span>Include Explanations</span>
-            </label>
-          </div>
-
-          <div style={{ marginBottom: 16, padding: 16, backgroundColor: '#fff3cd', borderRadius: 4, border: '1px solid #ffc107' }}>
-            <h3 style={{ marginTop: 0, fontSize: 16 }}>Optional Scenario Adjustments (Experimental)</h3>
-            <p style={{ fontSize: 12, color: '#856404', marginBottom: 12 }}>
-              These adjustments are post-processing transformations for exploration only. They do not affect the underlying forecasting model.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, marginBottom: 4 }}>
-                  Economic Stress Offset:
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-1"
-                  max="1"
-                  value={scenario?.economic_stress_offset || ''}
-                  onChange={(e) => {
-                    const val = e.target.value ? parseFloat(e.target.value) : undefined;
-                    setScenario(prev => ({
-                      ...prev,
-                      economic_stress_offset: val,
-                    }));
-                  }}
-                  placeholder="0.0"
-                  style={{ width: '100%', padding: 4, fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, marginBottom: 4 }}>
-                  Environmental Stress Offset:
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-1"
-                  max="1"
-                  value={scenario?.environmental_stress_offset || ''}
-                  onChange={(e) => {
-                    const val = e.target.value ? parseFloat(e.target.value) : undefined;
-                    setScenario(prev => ({
-                      ...prev,
-                      environmental_stress_offset: val,
-                    }));
-                  }}
-                  placeholder="0.0"
-                  style={{ width: '100%', padding: 4, fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, marginBottom: 4 }}>
-                  Digital Attention Offset:
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-1"
-                  max="1"
-                  value={scenario?.digital_attention_offset || ''}
-                  onChange={(e) => {
-                    const val = e.target.value ? parseFloat(e.target.value) : undefined;
-                    setScenario(prev => ({
-                      ...prev,
-                      digital_attention_offset: val,
-                    }));
-                  }}
-                  placeholder="0.0"
-                  style={{ width: '100%', padding: 4, fontSize: 12 }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, marginBottom: 4 }}>
-                  Public Health Stress Offset:
-                </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-1"
-                  max="1"
-                  value={scenario?.public_health_stress_offset || ''}
-                  onChange={(e) => {
-                    const val = e.target.value ? parseFloat(e.target.value) : undefined;
-                    setScenario(prev => ({
-                      ...prev,
-                      public_health_stress_offset: val,
-                    }));
-                  }}
-                  placeholder="0.0"
-                  style={{ width: '100%', padding: 4, fontSize: 12 }}
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => setScenario(null)}
-              style={{
-                marginTop: 12,
-                padding: '6px 12px',
-                fontSize: 12,
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
+        {/* Region Selection */}
+        <div style={styles.card}>
+          <h2 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: '600' }}>Region Selection</h2>
+          <div>
+            <label style={styles.label}>Select Region</label>
+            <select
+              value={selectedRegion?.id || ''}
+              onChange={(e) => {
+                const region = regions.find((r) => r.id === e.target.value);
+                if (region) setSelectedRegion(region);
               }}
+              style={styles.input}
+              aria-label="Select region for playground"
+              disabled={regionsLoading || regions.length === 0}
             >
-              Clear Scenario
-            </button>
+              {regionsLoading ? (
+                <option value="">Loading regions...</option>
+              ) : regionsError ? (
+                <option value="">Error loading regions</option>
+              ) : regions.length === 0 ? (
+                <option value="">No regions available</option>
+              ) : (
+                <>
+                  {(() => {
+                    const regionGroups = ['GLOBAL_CITIES', 'EUROPE', 'ASIA_PACIFIC', 'LATAM', 'AFRICA', 'US_STATES'];
+                    const groupedRegions: Record<string, Region[]> = {};
+                    const otherRegions: Region[] = [];
+
+                    regions.forEach((r) => {
+                      const group = r.region_group;
+                      if (group && regionGroups.includes(group)) {
+                        if (!groupedRegions[group]) {
+                          groupedRegions[group] = [];
+                        }
+                        const groupArray = groupedRegions[group];
+                        if (groupArray) {
+                          groupArray.push(r);
+                        }
+                      } else {
+                        otherRegions.push(r);
+                      }
+                    });
+
+                    return (
+                      <>
+                        {regionGroups.map((group) => {
+                          const groupRegions = groupedRegions[group];
+                          if (!groupRegions || groupRegions.length === 0) return null;
+                          const groupLabel = group.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                          return (
+                            <optgroup key={group} label={groupLabel}>
+                              {groupRegions.map((r) => (
+                                <option key={r.id} value={r.id}>
+                                  {r.name} ({r.country})
+                                </option>
+                              ))}
+                            </optgroup>
+                          );
+                        })}
+                        {otherRegions.length > 0 && (
+                          <optgroup label="Other">
+                            {otherRegions.map((r) => (
+                              <option key={r.id} value={r.id}>
+                                {r.name} ({r.country})
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
+              )}
+            </select>
+            {regionsError && (
+              <div style={{ margin: '8px 0', padding: '8px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', fontSize: '13px' }}>
+                <span style={{ color: '#856404' }}>Unable to load regions. Check your connection and click &quot;Retry&quot;.</span>
+                <button
+                  onClick={reloadRegions}
+                  style={{
+                    marginLeft: '8px',
+                    padding: '4px 12px',
+                    backgroundColor: '#0070f3',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {selectedRegion && (
+              <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#666' }}>
+                <strong>Selected:</strong> {selectedRegion.name} ({selectedRegion.country})
+                {' '}- {selectedRegion.latitude.toFixed(4)}, {selectedRegion.longitude.toFixed(4)}
+              </p>
+            )}
           </div>
+        </div>
 
-          <button
-            onClick={runComparison}
-            disabled={loading || selectedRegions.length === 0}
-            style={{
-              padding: '12px 24px',
-              fontSize: 16,
-              backgroundColor: loading || selectedRegions.length === 0 ? '#ccc' : '#0070f3',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: loading || selectedRegions.length === 0 ? 'not-allowed' : 'pointer',
-            }}
-            data-testid="playground-compare-button"
-          >
-            {loading ? 'Generating Comparison...' : 'Compare Regions'}
-          </button>
-        </section>
+        {/* Grafana Dashboard Embeds */}
+        <GrafanaDashboardEmbed
+          dashboardUid="behavior-index-global"
+          title="Behavior Index - Regional View"
+          regionId={selectedRegion?.id}
+        />
 
-        {error && (
-          <section style={{ padding: 16, backgroundColor: '#f8d7da', color: '#721c24', borderRadius: 4, marginBottom: 24 }}>
-            <strong>Error:</strong> {error}
-          </section>
-        )}
-
-        {playgroundData && (
-          <section data-testid="playground-results">
-            <h2>Comparison Results</h2>
-
-            {playgroundData.config.scenario_applied && (
-              <div style={{ marginBottom: 24, padding: 16, backgroundColor: '#fff3cd', borderRadius: 4, border: '1px solid #ffc107' }}>
-                <strong>Scenario Applied:</strong> Hypothetical what-if adjustments are active. Results show adjusted values for exploration purposes.
-              </div>
-            )}
-
-            {playgroundData.errors && playgroundData.errors.length > 0 && (
-              <div style={{ marginBottom: 24, padding: 16, backgroundColor: '#f8d7da', color: '#721c24', borderRadius: 4 }}>
-                <strong>Errors:</strong>
-                <ul style={{ marginTop: 8 }}>
-                  {playgroundData.errors.map((err, idx) => (
-                    <li key={`error-${err.region_id}-${idx}`}>{err.region_id}: {err.error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 24 }}>
-              {playgroundData.results.map((result) => {
-                const latestHistory = result.forecast.history && result.forecast.history.length > 0
-                  ? result.forecast.history[result.forecast.history.length - 1]
-                  : null;
-                const behaviorIndex = typeof latestHistory?.behavior_index === 'number'
-                  ? latestHistory.behavior_index
-                  : 0.5;
-                const subIndices = latestHistory?.sub_indices;
-
-                return (
-                  <div key={result.region_id} style={{ padding: 20, border: '1px solid #ddd', borderRadius: 8, backgroundColor: 'white' }}>
-                    <h3 style={{ marginTop: 0, marginBottom: 8 }}>
-                      {result.region_name} ({result.region_id})
-                    </h3>
-
-                    {result.scenario_applied && (
-                      <div style={{ marginBottom: 12, padding: 8, backgroundColor: '#fff3cd', borderRadius: 4, fontSize: 12 }}>
-                        <strong>Scenario Applied:</strong> {result.scenario_description}
-                      </div>
-                    )}
-
-                    <div style={{ marginBottom: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                        <span style={{ fontWeight: 'bold', fontSize: 18 }}>
-                          Behavior Index: {typeof behaviorIndex === 'number' ? behaviorIndex.toFixed(3) : String(behaviorIndex || 'N/A')}
-                        </span>
-                        <span
-                          style={{
-                            padding: '4px 12px',
-                            borderRadius: 12,
-                            fontSize: 12,
-                            fontWeight: '500',
-                            backgroundColor: behaviorIndex < 0.33 ? '#28a74520' : behaviorIndex < 0.67 ? '#ffc10720' : '#dc354520',
-                            color: behaviorIndex < 0.33 ? '#28a745' : behaviorIndex < 0.67 ? '#ffc107' : '#dc3545',
-                          }}
-                        >
-                          {behaviorIndex < 0.33 ? 'LOW' : behaviorIndex < 0.67 ? 'MODERATE' : 'HIGH'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {(subIndices && typeof subIndices === 'object' && subIndices !== null) ? (
-                      <div style={{ marginBottom: 16 }}>
-                        <h4 style={{ fontSize: 14, marginBottom: 8 }}>Sub-Indices:</h4>
-                        <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
-                          <tbody>
-                            <tr>
-                              <td style={{ padding: 4 }}>Economic Stress:</td>
-                              <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {(() => {
-                                  const val = (subIndices as Record<string, unknown>).economic_stress;
-                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
-                                })()}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style={{ padding: 4 }}>Environmental Stress:</td>
-                              <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {(() => {
-                                  const val = (subIndices as Record<string, unknown>).environmental_stress;
-                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
-                                })()}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style={{ padding: 4 }}>Mobility Activity:</td>
-                              <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {(() => {
-                                  const val = (subIndices as Record<string, unknown>).mobility_activity;
-                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
-                                })()}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style={{ padding: 4 }}>Digital Attention:</td>
-                              <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {(() => {
-                                  const val = (subIndices as Record<string, unknown>).digital_attention;
-                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
-                                })()}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style={{ padding: 4 }}>Public Health Stress:</td>
-                              <td style={{ padding: 4, textAlign: 'right', fontFamily: 'monospace' }}>
-                                {(() => {
-                                  const val = (subIndices as Record<string, unknown>).public_health_stress;
-                                  return typeof val === 'number' ? val.toFixed(3) : 'N/A';
-                                })()}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : null}
-
-                    {result.explanations && typeof result.explanations === 'object' && result.explanations !== null && (
-                      <div style={{ marginTop: 16, padding: 12, backgroundColor: '#e7f3ff', borderRadius: 4 }}>
-                        <h4 style={{ fontSize: 14, marginTop: 0, marginBottom: 8 }}>Explanation:</h4>
-                        <p style={{ fontSize: 12, margin: 0, color: '#555' }}>
-                          {typeof (result.explanations as Record<string, unknown>).summary === 'string'
-                            ? (result.explanations as Record<string, string>).summary
-                            : 'No explanation available'}
-                        </p>
-                      </div>
-                    )}
-
-                    {result.forecast.sources && result.forecast.sources.length > 0 && (
-                      <div style={{ marginTop: 12, fontSize: 11, color: '#666' }}>
-                        <strong>Sources:</strong> {result.forecast.sources.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-      </main>
+        <GrafanaDashboardEmbed
+          dashboardUid="subindex-deep-dive"
+          title="Sub-Index Analysis - Deep Dive"
+          regionId={selectedRegion?.id}
+        />
+      </div>
     </>
   );
 }

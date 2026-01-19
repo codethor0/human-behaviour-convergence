@@ -16,6 +16,10 @@ for i in $(seq 1 60); do
     echo "Backend is up (attempt $i)"
     break
   fi
+  if [[ "$i" -eq 60 ]]; then
+    echo "❌ Backend did not become healthy within 60s"
+    exit 1
+  fi
   sleep 1
 done
 
@@ -24,6 +28,10 @@ for i in $(seq 1 60); do
   if curl -sf "${BASE_FRONTEND}/forecast" > /dev/null; then
     echo "Frontend is up (attempt $i)"
     break
+  fi
+  if [[ "$i" -eq 60 ]]; then
+    echo "❌ Frontend did not become healthy within 60s"
+    exit 1
   fi
   sleep 1
 done
@@ -36,11 +44,11 @@ curl -is -X OPTIONS "${BASE_BACKEND}/api/forecast" \
   -H "Access-Control-Request-Headers: content-type" || true
 
 echo
-echo "If you see Access-Control-Allow-Origin and Access-Control-Allow-Headers above, CORS is good."
+echo "If you see Access-Control-Allow-Origin and Access-Control-Allow-Headers above, CORS is responding."
 echo
 echo "Docker services:"
 docker compose ps
 
 echo
-echo "Tailing backend + frontend logs (Ctrl+C to stop tail, containers stay running)..."
+echo "Tailing backend + frontend logs (Ctrl+C to stop tail; containers stay running)..."
 docker compose logs -f backend frontend

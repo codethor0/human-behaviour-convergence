@@ -18,6 +18,9 @@ FRED_SERIES = {
     "consumer_sentiment": "UMCSENT",  # University of Michigan Consumer Sentiment Index
     "unemployment_rate": "UNRATE",  # Unemployment Rate
     "jobless_claims": "ICSA",  # Initial Jobless Claims
+    "gdp_growth": "A191RL1Q225SBEA",  # Real Gross Domestic Product (quarterly, annualized %)
+    "cpi_all_items": "CPIAUCSL",  # Consumer Price Index for All Urban Consumers: All Items
+    "cpi_inflation": "CPIAUCSL",  # Same as CPI, but we'll compute YoY % change
 }
 
 
@@ -270,4 +273,87 @@ class FREDEconomicFetcher:
         else:
             df["jobless_claims"] = 0.5  # Default neutral
 
-        return df[["timestamp", "jobless_claims"]]
+            return df[["timestamp", "jobless_claims"]]
+
+    def fetch_gdp_growth(
+        self, days_back: int = 365, use_cache: bool = True
+    ) -> pd.DataFrame:
+        """
+        Fetch Real GDP Growth Rate (quarterly, annualized %).
+
+        Args:
+            days_back: Number of days of historical data (default: 365 to get quarterly data)
+            use_cache: Whether to use cached data (default: True)
+
+        Returns:
+            DataFrame with columns: ['timestamp', 'gdp_growth']
+            Values are percentage points (e.g., 2.5 = 2.5% annualized growth)
+            Returns empty DataFrame if API key not set or on error
+        """
+        df = self.fetch_series(FRED_SERIES["gdp_growth"], days_back, use_cache)
+
+        if df.empty:
+            return pd.DataFrame(columns=["timestamp", "gdp_growth"])
+
+        # GDP growth is already in percentage points, normalize to [0.0, 1.0] stress index
+        # Negative growth = high stress, positive growth = low stress
+        # Typical range: -10% to +10% annualized
+        df = df.copy()
+        df["gdp_growth"] = df["value"]
+
+        # Normalize: negative growth = high stress (1.0), positive growth = low stress (0.0)
+        # Use historical min/max or fixed bounds for normalization
+        min_val = max(df["gdp_growth"].min(), -10.0)  # Cap at -10%
+        max_val = min(df["gdp_growth"].max(), 10.0)  # Cap at +10%
+
+        if max_val > min_val:
+            # Normalize: growth of -10% = 1.0 stress, growth of +10% = 0.0 stress
+            df["gdp_growth_stress"] = (max_val - df["gdp_growth"]) / (max_val - min_val)
+            df["gdp_growth_stress"] = df["gdp_growth_stress"].clip(0.0, 1.0)
+        else:
+            df["gdp_growth_stress"] = 0.5  # Default neutral
+
+        return df[["timestamp", "gdp_growth", "gdp_growth_stress"]]
+
+    def fetch_cpi_inflation(
+        self, days_back: int = 365, use_cache: bool = True
+    ) -> pd.DataFrame:
+        """
+        Fetch Consumer Price Index and compute YoY inflation rate.
+
+        Args:
+            days_back: Number of days of historical data (default: 365 for YoY calculation)
+            use_cache: Whether to use cached data (default: True)
+
+        Returns:
+            DataFrame with columns: ['timestamp', 'cpi_value', 'cpi_inflation']
+            cpi_inflation is YoY % change, normalized to [0.0, 1.0] stress index
+            Returns empty DataFrame if API key not set or on error
+        """
+        df = self.fetch_series(FRED_SERIES["cpi_all_items"], days_back, use_cache)
+
+        if df.empty:
+            return pd.DataFrame(columns=["timestamp", "cpi_value", "cpi_inflation"])
+
+        # Calculate YoY inflation rate
+        df = df.copy()
+        df["cpi_value"] = df["value"]
+        df = df.sort_values("timestamp").reset_index(drop=True)
+
+        # Calculate YoY % change (12 months back)
+        df["cpi_inflation"] = df["cpi_value"].pct_change(periods=12) * 100.0
+
+        # Normalize inflation to [0.0, 1.0] stress index
+        # High inflation = high stress (typically 0-15% range for normalization)
+        df["cpi_inflation_stress"] = df["cpi_inflation"].fillna(0.0)
+
+        # Normalize: 0% inflation = 0.0 stress, 15%+ inflation = 1.0 stress
+        min_inflation = 0.0
+        max_inflation = 15.0
+
+        df["cpi_inflation_stress"] = (
+            (df["cpi_inflation_stress"] - min_inflation)
+            / (max_inflation - min_inflation)
+        ).clip(0.0, 1.0)
+
+        return df[["timestamp", "cpi_value", "cpi_inflation", "cpi_inflation_stress"]]
