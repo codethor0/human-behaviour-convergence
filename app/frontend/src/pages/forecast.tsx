@@ -164,7 +164,7 @@ const styles = {
 
 // Custom heights for specific dashboards that need more vertical space
 const dashboardHeights: Record<string, string> = {
-  'subindex-deep-dive': '1200px', // Increased for Sub-Index Deep Dive to show all panels without cropping
+  'subindex-deep-dive': '1800px', // Increased for Sub-Index Deep Dive to show all panels without cropping
 };
 
 // Grafana Dashboard Embed Component
