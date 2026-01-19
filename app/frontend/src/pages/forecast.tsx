@@ -4,48 +4,48 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import {
-  fetchDataSources as apiFetchDataSources,
+  // fetchDataSources as apiFetchDataSources, // No longer used - replaced by Grafana dashboard
   runForecast as apiRunForecast,
 } from '../lib/api';
 import { useRegions } from '../hooks/useRegions';
 
-interface SubIndices {
-  economic_stress?: number;
-  environmental_stress?: number;
-  mobility_activity?: number;
-  digital_attention?: number;
-  public_health_stress?: number;
-  political_stress?: number;
-  crime_stress?: number;
-  misinformation_stress?: number;
-  social_cohesion_stress?: number;
-}
+// Legacy interfaces - no longer used since Grafana migration
+// interface SubIndices {
+//   economic_stress?: number;
+//   environmental_stress?: number;
+//   mobility_activity?: number;
+//   digital_attention?: number;
+//   public_health_stress?: number;
+//   political_stress?: number;
+//   crime_stress?: number;
+//   misinformation_stress?: number;
+//   social_cohesion_stress?: number;
+// }
+// interface ForecastHistoryItem {
+//   timestamp: string;
+//   behavior_index: number;
+//   sub_indices?: SubIndices;
+// }
 
-interface ForecastHistoryItem {
-  timestamp: string;
-  behavior_index: number;
-  sub_indices?: SubIndices;
-}
+// interface ForecastItem {
+//   timestamp: string;
+//   prediction: number;
+//   lower_bound: number;
+//   upper_bound: number;
+//   sub_indices?: SubIndices;
+// }
 
-interface ForecastItem {
-  timestamp: string;
-  prediction: number;
-  lower_bound: number;
-  upper_bound: number;
-  sub_indices?: SubIndices;
-}
-
-interface ForecastResponse {
-  history: ForecastHistoryItem[];
-  forecast: ForecastItem[];
-  sources: string[];
-  metadata: Record<string, any>;
-  explanation?: string;
-  risk_tier?: {
-    tier: string;
-    risk_score: number;
-  };
-}
+// interface ForecastResponse {
+//   history: ForecastHistoryItem[];
+//   forecast: ForecastItem[];
+//   sources: string[];
+//   metadata: Record<string, any>;
+//   explanation?: string;
+//   risk_tier?: {
+//     tier: string;
+//     risk_score: number;
+//   };
+// }
 
 interface Region {
   id: string;
@@ -187,20 +187,23 @@ export default function ForecastPage() {
   const [daysBack, setDaysBack] = useState(30);
   const [forecastHorizon, setForecastHorizon] = useState(7);
   const [loading, setLoading] = useState(false);
-  const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
+  // forecastData no longer needed - Grafana displays metrics directly from Prometheus
+  // const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [dataSources, setDataSources] = useState<Array<{ name: string; status: string; description?: string; available?: boolean; optional?: boolean; message?: string | null }>>([]);
+  // Legacy data sources state - replaced by Grafana dashboard
+  // const [dataSources, setDataSources] = useState<Array<{ name: string; status: string; description?: string; available?: boolean; optional?: boolean; message?: string | null }>>([]);
 
-  const fetchDataSources = async () => {
-    try {
-      setError(null);
-      const data = await apiFetchDataSources();
-      setDataSources(data);
-    } catch (e) {
-      console.error('Failed to fetch data sources:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load data sources');
-    }
-  };
+  // Legacy data sources fetch - replaced by Grafana dashboard
+  // const fetchDataSources = async () => {
+  //   try {
+  //     setError(null);
+  //     const data = await apiFetchDataSources();
+  //     setDataSources(data);
+  //   } catch (e) {
+  //     console.error('Failed to fetch data sources:', e);
+  //     setError(e instanceof Error ? e.message : 'Failed to load data sources');
+  //   }
+  // };
 
   // Set default region when regions load successfully
   useEffect(() => {
@@ -215,7 +218,6 @@ export default function ForecastPage() {
   const runForecast = async () => {
     setLoading(true);
     setError(null);
-    setForecastData(null);
 
     try {
       if (!selectedRegion) {
@@ -231,25 +233,16 @@ export default function ForecastPage() {
         forecast_horizon: forecastHorizon,
       };
 
+      // Call forecast API to trigger backend metrics update
+      // Result is displayed via Grafana dashboards that query Prometheus
       const data = await apiRunForecast(request);
 
-      // Validate and sanitize response data
+      // Validate response
       if (!data) {
         throw new Error('Empty response from server');
       }
 
-      // Ensure arrays exist
-      if (!Array.isArray(data.history)) {
-        data.history = [];
-      }
-      if (!Array.isArray(data.forecast)) {
-        data.forecast = [];
-      }
-      if (!Array.isArray(data.sources)) {
-        data.sources = [];
-      }
-
-      setForecastData(data);
+      // Success - Grafana dashboards will automatically refresh and show updated metrics
     } catch (e: unknown) {
       console.error('Forecast request failed', e);
       setError(e instanceof Error ? e.message : 'Failed to generate forecast');
@@ -258,19 +251,21 @@ export default function ForecastPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDataSources();
-  }, []);
+  // Legacy data sources fetch - replaced by Grafana dashboard
+  // useEffect(() => {
+  //   fetchDataSources();
+  // }, []);
 
-  const latestHistory = forecastData?.history && Array.isArray(forecastData.history) && forecastData.history.length > 0
-    ? forecastData.history[forecastData.history.length - 1]
-    : null;
-  const currentBehaviorIndex = typeof latestHistory?.behavior_index === 'number' && !isNaN(latestHistory.behavior_index)
-    ? Math.max(0, Math.min(1, latestHistory.behavior_index))
-    : 0;
-  const riskTier = forecastData?.risk_tier?.tier && typeof forecastData.risk_tier.tier === 'string'
-    ? forecastData.risk_tier.tier
-    : 'stable';
+  // Legacy Quick Summary calculations - replaced by Grafana dashboard
+  // const latestHistory = forecastData?.history && Array.isArray(forecastData.history) && forecastData.history.length > 0
+  //   ? forecastData.history[forecastData.history.length - 1]
+  //   : null;
+  // const currentBehaviorIndex = typeof latestHistory?.behavior_index === 'number' && !isNaN(latestHistory.behavior_index)
+  //   ? Math.max(0, Math.min(1, latestHistory.behavior_index))
+  //   : 0;
+  // const riskTier = forecastData?.risk_tier?.tier && typeof forecastData.risk_tier.tier === 'string'
+  //   ? forecastData.risk_tier.tier
+  //   : 'stable';
 
   return (
     <>
@@ -448,7 +443,8 @@ export default function ForecastPage() {
             </div>
           </div>
 
-          {/* Quick Summary Panel */}
+          {/* Legacy Quick Summary Panel - Replaced by Grafana dashboard */}
+          {/* 
           <div style={styles.card} data-testid="forecast-quick-summary">
             <h2 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: '600' }}>Quick Summary</h2>
             {forecastData ? (
@@ -482,6 +478,7 @@ export default function ForecastPage() {
               <p style={{ color: '#999', fontSize: '14px', margin: 0 }}>Generate a forecast to see summary and update metrics</p>
             )}
           </div>
+          */}
         </div>
 
         {error && (
@@ -491,6 +488,14 @@ export default function ForecastPage() {
         )}
 
         {/* Grafana Dashboard Embeds */}
+        {selectedRegion && (
+          <GrafanaDashboardEmbed
+            dashboardUid="forecast-summary"
+            title="Forecast Quick Summary (Live Metrics)"
+            regionId={selectedRegion.id}
+          />
+        )}
+
         <GrafanaDashboardEmbed
           dashboardUid="behavior-index-global"
           title="Global Behavior Index Dashboard"
@@ -503,7 +508,8 @@ export default function ForecastPage() {
           regionId={selectedRegion?.id}
         />
 
-        {/* Data Sources Info */}
+        {/* Legacy Data Sources Info - Replaced by Grafana dashboard */}
+        {/* 
         {dataSources.length > 0 && (
           <div style={styles.card}>
             <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>Data Sources ({dataSources.length})</h2>
@@ -536,6 +542,13 @@ export default function ForecastPage() {
             </div>
           </div>
         )}
+        */}
+
+        {/* Data Sources Health Dashboard (Live Metrics) */}
+        <GrafanaDashboardEmbed
+          dashboardUid="data-sources-health"
+          title="Data Sources Health (Live Metrics)"
+        />
       </div>
     </>
   );

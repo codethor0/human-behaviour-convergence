@@ -100,6 +100,43 @@ See [docs/reports/INTELLIGENCE_LAYER_IMPLEMENTATION.md](./docs/reports/INTELLIGE
 
 **Note:** Architecture diagram is code-derived and verified against actual implementation.
 
+## Observability & Dashboards
+
+The application exposes metrics to **Prometheus** and visualizes analytics through **Grafana dashboards** embedded in the web UI.
+
+### Metrics Pipeline
+- Backend exports metrics via `/metrics` endpoint (Prometheus format)
+- Prometheus scrapes metrics every 15 seconds
+- Grafana queries Prometheus for visualization
+- Forecast UI embeds Grafana dashboards as iframes
+
+### Available Dashboards
+| Dashboard | UID | Purpose |
+|-----------|-----|---------|
+| **Forecast Quick Summary** | `forecast-summary` | Real-time summary of behavior index, risk tier, history/forecast points, and last updated timestamp per region |
+| **Data Sources Health** | `data-sources-health` | Status monitoring for all 12 data ingestion sources |
+| **Global Behavior Index** | `behavior-index-global` | Global behavior index trends and patterns |
+| **Sub-Index Deep Dive** | `subindex-deep-dive` | Detailed view of parent and child sub-indices per region |
+| **Regional Comparison** | `regional-comparison` | Side-by-side comparison of multiple regions |
+| **Historical Trends** | `historical-trends` | Long-term trend analysis and volatility metrics |
+| **Behavioral Risk Regimes** | `risk-regimes` | Risk tier classifications and transitions |
+
+### Key Metrics
+- `behavior_index{region}` - Current behavior index value (0-1 scale)
+- `parent_subindex_value{region,parent}` - Parent sub-index values
+- `child_subindex_value{region,parent,child}` - Child sub-index values
+- `forecast_history_points{region}` - Number of historical data points used
+- `forecast_points_generated{region}` - Number of forecast points generated
+- `forecast_last_updated_timestamp_seconds{region}` - Timestamp of last forecast
+- `data_source_status{source}` - Status of data ingestion sources (1=active, 0=inactive)
+
+### Access URLs (Docker Compose)
+- **Forecast UI**: http://localhost:3100/forecast
+- **Grafana**: http://localhost:3001 (login: admin/admin)
+- **Prometheus**: http://localhost:9090
+- **Backend API**: http://localhost:8100
+- **Backend Metrics**: http://localhost:8100/metrics
+
 ## Repository Structure
 
 ### Core Application Code

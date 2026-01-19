@@ -97,7 +97,7 @@ services:
       - default
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.4.0
     container_name: human-behaviour-grafana
     ports:
       - "3001:3000"

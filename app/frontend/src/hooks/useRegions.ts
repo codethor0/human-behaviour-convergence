@@ -2,11 +2,7 @@
 /**
  * Shared hook for loading regions across /forecast, /playground, /live.
  *
- * Features:
- * - Fetches once and caches in memory (module-level singleton)
- * - Manages loading/error state
- * - Provides reload() for retry
- * - Avoids duplicate network calls
+ * Simplified: Direct fetch on mount with module-level cache for subsequent mounts.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -21,26 +17,47 @@ interface UseRegionsResult {
 
 // Module-level cache for regions (shared across all hook instances)
 let cachedRegions: Region[] | null = null;
-let cachePromise: Promise<Region[]> | null = null;
-let cacheError: string | null = null;
+let fetchPromise: Promise<Region[]> | null = null;
 
 export function useRegions(): UseRegionsResult {
   const [regions, setRegions] = useState<Region[]>(cachedRegions || []);
-  const [loading, setLoading] = useState<boolean>(!cachedRegions && !cacheError);
-  const [error, setError] = useState<string | null>(cacheError);
+  const [loading, setLoading] = useState<boolean>(!cachedRegions);
+  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
-    // Clear cache to force fresh fetch
+    // Clear cache
     cachedRegions = null;
-    cachePromise = null;
-    cacheError = null;
-
+    fetchPromise = null;
     setLoading(true);
     setError(null);
     setRegions([]);
+  }, []);
 
-    // Start new fetch
-    const fetchPromise = fetchRegions()
+  useEffect(() => {
+    // If we have cached data, use it immediately
+    if (cachedRegions) {
+      setRegions(cachedRegions);
+      setLoading(false);
+      return;
+    }
+
+    // If there's already a fetch in progress, reuse it
+    if (fetchPromise) {
+      fetchPromise
+        .then((data) => {
+          setRegions(data);
+          setLoading(false);
+        })
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : 'Failed to load regions');
+          setLoading(false);
+        });
+      return;
+    }
+
+    // Start a new fetch
+    setLoading(true);
+    fetchPromise = fetchRegions()
       .then((data) => {
         // Validate response
         if (!Array.isArray(data)) {
@@ -53,65 +70,20 @@ export function useRegions(): UseRegionsResult {
 
         // Update cache
         cachedRegions = data;
-        cachePromise = null;
-        cacheError = null;
-
-        // Update state
         setRegions(data);
-        setLoading(false);
         setError(null);
-
+        setLoading(false);
+        
         return data;
       })
-      .catch((e: unknown) => {
-        const errorMessage = e instanceof Error
-          ? e.message
-          : 'Failed to load regions';
-
-        // Update cache error
-        cacheError = errorMessage;
-        cachePromise = null;
-
-        // Update state
+      .catch((e) => {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to load regions';
         setError(errorMessage);
-        setLoading(false);
         setRegions([]);
-
+        setLoading(false);
         throw e;
       });
-
-    cachePromise = fetchPromise;
-  }, []);
-
-  useEffect(() => {
-    // If we have cached data, use it immediately
-    if (cachedRegions) {
-      setRegions(cachedRegions);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    // If there's already a fetch in progress, wait for it
-    if (cachePromise) {
-      cachePromise
-        .then((data) => {
-          setRegions(data);
-          setLoading(false);
-          setError(null);
-        })
-        .catch(() => {
-          // Error already handled in reload, just set state
-          setError(cacheError);
-          setLoading(false);
-          setRegions([]);
-        });
-      return;
-    }
-
-    // Otherwise, start a new fetch
-    reload();
-  }, [reload]);
+  }, []); // Run once on mount
 
   return {
     regions,

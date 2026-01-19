@@ -141,12 +141,42 @@ if PROMETHEUS_AVAILABLE:
         "Total number of forecasts generated",
         ["region", "status"],
     )
+
+    # Quick Summary metrics
+    forecast_last_updated_gauge = Gauge(
+        "forecast_last_updated_timestamp_seconds",
+        "Timestamp of last forecast generation for a region",
+        ["region"],
+    )
+
+    forecast_history_points_gauge = Gauge(
+        "forecast_history_points",
+        "Number of historical data points used in forecast",
+        ["region"],
+    )
+
+    forecast_points_generated_gauge = Gauge(
+        "forecast_points_generated",
+        "Number of forecast points generated",
+        ["region"],
+    )
+
+    # Data Sources status metric
+    data_source_status_gauge = Gauge(
+        "data_source_status",
+        "Status of data sources (1=active, 0=inactive)",
+        ["source"],
+    )
 else:
     behavior_index_gauge = None
     parent_subindex_gauge = None
     child_subindex_gauge = None
     forecast_duration_histogram = None
     forecasts_generated_counter = None
+    forecast_last_updated_gauge = None
+    forecast_history_points_gauge = None
+    forecast_points_generated_gauge = None
+    data_source_status_gauge = None
 
 # Register routers
 app.include_router(public.router)
@@ -190,6 +220,17 @@ def startup_event() -> None:
         _refresh_thread = threading.Thread(target=_background_refresh_loop, daemon=True)
         _refresh_thread.start()
         logger.info("Started background refresh thread for live monitoring")
+
+    # Initialize data source status metrics
+    if PROMETHEUS_AVAILABLE and data_source_status_gauge is not None:
+        try:
+            from app.services.ingestion.source_registry import get_all_sources
+            sources = get_all_sources()
+            for source_id in sources.keys():
+                data_source_status_gauge.labels(source=source_id).set(1)
+            logger.info("Initialized data source status metrics", count=len(sources))
+        except Exception as e:
+            logger.warning("Failed to initialize data source metrics", error=str(e))
 
 
 @app.on_event("shutdown")
@@ -1974,6 +2015,23 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 forecasts_generated_counter.labels(
                     region=payload.region_id, status="success"
                 ).inc()
+
+            # Update Quick Summary metrics
+            if forecast_last_updated_gauge is not None:
+                import time
+                forecast_last_updated_gauge.labels(region=payload.region_id).set(
+                    time.time()
+                )
+
+            if forecast_history_points_gauge is not None:
+                forecast_history_points_gauge.labels(region=payload.region_id).set(
+                    len(history_records)
+                )
+
+            if forecast_points_generated_gauge is not None:
+                forecast_points_generated_gauge.labels(region=payload.region_id).set(
+                    len(forecast_records)
+                )
         except Exception as e:
             logger.warning("Failed to update Prometheus metrics", error=str(e))
 
