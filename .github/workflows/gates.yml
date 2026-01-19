@@ -32,6 +32,8 @@ jobs:
           echo "[PASS] Backend syntax OK"
 
       - name: Run core backend tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: |
           pytest tests/test_state_lifetime.py tests/test_regions_api.py -v
           echo "[PASS] Core tests pass"
