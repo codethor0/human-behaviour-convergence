@@ -5,10 +5,30 @@
   "schemaVersion": 38,
   "version": 1,
   "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "region",
+        "type": "query",
+        "label": "Region",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": "label_values(behavior_index, region)",
+        "multi": false,
+        "current": {
+          "text": "city_nyc",
+          "value": "city_nyc"
+        },
+        "refresh": 1
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
-      "title": "Behavior Index - Minnesota",
+      "title": "Behavior Index",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -18,8 +38,8 @@
       },
       "targets": [
         {
-          "expr": "behavior_index{region=\"us_mn\"}",
-          "legendFormat": "Minnesota Behavior Index",
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Behavior Index",
           "refId": "A"
         }
       ],
@@ -77,7 +97,7 @@
     },
     {
       "id": 2,
-      "title": "Parent Sub-Indices - Minnesota",
+      "title": "Parent Sub-Indices",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -87,27 +107,27 @@
       },
       "targets": [
         {
-          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"economic_stress\"}",
+          "expr": "parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}",
           "legendFormat": "Economic Stress",
           "refId": "A"
         },
         {
-          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"environmental_stress\"}",
+          "expr": "parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}",
           "legendFormat": "Environmental Stress",
           "refId": "B"
         },
         {
-          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"mobility_activity\"}",
+          "expr": "parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"}",
           "legendFormat": "Mobility Activity",
           "refId": "C"
         },
         {
-          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"digital_attention\"}",
+          "expr": "parent_subindex_value{region=\"$region\", parent=\"digital_attention\"}",
           "legendFormat": "Digital Attention",
           "refId": "D"
         },
         {
-          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"public_health_stress\"}",
+          "expr": "parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"}",
           "legendFormat": "Public Health Stress",
           "refId": "E"
         }

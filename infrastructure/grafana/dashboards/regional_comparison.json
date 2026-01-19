@@ -22,12 +22,12 @@
         "current": {
           "selected": true,
           "text": [
-            "us_mn",
+            "city_nyc",
             "us_ny",
             "us_ca"
           ],
           "value": [
-            "us_mn",
+            "city_nyc",
             "us_ny",
             "us_ca"
           ]

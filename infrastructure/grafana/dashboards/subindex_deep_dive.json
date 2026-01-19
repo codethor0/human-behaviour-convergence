@@ -20,11 +20,11 @@
         "includeAll": true,
         "multi": false,
         "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "us_mn",
-          "value": "us_mn"
-        },
+      "current": {
+        "selected": false,
+        "text": "city_nyc",
+        "value": "city_nyc"
+      },
         "options": [],
         "sort": 1
       },
