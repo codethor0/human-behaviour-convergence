@@ -169,6 +169,7 @@ jobs:
               -not -path "./test-results/*" \
               -not -path "*/__pycache__/*" \
               -not -path "*/site-packages/*" \
+              -not -path "./ops/*" \
               2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
 
             if [ -n "$MATCHES" ]; then
@@ -189,6 +190,7 @@ jobs:
               -not -path "./.next/*" \
               -not -path "./playwright-report/*" \
               -not -path "./test-results/*" \
+              -not -path "./ops/*" \
               2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
 
             if [ -n "$MATCHES" ]; then

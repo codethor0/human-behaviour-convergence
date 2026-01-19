@@ -10,8 +10,8 @@ services:
       - .:/app
       - ./data:/app/data
     env_file:
-      - .env
-    # env_file is optional - .env may not exist
+      - path: .env
+        required: false
     environment:
       - CACHE_MAX_SIZE=100
       - CACHE_TTL_MINUTES=5
