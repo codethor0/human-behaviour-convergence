@@ -29,10 +29,10 @@ jobs:
         run: |
           echo "=== Validating CI Configuration ==="
           if grep -q "branches-ignore.*dependabot" .github/workflows/ci.yml; then
-            echo "✅ CI correctly ignores dependabot branches"
+            echo "[PASS] CI correctly ignores dependabot branches"
             echo "ci_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "❌ CI does not ignore dependabot branches"
+            echo "[FAIL] CI does not ignore dependabot branches"
             echo "ci_ok=false" >> $GITHUB_OUTPUT
           fi
 
@@ -41,10 +41,10 @@ jobs:
         run: |
           echo "=== Validating CodeQL Configuration ==="
           if grep -q "branches-ignore.*dependabot" .github/workflows/codeql.yml; then
-            echo "✅ CodeQL correctly ignores dependabot branches"
+            echo "[PASS] CodeQL correctly ignores dependabot branches"
             echo "codeql_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "❌ CodeQL does not ignore dependabot branches"
+            echo "[FAIL] CodeQL does not ignore dependabot branches"
             echo "codeql_ok=false" >> $GITHUB_OUTPUT
           fi
 
@@ -87,12 +87,12 @@ jobs:
                       issues.append(f"{ecosystem} ({update.get('directory', '/')}): not configured for security-only")
 
           if issues:
-              print("❌ Dependabot configuration issues:")
+              print("[FAIL] Dependabot configuration issues:")
               for issue in issues:
                   print(f"  - {issue}")
               sys.exit(1)
           else:
-              print("✅ Dependabot configuration is correct")
+              print("[PASS] Dependabot configuration is correct")
           PYEOF
 
       - name: Validate Branch Hygiene Workflow
@@ -100,15 +100,15 @@ jobs:
         run: |
           echo "=== Validating Branch Hygiene Workflow ==="
           if [ ! -f ".github/workflows/branch-hygiene.yml" ]; then
-            echo "❌ Branch hygiene workflow not found"
+            echo "[FAIL] Branch hygiene workflow not found"
             exit 1
           fi
 
           if grep -q "cron: '0 2 \* \* \*'" .github/workflows/branch-hygiene.yml; then
-            echo "✅ Branch hygiene workflow scheduled correctly (02:00 UTC)"
+            echo "[PASS] Branch hygiene workflow scheduled correctly (02:00 UTC)"
             echo "branch_hygiene_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "❌ Branch hygiene workflow schedule incorrect"
+            echo "[FAIL] Branch hygiene workflow schedule incorrect"
             echo "branch_hygiene_ok=false" >> $GITHUB_OUTPUT
           fi
 
@@ -119,10 +119,10 @@ jobs:
           git fetch --all --prune
           HEAD_BRANCH=$(git remote show origin | grep "HEAD branch" | awk '{print $3}')
           if [ "$HEAD_BRANCH" = "main" ]; then
-            echo "✅ Remote HEAD correctly points to main"
+            echo "[PASS] Remote HEAD correctly points to main"
             echo "head_ok=true" >> $GITHUB_OUTPUT
           else
-            echo "❌ Remote HEAD points to $HEAD_BRANCH (should be main)"
+            echo "[FAIL] Remote HEAD points to $HEAD_BRANCH (should be main)"
             echo "head_ok=false" >> $GITHUB_OUTPUT
             echo "Attempting to fix..."
             git remote set-head origin main
@@ -166,13 +166,13 @@ jobs:
               console.log(`Last run: ${lastRun.created_at} (${lastRun.status}, ${lastRun.conclusion || 'in_progress'})`);
 
               if (lastRun.conclusion === 'failure') {
-                console.log('⚠️ Last branch hygiene run failed');
+                console.log('[WARN] Last branch hygiene run failed');
                 core.setFailed('Branch hygiene workflow failed');
               } else if (lastRun.conclusion === 'success') {
-                console.log('✅ Last branch hygiene run succeeded');
+                console.log('[PASS] Last branch hygiene run succeeded');
               }
             } else {
-              console.log('⚠️ No branch hygiene runs found in last 7 days');
+              console.log('[WARN] No branch hygiene runs found in last 7 days');
             }
 
   generate-report:
@@ -256,28 +256,28 @@ jobs:
             reportLines.push('');
             reportLines.push('## CI Cost Analysis');
             reportLines.push('- **CI runs on dependabot branches (last 100 runs):** ' + dependabotCIRuns.length);
-            reportLines.push('- **Status:** ' + (dependabotCIRuns.length === 0 ? '✅ No CI runs on dependabot branches' : '⚠️ CI runs detected on dependabot branches'));
+            reportLines.push('- **Status:** ' + (dependabotCIRuns.length === 0 ? '[PASS] No CI runs on dependabot branches' : '[WARN] CI runs detected on dependabot branches'));
             reportLines.push('');
             reportLines.push('## Configuration Status');
-            reportLines.push('- **CI dependabot ignore:** ' + (process.env.CI_OK === 'true' ? '✅ Configured' : '❌ Not configured'));
-            reportLines.push('- **CodeQL dependabot ignore:** ' + (process.env.CODEQL_OK === 'true' ? '✅ Configured' : '❌ Not configured'));
-            reportLines.push('- **Dependabot config:** ✅ Validated');
-            reportLines.push('- **Branch hygiene:** ✅ Scheduled (02:00 UTC nightly)');
-            reportLines.push('- **Remote HEAD:** ' + (process.env.HEAD_OK === 'true' ? '✅ Points to main' : '❌ Incorrect'));
+            reportLines.push('- **CI dependabot ignore:** ' + (process.env.CI_OK === 'true' ? '[PASS] Configured' : '[FAIL] Not configured'));
+            reportLines.push('- **CodeQL dependabot ignore:** ' + (process.env.CODEQL_OK === 'true' ? '[PASS] Configured' : '[FAIL] Not configured'));
+            reportLines.push('- **Dependabot config:** [PASS] Validated');
+            reportLines.push('- **Branch hygiene:** [PASS] Scheduled (02:00 UTC nightly)');
+            reportLines.push('- **Remote HEAD:** ' + (process.env.HEAD_OK === 'true' ? '[PASS] Points to main' : '[FAIL] Incorrect'));
             reportLines.push('');
             reportLines.push('## Recommendations');
 
             if (dependabotBranches.length > 5) {
-              reportLines.push('- ⚠️ High number of dependabot branches, consider reviewing PRs');
+              reportLines.push('- [WARN] High number of dependabot branches, consider reviewing PRs');
             }
             if (dependabotPRs.length > 5) {
-              reportLines.push('- ⚠️ High number of open dependabot PRs, consider grouping updates');
+              reportLines.push('- [WARN] High number of open dependabot PRs, consider grouping updates');
             }
             if (dependabotCIRuns.length > 0) {
-              reportLines.push('- ⚠️ CI is running on dependabot branches, check workflow configuration');
+              reportLines.push('- [WARN] CI is running on dependabot branches, check workflow configuration');
             }
             if (dependabotBranches.length === 0 && dependabotPRs.length === 0) {
-              reportLines.push('- ✅ Repository hygiene is optimal');
+              reportLines.push('- [PASS] Repository hygiene is optimal');
             }
 
             const report = reportLines.join('\n');
