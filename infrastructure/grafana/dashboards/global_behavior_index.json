@@ -1,193 +1,251 @@
 {
-  "dashboard": {
-    "title": "Global Behavior Index",
-    "uid": "behavior-index-global",
-    "timezone": "browser",
-    "schemaVersion": 38,
-    "version": 1,
-    "refresh": "30s",
-    "panels": [
-      {
-        "id": 1,
-        "title": "Behavior Index - Minnesota",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
-        "targets": [
-          {
-            "expr": "behavior_index{region=\"us_mn\"}",
-            "legendFormat": "Minnesota Behavior Index",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 10,
-              "gradientMode": "none",
-              "hideFrom": {"tooltip": false, "viz": false, "legend": false},
-              "lineInterpolation": "linear",
-              "lineWidth": 2,
-              "pointSize": 5,
-              "scaleDistribution": {"type": "linear"},
-              "showPoints": "never",
-              "spanNulls": false
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 0.6, "color": "yellow"},
-                {"value": 0.8, "color": "red"}
-              ]
-            },
-            "unit": "short",
-            "min": 0,
-            "max": 1
-          }
-        }
+  "title": "Global Behavior Index",
+  "uid": "behavior-index-global",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Behavior Index - Minnesota",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
       },
-      {
-        "id": 2,
-        "title": "Parent Sub-Indices - Minnesota",
-        "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-        "targets": [
-          {
-            "expr": "parent_subindex_value{region=\"us_mn\", parent=\"economic_stress\"}",
-            "legendFormat": "Economic Stress",
-            "refId": "A"
-          },
-          {
-            "expr": "parent_subindex_value{region=\"us_mn\", parent=\"environmental_stress\"}",
-            "legendFormat": "Environmental Stress",
-            "refId": "B"
-          },
-          {
-            "expr": "parent_subindex_value{region=\"us_mn\", parent=\"mobility_activity\"}",
-            "legendFormat": "Mobility Activity",
-            "refId": "C"
-          },
-          {
-            "expr": "parent_subindex_value{region=\"us_mn\", parent=\"digital_attention\"}",
-            "legendFormat": "Digital Attention",
-            "refId": "D"
-          },
-          {
-            "expr": "parent_subindex_value{region=\"us_mn\", parent=\"public_health_stress\"}",
-            "legendFormat": "Public Health Stress",
-            "refId": "E"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 10,
-              "gradientMode": "none",
-              "hideFrom": {"tooltip": false, "viz": false, "legend": false},
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {"type": "linear"},
-              "showPoints": "never",
-              "spanNulls": false
-            },
-            "mappings": [],
-            "unit": "short",
-            "min": 0,
-            "max": 1
-          }
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"us_mn\"}",
+          "legendFormat": "Minnesota Behavior Index",
+          "refId": "A"
         }
-      },
-      {
-        "id": 3,
-        "title": "Forecast Generation Rate",
-        "type": "timeseries",
-        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8},
-        "targets": [
-          {
-            "expr": "rate(forecasts_generated_total{status=\"success\"}[5m])",
-            "legendFormat": "{{region}} - Success Rate",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "Forecasts/sec",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 10,
-              "gradientMode": "none",
-              "hideFrom": {"tooltip": false, "viz": false, "legend": false},
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {"type": "linear"},
-              "showPoints": "never",
-              "spanNulls": false
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
             },
-            "mappings": [],
-            "unit": "short"
-          }
-        }
-      },
-      {
-        "id": 4,
-        "title": "Forecast Computation Duration (p95)",
-        "type": "timeseries",
-        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8},
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, sum(rate(forecast_computation_duration_seconds_bucket[5m])) by (le, region))",
-            "legendFormat": "{{region}} - p95",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "custom": {
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "Seconds",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "drawStyle": "line",
-              "fillOpacity": 10,
-              "gradientMode": "none",
-              "hideFrom": {"tooltip": false, "viz": false, "legend": false},
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {"type": "linear"},
-              "showPoints": "never",
-              "spanNulls": false
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
             },
-            "mappings": [],
-            "unit": "s"
-          }
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.6,
+                "color": "yellow"
+              },
+              {
+                "value": 0.8,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1
         }
       }
-    ]
-  },
-  "overwrite": true
+    },
+    {
+      "id": 2,
+      "title": "Parent Sub-Indices - Minnesota",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"economic_stress\"}",
+          "legendFormat": "Economic Stress",
+          "refId": "A"
+        },
+        {
+          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"environmental_stress\"}",
+          "legendFormat": "Environmental Stress",
+          "refId": "B"
+        },
+        {
+          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"mobility_activity\"}",
+          "legendFormat": "Mobility Activity",
+          "refId": "C"
+        },
+        {
+          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"digital_attention\"}",
+          "legendFormat": "Digital Attention",
+          "refId": "D"
+        },
+        {
+          "expr": "parent_subindex_value{region=\"us_mn\", parent=\"public_health_stress\"}",
+          "legendFormat": "Public Health Stress",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Forecast Generation Rate",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(forecasts_generated_total{status=\"success\"}[5m])",
+          "legendFormat": "{{region}} - Success Rate",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Forecasts/sec",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Forecast Computation Duration (p95)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(forecast_computation_duration_seconds_bucket[5m])) by (le, region))",
+          "legendFormat": "{{region}} - p95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Seconds",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "unit": "s"
+        }
+      }
+    }
+  ]
 }

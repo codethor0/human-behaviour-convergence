@@ -1,421 +1,563 @@
 {
-  "dashboard": {
-    "title": "Behavioral Risk Regimes",
-    "uid": "risk-regimes",
-    "timezone": "browser",
-    "schemaVersion": 38,
-    "version": 1,
-    "refresh": "1m",
-    "time": {
-      "from": "now-30d",
-      "to": "now"
+  "title": "Behavioral Risk Regimes",
+  "uid": "risk-regimes",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Risk Regime Definitions",
+      "type": "text",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# Behavioral Risk Regime Definitions\n\n| Regime | Behavior Index | 7-Day Volatility | Interpretation |\n|--------|----------------|------------------|----------------|\n| **Stable** | < 0.4 | < 0.05 | Low stress, low volatility - baseline conditions |\n| **Elevated** | 0.4 - 0.7 | < 0.1 | Moderate stress, manageable volatility - monitor closely |\n| **Unstable** | < 0.7 | ≥ 0.1 | High volatility regardless of index - rapid changes occurring |\n| **Critical** | ≥ 0.7 | Any | High stress - immediate investigation required |\n\n**Alert Thresholds:**\n- High Behavior Index alert fires at **0.8** (sustained 5 min)\n- Behavior Index Spike alert fires at **±0.3** change over 7 days\n\n**Dashboards:** [Global](http://localhost:3001/d/behavior-index-global) | [Deep Dive](http://localhost:3001/d/subindex-deep-dive) | [Trends](http://localhost:3001/d/historical-trends) | [Comparison](http://localhost:3001/d/regional-comparison)"
+      }
     },
-    "panels": [
-      {
-        "id": 1,
-        "title": "Risk Regime Definitions",
-        "type": "text",
-        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
-        "options": {
-          "mode": "markdown",
-          "content": "# Behavioral Risk Regime Definitions\n\n| Regime | Behavior Index | 7-Day Volatility | Interpretation |\n|--------|----------------|------------------|----------------|\n| **Stable** | < 0.4 | < 0.05 | Low stress, low volatility - baseline conditions |\n| **Elevated** | 0.4 - 0.7 | < 0.1 | Moderate stress, manageable volatility - monitor closely |\n| **Unstable** | < 0.7 | ≥ 0.1 | High volatility regardless of index - rapid changes occurring |\n| **Critical** | ≥ 0.7 | Any | High stress - immediate investigation required |\n\n**Alert Thresholds:**\n- High Behavior Index alert fires at **0.8** (sustained 5 min)\n- Behavior Index Spike alert fires at **±0.3** change over 7 days\n\n**Dashboards:** [Global](http://localhost:3001/d/behavior-index-global) | [Deep Dive](http://localhost:3001/d/subindex-deep-dive) | [Trends](http://localhost:3001/d/historical-trends) | [Comparison](http://localhost:3001/d/regional-comparison)"
-        }
+    {
+      "id": 2,
+      "title": "Critical Regions (Index ≥ 0.7)",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
       },
-      {
-        "id": 2,
-        "title": "Critical Regions (Index ≥ 0.7)",
-        "type": "table",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6},
-        "targets": [
-          {
-            "expr": "behavior_index >= 0.7",
-            "format": "table",
-            "instant": true,
-            "refId": "A"
-          },
-          {
-            "expr": "stddev_over_time(behavior_index{region=~\".+\"}[7d]) >= 0",
-            "format": "table",
-            "instant": true,
-            "refId": "B"
+      "targets": [
+        {
+          "expr": "behavior_index >= 0.7",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "stddev_over_time(behavior_index{region=~\".+\"}[7d]) >= 0",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "region": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "renameByName": {
+              "region": "Region",
+              "Value #A": "Behavior Index",
+              "Value #B": "7d Volatility"
+            }
           }
-        ],
-        "transformations": [
-          {
-            "id": "merge",
-            "options": {}
-          },
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {
-                "Time": true,
-                "__name__": true,
-                "job": true,
-                "instance": true
-              },
-              "indexByName": {
-                "region": 0,
-                "Value #A": 1,
-                "Value #B": 2
-              },
-              "renameByName": {
-                "region": "Region",
-                "Value #A": "Behavior Index",
-                "Value #B": "7d Volatility"
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Behavior Index",
+                "desc": true
               }
-            }
-          },
-          {
-            "id": "sortBy",
-            "options": {
-              "fields": {},
-              "sort": [
-                {
-                  "field": "Behavior Index",
-                  "desc": true
-                }
-              ]
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "displayMode": "auto"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 0.7, "color": "red"}
-              ]
-            },
-            "color": {
-              "mode": "thresholds"
-            }
-          },
-          "overrides": [
-            {
-              "matcher": {"id": "byName", "options": "Behavior Index"},
-              "properties": [
-                {"id": "custom.displayMode", "value": "color-background"},
-                {"id": "decimals", "value": 3}
-              ]
-            },
-            {
-              "matcher": {"id": "byName", "options": "7d Volatility"},
-              "properties": [
-                {"id": "decimals", "value": 4}
-              ]
-            }
-          ]
-        },
-        "options": {
-          "showHeader": true,
-          "footer": {
-            "show": false
+            ]
           }
         }
-      },
-      {
-        "id": 3,
-        "title": "Unstable Regions (High Volatility, Index < 0.7)",
-        "type": "table",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6},
-        "targets": [
-          {
-            "expr": "behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) >= 0.1",
-            "format": "table",
-            "instant": true,
-            "refId": "A"
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
           },
-          {
-            "expr": "stddev_over_time(behavior_index[7d])",
-            "format": "table",
-            "instant": true,
-            "refId": "B"
-          }
-        ],
-        "transformations": [
-          {
-            "id": "merge",
-            "options": {}
-          },
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {
-                "Time": true,
-                "__name__": true,
-                "job": true,
-                "instance": true
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
               },
-              "indexByName": {
-                "region": 0,
-                "Value #A": 1,
-                "Value #B": 2
-              },
-              "renameByName": {
-                "region": "Region",
-                "Value #A": "Behavior Index",
-                "Value #B": "7d Volatility"
+              {
+                "value": 0.7,
+                "color": "red"
               }
-            }
+            ]
           },
-          {
-            "id": "sortBy",
-            "options": {
-              "fields": {},
-              "sort": [
-                {
-                  "field": "7d Volatility",
-                  "desc": true
-                }
-              ]
-            }
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "custom": {
-              "align": "auto",
-              "displayMode": "auto"
-            },
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 0.1, "color": "orange"}
-              ]
-            }
-          },
-          "overrides": [
-            {
-              "matcher": {"id": "byName", "options": "7d Volatility"},
-              "properties": [
-                {"id": "custom.displayMode", "value": "color-background"},
-                {"id": "decimals", "value": 4}
-              ]
-            },
-            {
-              "matcher": {"id": "byName", "options": "Behavior Index"},
-              "properties": [
-                {"id": "decimals", "value": 3}
-              ]
-            }
-          ]
-        },
-        "options": {
-          "showHeader": true,
-          "footer": {
-            "show": false
-          }
-        }
-      },
-      {
-        "id": 4,
-        "title": "Risk Distribution (Current)",
-        "type": "piechart",
-        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 14},
-        "targets": [
-          {
-            "expr": "count(behavior_index < 0.4 and stddev_over_time(behavior_index[7d]) < 0.05)",
-            "legendFormat": "Stable (< 0.4, volatility < 0.05)",
-            "refId": "A",
-            "instant": true
-          },
-          {
-            "expr": "count(behavior_index >= 0.4 and behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) < 0.1)",
-            "legendFormat": "Elevated (0.4-0.7, volatility < 0.1)",
-            "refId": "B",
-            "instant": true
-          },
-          {
-            "expr": "count(behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) >= 0.1)",
-            "legendFormat": "Unstable (< 0.7, volatility ≥ 0.1)",
-            "refId": "C",
-            "instant": true
-          },
-          {
-            "expr": "count(behavior_index >= 0.7)",
-            "legendFormat": "Critical (≥ 0.7)",
-            "refId": "D",
-            "instant": true
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "palette-classic"},
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"}
-              ]
-            },
-            "unit": "short"
+          "color": {
+            "mode": "thresholds"
           }
         },
-        "options": {
-          "legend": {
-            "displayMode": "table",
-            "placement": "right",
-            "values": ["value", "percent"]
-          },
-          "pieType": "pie",
-          "tooltip": {
-            "mode": "single"
-          },
-          "displayLabels": ["percent"]
-        }
-      },
-      {
-        "id": 5,
-        "title": "Top 10 Regions by Volatility (7-Day)",
-        "type": "bargauge",
-        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
-        "targets": [
+        "overrides": [
           {
-            "expr": "topk(10, stddev_over_time(behavior_index[7d]))",
-            "legendFormat": "{{region}}",
-            "refId": "A",
-            "instant": true
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 0.05, "color": "yellow"},
-                {"value": 0.1, "color": "orange"},
-                {"value": 0.15, "color": "red"}
-              ]
+            "matcher": {
+              "id": "byName",
+              "options": "Behavior Index"
             },
-            "unit": "short",
-            "min": 0,
-            "max": 0.3,
-            "decimals": 4
-          }
-        },
-        "options": {
-          "orientation": "horizontal",
-          "displayMode": "gradient",
-          "showUnfilled": true
-        }
-      },
-      {
-        "id": 6,
-        "title": "Top 10 Regions by Behavior Index",
-        "type": "bargauge",
-        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
-        "targets": [
-          {
-            "expr": "topk(10, behavior_index)",
-            "legendFormat": "{{region}}",
-            "refId": "A",
-            "instant": true
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "mappings": [],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 0.4, "color": "yellow"},
-                {"value": 0.6, "color": "orange"},
-                {"value": 0.7, "color": "red"}
-              ]
-            },
-            "unit": "short",
-            "min": 0,
-            "max": 1,
-            "decimals": 3
-          }
-        },
-        "options": {
-          "orientation": "horizontal",
-          "displayMode": "gradient",
-          "showUnfilled": true
-        }
-      },
-      {
-        "id": 7,
-        "title": "Regime Heatmap (30-Day History)",
-        "type": "status-history",
-        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 22},
-        "targets": [
-          {
-            "expr": "(behavior_index >= 0.7) * 4 + (behavior_index >= 0.4 and behavior_index < 0.7) * 3 + (behavior_index >= 0.4 and stddev_over_time(behavior_index[7d]) >= 0.1) * 2 + (behavior_index < 0.4) * 1",
-            "legendFormat": "{{region}}",
-            "refId": "A"
-          }
-        ],
-        "fieldConfig": {
-          "defaults": {
-            "color": {"mode": "thresholds"},
-            "custom": {
-              "lineWidth": 0,
-              "fillOpacity": 70
-            },
-            "mappings": [
+            "properties": [
               {
-                "type": "value",
-                "options": {
-                  "1": {"text": "Stable", "color": "green"}
-                }
+                "id": "custom.displayMode",
+                "value": "color-background"
               },
               {
-                "type": "value",
-                "options": {
-                  "2": {"text": "Unstable", "color": "orange"}
-                }
-              },
-              {
-                "type": "value",
-                "options": {
-                  "3": {"text": "Elevated", "color": "yellow"}
-                }
-              },
-              {
-                "type": "value",
-                "options": {
-                  "4": {"text": "Critical", "color": "red"}
-                }
+                "id": "decimals",
+                "value": 3
               }
-            ],
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {"value": null, "color": "green"},
-                {"value": 1, "color": "green"},
-                {"value": 2, "color": "orange"},
-                {"value": 3, "color": "yellow"},
-                {"value": 4, "color": "red"}
-              ]
-            }
-          }
-        },
-        "options": {
-          "legend": {
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
+            ]
           },
-          "rowHeight": 0.7,
-          "showValue": "never"
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7d Volatility"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
         }
       }
-    ]
-  }
+    },
+    {
+      "id": 3,
+      "title": "Unstable Regions (High Volatility, Index < 0.7)",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "targets": [
+        {
+          "expr": "behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) >= 0.1",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "stddev_over_time(behavior_index[7d])",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "region": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "renameByName": {
+              "region": "Region",
+              "Value #A": "Behavior Index",
+              "Value #B": "7d Volatility"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "7d Volatility",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.1,
+                "color": "orange"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "7d Volatility"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Behavior Index"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Risk Distribution (Current)",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "expr": "count(behavior_index < 0.4 and stddev_over_time(behavior_index[7d]) < 0.05)",
+          "legendFormat": "Stable (< 0.4, volatility < 0.05)",
+          "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "count(behavior_index >= 0.4 and behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) < 0.1)",
+          "legendFormat": "Elevated (0.4-0.7, volatility < 0.1)",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "count(behavior_index < 0.7 and stddev_over_time(behavior_index[7d]) >= 0.1)",
+          "legendFormat": "Unstable (< 0.7, volatility ≥ 0.1)",
+          "refId": "C",
+          "instant": true
+        },
+        {
+          "expr": "count(behavior_index >= 0.7)",
+          "legendFormat": "Critical (≥ 0.7)",
+          "refId": "D",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single"
+        },
+        "displayLabels": [
+          "percent"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "title": "Top 10 Regions by Volatility (7-Day)",
+      "type": "bargauge",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 14
+      },
+      "targets": [
+        {
+          "expr": "topk(10, stddev_over_time(behavior_index[7d]))",
+          "legendFormat": "{{region}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.05,
+                "color": "yellow"
+              },
+              {
+                "value": 0.1,
+                "color": "orange"
+              },
+              {
+                "value": 0.15,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 0.3,
+          "decimals": 4
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 6,
+      "title": "Top 10 Regions by Behavior Index",
+      "type": "bargauge",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 14
+      },
+      "targets": [
+        {
+          "expr": "topk(10, behavior_index)",
+          "legendFormat": "{{region}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.4,
+                "color": "yellow"
+              },
+              {
+                "value": 0.6,
+                "color": "orange"
+              },
+              {
+                "value": 0.7,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "decimals": 3
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      }
+    },
+    {
+      "id": 7,
+      "title": "Regime Heatmap (30-Day History)",
+      "type": "status-history",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "targets": [
+        {
+          "expr": "(behavior_index >= 0.7) * 4 + (behavior_index >= 0.4 and behavior_index < 0.7) * 3 + (behavior_index >= 0.4 and stddev_over_time(behavior_index[7d]) >= 0.1) * 2 + (behavior_index < 0.4) * 1",
+          "legendFormat": "{{region}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "lineWidth": 0,
+            "fillOpacity": 70
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "text": "Stable",
+                  "color": "green"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "2": {
+                  "text": "Unstable",
+                  "color": "orange"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "3": {
+                  "text": "Elevated",
+                  "color": "yellow"
+                }
+              }
+            },
+            {
+              "type": "value",
+              "options": {
+                "4": {
+                  "text": "Critical",
+                  "color": "red"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 1,
+                "color": "green"
+              },
+              {
+                "value": 2,
+                "color": "orange"
+              },
+              {
+                "value": 3,
+                "color": "yellow"
+              },
+              {
+                "value": 4,
+                "color": "red"
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "rowHeight": 0.7,
+        "showValue": "never"
+      }
+    }
+  ]
 }
