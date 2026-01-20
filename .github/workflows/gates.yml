@@ -130,7 +130,7 @@ jobs:
       - name: Warm up backend (pre-generate forecasts)
         run: |
           echo "Generating forecasts to ensure data pipeline is ready..."
-          for region in us_mn city_nyc us_ca; do
+          for region in us_mn city_nyc us_ca city_london; do
             echo "  Forecasting ${region}..."
             curl -sf -X POST "http://localhost:8100/api/forecast" \
               -H "Content-Type: application/json" \
@@ -138,8 +138,8 @@ jobs:
               > /dev/null || echo "    [WARN] Forecast for ${region} failed (continuing)"
           done
           
-          echo "Waiting 30 seconds for Prometheus to scrape metrics..."
-          sleep 30
+          echo "Waiting 60 seconds for Prometheus to scrape metrics..."
+          sleep 60
           
           echo "[OK] Warm-up complete"
 
