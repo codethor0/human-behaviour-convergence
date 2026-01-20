@@ -54,18 +54,17 @@ test.describe('Forecast History Smoke Tests', () => {
     // Generate forecast
     await generateButton.click();
 
-    // Wait for forecast results - be flexible about what appears
+    // Wait for forecast results - check for Grafana dashboards
     await page.waitForTimeout(5000); // Give backend time to process
     
-    // Just verify something changed on the page (either Quick Summary or Grafana panels)
-    const hasResults = await page.evaluate(() => {
-      const summary = document.querySelector('[data-testid="forecast-quick-summary"]');
+    // Verify Grafana dashboards are embedded
+    const hasIframes = await page.evaluate(() => {
       const iframes = document.querySelectorAll('iframe');
-      return (summary && summary.textContent) || iframes.length > 0;
+      return iframes.length > 0;
     });
     
-    if (!hasResults) {
-      console.warn('No forecast results appeared, but continuing to history page');
+    if (!hasIframes) {
+      console.warn('No Grafana dashboards appeared, but continuing to history page');
     }
 
     // Step 2: Navigate to history page
