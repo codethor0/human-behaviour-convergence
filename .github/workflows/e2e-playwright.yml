@@ -39,6 +39,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
+          pip install -e ".[dev]"
           pip install -r requirements.txt
           pip install -r app/backend/requirements.txt
           pip install -r requirements-dev.txt
