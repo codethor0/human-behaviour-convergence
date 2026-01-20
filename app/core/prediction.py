@@ -239,27 +239,27 @@ class BehavioralForecaster:
                 # LRU: move accessed item to end (most recent)
                 history, forecast, metadata = self._cache.pop(cache_key)
                 self._cache[cache_key] = (history, forecast, metadata)
-            # Convert timestamps to ISO strings for API response
-            history_dict = history.copy()
-            if not history.empty and "timestamp" in history_dict.columns:
-                history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
-                    "%Y-%m-%dT%H:%M:%S"
-                )
-            forecast_dict = forecast.copy()
-            if not forecast.empty and "timestamp" in forecast_dict.columns:
-                forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
-                    "%Y-%m-%dT%H:%M:%S"
-                )
-            # Preserve harmonized_df in metadata for component extraction
-            # (will be removed in API layer)
-            return {
-                "history": history_dict.to_dict("records") if not history.empty else [],
-                "forecast": (
-                    forecast_dict.to_dict("records") if not forecast.empty else []
-                ),
-                "sources": metadata.get("sources", []),
-                "metadata": metadata,
-            }
+                # Convert timestamps to ISO strings for API response
+                history_dict = history.copy()
+                if not history.empty and "timestamp" in history_dict.columns:
+                    history_dict["timestamp"] = history_dict["timestamp"].dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+                forecast_dict = forecast.copy()
+                if not forecast.empty and "timestamp" in forecast_dict.columns:
+                    forecast_dict["timestamp"] = forecast_dict["timestamp"].dt.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    )
+                # Preserve harmonized_df in metadata for component extraction
+                # (will be removed in API layer)
+                return {
+                    "history": history_dict.to_dict("records") if not history.empty else [],
+                    "forecast": (
+                        forecast_dict.to_dict("records") if not forecast.empty else []
+                    ),
+                    "sources": metadata.get("sources", []),
+                    "metadata": metadata,
+                }
 
         sources = []
 
