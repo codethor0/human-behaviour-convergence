@@ -60,7 +60,7 @@ test.describe('Forecast Smoke Tests', () => {
       
       // Verify iframe src points to Grafana
       expect(src).toBeTruthy();
-      expect(src).toMatch(/grafana|\/d\/);
+      expect(src).toMatch(/grafana|\/d\//);
     } catch (error) {
       // Capture screenshot on failure for debugging
       await page.screenshot({ path: 'test-results/forecast-fail.png', fullPage: true });
