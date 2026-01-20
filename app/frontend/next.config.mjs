@@ -31,7 +31,10 @@ const nextConfig = {
     // Proxy API requests to backend
     // Use internal Docker service name for server-side requests
     // NEXT_PUBLIC_API_BASE is for browser-side, but rewrites run server-side
-    const apiBase = process.env.API_BASE_INTERNAL || 'http://backend:8000';
+    const apiBase =
+      process.env.API_BASE_INTERNAL ||
+      process.env.NEXT_PUBLIC_API_BASE ||
+      'http://localhost:8100';
     return [
       {
         source: '/api/:path*',

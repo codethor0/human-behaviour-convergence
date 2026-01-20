@@ -83,6 +83,8 @@ jobs:
         run: docker compose build frontend
 
       - name: Start Docker stack
+        env:
+          HBC_CI_OFFLINE_DATA: "1"
         run: |
           docker compose up -d
           echo "[PASS] Stack started with HBC_CI_OFFLINE_DATA=1"
