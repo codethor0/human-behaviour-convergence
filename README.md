@@ -3,6 +3,9 @@
 
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml)
 [![E2E](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml)
+[![Gates](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/gates.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/gates.yml)
+[![Forecast Integrity](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/forecast-integrity.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/forecast-integrity.yml)
+[![Frontend Lint](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/frontend-lint.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/frontend-lint.yml)
 [![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
 [![Security](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml)
 [![codecov](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/main/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
@@ -19,12 +22,17 @@
 
 ## CI Status
 
-Main branch workflows:
+Main branch workflows (all must remain green):
 
-- **CI** (`ci.yml`): See badge above for current status on `main`.
-- **E2E Playwright Tests** (`e2e-playwright.yml`): See badge above for current status on `main`.
+- **CI** (`ci.yml`): Core tests, lint, format, and Docker E2E smoke tests
+- **E2E Playwright Tests** (`e2e-playwright.yml`): Full end-to-end UI testing
+- **Gates (A + G)** (`gates.yml`): Architectural gates and governance checks
+- **Forecast Integrity** (`forecast-integrity.yml`): Forecast model validation and integrity tests
+- **Frontend Lint** (`frontend-lint.yml`): TypeScript/React code quality checks
+- **CodeQL** (`codeql.yml`): Security vulnerability scanning
+- **Security Harden** (`security-harden.yml`): Dependency scanning and hardening
 
-All changes to `main` must keep both workflows green.
+See badges above for current status on `main`.
 
 ---
 

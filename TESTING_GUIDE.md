@@ -1,4 +1,51 @@
-# Testing Guide - Location Normalization
+# Testing Guide
+
+## E2E UI Contracts
+
+The E2E Playwright tests enforce specific UI contracts for key pages. Tests must align with these contracts to remain stable.
+
+### `/forecast` Page Contract
+
+**UI Flow**:
+1. Page loads with a region selection dropdown (`<select>`)
+2. User selects a region from the dropdown
+3. User clicks the "Generate Forecast" button (`data-testid="forecast-generate-button"`)
+4. **After generation**: Grafana dashboard iframes appear
+
+**Key Elements** (all must be present):
+- Region `<select>` dropdown (first select element on page)
+- Generate button with `data-testid="forecast-generate-button"`
+- **Post-generation**: Multiple Grafana `<iframe>` elements with `src` matching `/d/` or `grafana`
+
+**Why this matters**: Tests must NOT expect Grafana iframes before forecast generation. The page uses a traditional form → submit → results flow.
+
+### `/history` Page Contract
+
+**UI Type**: Traditional UI/table page (NO Grafana iframes)
+
+**Key Elements** (all must be present):
+- Page title with `data-testid="history-page-title"` containing "Forecast History"
+- Forecast history container with `data-testid="forecast-history-container"`
+- Filter controls:
+  - Limit selector: `data-testid="history-limit-select"`
+  - Region filter input: `data-testid="history-region-filter"`
+  - Date range inputs: `data-testid="history-date-from"`, `data-testid="history-date-to"`
+  - Sort order selector: `data-testid="history-sort-order"`
+- History table or empty state message
+
+**Why NO iframes**: The history page displays tabular forecast metadata with client-side filtering. It does NOT embed Grafana dashboards.
+
+### Test Stability Rules
+
+1. **Navigate first, then wait for UI**: Always navigate to the page before waiting for elements
+2. **Use stable selectors**: Prefer `data-testid` attributes over brittle text/class selectors
+3. **Timeouts**: Use explicit timeouts (60s) for first-load elements; shorter for already-loaded interactions
+4. **Diagnostics**: Capture screenshots and console errors on failure
+5. **No arbitrary waits**: Use `waitFor` with conditions, not `page.waitForTimeout`
+
+---
+
+## Location Normalization Testing
 
 ## Server Status
 
