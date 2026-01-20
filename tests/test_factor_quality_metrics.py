@@ -370,7 +370,7 @@ class TestNoSemanticDriftQuality:
         global_index_before = float(df["behavior_index"].iloc[4])
 
         # Get details with quality metrics
-        details = computer.get_subindex_details(df, 4, include_quality_metrics=True)
+        computer.get_subindex_details(df, 4, include_quality_metrics=True)
 
         # Recompute to ensure no side effects
         df_after = computer.compute_behavior_index(harmonized)

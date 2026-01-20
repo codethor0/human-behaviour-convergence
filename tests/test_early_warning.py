@@ -79,7 +79,7 @@ class TestEarlyWarningIndicators:
 
         # Should have at least one warning if acceleration detected
         if result["warning_count"] > 0:
-            acceleration_warnings = [w for w in result["warnings"] if w["type"] == "acceleration"]
+            [w for w in result["warnings"] if w["type"] == "acceleration"]
             # May or may not have acceleration warning depending on threshold
             # Just verify structure is correct
             assert isinstance(result["warnings"], list)

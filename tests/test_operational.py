@@ -258,7 +258,7 @@ class TestOperationalManager:
             ]
 
             # First processing
-            result1 = manager.process_alerts(
+            manager.process_alerts(
                 alerts=alerts,
                 region_id="test_region",
                 region_name="Test Region",

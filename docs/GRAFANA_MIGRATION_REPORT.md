@@ -54,19 +54,19 @@ Successfully migrated Quick Summary and Data Sources (12) panels from React-only
 - **Type:** Gauge
 - **Purpose:** Timestamp of last forecast generation
 - **Example:** `forecast_last_updated_timestamp_seconds{region="us_mn"} 1.768857e+09`
-- **Status:** ✓ Populated for tested regions
+- **Status:** [OK] Populated for tested regions
 
 #### 2. `forecast_history_points{region}`
 - **Type:** Gauge
 - **Purpose:** Number of historical data points used
 - **Example:** `forecast_history_points{region="us_mn"} 35.0`
-- **Status:** ✓ Populated for tested regions
+- **Status:** [OK] Populated for tested regions
 
 #### 3. `forecast_points_generated{region}`
 - **Type:** Gauge
 - **Purpose:** Number of forecast points generated
 - **Example:** `forecast_points_generated{region="us_mn"} 7.0`
-- **Status:** ✓ Populated for tested regions
+- **Status:** [OK] Populated for tested regions
 
 #### 4. `data_source_status{source}`
 - **Type:** Gauge
@@ -84,7 +84,7 @@ Successfully migrated Quick Summary and Data Sources (12) panels from React-only
   - search_trends
   - weather_alerts
   - weather_patterns
-- **Status:** ✓ All sources initialized to 1.0 (ACTIVE)
+- **Status:** [OK] All sources initialized to 1.0 (ACTIVE)
 
 ### Backend Compilation: GREEN
 ```bash
@@ -114,9 +114,9 @@ Regions with last_updated metric: 2
 ```
 
 #### Example Queries (Verified):
-1. `behavior_index{region="us_mn"}` → Returns 1 frame ✓
-2. `forecast_last_updated_timestamp_seconds{region="us_mn"}` → Returns data ✓
-3. `data_source_status` → Returns 12 series ✓
+1. `behavior_index{region="us_mn"}` → Returns 1 frame [OK]
+2. `forecast_last_updated_timestamp_seconds{region="us_mn"}` → Returns data [OK]
+3. `data_source_status` → Returns 12 series [OK]
 
 ---
 
@@ -137,13 +137,13 @@ Regions with last_updated metric: 2
 
 | UID                      | Title                          | Status |
 |--------------------------|--------------------------------|--------|
-| behavior-index-global    | Global Behavior Index          | ✓ Exists |
-| subindex-deep-dive       | Sub-Index Deep Dive            | ✓ Exists |
-| regional-comparison      | Regional Comparison            | ✓ Exists |
-| historical-trends        | Historical Trends & Volatility | ✓ Exists |
-| risk-regimes             | Behavioral Risk Regimes        | ✓ Exists |
-| **forecast-summary**     | **Forecast Quick Summary**     | ✓ NEW |
-| **data-sources-health**  | **Data Sources Health**        | ✓ NEW |
+| behavior-index-global    | Global Behavior Index          | [OK] Exists |
+| subindex-deep-dive       | Sub-Index Deep Dive            | [OK] Exists |
+| regional-comparison      | Regional Comparison            | [OK] Exists |
+| historical-trends        | Historical Trends & Volatility | [OK] Exists |
+| risk-regimes             | Behavioral Risk Regimes        | [OK] Exists |
+| **forecast-summary**     | **Forecast Quick Summary**     | [OK] NEW |
+| **data-sources-health**  | **Data Sources Health**        | [OK] NEW |
 
 ### New Dashboard: Forecast Quick Summary (forecast-summary)
 
@@ -153,7 +153,7 @@ Regions with last_updated metric: 2
 1. **Behavior Index** (stat)
    - Query: `behavior_index{region="$region"}`
    - Thresholds: green<0.3, yellow<0.5, orange<0.7, red>=0.7
-   - Status: ✓ Query returns data
+   - Status: [OK] Query returns data
 
 2. **Risk Tier** (stat)
    - Query: `behavior_index{region="$region"}`
@@ -162,20 +162,20 @@ Regions with last_updated metric: 2
      - 0.3-0.49 → ELEVATED (yellow)
      - 0.5-0.69 → HIGH (orange)
      - 0.7-1.0 → CRITICAL (red)
-   - Status: ✓ Query returns data
+   - Status: [OK] Query returns data
 
 3. **History Points** (stat)
    - Query: `forecast_history_points{region="$region"}`
-   - Status: ✓ Returns 35 for tested regions
+   - Status: [OK] Returns 35 for tested regions
 
 4. **Forecast Points** (stat)
    - Query: `forecast_points_generated{region="$region"}`
-   - Status: ✓ Returns 7 for tested regions
+   - Status: [OK] Returns 7 for tested regions
 
 5. **Last Updated** (stat)
    - Query: `forecast_last_updated_timestamp_seconds{region="$region"} * 1000`
    - Unit: dateTimeFromNow
-   - Status: ✓ Returns recent timestamps
+   - Status: [OK] Returns recent timestamps
 
 **Variables:**
 - `$region` - Query: `label_values(behavior_index, region)`
@@ -214,7 +214,7 @@ SUCCESS: Data available for dashboard
    - Value Mappings:
      - 1 → ACTIVE (green background)
      - 0 → INACTIVE (red background)
-   - Status: ✓ Query returns 12 series
+   - Status: [OK] Query returns 12 series
 
 **API Test Results:**
 ```bash
@@ -323,33 +323,33 @@ All services operational.
 
 ## 7. Component Verdicts
 
-### Backend: GREEN ✓
+### Backend: GREEN [OK]
 - Health check: OK
 - Regions API: 62 regions
 - Forecast contracts: Satisfied for us_mn, city_nyc, us_ca
 - New metrics: All 4 types exported correctly
 - Compilation: No errors
 
-### Prometheus: GREEN ✓
+### Prometheus: GREEN [OK]
 - Target: backend:8000/metrics UP
 - Scraping: All new metrics present
 - Query tests: behavior_index, forecast_last_updated, data_source_status all return data
 - Series count: 12 data_source_status series, 2+ regions with forecast metrics
 
-### Existing Grafana Dashboards: GREEN ✓
+### Existing Grafana Dashboards: GREEN [OK]
 - All 5 original dashboards provisioned
 - Datasource UID fixed and consistent
 - API queries return data frames
 - Grafana 11.4.0 stable (no rendering bugs)
 
-### Quick Summary Dashboard: GREEN ✓
+### Quick Summary Dashboard: GREEN [OK]
 - Dashboard provisioned (UID: forecast-summary)
 - 5 panels defined with correct queries
 - Variable $region configured
 - API test: behavior_index query returns 1 frame
 - Metrics populated for tested regions
 
-### Data Sources Dashboard: GREEN ✓
+### Data Sources Dashboard: GREEN [OK]
 - Dashboard provisioned (UID: data-sources-health)
 - Table panel configured
 - 12 data sources initialized as ACTIVE
@@ -365,7 +365,7 @@ All services operational.
   2. Grafana Quick Summary iframe shows data
   3. Grafana Data Sources iframe shows table
 
-### Git Hygiene: GREEN ✓
+### Git Hygiene: GREEN [OK]
 - No emojis in modified code files
 - No tracked DB artifacts
 - No tracked node_modules or build artifacts
@@ -458,13 +458,13 @@ All services operational.
 **Status:** GREEN (with manual verification pending)
 
 ### What is DEMONSTRABLY GREEN:
-✓ Backend API (health, regions, forecasts)  
-✓ Backend metrics export (4 new metrics)  
-✓ Prometheus scraping (all metrics present)  
-✓ Grafana infrastructure (v11.4.0, datasources, provisioning)  
-✓ Dashboard JSON files (correct structure, queries validated via API)  
-✓ Frontend service (responding, code deployed)  
-✓ Git hygiene (no emojis, no artifacts)  
+[OK] Backend API (health, regions, forecasts)  
+[OK] Backend metrics export (4 new metrics)  
+[OK] Prometheus scraping (all metrics present)  
+[OK] Grafana infrastructure (v11.4.0, datasources, provisioning)  
+[OK] Dashboard JSON files (correct structure, queries validated via API)  
+[OK] Frontend service (responding, code deployed)  
+[OK] Git hygiene (no emojis, no artifacts)  
 
 ### What REQUIRES Manual Browser Verification:
 ⚠ Region dropdown behavior (fix deployed, needs visual confirmation)  
@@ -481,7 +481,7 @@ All services operational.
 3. **Frontend Code:** Deployed and compiles. UI behavior requires browser confirmation.
 
 **Recommendation:**
-- Merge to `feat/grafana-dashboards-phase2` branch ✓ (already on this branch)
+- Merge to `feat/grafana-dashboards-phase2` branch [OK] (already on this branch)
 - Do NOT merge to `main` until manual browser verification completes
 - If browser tests pass → immediate merge to main
 - If browser tests fail → fix issues in place, re-verify, then merge

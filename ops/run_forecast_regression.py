@@ -173,9 +173,9 @@ def generate_markdown_report(report: Dict, output_file: Path) -> None:
         f.write(f"- Regions with errors: {report['summary']['regions_with_errors']}\n\n")
 
         if report['summary']['total_failures'] == 0:
-            f.write("✅ **All assertions passed**\n\n")
+            f.write("[OK] **All assertions passed**\n\n")
         else:
-            f.write("❌ **Assertions failed**\n\n")
+            f.write("[FAIL] **Assertions failed**\n\n")
 
         f.write("## Results by Region\n\n")
         for result in report['results']:
@@ -199,11 +199,11 @@ def generate_markdown_report(report: Dict, output_file: Path) -> None:
 
             integrity = result.get('integrity', {})
             if integrity.get('shock_multiplier_applied'):
-                f.write("\n**Shock Multiplier Applied:** ✅\n")
+                f.write("\n**Shock Multiplier Applied:** [OK]\n")
                 f.write(f"- Shock count: {integrity.get('shock_count', 'N/A')}\n")
                 f.write(f"- Multiplier: {integrity.get('shock_multiplier_value', 'N/A')}\n")
             else:
-                f.write("\n**Shock Multiplier Applied:** ❌\n")
+                f.write("\n**Shock Multiplier Applied:** [FAIL]\n")
 
             f.write("\n")
 
@@ -278,7 +278,7 @@ def main():
                 if failures:
                     print(f"    ⚠ FAILURES: {len(failures)}")
                 else:
-                    print("    ✅ PASSED")
+                    print("    [OK] PASSED")
 
     # Save results
     report = {
@@ -323,7 +323,7 @@ def main():
         print()
         return 1
     else:
-        print("✅ All assertions passed.")
+        print("[OK] All assertions passed.")
         print()
         return 0
 

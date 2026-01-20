@@ -338,7 +338,7 @@ class TestNoSemanticDrift:
 
     def test_base_index_unchanged_with_provenance(self):
         """Test that behavior index is unchanged when provenance is generated."""
-        behavior_index_before = 0.548
+        # Expected value for comparison: 0.548
 
         subindex_details = {
             "economic_stress": {

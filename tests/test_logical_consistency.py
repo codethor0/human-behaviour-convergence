@@ -130,7 +130,6 @@ class TestShockTrendConsistency:
         # Create data with severe shock
         dates = pd.date_range("2024-01-01", periods=30, freq="D")
         values = [0.5] * 20 + [0.9] * 10  # Sudden jump (severe shock)
-        series = pd.Series(values, index=dates)
 
         shocks = detector.detect_shocks(
             pd.DataFrame({"timestamp": dates, "economic_stress": values})

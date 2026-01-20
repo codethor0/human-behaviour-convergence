@@ -1213,9 +1213,11 @@ class BehaviorIndexComputer:
         if has_stress_data:
             # GDP growth stress: inverse of economic stability (high stress_index = low GDP growth potential)
             # Use rate-of-change in stress_index as GDP growth stress proxy
+            window = min(30, len(stress_index_raw))
+            min_periods = min(7, window)
             stress_slope = (
                 stress_index_raw.rolling(
-                    window=min(30, len(stress_index_raw)), min_periods=7
+                    window=window, min_periods=min_periods
                 )
                 .apply(
                     lambda x: (x.iloc[-1] - x.iloc[0]) / len(x) if len(x) > 1 else 0.0

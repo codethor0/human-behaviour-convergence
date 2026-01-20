@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 import requests
 import structlog
@@ -266,6 +267,18 @@ class FREDEconomicFetcher:
             DataFrame with columns: ['timestamp', 'jobless_claims']
             Values normalized to [0.0, 1.0] where 1.0 = maximum claims (high stress)
         """
+        # CI offline mode or no API key: return synthetic data
+        if is_ci_offline_mode() or not self.api_key:
+            today = pd.Timestamp.today().normalize()
+            dates = pd.date_range(end=today, periods=12, freq="W-THU")
+            values = np.linspace(200_000, 260_000, len(dates))
+            values_normalized = (values - values.min()) / (values.max() - values.min())
+            
+            return pd.DataFrame({
+                "timestamp": dates,
+                "jobless_claims": values_normalized,
+            })
+        
         df = self.fetch_series(FRED_SERIES["jobless_claims"], days_back, use_cache)
 
         if df.empty:
@@ -280,7 +293,7 @@ class FREDEconomicFetcher:
         else:
             df["jobless_claims"] = 0.5  # Default neutral
 
-            return df[["timestamp", "jobless_claims"]]
+        return df[["timestamp", "jobless_claims"]]
 
     def fetch_gdp_growth(
         self, days_back: int = 365, use_cache: bool = True

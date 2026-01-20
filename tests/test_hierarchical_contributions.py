@@ -159,7 +159,7 @@ class TestGlobalStability:
         global_index_before = float(df["behavior_index"].iloc[0])
 
         # Get details (this should not change the global index)
-        details = computer.get_subindex_details(df, 0)
+        computer.get_subindex_details(df, 0)
 
         # Recompute to ensure no side effects
         df_after = computer.compute_behavior_index(harmonized)

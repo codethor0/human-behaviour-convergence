@@ -53,7 +53,7 @@ class TestStateReset:
     def test_singleton_reset(self):
         """Singleton LiveMonitor can be reset."""
         # Get instance (creates if needed)
-        get_live_monitor()
+        monitor1 = get_live_monitor()
 
         # Reset singleton
         reset_live_monitor()

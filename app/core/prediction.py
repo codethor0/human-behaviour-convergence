@@ -339,12 +339,13 @@ class BehavioralForecaster:
                 sources.append("public health API")
 
             # Fetch mobility data (TSA passenger throughput - no key required)
-            mobility_data, mobility_status = self.mobility_fetcher.fetch_mobility_index(
+            mobility_data = self.mobility_fetcher.fetch_mobility_index(
                 latitude=latitude, longitude=longitude, days_back=days_back
             )
-            if mobility_status.ok and not mobility_data.empty:
+            if not mobility_data.empty:
                 sources.append("TSA Passenger Throughput (Mobility)")
-            # Always store mobility status in metadata (even if failed)
+            # Get status from last_status attribute if needed
+            mobility_status = getattr(self.mobility_fetcher, 'last_status', None)
 
             # Fetch GDELT events data (digital attention)
             gdelt_tone, gdelt_status = self.gdelt_fetcher.fetch_event_tone(
