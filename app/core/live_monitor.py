@@ -144,7 +144,7 @@ class LiveMonitor:
 
                 snapshot = LiveSnapshot(
                     region_id=region_id,
-                    timestamp=datetime.now().isoformat(),
+                    timestamp=datetime.now(),
                     behavior_index=0.5,
                     sub_indices={
                         "economic_stress": 0.5,
@@ -153,9 +153,9 @@ class LiveMonitor:
                         "digital_attention": 0.5,
                         "public_health_stress": 0.5,
                     },
-                    risk_tier="stable",
-                    events=[],
-                    explanation="Test snapshot",
+                    sources=["test_synthetic"],
+                    explanation_summary="Test snapshot for resource exhaustion tests",
+                    event_flags={},
                 )
                 # Store using same LRU logic
                 with self._lock:
