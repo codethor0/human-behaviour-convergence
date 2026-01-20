@@ -411,6 +411,7 @@ jobs:
           echo "Test discovery successful"
 
       - name: Run tests
+        timeout-minutes: 30
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
@@ -782,7 +783,22 @@ jobs:
           set +e
           LOG="/tmp/docker-e2e-playwright.log"
 
-          npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line,html 2>&1 | tee "$LOG"
+          # Print diagnostics marker and environment before tests
+          echo "=== DOCKER_E2E_DIAGNOSTICS ===" | tee "$LOG"
+          echo "Environment:" | tee -a "$LOG"
+          echo "  PLAYWRIGHT_BASE_URL: http://localhost:3100" | tee -a "$LOG"
+          echo "  NEXT_PUBLIC_API_BASE: http://localhost:8100" | tee -a "$LOG"
+          echo "Docker containers:" | tee -a "$LOG"
+          docker ps | tee -a "$LOG"
+          echo "Backend health:" | tee -a "$LOG"
+          curl -s http://localhost:8100/health || echo "Backend not responding" | tee -a "$LOG"
+          echo "Frontend reachability:" | tee -a "$LOG"
+          curl -sI http://localhost:3100/forecast | head -5 | tee -a "$LOG"
+          echo "Regions API:" | tee -a "$LOG"
+          curl -s http://localhost:8100/api/forecasting/regions | jq 'length' || echo "Regions API not responding" | tee -a "$LOG"
+          echo "=== Starting Playwright tests ===" | tee -a "$LOG"
+
+          npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line,html 2>&1 | tee -a "$LOG"
           code=${PIPESTATUS[0]}
 
           if [ "$code" -ne 0 ]; then

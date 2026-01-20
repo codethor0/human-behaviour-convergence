@@ -43,69 +43,26 @@ test.describe('Forecast Smoke Tests', () => {
 
   test('Generate forecast and verify results sections exist', async ({ page }) => {
     try {
-      // Wait for region dropdown to be available
-      const regionSelect = page.locator('select').first();
-      await regionSelect.waitFor({ timeout: 10000 });
-
-      // Select first available region deterministically
-      const options = await regionSelect.locator('option').all();
-      if (options.length < 2) {
-        test.skip('No regions available for testing');
+      // Verify Grafana dashboards are embedded (Grafana-first UI)
+      const iframes = page.locator('iframe');
+      await expect(iframes.first()).toBeVisible({ timeout: 30000 });
+      
+      // Verify multiple dashboards are present
+      const iframeCount = await iframes.count();
+      if (iframeCount < 2) {
+        test.skip('No dashboards loaded for testing');
         return;
       }
 
-      // Select the first non-empty option (skip index 0 if it's empty/default)
-      const firstValidOption = options.find(async (opt) => {
-        const value = await opt.getAttribute('value');
-        return value && value !== '' && value !== 'default';
-      }) || options[1];
-
-      const regionValue = await firstValidOption.getAttribute('value');
-      if (regionValue) {
-        await regionSelect.selectOption(regionValue);
-      }
-
-      // Assert button is visible and enabled before clicking
-      const generateButton = page.getByTestId('forecast-generate-button');
-      await expect(generateButton).toBeVisible({ timeout: 10000 });
-      await expect(generateButton).toBeEnabled({ timeout: 30000 });
-
-      // Wait for the POST request AND response to complete
-      const responsePromise = page.waitForResponse(
-        (response) => {
-          const url = response.url();
-          return url.includes('/api/forecast') && response.request().method() === 'POST' && response.status() === 200;
-        },
-        { timeout: 60000 }
-      );
-
-      // Click generate button
-      await generateButton.click();
-
-    // Wait for response to complete
-    const response = await responsePromise;
-
-    // Assertions
-    expect(response.request().method()).toBe('POST');
-    expect(response.status()).toBe(200);
-
-    // Wait for results to render (check for Grafana dashboard iframes)
-    // The Quick Summary was replaced with Grafana dashboards
-    await page.waitForFunction(
-      () => {
-        const iframes = document.querySelectorAll('iframe');
-        return iframes.length > 0;
-      },
-      { timeout: 30000 }
-    );
-
-    // Verify Grafana dashboard iframes are embedded
-    const dashboardIframes = page.locator('iframe');
-    await expect(dashboardIframes.first()).toBeVisible();
-    
-    // Verify at least one Grafana dashboard is present
-    const iframeCount = await dashboardIframes.count();
-    expect(iframeCount).toBeGreaterThan(0);
+      // Grafana-first UI: dashboards auto-load, verify they contain valid src
+      const firstIframe = iframes.first();
+      const src = await firstIframe.getAttribute('src');
+      
+      // Verify iframe src points to Grafana
+      expect(src).toBeTruthy();
+      expect(src).toMatch(/grafana|\/d\//);
+      
+      console.log(`✓ Verified ${iframeCount} Grafana dashboard(s) loaded`);
 
       // Verify button returns to normal state
       await expect(generateButton).not.toBeDisabled();

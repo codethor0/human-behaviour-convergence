@@ -25,7 +25,10 @@ class TestSearchTrendsFetcher:
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
         # Column name varies: search_interest_score or search_attention_index
-        assert "search_interest_score" in result.columns or "search_attention_index" in result.columns
+        assert (
+            "search_interest_score" in result.columns
+            or "search_attention_index" in result.columns
+        )
         # Fallback behavior may return data (e.g., Wikipedia pageviews)
 
     @patch("os.getenv")
@@ -63,7 +66,10 @@ class TestSearchTrendsFetcher:
         assert isinstance(result, pd.DataFrame)
         assert status is not None
         assert "timestamp" in result.columns
-        assert "search_interest_score" in result.columns or "search_attention_index" in result.columns
+        assert (
+            "search_interest_score" in result.columns
+            or "search_attention_index" in result.columns
+        )
         assert len(result) > 0
 
     def test_error_handling(self):
@@ -98,4 +104,7 @@ class TestSearchTrendsFetcher:
         assert isinstance(result, pd.DataFrame)
         assert status is not None
         assert "timestamp" in result.columns
-        assert "search_interest_score" in result.columns or "search_attention_index" in result.columns
+        assert (
+            "search_interest_score" in result.columns
+            or "search_attention_index" in result.columns
+        )
