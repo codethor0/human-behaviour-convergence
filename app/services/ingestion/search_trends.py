@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: PROPRIETARY
+# SPDX-LICENSE-IDENTIFIER: PROPRIETARY
 """Search trends data ingestion using public APIs for digital attention analysis."""
 import math
 import time
@@ -10,6 +10,7 @@ import requests
 import structlog
 
 from app.services.ingestion.gdelt_events import SourceStatus
+from app.services.ingestion.ci_offline_data import is_ci_offline_mode, get_ci_search_trends_data
 
 logger = structlog.get_logger("ingestion.search_trends")
 
@@ -145,6 +146,13 @@ class SearchTrendsFetcher:
             DataFrame columns: ['timestamp', 'search_attention_index']
             search_attention_index is normalized to 0.0-1.0 where 1.0 = maximum attention
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for search trends data")
+            df = get_ci_search_trends_data(region_name or query)
+            df = df.rename(columns={"value": "search_attention_index"})
+            return df, SourceStatus.HEALTHY
+        
         fetched_at = datetime.now().isoformat()
         cache_key = f"search_trends_{region_name or query}_{days_back}"
 

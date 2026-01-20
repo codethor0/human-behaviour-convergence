@@ -66,6 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: static-checks
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feat/'))
+    env:
+      HBC_CI_OFFLINE_DATA: "1"
 
     steps:
       - name: Checkout code
@@ -83,7 +85,7 @@ jobs:
       - name: Start Docker stack
         run: |
           docker compose up -d
-          echo "[PASS] Stack started"
+          echo "[PASS] Stack started with HBC_CI_OFFLINE_DATA=1"
 
       - name: Wait for services
         run: |

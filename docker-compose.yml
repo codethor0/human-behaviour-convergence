@@ -26,6 +26,7 @@ services:
       - SEARCH_TRENDS_API_KEY=${SEARCH_TRENDS_API_KEY:-}
       - OPENSTATES_API_KEY=${OPENSTATES_API_KEY:-}
       - HBC_DB_PATH=${HBC_DB_PATH:-/app/data/hbc.db}
+      - HBC_CI_OFFLINE_DATA=${HBC_CI_OFFLINE_DATA:-0}
     command: uvicorn app.backend.app.main:app --host 0.0.0.0 --port 8000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

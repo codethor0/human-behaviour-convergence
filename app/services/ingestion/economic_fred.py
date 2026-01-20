@@ -8,6 +8,8 @@ import pandas as pd
 import requests
 import structlog
 
+from app.services.ingestion.ci_offline_data import is_ci_offline_mode, get_ci_economic_data
+
 logger = structlog.get_logger("ingestion.economic_fred")
 
 # FRED API base URL
@@ -70,6 +72,11 @@ class FREDEconomicFetcher:
             DataFrame with columns: ['timestamp', 'value']
             Returns empty DataFrame if API key not set or on error
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for economic data")
+            return get_ci_economic_data(series_id)
+        
         if not self.api_key:
             logger.warning("FRED_API_KEY not set, returning empty DataFrame")
             return pd.DataFrame(columns=["timestamp", "value"])
