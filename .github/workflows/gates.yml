@@ -132,10 +132,15 @@ jobs:
           echo "Generating forecasts to ensure data pipeline is ready..."
           for region in us_mn city_nyc us_ca city_london; do
             echo "  Forecasting ${region}..."
-            curl -sf -X POST "http://localhost:8100/api/forecast" \
+            response=$(curl -sS -X POST "http://localhost:8100/api/forecast" \
               -H "Content-Type: application/json" \
               -d "{\"region_id\":\"${region}\",\"days_back\":30,\"forecast_horizon\":7}" \
-              > /dev/null || echo "    [WARN] Forecast for ${region} failed (continuing)"
+              2>&1)
+            if echo "$response" | jq -e '.metadata.region_id' > /dev/null 2>&1; then
+              echo "    [OK] Forecast generated successfully"
+            else
+              echo "    [WARN] Forecast response: ${response:0:200}"
+            fi
           done
           
           echo "Waiting 60 seconds for Prometheus to scrape metrics..."
