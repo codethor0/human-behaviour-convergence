@@ -28,7 +28,7 @@ This guide covers deploying the behavioral forecasting system in three environme
 3. [Production Deployment](#production-deployment)
 4. [Environment Variables Reference](#environment-variables-reference)
 5. [Security Considerations](#security-considerations)
-6. [Monitoring & Health Checks](#monitoring--health-checks)
+6. [Monitoring & Health Checks](#monitoring-health-checks)
 7. [Rollback Procedures](#rollback-procedures)
 8. [Troubleshooting](#troubleshooting)
 
