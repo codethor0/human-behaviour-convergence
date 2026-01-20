@@ -5,105 +5,81 @@ test.describe('Playground Smoke Tests', () => {
     // Navigate to playground page
     await page.goto('/playground');
 
-    // Wait for regions to load by checking for checkboxes
-    // Checkboxes only appear when regions have loaded successfully
-    await page.waitForSelector('input[type="checkbox"]', { timeout: 30000 });
+    // Wait for region dropdown to be populated
+    // The select element is always present, but initially shows "Loading regions..."
+    const regionSelect = page.locator('select[aria-label="Select region for playground"]');
+    await regionSelect.waitFor({ state: 'visible', timeout: 60000 });
 
-    // Wait for at least one checkbox to be available
+    // Wait for regions to actually load by checking that we have real options (not just "Loading...")
     await page.waitForFunction(
       () => {
-        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-        return checkboxes.length > 0;
-      },
-      { timeout: 30000 }
-    );
-
-    // Wait a bit for any error messages to clear
-    await page.waitForTimeout(1000);
-
-    // Verify no error message is shown (only fail if error persists after regions should have loaded)
-    const errorText = page.locator('text=/Failed to load/i');
-    const errorVisible = await errorText.isVisible().catch(() => false);
-    if (errorVisible) {
-      // Double-check that regions actually loaded by checking for checkboxes
-      const checkboxes = page.locator('input[type="checkbox"]');
-      const checkboxCount = await checkboxes.count();
-      if (checkboxCount === 0) {
-        throw new Error('Regions failed to load - error message present and no regions available');
-      }
-    }
-
-    // Wait for network to be idle
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('Compare regions and verify results exist', async ({ page }) => {
-    // Wait for region checkboxes to be available
-    const regionCheckboxes = page.locator('input[type="checkbox"]');
-    await regionCheckboxes.first().waitFor({ timeout: 10000 });
-
-    // Count available checkboxes
-    const checkboxCount = await regionCheckboxes.count();
-    if (checkboxCount === 0) {
-      test.skip('No regions available for testing');
-      return;
-    }
-
-    // Select first available region
-    const firstCheckbox = regionCheckboxes.first();
-    const isChecked = await firstCheckbox.isChecked();
-
-    if (!isChecked) {
-      await firstCheckbox.check();
-      // Wait for checkbox state to update
-      await expect(firstCheckbox).toBeChecked({ timeout: 5000 });
-    }
-
-    // Verify at least one region is selected by checking each checkbox's state
-    let checkedCount = 0;
-    const totalCheckboxes = await regionCheckboxes.count();
-    for (let i = 0; i < totalCheckboxes; i++) {
-      const checkbox = regionCheckboxes.nth(i);
-      if (await checkbox.isChecked()) {
-        checkedCount++;
-      }
-    }
-    expect(checkedCount).toBeGreaterThan(0);
-
-    // Wait for the POST request to complete
-    const requestPromise = page.waitForRequest(
-      (request) => {
-        const url = request.url();
-        return url.includes('/api/playground/compare') && request.method() === 'POST';
+        const select = document.querySelector('select[aria-label="Select region for playground"]') as HTMLSelectElement;
+        if (!select) return false;
+        const options = Array.from(select.options);
+        // Check if we have options that aren't loading/error states
+        return options.some(opt => opt.value && !opt.text.includes('Loading') && !opt.text.includes('Error'));
       },
       { timeout: 60000 }
     );
 
-    // Click compare button
-    await page.click('[data-testid="playground-compare-button"]');
+    // Small delay for stability
+    await page.waitForTimeout(2000);
+  });
 
-    // Wait for request to complete
-    const request = await requestPromise;
-    const response = await request.response();
+  test('Region selection and Grafana dashboard embedding', async ({ page }) => {
+    // Verify page title/heading
+    await expect(page.locator('text=/Live Playground/i')).toBeVisible();
+    await expect(page.locator('text=/Interactive Analytics Playground/i')).toBeVisible();
 
-    // Assertions
-    expect(request.method()).toBe('POST');
-    expect(response?.status()).toBe(200);
+    // Verify region dropdown is functional
+    const regionSelect = page.locator('select[aria-label="Select region for playground"]');
+    await expect(regionSelect).toBeEnabled();
 
-    // Wait for results section to appear
-    await page.waitForSelector('[data-testid="playground-results"]', { timeout: 10000 });
+    // Get the current selected value
+    const initialRegion = await regionSelect.inputValue();
+    expect(initialRegion).toBeTruthy(); // Should have a default region selected
 
-    // Verify results section exists and is visible
-    const resultsSection = page.locator('[data-testid="playground-results"]');
-    await expect(resultsSection).toBeVisible();
+    // Verify region selection displays correctly
+    await expect(page.locator('text=/Selected:/i')).toBeVisible();
 
-    // Verify results contain at least one region result
-    const resultsHeading = resultsSection.locator('h2');
-    await expect(resultsHeading).toContainText('Comparison Results');
+    // Verify both Grafana dashboards are embedded
+    const iframes = page.locator('iframe');
+    const iframeCount = await iframes.count();
+    expect(iframeCount).toBeGreaterThanOrEqual(2); // At least 2 dashboards
 
-    // Verify button returns to normal state
-    const compareButton = page.locator('[data-testid="playground-compare-button"]');
-    await expect(compareButton).not.toBeDisabled();
-    await expect(compareButton).toHaveText('Compare Regions');
+    // Verify the dashboard titles
+    await expect(page.locator('text=/Behavior Index - Regional View/i')).toBeVisible();
+    await expect(page.locator('text=/Sub-Index Analysis - Deep Dive/i')).toBeVisible();
+
+    // Verify iframe src contains expected dashboard UIDs
+    const firstIframe = iframes.first();
+    const firstSrc = await firstIframe.getAttribute('src');
+    expect(firstSrc).toContain('behavior-index-global');
+
+    const secondIframe = iframes.nth(1);
+    const secondSrc = await secondIframe.getAttribute('src');
+    expect(secondSrc).toContain('subindex-deep-dive');
+
+    // Verify iframes contain region parameter
+    expect(firstSrc).toContain('var-region=');
+    expect(secondSrc).toContain('var-region=');
+
+    // Try changing region (if we have multiple options)
+    const optionCount = await regionSelect.locator('option').count();
+    if (optionCount > 1) {
+      // Get the second option value
+      const secondOption = regionSelect.locator('option').nth(1);
+      const secondValue = await secondOption.getAttribute('value');
+      
+      if (secondValue) {
+        // Select a different region
+        await regionSelect.selectOption(secondValue);
+        await page.waitForTimeout(1000);
+
+        // Verify the iframe src updated with new region
+        const updatedIframeSrc = await iframes.first().getAttribute('src');
+        expect(updatedIframeSrc).toContain(`var-region=${secondValue}`);
+      }
+    }
   });
 });
