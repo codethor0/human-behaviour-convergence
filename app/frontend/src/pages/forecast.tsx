@@ -183,8 +183,14 @@ function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid
     : styles.iframe;
 
   return (
-    <div style={styles.card}>
-      <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>{title}</h2>
+    <div style={{
+      backgroundColor: '#fff',
+      borderRadius: '8px',
+      padding: '10px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      marginBottom: '2px',
+    }}>
+      <h2 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: '600', color: '#333' }}>{title}</h2>
       <iframe
         src={src}
         style={iframeStyle}
