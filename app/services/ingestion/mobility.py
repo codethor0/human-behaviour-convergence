@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: PROPRIETARY
+# SPDX-LICENSE-IDENTIFIER: PROPRIETARY
 """Mobility data ingestion using public APIs for activity pattern analysis."""
 import time
 from datetime import datetime, timedelta
@@ -8,6 +8,7 @@ import pandas as pd
 import requests
 import structlog
 
+from app.services.ingestion.ci_offline_data import is_ci_offline_mode, get_ci_mobility_data
 from app.services.ingestion.gdelt_events import SourceStatus
 
 logger = structlog.get_logger("ingestion.mobility")
@@ -124,6 +125,21 @@ class MobilityFetcher:
             DataFrame columns: ['timestamp', 'mobility_index']
             mobility_index is normalized to 0.0-1.0 where 1.0 = maximum mobility/activity
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for mobility data")
+            df = get_ci_mobility_data(region_code or "default")
+            df = df.rename(columns={"value": "mobility_index"})
+            status = SourceStatus(
+                provider="CI_Synthetic_Mobility",
+                ok=True,
+                http_status=200,
+                fetched_at=datetime.now().isoformat(),
+                rows=len(df),
+                query_window_days=days_back,
+            )
+            return df.tail(days_back).copy(), status
+        
         fetched_at = datetime.now().isoformat()
         cache_key = f"mobility_tsa_{days_back}"
 
