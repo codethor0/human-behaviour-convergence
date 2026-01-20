@@ -128,8 +128,10 @@ class BehavioralForecaster:
         self.risk_classifier = RiskClassifier()
         self.forecast_monitor = ForecastMonitor()
         self.correlation_engine = CorrelationEngine()
+        # Use dict for LRU cache (Python 3.7+ dicts maintain insertion order)
         self._cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, Dict]] = {}
         self._max_cache_size: Optional[int] = None
+        self._cache_lock = __import__('threading').Lock()
 
     def reset_cache(self) -> None:
         """
@@ -137,7 +139,8 @@ class BehavioralForecaster:
 
         Intended for tests and process-lifetime reset paths.
         """
-        self._cache.clear()
+        with self._cache_lock:
+            self._cache.clear()
 
     def _is_us_state(self, region_name: str) -> bool:
         """Check if region_name is a US state."""
@@ -229,10 +232,13 @@ class BehavioralForecaster:
             f"{days_back},{forecast_horizon}"
         )
 
-        # Check cache
-        if cache_key in self._cache:
-            logger.info("Using cached forecast", cache_key=cache_key)
-            history, forecast, metadata = self._cache[cache_key]
+        # Check cache with LRU access pattern
+        with self._cache_lock:
+            if cache_key in self._cache:
+                logger.info("Using cached forecast", cache_key=cache_key)
+                # LRU: move accessed item to end (most recent)
+                history, forecast, metadata = self._cache.pop(cache_key)
+                self._cache[cache_key] = (history, forecast, metadata)
             # Convert timestamps to ISO strings for API response
             history_dict = history.copy()
             if not history.empty and "timestamp" in history_dict.columns:
@@ -1341,17 +1347,18 @@ class BehavioralForecaster:
                         "enforcement_attention"
                     ] = max_enforcement_attention
 
-                # Cache result
-                self._cache[cache_key] = (history, forecast_df, metadata)
+                # Cache result with LRU eviction
+                with self._cache_lock:
+                    self._cache[cache_key] = (history, forecast_df, metadata)
 
-                # Enforce cache size limit (LRU eviction)
-                if (
-                    self._max_cache_size is not None
-                    and len(self._cache) > self._max_cache_size
-                ):
-                    # Remove oldest entry (first key in dict)
-                    oldest_key = next(iter(self._cache))
-                    del self._cache[oldest_key]
+                    # Enforce cache size limit (LRU eviction)
+                    if (
+                        self._max_cache_size is not None
+                        and len(self._cache) > self._max_cache_size
+                    ):
+                        # Remove oldest entry (first key in dict)
+                        oldest_key = next(iter(self._cache))
+                        del self._cache[oldest_key]
 
                 logger.info(
                         "Forecast generated successfully",

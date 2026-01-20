@@ -94,10 +94,13 @@ class LiveMonitor:
         self.max_snapshots_per_region = max_snapshots_per_region
         self.refresh_interval_minutes = refresh_interval_minutes
         self.historical_days = historical_days
+        self.max_regions = max_regions  # Make it a public property for tests
         self._max_regions = max_regions
 
         # In-memory storage: region_id -> list of LiveSnapshot (most recent first)
+        # Use dict for LRU ordering (Python 3.7+ maintains insertion order)
         self._snapshots: Dict[str, List[LiveSnapshot]] = {}
+        self._lock = __import__('threading').Lock()
 
         # Event detection thresholds
         self._event_thresholds = {
@@ -195,11 +198,16 @@ class LiveMonitor:
                 event_flags=event_flags,
             )
 
-            # Store snapshot (most recent first)
-            if region_id not in self._snapshots:
-                self._snapshots[region_id] = []
+            # Store snapshot with LRU region management
+            with self._lock:
+                # LRU: if region already exists, remove and re-add to move to end
+                if region_id in self._snapshots:
+                    snapshots_list = self._snapshots.pop(region_id)
+                    self._snapshots[region_id] = snapshots_list
+                else:
+                    self._snapshots[region_id] = []
 
-                # Enforce max_regions limit (evict oldest region)
+                # Enforce max_regions limit (evict least recently used)
                 if (
                     self._max_regions is not None
                     and len(self._snapshots) > self._max_regions
@@ -208,13 +216,13 @@ class LiveMonitor:
                     oldest_region = next(iter(self._snapshots))
                     del self._snapshots[oldest_region]
 
-            self._snapshots[region_id].insert(0, snapshot)
+                self._snapshots[region_id].insert(0, snapshot)
 
-            # Trim old snapshots
-            if len(self._snapshots[region_id]) > self.max_snapshots_per_region:
-                self._snapshots[region_id] = self._snapshots[region_id][
-                    : self.max_snapshots_per_region
-                ]
+                # Trim old snapshots
+                if len(self._snapshots[region_id]) > self.max_snapshots_per_region:
+                    self._snapshots[region_id] = self._snapshots[region_id][
+                        : self.max_snapshots_per_region
+                    ]
 
             logger.info(
                 "Refreshed live snapshot",
