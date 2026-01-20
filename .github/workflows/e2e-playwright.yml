@@ -112,6 +112,20 @@ jobs:
           done
         continue-on-error: false
 
+      - name: Warm up backend (pre-generate regions and forecast)
+        run: |
+          echo "=== Warming up backend ==="
+          echo "Checking /api/forecasting/regions..."
+          curl -sS http://127.0.0.1:8100/api/forecasting/regions | jq 'length' || echo "Regions API failed"
+          
+          echo "Pre-generating forecast for us_mn..."
+          curl -sS -X POST http://127.0.0.1:8100/api/forecast \
+            -H "Content-Type: application/json" \
+            -d '{"region_id":"us_mn","days_back":30,"forecast_horizon":7}' \
+            | jq '.metadata.region_id' || echo "Forecast generation failed (continuing)"
+          
+          echo "[OK] Backend warm-up complete"
+
       - name: Verify CORS headers (temporary proof)
         run: |
           echo "=== CORS Header Verification ==="
