@@ -1341,10 +1341,19 @@ class BehavioralForecaster:
                         "enforcement_attention"
                     ] = max_enforcement_attention
 
-                    # Cache result
-                    self._cache[cache_key] = (history, forecast_df, metadata)
+                # Cache result
+                self._cache[cache_key] = (history, forecast_df, metadata)
 
-                    logger.info(
+                # Enforce cache size limit (LRU eviction)
+                if (
+                    self._max_cache_size is not None
+                    and len(self._cache) > self._max_cache_size
+                ):
+                    # Remove oldest entry (first key in dict)
+                    oldest_key = next(iter(self._cache))
+                    del self._cache[oldest_key]
+
+                logger.info(
                         "Forecast generated successfully",
                         region_name=region_name,
                         forecast_points=len(forecast_df),

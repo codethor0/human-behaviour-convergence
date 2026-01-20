@@ -89,40 +89,23 @@ test.describe('Forecast Smoke Tests', () => {
     expect(response.request().method()).toBe('POST');
     expect(response.status()).toBe(200);
 
-    // Wait for Quick Summary section to appear and have content (UI updates after response is parsed)
-    // The div exists but content only appears when forecastData is set
+    // Wait for results to render (check for Grafana dashboard iframes)
+    // The Quick Summary was replaced with Grafana dashboards
     await page.waitForFunction(
       () => {
-        const summary = document.querySelector('[data-testid="forecast-quick-summary"]');
-        if (!summary) return false;
-        // Check if content exists (not just the placeholder text)
-        const hasContent = summary.textContent &&
-          !summary.textContent.includes('Generate a forecast to see summary') &&
-          (summary.textContent.includes('Behavior Index') ||
-           summary.textContent.includes('Risk Tier') ||
-           summary.textContent.includes('Convergence Score'));
-        return hasContent;
+        const iframes = document.querySelectorAll('iframe');
+        return iframes.length > 0;
       },
       { timeout: 30000 }
     );
 
-    // Verify Quick Summary exists and has content
-    const quickSummary = page.locator('[data-testid="forecast-quick-summary"]');
-    await expect(quickSummary).toBeVisible();
-
-    // Verify at least one metric card exists in Quick Summary
-    const metricCards = quickSummary.locator('div').filter({ hasText: /Behavior Index|Risk Tier|Convergence Score|Shock Events/ });
-    const cardCount = await metricCards.count();
-    expect(cardCount).toBeGreaterThan(0);
-
-    // Verify Sub-Index Breakdown exists (if explanations are present)
-    const subIndexBreakdown = page.locator('[data-testid="forecast-subindex-breakdown"]');
-    const breakdownExists = await subIndexBreakdown.count() > 0;
-
-    // Sub-Index Breakdown is optional, but if it exists, it should be visible
-    if (breakdownExists) {
-      await expect(subIndexBreakdown).toBeVisible();
-    }
+    // Verify Grafana dashboard iframes are embedded
+    const dashboardIframes = page.locator('iframe');
+    await expect(dashboardIframes.first()).toBeVisible();
+    
+    // Verify at least one Grafana dashboard is present
+    const iframeCount = await dashboardIframes.count();
+    expect(iframeCount).toBeGreaterThan(0);
 
       // Verify button returns to normal state
       await expect(generateButton).not.toBeDisabled();

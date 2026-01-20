@@ -17,7 +17,7 @@ class TestMobilityFetcher:
         assert isinstance(fetcher, MobilityFetcher)
 
     def test_fetch_mobility_index_no_config(self):
-        """Test that fetcher returns empty DataFrame when API not configured."""
+        """Test that fetcher returns fallback data when API not configured."""
         fetcher = MobilityFetcher()
         result = fetcher.fetch_mobility_index(days_back=30)
 
@@ -25,7 +25,8 @@ class TestMobilityFetcher:
         assert isinstance(result, pd.DataFrame)
         assert "timestamp" in result.columns
         assert "mobility_index" in result.columns
-        assert result.empty  # Should be empty when API not configured
+        # Fetcher uses deterministic day-of-week fallback when API unavailable
+        assert len(result) == 30  # Should return days_back rows of fallback data
 
     @patch("os.getenv")
     @patch("requests_cache.CachedSession")

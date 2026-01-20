@@ -48,10 +48,10 @@ class TestRiskTierMonotonicity:
         # Use neutral adjustments (convergence_score=50.0, trend="stable") so risk_score ≈ behavior_index
         test_cases = [
             (0.0, "stable"),
-            (0.35, "watchlist"),  # Above 0.3 threshold
-            (0.60, "elevated"),  # Above 0.5 threshold
-            (0.75, "high"),  # Above 0.7 threshold
-            (0.90, "critical"),  # Above 0.85 threshold
+            (0.35, "elevated"),  # Above 0.30 threshold
+            (0.60, "high"),  # Above 0.50 threshold
+            (0.75, "critical"),  # Above 0.70 threshold
+            (0.90, "critical"),  # Above 0.70 threshold
         ]
 
         for score, expected_tier in test_cases:

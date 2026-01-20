@@ -198,6 +198,16 @@ class LiveMonitor:
             # Store snapshot (most recent first)
             if region_id not in self._snapshots:
                 self._snapshots[region_id] = []
+
+                # Enforce max_regions limit (evict oldest region)
+                if (
+                    self._max_regions is not None
+                    and len(self._snapshots) > self._max_regions
+                ):
+                    # Remove oldest region (first key in dict)
+                    oldest_region = next(iter(self._snapshots))
+                    del self._snapshots[oldest_region]
+
             self._snapshots[region_id].insert(0, snapshot)
 
             # Trim old snapshots
