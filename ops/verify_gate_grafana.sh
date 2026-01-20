@@ -131,7 +131,17 @@ prom_query "behavior_index 7-day volatility" "stddev_over_time(behavior_index{re
 
 echo
 echo "[4.5] Risk Regimes dashboard queries"
-prom_query "critical regions (>= 0.7)" "behavior_index >= 0.7"
+# Note: critical regions query may legitimately return empty if no regions are currently critical
+echo "  - critical regions (>= 0.7): behavior_index >= 0.7"
+encoded_query="$(python3 -c "import urllib.parse; print(urllib.parse.quote('behavior_index >= 0.7'))")"
+curl -sS "http://localhost:9090/api/v1/query?query=${encoded_query}" > /tmp/gateg_critical.json 2>&1
+if python3 -c "import json; d=json.load(open('/tmp/gateg_critical.json')); exit(0 if d.get('status')=='success' else 1)" 2>/dev/null; then
+  series_count=$(python3 -c "import json; print(len(json.load(open('/tmp/gateg_critical.json')).get('data',{}).get('result',[])))")
+  echo "    [OK] Query successful, series count: ${series_count} (0 = no critical regions, expected in healthy system)"
+else
+  echo "    [FAIL] Query failed"
+  FAIL=1
+fi
 
 # Note: unstable regions query may legitimately return empty if all regions have low volatility
 echo "  - unstable regions (volatility): stddev_over_time(behavior_index[7d]) >= 0.1"
