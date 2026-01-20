@@ -94,13 +94,21 @@ class LiveMonitor:
         self.max_snapshots_per_region = max_snapshots_per_region
         self.refresh_interval_minutes = refresh_interval_minutes
         self.historical_days = historical_days
+
+        # Read max_regions from env var if not explicitly set
+        import os
+
+        if max_regions is None:
+            max_regions_env = os.environ.get("LIVE_MONITOR_MAX_REGIONS")
+            max_regions = int(max_regions_env) if max_regions_env else None
+
         self.max_regions = max_regions  # Make it a public property for tests
         self._max_regions = max_regions
 
         # In-memory storage: region_id -> list of LiveSnapshot (most recent first)
         # Use dict for LRU ordering (Python 3.7+ maintains insertion order)
         self._snapshots: Dict[str, List[LiveSnapshot]] = {}
-        self._lock = __import__('threading').Lock()
+        self._lock = __import__("threading").Lock()
 
         # Event detection thresholds
         self._event_thresholds = {
@@ -321,9 +329,15 @@ class LiveMonitor:
         Returns:
             Latest LiveSnapshot or None if not available
         """
-        if region_id not in self._snapshots or len(self._snapshots[region_id]) == 0:
-            return None
-        return self._snapshots[region_id][0]
+        with self._lock:
+            if region_id not in self._snapshots or len(self._snapshots[region_id]) == 0:
+                return None
+
+            # LRU: move accessed region to end (most recently used)
+            snapshots_list = self._snapshots.pop(region_id)
+            self._snapshots[region_id] = snapshots_list
+
+            return snapshots_list[0]
 
     def get_snapshots(
         self,

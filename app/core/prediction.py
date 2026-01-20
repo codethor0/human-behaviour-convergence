@@ -130,8 +130,16 @@ class BehavioralForecaster:
         self.correlation_engine = CorrelationEngine()
         # Use dict for LRU cache (Python 3.7+ dicts maintain insertion order)
         self._cache: Dict[str, Tuple[pd.DataFrame, pd.DataFrame, Dict]] = {}
-        self._max_cache_size: Optional[int] = None
-        self._cache_lock = __import__('threading').Lock()
+
+        # Read cache size from env var if set
+        import os
+
+        cache_size_env = os.environ.get("FORECASTER_CACHE_MAX_SIZE")
+        self._max_cache_size: Optional[int] = (
+            int(cache_size_env) if cache_size_env else None
+        )
+
+        self._cache_lock = __import__("threading").Lock()
 
     def reset_cache(self) -> None:
         """
@@ -253,7 +261,9 @@ class BehavioralForecaster:
                 # Preserve harmonized_df in metadata for component extraction
                 # (will be removed in API layer)
                 return {
-                    "history": history_dict.to_dict("records") if not history.empty else [],
+                    "history": (
+                        history_dict.to_dict("records") if not history.empty else []
+                    ),
                     "forecast": (
                         forecast_dict.to_dict("records") if not forecast.empty else []
                     ),
@@ -1361,14 +1371,14 @@ class BehavioralForecaster:
                         del self._cache[oldest_key]
 
                 logger.info(
-                        "Forecast generated successfully",
-                        region_name=region_name,
-                        forecast_points=len(forecast_df),
-                        prediction_range=(
-                            forecast_df["prediction"].min(),
-                            forecast_df["prediction"].max(),
-                        ),
-                    )
+                    "Forecast generated successfully",
+                    region_name=region_name,
+                    forecast_points=len(forecast_df),
+                    prediction_range=(
+                        forecast_df["prediction"].min(),
+                        forecast_df["prediction"].max(),
+                    ),
+                )
 
                 # Convert timestamps to ISO strings for API response
                 history_dict = history.copy()

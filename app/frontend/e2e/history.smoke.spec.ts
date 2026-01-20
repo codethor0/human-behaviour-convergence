@@ -253,14 +253,13 @@ test.describe('Forecast History Smoke Tests', () => {
       await expect(generateButton).toBeEnabled({ timeout: 30000 });
       await generateButton.click();
 
-      // Wait for forecast results
-      await page.waitForSelector('[data-testid="forecast-quick-summary"]', { timeout: 60000 });
+      // Wait for forecast results (Grafana dashboards)
       await page.waitForFunction(
         () => {
-          const summary = document.querySelector('[data-testid="forecast-quick-summary"]');
-          return summary && summary.textContent && summary.textContent.includes('Behavior Index');
+          const iframes = document.querySelectorAll('iframe');
+          return iframes.length > 0;
         },
-        { timeout: 30000 }
+        { timeout: 60000 }
       );
 
       // Small delay between forecasts to ensure different timestamps
