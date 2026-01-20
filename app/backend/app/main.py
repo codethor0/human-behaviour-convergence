@@ -1784,6 +1784,9 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         if isinstance(risk_tier_data, dict):
             risk_tier_for_explanation = risk_tier_data.get("tier")
 
+        # Initialize subindices_details_structure before try block to avoid UnboundLocalError
+        subindices_details_structure = None
+
         try:
             explanations_dict = generate_explanation(
                 behavior_index=latest_behavior_index,
@@ -1794,7 +1797,6 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             )
 
             # Build subindices_details with child indices (vNext)
-            subindices_details_structure = None
             if harmonized_df is not None and len(harmonized_df) > 0:
                 try:
                     # index_computer is already in scope (created at line 1183/1190)
