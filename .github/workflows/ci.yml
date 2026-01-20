@@ -704,57 +704,80 @@ jobs:
           docker compose up -d --build
           echo "Docker Compose stack started"
 
-      - name: Wait for backend healthcheck
+      - name: Wait for Docker services and verify all routes
         run: |
-          echo "Waiting for backend to be healthy..."
+          echo "=== Docker Service Readiness Gates ==="
+          
+          # Wait for backend (inside container healthcheck)
+          echo "Waiting for backend container healthcheck..."
           for i in {1..60}; do
             if docker compose exec -T backend curl -f http://localhost:8000/health >/dev/null 2>&1; then
-              echo "Backend healthcheck passed after ${i}s"
-              exit 0
+              echo "  Backend container: HEALTHY (${i}s)"
+              break
             fi
             if [ $i -eq 60 ]; then
-              echo "Backend healthcheck failed after 60s"
-              docker compose logs backend
+              echo "ERROR: Backend container healthcheck failed after 60s"
+              docker compose logs backend --tail=100
               exit 1
             fi
             sleep 1
           done
-
-      - name: Wait for frontend healthcheck
-        run: |
-          echo "Waiting for frontend to be healthy..."
+          
+          # Verify backend accessible from host
+          echo "Verifying backend accessible from host (localhost:8100)..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8100/health >/dev/null 2>&1; then
+              echo "  Backend host access: OK (${i}s)"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "ERROR: Backend not accessible from host after 30s"
+              docker compose logs backend --tail=100
+              exit 1
+            fi
+            sleep 1
+          done
+          
+          # Wait for frontend container
+          echo "Waiting for frontend container..."
           for i in {1..90}; do
-            if curl -f http://localhost:3100/ >/dev/null 2>&1; then
-              echo "Frontend healthcheck passed after ${i}s"
-              # Additional wait to ensure Next.js is fully ready
-              sleep 5
-              exit 0
+            if curl -fsS http://localhost:3100/ >/dev/null 2>&1; then
+              echo "  Frontend root: OK (${i}s)"
+              break
             fi
             if [ $i -eq 90 ]; then
-              echo "Frontend healthcheck failed after 90s"
-              docker compose logs frontend
+              echo "ERROR: Frontend not responding after 90s"
+              docker compose logs frontend --tail=100
               exit 1
             fi
             sleep 1
           done
-
-      - name: Verify backend API is accessible from host
-        run: |
-          echo "Verifying backend API is accessible..."
-          curl -f http://localhost:8100/health || (echo "Backend API not accessible" && docker compose logs backend && exit 1)
-          echo "Backend API is accessible"
-
-      - name: Warm up backend (pre-generate data)
-        run: |
-          echo "Warming up backend with forecast generation..."
-          curl -sS http://localhost:8100/api/forecasting/regions | jq 'length' || echo "Regions check completed"
           
+          # Critical: verify /forecast and /history routes (known failure points)
+          echo "Verifying critical routes..."
+          for route in /forecast /history; do
+            http_code=$(curl -sS -o /dev/null -w "%{http_code}" "http://localhost:3100${route}")
+            if [ "$http_code" = "200" ]; then
+              echo "  ${route}: 200 OK"
+            else
+              echo "ERROR: ${route} returned HTTP ${http_code}"
+              echo "Docker containers:"
+              docker ps
+              echo "Frontend logs:"
+              docker compose logs frontend --tail=100
+              exit 1
+            fi
+          done
+          
+          # Warm up backend with forecast generation
+          echo "Warming up backend (pre-generate metrics)..."
+          curl -sS http://localhost:8100/api/forecasting/regions | jq 'length' || echo "  Regions API: called"
           curl -sS -X POST http://localhost:8100/api/forecast \
             -H "Content-Type: application/json" \
             -d '{"region_id":"us_mn","region_name":"Minnesota","days_back":30,"forecast_horizon":7}' \
-            | jq '.metadata.region_id' || echo "Forecast generation completed"
+            | jq '.metadata.region_id' || echo "  Forecast: called"
           
-          echo "[OK] Backend warm-up complete"
+          echo "=== All readiness gates PASSED ==="
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -774,122 +797,76 @@ jobs:
         working-directory: app/frontend
         run: npx playwright install chromium
 
-      - name: Wait for services to be ready
-        run: |
-          echo "=== Readiness Gates ==="
-          
-          # Wait for backend health (max 60s)
-          echo "Waiting for backend health..."
-          for i in {1..30}; do
-            if curl -fsS http://localhost:8100/health >/dev/null 2>&1; then
-              echo "  Backend health: OK"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "ERROR: Backend health check failed after 60s"
-              docker compose logs backend --tail=100
-              exit 1
-            fi
-            sleep 2
-          done
-          
-          # Wait for frontend root (max 60s)
-          echo "Waiting for frontend root..."
-          for i in {1..30}; do
-            if curl -fsS http://localhost:3100/ >/dev/null 2>&1; then
-              echo "  Frontend /: OK"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "ERROR: Frontend root not responding after 60s"
-              docker compose logs frontend --tail=100
-              exit 1
-            fi
-            sleep 2
-          done
-          
-          # Wait for /forecast route (max 60s)
-          echo "Waiting for /forecast route..."
-          for i in {1..30}; do
-            if curl -fsS http://localhost:3100/forecast >/dev/null 2>&1; then
-              echo "  Frontend /forecast: OK"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "ERROR: /forecast route not responding after 60s"
-              docker compose logs frontend --tail=100
-              exit 1
-            fi
-            sleep 2
-          done
-          
-          # Wait for /history route (max 60s)
-          echo "Waiting for /history route..."
-          for i in {1..30}; do
-            if curl -fsS http://localhost:3100/history >/dev/null 2>&1; then
-              echo "  Frontend /history: OK"
-              break
-            fi
-            if [ "$i" -eq 30 ]; then
-              echo "ERROR: /history route not responding after 60s"
-              docker compose logs frontend --tail=100
-              exit 1
-            fi
-            sleep 2
-          done
-          
-          # Verify regions API (best effort)
-          echo "Checking regions API..."
-          curl -fsS http://localhost:8100/api/forecasting/regions >/dev/null 2>&1 && echo "  Regions API: OK" || echo "  Regions API: WARNING (continuing)"
-          
-          echo "=== All readiness gates passed ==="
-
       - name: Run Docker E2E smoke tests
         working-directory: app/frontend
         env:
           PLAYWRIGHT_BASE_URL: http://localhost:3100
-          NEXT_PUBLIC_API_BASE: http://localhost:8100
         run: |
           set +e
           LOG="/tmp/docker-e2e-playwright.log"
 
-          # Print diagnostics marker and environment before tests
-          echo "=== DOCKER_E2E_DIAGNOSTICS ===" | tee "$LOG"
+          # Print diagnostics marker BEFORE tests (always captured)
+          echo "=== DOCKER_E2E_DIAGNOSTICS_PRE ===" | tee "$LOG"
           echo "Environment:" | tee -a "$LOG"
-          echo "  PLAYWRIGHT_BASE_URL: http://localhost:3100" | tee -a "$LOG"
-          echo "  NEXT_PUBLIC_API_BASE: http://localhost:8100" | tee -a "$LOG"
+          echo "  PLAYWRIGHT_BASE_URL: ${PLAYWRIGHT_BASE_URL}" | tee -a "$LOG"
+          echo "  PWD: $(pwd)" | tee -a "$LOG"
           echo "Docker containers:" | tee -a "$LOG"
           docker ps | tee -a "$LOG"
           echo "Backend health:" | tee -a "$LOG"
-          curl -s http://localhost:8100/health || echo "Backend not responding" | tee -a "$LOG"
-          echo "Frontend reachability:" | tee -a "$LOG"
-          curl -sI http://localhost:3100/forecast | head -5 | tee -a "$LOG"
+          curl -sS http://localhost:8100/health | tee -a "$LOG" || echo "  [FAIL] Backend not responding" | tee -a "$LOG"
+          echo "Frontend routes:" | tee -a "$LOG"
+          for route in / /forecast /history; do
+            http_code=$(curl -sS -o /dev/null -w "%{http_code}" "http://localhost:3100${route}")
+            echo "  ${route}: HTTP ${http_code}" | tee -a "$LOG"
+          done
           echo "Regions API:" | tee -a "$LOG"
-          curl -s http://localhost:8100/api/forecasting/regions | jq 'length' || echo "Regions API not responding" | tee -a "$LOG"
+          curl -sS http://localhost:8100/api/forecasting/regions | jq -r 'length' | tee -a "$LOG" || echo "  [FAIL] Regions API error" | tee -a "$LOG"
           echo "=== Starting Playwright tests ===" | tee -a "$LOG"
 
           npx playwright test e2e/forecast.smoke.spec.ts e2e/history.smoke.spec.ts --reporter=line,html 2>&1 | tee -a "$LOG"
-          code=${PIPESTATUS[0]}
+          test_exit_code=${PIPESTATUS[0]}
 
-          if [ "$code" -ne 0 ]; then
-            # Extract a compact failure summary that will show up in the Annotations tab.
+          echo "=== DOCKER_E2E_DIAGNOSTICS_POST ===" | tee -a "$LOG"
+          echo "Test exit code: ${test_exit_code}" | tee -a "$LOG"
+          echo "Docker containers (after tests):" | tee -a "$LOG"
+          docker ps | tee -a "$LOG"
+          
+          if [ "$test_exit_code" -ne 0 ]; then
+            echo "Extracting failure summary..." | tee -a "$LOG"
             summary="$(grep -nE 'FAIL|Error:|Timeout|expect\(|net::|page\.goto|strict mode|locator' "$LOG" | head -n 40 || true)"
 
-            # Extract diagnostics block if present
-            diag_block="$(awk '/DOCKER_E2E_DIAGNOSTICS/ {flag=1; c=0} flag {print; c++} (flag && c>=60) {exit}' "$LOG" || true)"
+            diag_pre="$(awk '/DOCKER_E2E_DIAGNOSTICS_PRE/,/Starting Playwright tests/' "$LOG" || true)"
 
-            if [ -n "$diag_block" ]; then
-              summary="${summary}\n\n=== DOCKER_E2E_DIAGNOSTICS ===\n${diag_block}"
+            if [ -n "$diag_pre" ]; then
+              summary="${summary}\n\n=== PRE-TEST DIAGNOSTICS ===\n${diag_pre}"
             else
-              python3 -c "print('::error title=DIAGNOSTICS_MARKER_NOT_FOUND::DOCKER_E2E_DIAGNOSTICS not found in /tmp/docker-e2e-playwright.log')"
+              python3 -c "print('::error title=DIAGNOSTICS_MARKER_NOT_FOUND::DOCKER_E2E_DIAGNOSTICS_PRE not found')"
             fi
 
-            # Encode newlines for GitHub annotation rendering
             export SUMMARY="$summary"
-            python3 -c "import os; s=os.environ.get('SUMMARY',''); print('::error title=Docker E2E Playwright Failure Summary::' + s.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))"
+            python3 -c "import os; s=os.environ.get('SUMMARY',''); print('::error title=Docker E2E Failure::' + s.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))"
           fi
 
-          exit "$code"
+          exit "$test_exit_code"
+
+      - name: Capture final diagnostics
+        if: always()
+        run: |
+          echo "=== FINAL DIAGNOSTICS (always runs) ==="
+          echo "Docker containers final state:"
+          docker ps -a
+          echo ""
+          echo "Backend logs (last 100 lines):"
+          docker compose logs backend --tail=100 || echo "Could not get backend logs"
+          echo ""
+          echo "Frontend logs (last 100 lines):"
+          docker compose logs frontend --tail=100 || echo "Could not get frontend logs"
+          echo ""
+          echo "Final route checks:"
+          for route in / /forecast /history; do
+            http_code=$(curl -sS -o /dev/null -w "%{http_code}" "http://localhost:3100${route}" 2>/dev/null || echo "FAIL")
+            echo "  http://localhost:3100${route}: ${http_code}"
+          done
 
       - name: Ensure test-results directory exists
         if: always()
