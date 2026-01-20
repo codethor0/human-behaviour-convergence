@@ -21,8 +21,6 @@ test.describe('Forecast History Smoke Tests', () => {
     
     const iframeCount = await iframes.count();
     expect(iframeCount).toBeGreaterThan(0);
-    
-    console.log(`✓ History page loaded with ${iframeCount} Grafana dashboard(s)`);
   });
 
   test('History page loads with filters', async ({ page }) => {
@@ -42,8 +40,6 @@ test.describe('Forecast History Smoke Tests', () => {
       },
       { timeout: 30000 }
     );
-    
-    console.log('✓ History filters and dashboards loaded');
   });
 
   test('History filters and sorting work correctly', async ({ page }) => {
@@ -54,7 +50,5 @@ test.describe('Forecast History Smoke Tests', () => {
     // Just verify page loads - Grafana handles filtering/sorting internally
     const iframes = page.locator('iframe');
     await expect(iframes.first()).toBeVisible({ timeout: 30000 });
-    
-    console.log('✓ History page interactive elements verified');
   });
 });
