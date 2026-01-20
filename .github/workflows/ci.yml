@@ -743,6 +743,18 @@ jobs:
           curl -f http://localhost:8100/health || (echo "Backend API not accessible" && docker compose logs backend && exit 1)
           echo "Backend API is accessible"
 
+      - name: Warm up backend (pre-generate data)
+        run: |
+          echo "Warming up backend with forecast generation..."
+          curl -sS http://localhost:8100/api/forecasting/regions | jq 'length' || echo "Regions check completed"
+          
+          curl -sS -X POST http://localhost:8100/api/forecast \
+            -H "Content-Type: application/json" \
+            -d '{"region_id":"us_mn","days_back":30,"forecast_horizon":7}' \
+            | jq '.metadata.region_id' || echo "Forecast generation completed"
+          
+          echo "[OK] Backend warm-up complete"
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:

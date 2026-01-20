@@ -154,7 +154,15 @@ class SearchTrendsFetcher:
             logger.info("Using CI offline mode for search trends data")
             df = get_ci_search_trends_data(region_name or query)
             df = df.rename(columns={"value": "search_attention_index"})
-            return df, SourceStatus.HEALTHY
+            status = SourceStatus(
+                provider="CI_Synthetic_SearchTrends",
+                ok=True,
+                http_status=200,
+                fetched_at=datetime.now().isoformat(),
+                rows=len(df),
+                query_window_days=days_back,
+            )
+            return df, status
 
         fetched_at = datetime.now().isoformat()
         cache_key = f"search_trends_{region_name or query}_{days_back}"
