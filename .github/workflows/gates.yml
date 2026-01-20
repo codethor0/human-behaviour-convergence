@@ -153,6 +153,12 @@ jobs:
           chmod +x ops/verify_gate_a.sh
           ./ops/verify_gate_a.sh
 
+      - name: Wait for Prometheus to scrape GATE A metrics
+        run: |
+          echo "Waiting 30 seconds for Prometheus to scrape metrics from GATE A forecast..."
+          sleep 30
+          echo "[OK] Ready for GATE G"
+
       - name: Run GATE G
         run: |
           chmod +x ops/verify_gate_grafana.sh
