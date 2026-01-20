@@ -24,7 +24,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -e ".[dev]"
-          pip install prometheus-client httpx
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Compile Python (syntax check)
         run: |
