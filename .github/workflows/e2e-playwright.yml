@@ -121,7 +121,7 @@ jobs:
           echo "Pre-generating forecast for us_mn..."
           curl -sS -X POST http://127.0.0.1:8100/api/forecast \
             -H "Content-Type: application/json" \
-            -d '{"region_id":"us_mn","days_back":30,"forecast_horizon":7}' \
+            -d '{"region_id":"us_mn","region_name":"Minnesota","days_back":30,"forecast_horizon":7}' \
             | jq '.metadata.region_id' || echo "Forecast generation failed (continuing)"
           
           echo "[OK] Backend warm-up complete"

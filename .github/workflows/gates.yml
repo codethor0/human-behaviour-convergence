@@ -130,18 +130,21 @@ jobs:
       - name: Warm up backend (pre-generate forecasts)
         run: |
           echo "Generating forecasts to ensure data pipeline is ready..."
-          for region in us_mn city_nyc us_ca city_london; do
-            echo "  Forecasting ${region}..."
-            response=$(curl -sS -X POST "http://localhost:8100/api/forecast" \
-              -H "Content-Type: application/json" \
-              -d "{\"region_id\":\"${region}\",\"days_back\":30,\"forecast_horizon\":7}" \
-              2>&1)
-            if echo "$response" | jq -e '.metadata.region_id' > /dev/null 2>&1; then
-              echo "    [OK] Forecast generated successfully"
-            else
-              echo "    [WARN] Forecast response: ${response:0:200}"
-            fi
-          done
+          
+          curl -sS -X POST "http://localhost:8100/api/forecast" \
+            -H "Content-Type: application/json" \
+            -d '{"region_id":"us_mn","region_name":"Minnesota","days_back":30,"forecast_horizon":7}' \
+            | jq -r '.metadata.region_id' || echo "[WARN] us_mn forecast failed"
+          
+          curl -sS -X POST "http://localhost:8100/api/forecast" \
+            -H "Content-Type: application/json" \
+            -d '{"region_id":"city_nyc","region_name":"New York City","days_back":30,"forecast_horizon":7}' \
+            | jq -r '.metadata.region_id' || echo "[WARN] city_nyc forecast failed"
+          
+          curl -sS -X POST "http://localhost:8100/api/forecast" \
+            -H "Content-Type: application/json" \
+            -d '{"region_id":"us_ca","region_name":"California","days_back":30,"forecast_horizon":7}' \
+            | jq -r '.metadata.region_id' || echo "[WARN] us_ca forecast failed"
           
           echo "Waiting 60 seconds for Prometheus to scrape metrics..."
           sleep 60
