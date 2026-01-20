@@ -31,7 +31,7 @@
       "title": "Behavior Index",
       "type": "timeseries",
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 12,
         "x": 0,
         "y": 0
@@ -100,7 +100,7 @@
       "title": "Parent Sub-Indices",
       "type": "timeseries",
       "gridPos": {
-        "h": 8,
+        "h": 6,
         "w": 12,
         "x": 12,
         "y": 0
@@ -172,10 +172,10 @@
       "title": "Forecast Generation Rate",
       "type": "timeseries",
       "gridPos": {
-        "h": 6,
+        "h": 5,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 6
       },
       "targets": [
         {
@@ -222,10 +222,10 @@
       "title": "Forecast Computation Duration (p95)",
       "type": "timeseries",
       "gridPos": {
-        "h": 6,
+        "h": 5,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 6
       },
       "targets": [
         {

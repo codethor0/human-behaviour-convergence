@@ -62,15 +62,15 @@ const styles = {
     fontFamily: 'system-ui, -apple-system, sans-serif',
     maxWidth: '1600px',
     margin: '0 auto',
-    padding: '12px',
+    padding: '10px',
     backgroundColor: '#f5f5f5',
     minHeight: '100vh',
   },
   header: {
     backgroundColor: '#fff',
-    padding: '10px 16px',
-    marginBottom: '8px',
-    borderRadius: '8px',
+    padding: '8px 14px',
+    marginBottom: '6px',
+    borderRadius: '6px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   },
   nav: {
@@ -92,20 +92,20 @@ const styles = {
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: '8px',
-    padding: '14px',
+    borderRadius: '6px',
+    padding: '12px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
     marginBottom: '4px',
   },
   infoCard: {
     backgroundColor: '#e7f3ff',
     border: '1px solid #b3d9ff',
-    borderRadius: '8px',
-    padding: '12px',
-    marginBottom: '8px',
-    fontSize: '14px',
+    borderRadius: '6px',
+    padding: '10px',
+    marginBottom: '6px',
+    fontSize: '13px',
     color: '#004085',
-    lineHeight: '1.5',
+    lineHeight: '1.4',
   },
   grid: {
     display: 'grid',
@@ -156,18 +156,18 @@ const styles = {
   },
   iframe: {
     width: '100%',
-    height: '800px', // Increased default height to show more data
+    height: '500px',
     border: 'none',
     borderRadius: '8px',
   },
 };
 
-// Custom heights for specific dashboards that need more vertical space
+// Custom heights for specific dashboards
 const dashboardHeights: Record<string, string> = {
-  'forecast-summary': '900px',           // Regional overview with metrics cards
-  'behavior-index-global': '1200px',     // Timeline charts and trend analysis
-  'subindex-deep-dive': '2400px',        // All sub-index components and contributing factors
-  'data-sources-health': '1000px',       // Data source status panels and health metrics
+  'forecast-summary': '380px',
+  'behavior-index-global': '580px',
+  'subindex-deep-dive': '1200px',
+  'data-sources-health': '500px',
 };
 
 // Grafana Dashboard Embed Component
@@ -185,12 +185,12 @@ function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid
   return (
     <div style={{
       backgroundColor: '#fff',
-      borderRadius: '8px',
-      padding: '10px',
+      borderRadius: '6px',
+      padding: '8px',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      marginBottom: '2px',
+      marginBottom: '4px',
     }}>
-      <h2 style={{ margin: '0 0 6px 0', fontSize: '15px', fontWeight: '600', color: '#333' }}>{title}</h2>
+      <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>{title}</h2>
       <iframe
         src={src}
         style={iframeStyle}

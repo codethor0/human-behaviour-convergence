@@ -20,15 +20,15 @@ const styles = {
     fontFamily: 'system-ui, -apple-system, sans-serif',
     maxWidth: '1600px',
     margin: '0 auto',
-    padding: '12px',
+    padding: '10px',
     backgroundColor: '#f5f5f5',
     minHeight: '100vh',
   },
   header: {
     backgroundColor: '#fff',
-    padding: '10px 16px',
-    marginBottom: '12px',
-    borderRadius: '8px',
+    padding: '8px 14px',
+    marginBottom: '6px',
+    borderRadius: '6px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   },
   nav: {
@@ -50,20 +50,20 @@ const styles = {
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: '8px',
-    padding: '14px',
+    borderRadius: '6px',
+    padding: '12px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginBottom: '12px',
+    marginBottom: '6px',
   },
   infoCard: {
     backgroundColor: '#e7f3ff',
     border: '1px solid #b3d9ff',
-    borderRadius: '8px',
-    padding: '12px',
-    marginBottom: '12px',
-    fontSize: '14px',
+    borderRadius: '6px',
+    padding: '10px',
+    marginBottom: '6px',
+    fontSize: '13px',
     color: '#004085',
-    lineHeight: '1.5',
+    lineHeight: '1.4',
   },
   label: {
     fontSize: '12px',
@@ -82,9 +82,9 @@ const styles = {
   },
   iframe: {
     width: '100%',
-    height: '600px',
+    height: '500px',
     border: 'none',
-    borderRadius: '8px',
+    borderRadius: '6px',
   },
   metricCard: {
     backgroundColor: '#f8f9fa',
@@ -107,8 +107,14 @@ function GrafanaDashboardEmbed({ dashboardUid, title, regionId, refreshInterval 
   const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv${regionParam}${refreshParam}`;
 
   return (
-    <div style={styles.card}>
-      <h2 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>{title}</h2>
+    <div style={{
+      backgroundColor: '#fff',
+      borderRadius: '6px',
+      padding: '8px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      marginBottom: '4px',
+    }}>
+      <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>{title}</h2>
       <iframe
         src={src}
         style={styles.iframe}
