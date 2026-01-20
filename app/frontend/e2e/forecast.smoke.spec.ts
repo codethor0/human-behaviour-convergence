@@ -1,16 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
-
 async function waitForRegionsReady(page: any, request: any) {
-  // 1. Wait for the page to load
+  // 1. Navigate to forecast page first
   await page.goto('/forecast', { waitUntil: 'domcontentloaded' });
 
-  // 2. Wait for region dropdown to be visible - this is the real source of truth
+  // 2. Wait for region selector to be visible (primary UI signal)
   const regionSelect = page.locator('select').first();
   await regionSelect.waitFor({ state: 'visible', timeout: 60_000 });
 
-  // 3. Wait for regions to actually load (options > 1)
+  // 3. Wait for regions to load (options > 1)
   await page.waitForFunction(
     () => {
       const select = document.querySelector('select');
@@ -19,11 +17,12 @@ async function waitForRegionsReady(page: any, request: any) {
     { timeout: 60_000 }
   );
 
-  // 4. Optional: sanity-check the backend, but don't fail if it's slightly off
+  // 4. Optional: Check regions API (best-effort, non-blocking)
   try {
-    const response = await request.get(`${API_BASE}/api/forecasting/regions`, { timeout: 10_000 });
-    if (!response.ok()) {
-      console.warn(`Regions API non-200: ${response.status()} (continuing anyway, UI loaded)`);
+    const response = await request.get('http://localhost:8100/api/forecasting/regions');
+    const regions = await response.json();
+    if (!Array.isArray(regions) || regions.length === 0) {
+      console.warn('Regions API returned empty array (continuing anyway, UI loaded)');
     }
   } catch (err) {
     console.warn(`Regions API check failed: ${String(err)} (continuing anyway, UI loaded)`);
@@ -41,24 +40,54 @@ test.describe('Forecast Smoke Tests', () => {
     });
   });
 
-  test('Generate forecast and verify results sections exist', async ({ page }) => {
+  test('Generate forecast and verify Grafana dashboards load', async ({ page }) => {
     try {
-      // Verify Grafana dashboards are embedded (Grafana-first UI)
-      const iframes = page.locator('iframe');
-      await expect(iframes.first()).toBeVisible({ timeout: 30000 });
-      
-      // Verify multiple dashboards are present
-      const iframeCount = await iframes.count();
-      if (iframeCount < 2) {
-        test.skip('No dashboards loaded for testing');
+      // Wait for region dropdown to be available
+      const regionSelect = page.locator('select').first();
+      await regionSelect.waitFor({ timeout: 10000 });
+
+      // Select first available region deterministically
+      const options = await regionSelect.locator('option').all();
+      if (options.length < 2) {
+        test.skip('No regions available for testing');
         return;
       }
 
-      // Grafana-first UI: dashboards auto-load, verify they contain valid src
-      const firstIframe = iframes.first();
-      const src = await firstIframe.getAttribute('src');
+      // Select the first non-empty option (skip index 0 if it's empty/default)
+      const firstValidOption = options[1];
+      const regionValue = await firstValidOption.getAttribute('value');
+      if (regionValue) {
+        await regionSelect.selectOption(regionValue);
+      }
+
+      // Wait for generate button
+      const generateButton = page.getByTestId('forecast-generate-button');
+      await expect(generateButton).toBeVisible({ timeout: 10000 });
+      await expect(generateButton).toBeEnabled({ timeout: 30000 });
+
+      // Click generate
+      await generateButton.click();
+
+      // Wait for Grafana dashboards to load (they appear after forecast generation)
+      await page.waitForFunction(
+        () => {
+          const iframes = document.querySelectorAll('iframe');
+          return iframes.length > 0;
+        },
+        { timeout: 60000 }
+      );
+
+      // Verify Grafana dashboard iframes are embedded
+      const dashboardIframes = page.locator('iframe');
+      await expect(dashboardIframes.first()).toBeVisible();
       
+      // Verify at least one Grafana dashboard is present
+      const iframeCount = await dashboardIframes.count();
+      expect(iframeCount).toBeGreaterThan(0);
+
       // Verify iframe src points to Grafana
+      const firstIframe = dashboardIframes.first();
+      const src = await firstIframe.getAttribute('src');
       expect(src).toBeTruthy();
       expect(src).toMatch(/grafana|\/d\//);
     } catch (error) {

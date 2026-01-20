@@ -1,54 +1,54 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Forecast History Smoke Tests', () => {
-  test('Navigate to history and verify page loads with Grafana dashboards', async ({ page }) => {
-    // Grafana-first: history page auto-loads with dashboards
-    // No manual forecast creation needed - backend pre-warms data
-    
-    // Navigate directly to history page
-    await page.goto('/history', { waitUntil: 'domcontentloaded' });
-
-    // Wait for page to load and network to settle
-    await page.waitForLoadState('networkidle');
-
-    // Verify page title
-    const pageTitle = page.getByRole('heading', { name: /history/i });
-    await expect(pageTitle).toBeVisible({ timeout: 10000 });
-
-    // Verify Grafana dashboards are embedded (Grafana-first architecture)
-    const iframes = page.locator('iframe');
-    await expect(iframes.first()).toBeVisible({ timeout: 30000 });
-    
-    const iframeCount = await iframes.count();
-    expect(iframeCount).toBeGreaterThan(0);
-  });
-
-  test('History page loads with filters', async ({ page }) => {
+  test('Navigate to history and verify page loads with correct UI', async ({ page }) => {
     // Navigate to history page
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
 
-    // Verify basic page elements
-    const pageHeading = page.getByRole('heading', { name: /history/i });
-    await expect(pageHeading).toBeVisible({ timeout: 10000 });
-    
-    // Verify Grafana dashboards load
-    await page.waitForFunction(
-      () => {
-        const iframes = document.querySelectorAll('iframe');
-        return iframes.length > 0;
-      },
-      { timeout: 30000 }
-    );
+    // Verify page title (primary sentinel)
+    const pageTitle = page.getByTestId('history-page-title');
+    await expect(pageTitle).toBeVisible({ timeout: 30000 });
+    await expect(pageTitle).toHaveText('Forecast History');
+
+    // Verify history container is visible
+    const historyContainer = page.getByTestId('forecast-history-container');
+    await expect(historyContainer).toBeVisible({ timeout: 30000 });
+
+    // Verify UI is functional (contract: UI-based history page, NOT Grafana)
+    // History page uses traditional filters + table, not embedded dashboards
+  });
+
+  test('History page loads with filters', async ({ page }) => {
+    await page.goto('/history', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle');
+
+    // Verify page loaded
+    const pageTitle = page.getByTestId('history-page-title');
+    await expect(pageTitle).toBeVisible({ timeout: 10000 });
+
+    // Verify filter controls exist (validates UI contract)
+    const limitSelect = page.getByTestId('history-limit-select');
+    await expect(limitSelect).toBeVisible({ timeout: 10000 });
+
+    const regionFilter = page.getByTestId('history-region-filter');
+    await expect(regionFilter).toBeVisible({ timeout: 10000 });
   });
 
   test('History filters and sorting work correctly', async ({ page }) => {
-    // Navigate to history
     await page.goto('/history', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle');
+
+    // Verify page loads
+    const historyContainer = page.getByTestId('forecast-history-container');
+    await expect(historyContainer).toBeVisible({ timeout: 30000 });
+
+    // Verify sort order selector exists and is interactive
+    const sortOrderSelect = page.getByTestId('history-sort-order');
+    await expect(sortOrderSelect).toBeVisible({ timeout: 10000 });
     
-    // Just verify page loads - Grafana handles filtering/sorting internally
-    const iframes = page.locator('iframe');
-    await expect(iframes.first()).toBeVisible({ timeout: 30000 });
+    // Verify we can change sort order
+    await sortOrderSelect.selectOption('ASC');
+    expect(await sortOrderSelect.inputValue()).toBe('ASC');
   });
 });
