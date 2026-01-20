@@ -8,6 +8,11 @@ import pandas as pd
 import requests_cache
 import structlog
 
+from app.services.ingestion.ci_offline_data import (
+    is_ci_offline_mode,
+    get_ci_weather_data,
+)
+
 logger = structlog.get_logger("ingestion.weather")
 
 
@@ -60,6 +65,18 @@ class EnvironmentalImpactFetcher:
                 'windspeed', 'discomfort_score']
             discomfort_score is normalized to 0.0-1.0 where 1.0 = maximum discomfort
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for weather data")
+            region_key = f"{latitude:.2f}_{longitude:.2f}"
+            df = get_ci_weather_data(region_key)
+            df = df.rename(columns={"value": "discomfort_score"})
+            # Add mock weather columns
+            df["temperature"] = 20.0
+            df["precipitation"] = 0.0
+            df["windspeed"] = 5.0
+            return df.tail(days_back).copy()
+
         # Validate coordinates
         if not (-90 <= latitude <= 90):
             raise ValueError(

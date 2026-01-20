@@ -8,6 +8,10 @@ import pandas as pd
 import requests_cache
 import structlog
 
+from app.services.ingestion.ci_offline_data import (
+    is_ci_offline_mode,
+    get_ci_public_health_data,
+)
 from app.services.ingestion.health_owid import OWIDHealthFetcher
 
 logger = structlog.get_logger("ingestion.public_health")
@@ -65,6 +69,13 @@ class PublicHealthFetcher:
             DataFrame with columns: ['timestamp', 'health_risk_index']
             health_risk_index is normalized to 0.0-1.0 where 1.0 = maximum health risk
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for public health data")
+            df = get_ci_public_health_data(region_code or "default")
+            df = df.rename(columns={"value": "health_risk_index"})
+            return df.tail(days_back).copy()
+
         # Check cache validity
         cache_key = f"{region_code or 'default'},{days_back}"
         if (

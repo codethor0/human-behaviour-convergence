@@ -10,6 +10,11 @@ import pandas as pd
 import requests
 import structlog
 
+from app.services.ingestion.ci_offline_data import (
+    is_ci_offline_mode,
+    get_ci_event_data,
+)
+
 logger = structlog.get_logger("ingestion.gdelt_events")
 
 # GDELT API base URL
@@ -215,6 +220,21 @@ class GDELTEventsFetcher:
             DataFrame has columns: ['timestamp', 'tone_score']
             Returns empty DataFrame on error, with status.ok=False
         """
+        # CI offline mode: return synthetic deterministic data
+        if is_ci_offline_mode():
+            logger.info("Using CI offline mode for GDELT events data")
+            df = get_ci_event_data("gdelt_global")
+            df = df.rename(columns={"value": "tone_score"})
+            status = SourceStatus(
+                provider="CI_Synthetic_GDELT",
+                ok=True,
+                http_status=200,
+                fetched_at=datetime.now().isoformat(),
+                rows=len(df),
+                query_window_days=days_back,
+            )
+            return df.tail(days_back).copy(), status
+
         fetched_at = datetime.now().isoformat()
         cache_key = f"gdelt_tone_{days_back}"
 
