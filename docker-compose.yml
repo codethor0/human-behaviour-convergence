@@ -44,6 +44,7 @@ services:
     environment:
       - NEXT_PUBLIC_API_BASE=http://localhost:8100
       - NEXT_PUBLIC_GRAFANA_URL=http://localhost:3001
+      - API_BASE_INTERNAL=http://backend:8000
     depends_on:
       backend:
         condition: service_healthy

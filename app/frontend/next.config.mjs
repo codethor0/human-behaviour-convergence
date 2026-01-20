@@ -28,8 +28,10 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
-    // Proxy API requests to backend in Docker E2E environment
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8100';
+    // Proxy API requests to backend
+    // Use internal Docker service name for server-side requests
+    // NEXT_PUBLIC_API_BASE is for browser-side, but rewrites run server-side
+    const apiBase = process.env.API_BASE_INTERNAL || 'http://backend:8000';
     return [
       {
         source: '/api/:path*',
