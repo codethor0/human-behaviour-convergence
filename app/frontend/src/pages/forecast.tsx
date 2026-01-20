@@ -156,7 +156,7 @@ const styles = {
   },
   iframe: {
     width: '100%',
-    height: '600px',
+    height: '800px', // Increased default height to show more data
     border: 'none',
     borderRadius: '8px',
   },
@@ -164,7 +164,10 @@ const styles = {
 
 // Custom heights for specific dashboards that need more vertical space
 const dashboardHeights: Record<string, string> = {
-  'subindex-deep-dive': '1800px', // Increased for Sub-Index Deep Dive to show all panels without cropping
+  'forecast-summary': '900px',           // Regional overview with metrics cards
+  'behavior-index-global': '1200px',     // Timeline charts and trend analysis
+  'subindex-deep-dive': '2400px',        // All sub-index components and contributing factors
+  'data-sources-health': '1000px',       // Data source status panels and health metrics
 };
 
 // Grafana Dashboard Embed Component
@@ -502,20 +505,20 @@ export default function ForecastPage() {
         {selectedRegion && (
           <GrafanaDashboardEmbed
             dashboardUid="forecast-summary"
-            title="Forecast Quick Summary (Live Metrics)"
+            title="Regional Forecast Overview & Key Metrics"
             regionId={selectedRegion.id}
           />
         )}
 
         <GrafanaDashboardEmbed
           dashboardUid="behavior-index-global"
-          title="Global Behavior Index Dashboard"
+          title="Behavior Index Timeline & Historical Trends"
           regionId={selectedRegion?.id}
         />
 
         <GrafanaDashboardEmbed
           dashboardUid="subindex-deep-dive"
-          title="Sub-Index Deep Dive Dashboard"
+          title="Sub-Index Components & Contributing Factors"
           regionId={selectedRegion?.id}
         />
 
@@ -558,7 +561,7 @@ export default function ForecastPage() {
         {/* Data Sources Health Dashboard (Live Metrics) */}
         <GrafanaDashboardEmbed
           dashboardUid="data-sources-health"
-          title="Data Sources Health (Live Metrics)"
+          title="Real-Time Data Source Status & API Health"
         />
       </div>
     </>
