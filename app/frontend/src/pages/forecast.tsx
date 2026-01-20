@@ -69,7 +69,7 @@ const styles = {
   header: {
     backgroundColor: '#fff',
     padding: '10px 16px',
-    marginBottom: '12px',
+    marginBottom: '8px',
     borderRadius: '8px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   },
@@ -95,14 +95,14 @@ const styles = {
     borderRadius: '8px',
     padding: '14px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginBottom: '12px',
+    marginBottom: '4px',
   },
   infoCard: {
     backgroundColor: '#e7f3ff',
     border: '1px solid #b3d9ff',
     borderRadius: '8px',
     padding: '12px',
-    marginBottom: '12px',
+    marginBottom: '8px',
     fontSize: '14px',
     color: '#004085',
     lineHeight: '1.5',
@@ -320,7 +320,7 @@ export default function ForecastPage() {
         </div>
 
         {/* Forecast Configuration */}
-        <div style={{ ...styles.grid, ...styles.grid2Col, marginBottom: '12px' }} className="grid-2-col">
+        <div style={{ ...styles.grid, ...styles.grid2Col, marginBottom: '4px' }} className="grid-2-col">
           <div style={styles.card}>
             <h2 style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: '600' }}>Forecast Configuration</h2>
             <div style={{ ...styles.grid, gap: '10px' }}>
