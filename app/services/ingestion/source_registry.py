@@ -233,7 +233,7 @@ def get_all_sources() -> Dict[str, SourceDefinition]:
     db = _get_registry_db()
     if db is not None:
         try:
-            db_sources = db.get_all_sources()
+            db.get_all_sources()  # currently unused; kept for potential future merge logic
             # If DB has sources, we could merge them, but for now we keep
             # in-memory as primary and DB as persistence layer
             # This maintains backward compatibility

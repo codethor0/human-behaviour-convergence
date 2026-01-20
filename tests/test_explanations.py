@@ -24,12 +24,20 @@ class TestGenerateExplanation:
 
         assert "summary" in explanation
         assert "subindices" in explanation
-        assert len(explanation["subindices"]) == 5
-        assert "economic_stress" in explanation["subindices"]
-        assert "environmental_stress" in explanation["subindices"]
-        assert "mobility_activity" in explanation["subindices"]
-        assert "digital_attention" in explanation["subindices"]
-        assert "public_health_stress" in explanation["subindices"]
+        
+        # Verify all 9 expected sub-indices are present
+        expected_subindices = {
+            "economic_stress",
+            "environmental_stress",
+            "mobility_activity",
+            "digital_attention",
+            "public_health_stress",
+            "political_stress",
+            "crime_stress",
+            "misinformation_stress",
+            "social_cohesion_stress",
+        }
+        assert set(explanation["subindices"].keys()) == expected_subindices
 
         # Check structure of sub-index explanations
         economic = explanation["subindices"]["economic_stress"]

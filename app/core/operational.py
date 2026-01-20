@@ -120,7 +120,7 @@ class OperationalManager:
 
             # Persist alert (idempotent)
             try:
-                persisted_alert = self.alert_storage.upsert_alert(
+                self.alert_storage.upsert_alert(
                     alert_id=alert_id,
                     region_id=region_id,
                     alert_type=alert_type,

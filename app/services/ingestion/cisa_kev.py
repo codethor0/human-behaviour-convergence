@@ -9,6 +9,8 @@ import requests
 import structlog
 import time
 
+from app.services.ingestion.gdelt_events import SourceStatus
+
 logger = structlog.get_logger("ingestion.cisa_kev")
 
 # CISA KEV API
@@ -18,9 +20,6 @@ CISA_KEV_URL = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_v
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 1.0
 MAX_BACKOFF = 10.0
-
-# Import SourceStatus from gdelt_events (reuse pattern)
-from app.services.ingestion.gdelt_events import SourceStatus
 
 
 class CISAKEVFetcher:

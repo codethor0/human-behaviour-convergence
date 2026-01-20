@@ -11,7 +11,9 @@ try:
     reset_application_state = getattr(_backend_main, "reset_application_state", lambda: None)
 except (RecursionError, AttributeError):
     # If import fails due to recursion or missing attribute, use no-op
-    reset_application_state = lambda: None
+    def reset_application_state() -> None:
+        """Fallback no-op reset when state reset utility is unavailable."""
+        return None
 
 from app.core.live_monitor import LiveMonitor, get_live_monitor
 # reset_live_monitor may not exist, create a simple reset function
@@ -51,7 +53,7 @@ class TestStateReset:
     def test_singleton_reset(self):
         """Singleton LiveMonitor can be reset."""
         # Get instance (creates if needed)
-        monitor1 = get_live_monitor()
+        get_live_monitor()
 
         # Reset singleton
         reset_live_monitor()
@@ -140,7 +142,7 @@ class TestNoStaleState:
     def test_singleton_reset_prevents_stale_access(self):
         """Resetting singleton should prevent access to old state."""
         # Get instance
-        monitor1 = get_live_monitor()
+        get_live_monitor()
 
         # Reset
         reset_live_monitor()
@@ -159,7 +161,7 @@ class TestStateLifetime:
         forecaster._max_cache_size = 5
 
         # Cache should persist until reset
-        initial_size = len(forecaster._cache)
+        len(forecaster._cache)
 
         # Reset clears cache
         forecaster.reset_cache()
@@ -170,7 +172,7 @@ class TestStateLifetime:
         monitor = LiveMonitor()
 
         # Snapshots should persist until reset
-        initial_size = len(monitor._snapshots)
+        len(monitor._snapshots)
 
         # Reset clears snapshots
         monitor.reset()

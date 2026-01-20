@@ -9,6 +9,8 @@ import requests
 import structlog
 import time
 
+from app.services.ingestion.gdelt_events import SourceStatus
+
 logger = structlog.get_logger("ingestion.nws_alerts")
 
 # NWS API base URLs
@@ -19,9 +21,6 @@ NWS_USER_AGENT = "HumanBehaviourConvergence/1.0 (contact: your-email@example.com
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 1.0  # seconds
 MAX_BACKOFF = 10.0  # seconds
-
-# Import SourceStatus from gdelt_events (reuse pattern)
-from app.services.ingestion.gdelt_events import SourceStatus
 
 
 class NWSAlertsFetcher:

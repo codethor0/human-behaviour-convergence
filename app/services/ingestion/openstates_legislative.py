@@ -10,10 +10,9 @@ import requests
 import structlog
 import time
 
-logger = structlog.get_logger("ingestion.openstates")
-
-# Import SourceStatus from gdelt_events (reuse pattern)
 from app.services.ingestion.gdelt_events import SourceStatus
+
+logger = structlog.get_logger("ingestion.openstates")
 
 # OpenStates API base URL
 OPENSTATES_API_BASE = "https://v3.openstates.org"

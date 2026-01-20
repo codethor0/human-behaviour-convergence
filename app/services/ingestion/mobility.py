@@ -109,7 +109,7 @@ class MobilityFetcher:
         longitude: Optional[float] = None,
         days_back: int = 30,
         use_cache: bool = True,
-    ) -> Tuple[pd.DataFrame, SourceStatus]:
+    ) -> pd.DataFrame:
         """
         Fetch mobility/activity index time-series data using TSA passenger throughput (no-key public dataset).
 
@@ -121,9 +121,40 @@ class MobilityFetcher:
             use_cache: Whether to use cached data if available (default: True)
 
         Returns:
-            Tuple of (DataFrame, SourceStatus)
-            DataFrame columns: ['timestamp', 'mobility_index']
+            DataFrame with columns: ['timestamp', 'mobility_index']
             mobility_index is normalized to 0.0-1.0 where 1.0 = maximum mobility/activity
+        """
+        df, status = self._fetch_mobility_index_with_status(
+            region_code=region_code,
+            latitude=latitude,
+            longitude=longitude,
+            days_back=days_back,
+            use_cache=use_cache,
+        )
+        # Store status for internal use or logging
+        self.last_status = status
+        return df
+
+    def _fetch_mobility_index_with_status(
+        self,
+        region_code: Optional[str] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        days_back: int = 30,
+        use_cache: bool = True,
+    ) -> Tuple[pd.DataFrame, SourceStatus]:
+        """
+        Internal method that returns both DataFrame and SourceStatus.
+
+        Args:
+            region_code: Optional standardized region identifier
+            latitude: Optional latitude coordinate
+            longitude: Optional longitude coordinate
+            days_back: Number of days of historical data to fetch
+            use_cache: Whether to use cached data if available
+
+        Returns:
+            Tuple of (DataFrame, SourceStatus)
         """
         # CI offline mode: return synthetic deterministic data
         if is_ci_offline_mode():

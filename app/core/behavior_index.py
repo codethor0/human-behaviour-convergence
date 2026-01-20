@@ -754,8 +754,10 @@ class BehaviorIndexComputer:
 
             # Mobility Recovery Momentum: slope over last 7-14 days
             if len(mobility_index_raw) >= 14:
+                window = 14
+                min_periods = min(7, window)
                 mobility_slope = (
-                    mobility_index_raw.rolling(window=14, min_periods=7)
+                    mobility_index_raw.rolling(window=window, min_periods=min_periods)
                     .apply(
                         lambda x: (
                             (x.iloc[-1] - x.iloc[0]) / len(x) if len(x) > 1 else 0.0
@@ -1099,8 +1101,10 @@ class BehaviorIndexComputer:
                 fred_cpi_raw.mean() if fred_cpi_raw.notna().any() else 0.5
             )
             # Add slope component (momentum)
+            window = min(30, len(cpi_filled))
+            min_periods = min(7, window)
             cpi_slope = (
-                cpi_filled.rolling(window=min(30, len(cpi_filled)), min_periods=7)
+                cpi_filled.rolling(window=window, min_periods=min_periods)
                 .apply(
                     lambda x: (x.iloc[-1] - x.iloc[0]) / len(x) if len(x) > 1 else 0.0
                 )
@@ -1317,14 +1321,7 @@ class BehaviorIndexComputer:
         if has_weather:
             # Drought proxy: sustained periods of high discomfort (heat + dryness)
             # Low precipitation manifests as sustained high discomfort without relief
-            # Use rolling min to identify persistent dry periods (high discomfort sustained)
-            drought_rolling_min = (
-                discomfort_score_raw.rolling(
-                    window=min(30, len(discomfort_score_raw)), min_periods=7
-                )
-                .min()
-                .fillna(0.5)
-            )
+            # Note: drought_rolling_min calculation removed as it was unused
             # Drought stress: inverse of comfort (high discomfort = drought stress)
             # Combine with persistence: how many days above a high threshold
             drought_threshold = (
