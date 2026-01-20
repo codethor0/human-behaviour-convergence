@@ -30,7 +30,11 @@ class TestFactorElasticity:
         assert abs(elasticity_data["input_delta"] - 0.2) < 1e-9
         assert abs(elasticity_data["output_delta"] - 0.1) < 1e-9
         assert abs(elasticity_data["elasticity"] - 0.2) < 1e-9  # (0.1 / 0.2) * 0.4
-        assert elasticity_data["sensitivity_classification"] in ["low", "medium", "high"]
+        assert elasticity_data["sensitivity_classification"] in [
+            "low",
+            "medium",
+            "high",
+        ]
 
     def test_elasticity_negative_change(self):
         """Test elasticity with negative change."""
@@ -44,7 +48,11 @@ class TestFactorElasticity:
 
         assert abs(elasticity_data["input_delta"] - (-0.2)) < 1e-9
         assert abs(elasticity_data["output_delta"] - (-0.1)) < 1e-9
-        assert elasticity_data["sensitivity_classification"] in ["low", "medium", "high"]
+        assert elasticity_data["sensitivity_classification"] in [
+            "low",
+            "medium",
+            "high",
+        ]
 
     def test_elasticity_zero_input_delta(self):
         """Test elasticity with zero input delta."""
@@ -103,9 +111,21 @@ class TestSensitivityRanking:
     def test_compute_sensitivity_ranking(self):
         """Test sensitivity ranking computation."""
         factor_elasticities = {
-            "factor_a": {"elasticity": 0.1, "sensitivity_classification": "low", "is_non_linear": False},
-            "factor_b": {"elasticity": 0.6, "sensitivity_classification": "high", "is_non_linear": True},
-            "factor_c": {"elasticity": 0.3, "sensitivity_classification": "medium", "is_non_linear": False},
+            "factor_a": {
+                "elasticity": 0.1,
+                "sensitivity_classification": "low",
+                "is_non_linear": False,
+            },
+            "factor_b": {
+                "elasticity": 0.6,
+                "sensitivity_classification": "high",
+                "is_non_linear": True,
+            },
+            "factor_c": {
+                "elasticity": 0.3,
+                "sensitivity_classification": "medium",
+                "is_non_linear": False,
+            },
         }
 
         rankings = compute_sensitivity_ranking(factor_elasticities)
@@ -207,15 +227,30 @@ class TestSensitivityNarrative:
     def test_generate_sensitivity_narrative(self):
         """Test sensitivity narrative generation."""
         rankings = [
-            {"factor_id": "market_volatility", "elasticity": 0.6, "is_non_linear": True},
-            {"factor_id": "employment_delta", "elasticity": 0.3, "is_non_linear": False},
-            {"factor_id": "consumer_sentiment", "elasticity": 0.1, "is_non_linear": False},
+            {
+                "factor_id": "market_volatility",
+                "elasticity": 0.6,
+                "is_non_linear": True,
+            },
+            {
+                "factor_id": "employment_delta",
+                "elasticity": 0.3,
+                "is_non_linear": False,
+            },
+            {
+                "factor_id": "consumer_sentiment",
+                "elasticity": 0.1,
+                "is_non_linear": False,
+            },
         ]
 
         narrative = generate_sensitivity_narrative(rankings, top_n=3)
 
         assert len(narrative) > 0
-        assert "market volatility" in narrative.lower() or "market_volatility" in narrative.lower()
+        assert (
+            "market volatility" in narrative.lower()
+            or "market_volatility" in narrative.lower()
+        )
         assert "non-linear" in narrative.lower()
 
     def test_generate_sensitivity_narrative_empty(self):
@@ -274,14 +309,16 @@ class TestNoSemanticDrift:
         """Test that base index is unchanged when sensitivity analysis is computed."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=20),
-            "stress_index": [0.6] * 20,
-            "discomfort_score": [0.7] * 20,
-            "mobility_index": [0.5] * 20,
-            "search_interest_score": [0.5] * 20,
-            "health_risk_index": [0.5] * 20,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=20),
+                "stress_index": [0.6] * 20,
+                "discomfort_score": [0.7] * 20,
+                "mobility_index": [0.5] * 20,
+                "search_interest_score": [0.5] * 20,
+                "health_risk_index": [0.5] * 20,
+            }
+        )
 
         df_before = computer.compute_behavior_index(harmonized)
         base_index_before = float(df_before["behavior_index"].iloc[19])
@@ -313,14 +350,16 @@ class TestBackwardCompatibility:
         """Test that sensitivity analysis is optional and doesn't break old consumers."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.5] * 10,
-            "discomfort_score": [0.5] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.5] * 10,
+                "discomfort_score": [0.5] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         base_index = float(df["behavior_index"].iloc[9])

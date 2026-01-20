@@ -233,7 +233,9 @@ class TestPersistentRisks:
             }
         }
 
-        persistent = generate_persistent_risks(subindex_details, min_persistence_days=30)
+        persistent = generate_persistent_risks(
+            subindex_details, min_persistence_days=30
+        )
 
         assert len(persistent) == 1
         assert persistent[0]["factor_id"] == "weather_discomfort"
@@ -265,7 +267,9 @@ class TestPersistentRisks:
             }
         }
 
-        persistent = generate_persistent_risks(subindex_details, min_persistence_days=30)
+        persistent = generate_persistent_risks(
+            subindex_details, min_persistence_days=30
+        )
 
         assert len(persistent) == 2
         assert persistent[0]["persistence"] >= persistent[1]["persistence"]
@@ -291,7 +295,9 @@ class TestConfidenceDisclaimer:
             }
         }
 
-        disclaimer = generate_confidence_disclaimer(subindex_details, behavior_index=0.5)
+        disclaimer = generate_confidence_disclaimer(
+            subindex_details, behavior_index=0.5
+        )
 
         assert "high" in disclaimer.lower() or "moderate" in disclaimer.lower()
 
@@ -311,7 +317,9 @@ class TestConfidenceDisclaimer:
             }
         }
 
-        disclaimer = generate_confidence_disclaimer(subindex_details, behavior_index=0.5)
+        disclaimer = generate_confidence_disclaimer(
+            subindex_details, behavior_index=0.5
+        )
 
         # Should handle missing data gracefully
         assert isinstance(disclaimer, str)
@@ -344,7 +352,9 @@ class TestAssessmentSummary:
             confidence_disclaimer,
         )
 
-        assert "moderate disruption" in summary.lower() or "disruption" in summary.lower()
+        assert (
+            "moderate disruption" in summary.lower() or "disruption" in summary.lower()
+        )
 
     def test_assessment_summary_includes_drivers(self):
         """Test that summary includes primary drivers."""
@@ -404,14 +414,16 @@ class TestNarrativeDeterminism:
         """Test that narrative generation is deterministic."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.6] * 10,
-            "discomfort_score": [0.7] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.6] * 10,
+                "discomfort_score": [0.7] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         details = computer.get_subindex_details(df, 9, include_quality_metrics=True)
@@ -463,19 +475,23 @@ class TestNoSemanticDrift:
         """Test that global index is unchanged when narrative is generated."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.6] * 10,
-            "discomfort_score": [0.7] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.6] * 10,
+                "discomfort_score": [0.7] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df_before = computer.compute_behavior_index(harmonized)
         global_before = float(df_before["behavior_index"].iloc[9])
 
-        details = computer.get_subindex_details(df_before, 9, include_quality_metrics=True)
+        details = computer.get_subindex_details(
+            df_before, 9, include_quality_metrics=True
+        )
         narrative = compose_narrative(global_before, details)
 
         df_after = computer.compute_behavior_index(harmonized)
@@ -488,14 +504,16 @@ class TestNoSemanticDrift:
         """Test that sub-indices are unchanged when narrative is generated."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.6] * 10,
-            "discomfort_score": [0.7] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.6] * 10,
+                "discomfort_score": [0.7] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         economic_before = float(df["economic_stress"].iloc[9])
@@ -541,14 +559,16 @@ class TestBackwardCompatibility:
         """Test that narrative is optional and doesn't break old consumers."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         details = computer.get_subindex_details(df, 0, include_quality_metrics=False)
@@ -571,14 +591,16 @@ class TestNarrativeComposition:
         """Test that compose_narrative returns all required fields."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.6] * 10,
-            "discomfort_score": [0.7] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.6] * 10,
+                "discomfort_score": [0.7] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         details = computer.get_subindex_details(df, 9, include_quality_metrics=True)

@@ -302,8 +302,12 @@ class TestOrderIndependence:
         )
 
         # Calculate with different column orders
-        result1 = engine.analyze_convergence(df, index_columns=["economic_stress", "environmental_stress"])
-        result2 = engine.analyze_convergence(df, index_columns=["environmental_stress", "economic_stress"])
+        result1 = engine.analyze_convergence(
+            df, index_columns=["economic_stress", "environmental_stress"]
+        )
+        result2 = engine.analyze_convergence(
+            df, index_columns=["environmental_stress", "economic_stress"]
+        )
 
         # Scores should be identical (correlation is symmetric)
         assert abs(result1["score"] - result2["score"]) < 1e-10
@@ -413,10 +417,14 @@ class TestCorrelationMatrixInvariants:
             }
         )
 
-        corr_matrix = engine._calculate_correlation_matrix(df[["economic_stress", "environmental_stress"]])
+        corr_matrix = engine._calculate_correlation_matrix(
+            df[["economic_stress", "environmental_stress"]]
+        )
 
         # Must be symmetric
-        pd.testing.assert_frame_equal(corr_matrix, corr_matrix.T, check_exact=False, rtol=1e-10)
+        pd.testing.assert_frame_equal(
+            corr_matrix, corr_matrix.T, check_exact=False, rtol=1e-10
+        )
 
     def test_correlation_matrix_diagonal_one(self):
         """Correlation matrix diagonal must be 1.0."""
@@ -450,7 +458,13 @@ class TestRiskTierMonotonicity:
             tiers.append(result["tier"])
 
         # Tiers must be non-decreasing
-        tier_order = {"stable": 0, "watchlist": 1, "elevated": 2, "high": 3, "critical": 4}
+        tier_order = {
+            "stable": 0,
+            "watchlist": 1,
+            "elevated": 2,
+            "high": 3,
+            "critical": 4,
+        }
         tier_values = [tier_order[t] for t in tiers]
 
         for i in range(len(tier_values) - 1):

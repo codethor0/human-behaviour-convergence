@@ -8,22 +8,29 @@ from importlib import import_module
 try:
     _backend_main = import_module("app.backend.app.main")
     # reset_application_state may not exist, provide a no-op fallback
-    reset_application_state = getattr(_backend_main, "reset_application_state", lambda: None)
+    reset_application_state = getattr(
+        _backend_main, "reset_application_state", lambda: None
+    )
 except (RecursionError, AttributeError):
     # If import fails due to recursion or missing attribute, use no-op
     def reset_application_state() -> None:
         """Fallback no-op reset when state reset utility is unavailable."""
         return None
 
+
 from app.core.live_monitor import LiveMonitor, get_live_monitor
+
 # reset_live_monitor may not exist, create a simple reset function
 try:
     from app.core.live_monitor import reset_live_monitor
 except ImportError:
     # If reset_live_monitor doesn't exist, create one that resets the singleton
     import app.core.live_monitor as live_monitor_module
+
     def reset_live_monitor():
         live_monitor_module._live_monitor_instance = None
+
+
 from app.core.prediction import BehavioralForecaster
 
 

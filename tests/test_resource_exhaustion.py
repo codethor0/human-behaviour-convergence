@@ -99,7 +99,9 @@ class TestBehavioralForecasterCacheBounds:
             )
 
         # Generate forecasts concurrently
-        threads = [threading.Thread(target=generate_forecast, args=(i,)) for i in range(20)]
+        threads = [
+            threading.Thread(target=generate_forecast, args=(i,)) for i in range(20)
+        ]
         for t in threads:
             t.start()
         for t in threads:
@@ -149,7 +151,9 @@ class TestLiveMonitorBounds:
             monitor.refresh_region("test_region")
 
         # Should not exceed max_snapshots_per_region
-        assert len(monitor._snapshots["test_region"]) <= monitor.max_snapshots_per_region
+        assert (
+            len(monitor._snapshots["test_region"]) <= monitor.max_snapshots_per_region
+        )
 
     def test_snapshots_trimmed_when_over_limit(self):
         """LiveMonitor must trim snapshots when over limit."""
@@ -161,7 +165,9 @@ class TestLiveMonitorBounds:
         monitor.refresh_region("test_region")
 
         # Should be trimmed to max_snapshots_per_region
-        assert len(monitor._snapshots["test_region"]) == monitor.max_snapshots_per_region
+        assert (
+            len(monitor._snapshots["test_region"]) == monitor.max_snapshots_per_region
+        )
 
     def test_region_lru_ordering(self):
         """LiveMonitor must maintain LRU ordering for regions."""
@@ -191,7 +197,9 @@ class TestLiveMonitorBounds:
             monitor.refresh_region(f"region_{i}")
 
         # Refresh regions concurrently
-        threads = [threading.Thread(target=refresh_region, args=(i,)) for i in range(20)]
+        threads = [
+            threading.Thread(target=refresh_region, args=(i,)) for i in range(20)
+        ]
         for t in threads:
             t.start()
         for t in threads:
@@ -229,7 +237,9 @@ class TestRepeatedRequests:
         # Should not exceed bounds
         assert len(monitor._snapshots) <= monitor.max_regions
         for region_id in monitor._snapshots:
-            assert len(monitor._snapshots[region_id]) <= monitor.max_snapshots_per_region
+            assert (
+                len(monitor._snapshots[region_id]) <= monitor.max_snapshots_per_region
+            )
 
     def test_cache_size_from_env(self):
         """Forecaster cache size should be configurable via env var."""

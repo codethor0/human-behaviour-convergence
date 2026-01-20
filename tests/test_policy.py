@@ -322,7 +322,9 @@ class TestPolicyInvariants:
         analytics_before = {"behavior_index": 0.548}
         analytics_after = {"behavior_index": 0.548}  # Unchanged
 
-        is_valid, error = registry.check("INV-POL01", policy, analytics_before, analytics_after)
+        is_valid, error = registry.check(
+            "INV-POL01", policy, analytics_before, analytics_after
+        )
         assert is_valid is True
 
     def test_inv_pol01_policy_affects_analytics_violation(self):
@@ -340,7 +342,9 @@ class TestPolicyInvariants:
         analytics_before = {"behavior_index": 0.548}
         analytics_after = {"behavior_index": 0.550}  # Changed
 
-        is_valid, error = registry.check("INV-POL01", policy, analytics_before, analytics_after)
+        is_valid, error = registry.check(
+            "INV-POL01", policy, analytics_before, analytics_after
+        )
         assert is_valid is False
         assert "analytics" in error.lower()
 
@@ -361,7 +365,9 @@ class TestPolicyInvariants:
         result1 = {"evaluated": True, "matches": []}
         result2 = {"evaluated": True, "matches": []}  # Same
 
-        is_valid, error = registry.check("INV-POL02", policy, context1, context2, result1, result2)
+        is_valid, error = registry.check(
+            "INV-POL02", policy, context1, context2, result1, result2
+        )
         assert is_valid is True
 
     def test_inv_pol03_rbac_enforced(self):
@@ -373,7 +379,9 @@ class TestPolicyInvariants:
         user_roles = ["policy_admin"]
         required_roles = ["policy_admin"]
 
-        is_valid, error = registry.check("INV-POL03", action, user_id, user_roles, required_roles)
+        is_valid, error = registry.check(
+            "INV-POL03", action, user_id, user_roles, required_roles
+        )
         assert is_valid is True
 
     def test_inv_pol03_rbac_enforced_violation(self):
@@ -390,7 +398,10 @@ class TestPolicyInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-POL03", action, user_id, user_roles, required_roles)
 
-        assert "rbac" in str(exc_info.value).lower() or "role" in str(exc_info.value).lower()
+        assert (
+            "rbac" in str(exc_info.value).lower()
+            or "role" in str(exc_info.value).lower()
+        )
 
     def test_inv_pol04_policy_bounds_not_exceeded(self):
         """Test INV-POL04: Policy bounds not exceeded."""
@@ -416,7 +427,9 @@ class TestPolicyInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-POL05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-POL05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_pol05_zero_numerical_drift_violation(self):
@@ -431,7 +444,10 @@ class TestPolicyInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-POL05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -444,21 +460,24 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before policy
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # Use policy engine
         from app.core.policy import get_policy_engine
+
         engine = get_policy_engine()
         policy = {
             "alert_thresholds": {
@@ -471,7 +490,7 @@ class TestNoSemanticDrift:
 
         # Recompute after policy
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10

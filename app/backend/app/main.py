@@ -225,6 +225,7 @@ def startup_event() -> None:
     if PROMETHEUS_AVAILABLE and data_source_status_gauge is not None:
         try:
             from app.services.ingestion.source_registry import get_all_sources
+
             sources = get_all_sources()
             for source_id in sources.keys():
                 data_source_status_gauge.labels(source=source_id).set(1)
@@ -1186,11 +1187,14 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         # Try to find matching region by coordinates (for metrics labeling)
         # This is a best-effort lookup to enable proper region labeling in metrics
         from app.backend.app.routers.forecasting import get_regions
+
         all_regions = get_regions()
         for region_info in all_regions:
             # Match if coordinates are very close (within 0.01 degrees)
-            if (abs(region_info.latitude - latitude) < 0.01 and 
-                abs(region_info.longitude - longitude) < 0.01):
+            if (
+                abs(region_info.latitude - latitude) < 0.01
+                and abs(region_info.longitude - longitude) < 0.01
+            ):
                 payload.region_id = region_info.id
                 break
 
@@ -1228,10 +1232,12 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
 
     try:
         forecaster = BehavioralForecaster()
-        
+
         # Time the forecast computation for metrics
         if forecast_duration_histogram is not None:
-            with forecast_duration_histogram.labels(region=payload.region_id or "unknown").time():
+            with forecast_duration_histogram.labels(
+                region=payload.region_id or "unknown"
+            ).time():
                 result = forecaster.forecast(
                     latitude=latitude,
                     longitude=longitude,
@@ -2019,6 +2025,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             # Update Quick Summary metrics
             if forecast_last_updated_gauge is not None:
                 import time
+
                 forecast_last_updated_gauge.labels(region=payload.region_id).set(
                     time.time()
                 )

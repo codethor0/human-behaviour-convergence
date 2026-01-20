@@ -39,15 +39,21 @@ class TestSourceProvenance:
     def test_source_provenance_freshness_classification(self):
         """Test freshness classification."""
         # Fresh: within 1.5x expected frequency
-        result = compute_source_provenance("yfinance", data_age_hours=1.0)  # Expected: 1h
+        result = compute_source_provenance(
+            "yfinance", data_age_hours=1.0
+        )  # Expected: 1h
         assert result["freshness_classification"] == "fresh"
 
         # Delayed: 1.5x to 3x expected frequency
-        result = compute_source_provenance("yfinance", data_age_hours=2.5)  # Expected: 1h
+        result = compute_source_provenance(
+            "yfinance", data_age_hours=2.5
+        )  # Expected: 1h
         assert result["freshness_classification"] == "delayed"
 
         # Stale: >3x expected frequency
-        result = compute_source_provenance("yfinance", data_age_hours=5.0)  # Expected: 1h
+        result = compute_source_provenance(
+            "yfinance", data_age_hours=5.0
+        )  # Expected: 1h
         assert result["freshness_classification"] == "stale"
 
     def test_source_provenance_coverage(self):
@@ -140,7 +146,10 @@ class TestSubIndexProvenance:
         )
 
         assert len(result["known_biases"]) > 0
-        assert "US-focused" in result["known_biases"] or "Urban skew" in result["known_biases"]
+        assert (
+            "US-focused" in result["known_biases"]
+            or "Urban skew" in result["known_biases"]
+        )
 
 
 class TestAggregateProvenance:
@@ -314,7 +323,9 @@ class TestProvenanceInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-P05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-P05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_p05_zero_numerical_drift_violation(self):
@@ -330,7 +341,10 @@ class TestProvenanceInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-P05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -380,8 +394,10 @@ class TestNoSemanticDrift:
         result2 = compose_provenance(subindex_details)
 
         # Results should be identical (deterministic)
-        assert result1["sub_index_provenances"]["economic_stress"]["sources"] == \
-               result2["sub_index_provenances"]["economic_stress"]["sources"]
+        assert (
+            result1["sub_index_provenances"]["economic_stress"]["sources"]
+            == result2["sub_index_provenances"]["economic_stress"]["sources"]
+        )
 
 
 class TestBackwardCompatibility:

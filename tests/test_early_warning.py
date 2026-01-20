@@ -48,7 +48,9 @@ class TestChangeAcceleration:
 
         # Quadratic increase (accelerating values)
         accelerating_values = [0.01 * i * i for i in range(20)]
-        accel_result = detect_change_acceleration(accelerating_values, acceleration_threshold=0.001)
+        accel_result = detect_change_acceleration(
+            accelerating_values, acceleration_threshold=0.001
+        )
 
         # Accelerating should have higher confidence (if detected)
         if accel_result["detected"]:
@@ -103,7 +105,9 @@ class TestEarlyWarningIndicators:
             min_confidence=0.5,
         )
 
-        benchmark_warnings = [w for w in result["warnings"] if w["type"] == "benchmark_deviation"]
+        benchmark_warnings = [
+            w for w in result["warnings"] if w["type"] == "benchmark_deviation"
+        ]
         assert len(benchmark_warnings) > 0
 
     def test_confidence_gating(self):
@@ -144,7 +148,9 @@ class TestEarlyWarningIndicators:
             min_confidence=0.5,
         )
 
-        trend_warnings = [w for w in result["warnings"] if w["type"] == "trend_sensitivity"]
+        trend_warnings = [
+            w for w in result["warnings"] if w["type"] == "trend_sensitivity"
+        ]
         assert len(trend_warnings) > 0
 
 
@@ -314,7 +320,10 @@ class TestConfidenceWeightedForesight:
             provenance=provenance,
         )
 
-        assert "coverage" in result["confidence_disclaimer"].lower() or "freshness" in result["confidence_disclaimer"].lower()
+        assert (
+            "coverage" in result["confidence_disclaimer"].lower()
+            or "freshness" in result["confidence_disclaimer"].lower()
+        )
 
 
 class TestEarlyWarningInvariants:
@@ -365,7 +374,9 @@ class TestEarlyWarningInvariants:
         min_confidence = 0.6
         coverage_ratio = 0.9
 
-        is_valid, error = registry.check("INV-EW02", early_warning, min_confidence, coverage_ratio)
+        is_valid, error = registry.check(
+            "INV-EW02", early_warning, min_confidence, coverage_ratio
+        )
         assert is_valid is True
 
     def test_inv_ew02_confidence_gating_violation(self):
@@ -413,7 +424,9 @@ class TestEarlyWarningInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-EW05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-EW05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_ew05_zero_numerical_drift_violation(self):
@@ -428,7 +441,10 @@ class TestEarlyWarningInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-EW05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -441,26 +457,28 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before early warning
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # Use early warning features
-        history = [float(df_before['behavior_index'].iloc[i]) for i in range(20)]
+        history = [float(df_before["behavior_index"].iloc[i]) for i in range(20)]
         compose_early_warning_indicators(behavior_index_history=history)
 
         # Recompute after early warning
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10

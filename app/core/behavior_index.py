@@ -1216,9 +1216,7 @@ class BehaviorIndexComputer:
             window = min(30, len(stress_index_raw))
             min_periods = min(7, window)
             stress_slope = (
-                stress_index_raw.rolling(
-                    window=window, min_periods=min_periods
-                )
+                stress_index_raw.rolling(window=window, min_periods=min_periods)
                 .apply(
                     lambda x: (x.iloc[-1] - x.iloc[0]) / len(x) if len(x) > 1 else 0.0
                 )

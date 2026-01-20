@@ -174,13 +174,16 @@ class TestNotificationChannels:
         channel = EmailChannel()
         assert channel.is_enabled() is False
 
-    @patch.dict(os.environ, {
-        "SMTP_HOST": "smtp.example.com",
-        "SMTP_USER": "user",
-        "SMTP_PASSWORD": "pass",
-        "SMTP_FROM_EMAIL": "from@example.com",
-        "SMTP_TO_EMAILS": "to@example.com",
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "SMTP_HOST": "smtp.example.com",
+            "SMTP_USER": "user",
+            "SMTP_PASSWORD": "pass",
+            "SMTP_FROM_EMAIL": "from@example.com",
+            "SMTP_TO_EMAILS": "to@example.com",
+        },
+    )
     def test_email_channel_configured(self):
         """Test email channel when configured."""
         reset_notification_manager()
@@ -219,7 +222,9 @@ class TestOperationalManager:
             db_path = Path(tmpdir) / "test.db"
             storage = AlertStorage(db_path=str(db_path))
 
-            manager = OperationalManager(alert_storage=storage, global_alerts_enabled=True)
+            manager = OperationalManager(
+                alert_storage=storage, global_alerts_enabled=True
+            )
 
             alerts = [
                 {
@@ -247,7 +252,9 @@ class TestOperationalManager:
             db_path = Path(tmpdir) / "test.db"
             storage = AlertStorage(db_path=str(db_path))
 
-            manager = OperationalManager(alert_storage=storage, global_alerts_enabled=True)
+            manager = OperationalManager(
+                alert_storage=storage, global_alerts_enabled=True
+            )
 
             alerts = [
                 {
@@ -286,7 +293,9 @@ class TestOperationalManager:
             db_path = Path(tmpdir) / "test.db"
             storage = AlertStorage(db_path=str(db_path))
 
-            manager = OperationalManager(alert_storage=storage, global_alerts_enabled=False)
+            manager = OperationalManager(
+                alert_storage=storage, global_alerts_enabled=False
+            )
 
             alerts = [{"id": "test_alert", "type": "threshold", "severity": "high"}]
 
@@ -428,14 +437,20 @@ class TestOperationalInvariants:
 
         # Within rate limit window (should fail)
         is_valid, error = registry.check(
-            "INV-O04", last_notification_time=one_hour_ago, current_time=now, rate_limit_hours=24
+            "INV-O04",
+            last_notification_time=one_hour_ago,
+            current_time=now,
+            rate_limit_hours=24,
         )
         assert is_valid is False
 
         # Outside rate limit window (should pass)
         one_day_ago = (datetime.now(timezone.utc) - timedelta(hours=25)).isoformat()
         is_valid, error = registry.check(
-            "INV-O04", last_notification_time=one_day_ago, current_time=now, rate_limit_hours=24
+            "INV-O04",
+            last_notification_time=one_day_ago,
+            current_time=now,
+            rate_limit_hours=24,
         )
         assert is_valid is True
 
@@ -446,7 +461,9 @@ class TestOperationalInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-O05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-O05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_o05_zero_numerical_drift_violation(self):
@@ -462,7 +479,10 @@ class TestOperationalInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-O05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -505,7 +525,9 @@ class TestBackwardCompatibility:
             db_path = Path(tmpdir) / "test.db"
             storage = AlertStorage(db_path=str(db_path))
 
-            manager = OperationalManager(alert_storage=storage, global_alerts_enabled=True)
+            manager = OperationalManager(
+                alert_storage=storage, global_alerts_enabled=True
+            )
 
             # Process alerts (should not raise even if notifications fail)
             alerts = [{"id": "test", "type": "threshold", "severity": "high"}]

@@ -78,9 +78,7 @@ class TestFactorDelta:
         weight = 0.4
         contribution_delta = value_delta * weight
 
-        is_valid, _ = registry.check(
-            "INV-T02", contribution_delta, value_delta, weight
-        )
+        is_valid, _ = registry.check("INV-T02", contribution_delta, value_delta, weight)
         assert is_valid
 
 
@@ -172,7 +170,9 @@ class TestFactorChangeAttribution:
         assert len(factor_changes["economic_stress"]) == 1
         change = factor_changes["economic_stress"][0]
         assert change["factor_id"] == "market_volatility"
-        assert abs(change["contribution_delta"] - 0.08) < 1e-9  # 0.28 - 0.2 (floating point precision)
+        assert (
+            abs(change["contribution_delta"] - 0.08) < 1e-9
+        )  # 0.28 - 0.2 (floating point precision)
 
     def test_attribute_factor_changes_no_previous(self):
         """Test factor change attribution with no previous data."""
@@ -212,10 +212,14 @@ class TestSubIndexChangeAttribution:
             "environmental_stress": {"value": 0.5},
         }
 
-        sub_index_changes = attribute_sub_index_changes(current_details, previous_details)
+        sub_index_changes = attribute_sub_index_changes(
+            current_details, previous_details
+        )
 
         assert "economic_stress" in sub_index_changes
-        assert abs(sub_index_changes["economic_stress"]["delta"] - 0.1) < 1e-9  # Floating point precision
+        assert (
+            abs(sub_index_changes["economic_stress"]["delta"] - 0.1) < 1e-9
+        )  # Floating point precision
         assert "environmental_stress" not in sub_index_changes  # No change
 
 
@@ -291,15 +295,16 @@ class TestChangeNarrative:
         )
 
         assert "increased" in narrative.lower()
-        assert "economic stress" in narrative.lower() or "market volatility" in narrative.lower()
+        assert (
+            "economic stress" in narrative.lower()
+            or "market volatility" in narrative.lower()
+        )
 
     def test_change_narrative_no_change(self):
         """Test narrative for no change."""
         global_delta = {"has_change": False}
 
-        narrative = generate_change_narrative(
-            global_delta, {}, {}, time_window_days=7
-        )
+        narrative = generate_change_narrative(global_delta, {}, {}, time_window_days=7)
 
         assert "no significant change" in narrative.lower()
 
@@ -376,21 +381,27 @@ class TestNoSemanticDrift:
         """Test that global index is unchanged when temporal attribution is computed."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=20),
-            "stress_index": [0.6] * 20,
-            "discomfort_score": [0.7] * 20,
-            "mobility_index": [0.5] * 20,
-            "search_interest_score": [0.5] * 20,
-            "health_risk_index": [0.5] * 20,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=20),
+                "stress_index": [0.6] * 20,
+                "discomfort_score": [0.7] * 20,
+                "mobility_index": [0.5] * 20,
+                "search_interest_score": [0.5] * 20,
+                "health_risk_index": [0.5] * 20,
+            }
+        )
 
         df_before = computer.compute_behavior_index(harmonized)
         global_before = float(df_before["behavior_index"].iloc[19])
 
         # Get details for current and previous
-        current_details = computer.get_subindex_details(df_before, 19, include_quality_metrics=True)
-        previous_details = computer.get_subindex_details(df_before, 10, include_quality_metrics=True)
+        current_details = computer.get_subindex_details(
+            df_before, 19, include_quality_metrics=True
+        )
+        previous_details = computer.get_subindex_details(
+            df_before, 10, include_quality_metrics=True
+        )
 
         # Compute temporal attribution
         attribution = compose_temporal_attribution(
@@ -455,17 +466,21 @@ class TestBackwardCompatibility:
         """Test that temporal attribution is optional and doesn't break old consumers."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=10),
-            "stress_index": [0.5] * 10,
-            "discomfort_score": [0.5] * 10,
-            "mobility_index": [0.5] * 10,
-            "search_interest_score": [0.5] * 10,
-            "health_risk_index": [0.5] * 10,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=10),
+                "stress_index": [0.5] * 10,
+                "discomfort_score": [0.5] * 10,
+                "mobility_index": [0.5] * 10,
+                "search_interest_score": [0.5] * 10,
+                "health_risk_index": [0.5] * 10,
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
-        current_details = computer.get_subindex_details(df, 9, include_quality_metrics=False)
+        current_details = computer.get_subindex_details(
+            df, 9, include_quality_metrics=False
+        )
 
         # Old consumers can still access value and components without temporal attribution
         assert "economic_stress" in current_details
@@ -485,20 +500,26 @@ class TestTemporalAttributionIntegration:
         """Test temporal attribution with realistic data."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=30),
-            "stress_index": [0.5 + i * 0.01 for i in range(30)],  # Increasing trend
-            "discomfort_score": [0.7] * 30,
-            "mobility_index": [0.5] * 30,
-            "search_interest_score": [0.5] * 30,
-            "health_risk_index": [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.5 + i * 0.01 for i in range(30)],  # Increasing trend
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
 
         # Get current and previous details
-        current_details = computer.get_subindex_details(df, 29, include_quality_metrics=True)
-        previous_details = computer.get_subindex_details(df, 15, include_quality_metrics=True)
+        current_details = computer.get_subindex_details(
+            df, 29, include_quality_metrics=True
+        )
+        previous_details = computer.get_subindex_details(
+            df, 15, include_quality_metrics=True
+        )
 
         current_index = float(df["behavior_index"].iloc[29])
         previous_index = float(df["behavior_index"].iloc[15])

@@ -15,17 +15,19 @@ class TestFactorReconciliation:
         computer = BehaviorIndexComputer()
 
         # Create harmonized data with multiple economic components
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],  # Market volatility
-            "fred_consumer_sentiment": [0.4],
-            "fred_unemployment": [0.5],
-            "fred_jobless_claims": [0.3],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],  # Market volatility
+                "fred_consumer_sentiment": [0.4],
+                "fred_unemployment": [0.5],
+                "fred_jobless_claims": [0.3],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -35,26 +37,28 @@ class TestFactorReconciliation:
         sub_index_value = economic_details["value"]
 
         # Factors should reconcile to sub-index (± tolerance)
-        assert abs(factor_sum - sub_index_value) <= 0.01, (
-            f"Factor sum {factor_sum} does not reconcile with sub-index {sub_index_value}"
-        )
-        assert economic_details["reconciliation"]["valid"], (
-            "Reconciliation should be valid"
-        )
+        assert (
+            abs(factor_sum - sub_index_value) <= 0.01
+        ), f"Factor sum {factor_sum} does not reconcile with sub-index {sub_index_value}"
+        assert economic_details["reconciliation"][
+            "valid"
+        ], "Reconciliation should be valid"
 
     def test_environmental_stress_factors_reconcile(self):
         """Test that environmental stress factors sum to sub-index value."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.7],
-            "usgs_earthquake_intensity": [0.3],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.7],
+                "usgs_earthquake_intensity": [0.3],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -70,14 +74,16 @@ class TestFactorReconciliation:
         """Test that mobility activity factors sum to sub-index value."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.8],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.8],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -93,15 +99,17 @@ class TestFactorReconciliation:
         """Test that digital attention factors sum to sub-index value."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.6],
-            "gdelt_tone_score": [0.4],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.6],
+                "gdelt_tone_score": [0.4],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -117,15 +125,17 @@ class TestFactorReconciliation:
         """Test that public health stress factors sum to sub-index value."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.7],
-            "owid_health_stress": [0.3],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.7],
+                "owid_health_stress": [0.3],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -145,15 +155,17 @@ class TestGlobalStability:
         """Test that global behavior index is identical before/after factor expansion."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],
-            "fred_consumer_sentiment": [0.4],
-            "discomfort_score": [0.7],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],
+                "fred_consumer_sentiment": [0.4],
+                "discomfort_score": [0.7],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         global_index_before = float(df["behavior_index"].iloc[0])
@@ -165,22 +177,24 @@ class TestGlobalStability:
         df_after = computer.compute_behavior_index(harmonized)
         global_index_after = float(df_after["behavior_index"].iloc[0])
 
-        assert abs(global_index_before - global_index_after) < 1e-10, (
-            "Global index should be unchanged"
-        )
+        assert (
+            abs(global_index_before - global_index_after) < 1e-10
+        ), "Global index should be unchanged"
 
     def test_sub_indices_unchanged(self):
         """Test that sub-index values are identical before/after factor expansion."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],
-            "discomfort_score": [0.7],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],
+                "discomfort_score": [0.7],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         economic_before = float(df["economic_stress"].iloc[0])
@@ -191,7 +205,9 @@ class TestGlobalStability:
 
         # Verify details match original values
         assert abs(details["economic_stress"]["value"] - economic_before) < 1e-10
-        assert abs(details["environmental_stress"]["value"] - environmental_before) < 1e-10
+        assert (
+            abs(details["environmental_stress"]["value"] - environmental_before) < 1e-10
+        )
 
 
 class TestSemanticDrift:
@@ -201,15 +217,17 @@ class TestSemanticDrift:
         """Test that factor expansion adds detail without changing meaning."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],
-            "fred_consumer_sentiment": [0.4],
-            "discomfort_score": [0.7],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],
+                "fred_consumer_sentiment": [0.4],
+                "discomfort_score": [0.7],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -247,14 +265,16 @@ class TestBackwardCompatibility:
         """Test that trace objects without factor contributions still work."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -281,17 +301,19 @@ class TestOrderIndependence:
         """Test that factors are in deterministic order."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],
-            "fred_consumer_sentiment": [0.4],
-            "fred_unemployment": [0.5],
-            "fred_jobless_claims": [0.3],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],
+                "fred_consumer_sentiment": [0.4],
+                "fred_unemployment": [0.5],
+                "fred_jobless_claims": [0.3],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
 
@@ -314,14 +336,16 @@ class TestMissingFactorSafety:
         computer = BehaviorIndexComputer()
 
         # Create data with missing FRED indicators
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],  # Only market volatility
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],  # Only market volatility
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 0)
@@ -341,10 +365,12 @@ class TestMissingFactorSafety:
         computer = BehaviorIndexComputer()
 
         # Minimal data
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
 
@@ -363,15 +389,17 @@ class TestHierarchicalReconciliation:
         """Test that factors reconcile transitively to global index."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.6],
-            "fred_consumer_sentiment": [0.4],
-            "discomfort_score": [0.7],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.6],
+                "fred_consumer_sentiment": [0.4],
+                "discomfort_score": [0.7],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         row = df.iloc[0]
@@ -395,15 +423,15 @@ class TestHierarchicalReconciliation:
                     f["contribution"] for f in sub_index_details["components"]
                 )
                 sub_index_value = sub_index_details["value"]
-                assert abs(factor_sum - sub_index_value) <= 0.01, (
-                    f"{sub_index_name}: factors {factor_sum} != sub-index {sub_index_value}"
-                )
+                assert (
+                    abs(factor_sum - sub_index_value) <= 0.01
+                ), f"{sub_index_name}: factors {factor_sum} != sub-index {sub_index_value}"
 
         # Verify Sub-Index → Global reconciliation (already tested elsewhere)
         global_index = float(row["behavior_index"])
         contribution_sum = sum(
             contrib["contribution"] for contrib in contributions.values()
         )
-        assert abs(contribution_sum - global_index) <= 0.01, (
-            f"Sub-indices {contribution_sum} != global index {global_index}"
-        )
+        assert (
+            abs(contribution_sum - global_index) <= 0.01
+        ), f"Sub-indices {contribution_sum} != global index {global_index}"

@@ -345,7 +345,7 @@ class BehavioralForecaster:
             if not mobility_data.empty:
                 sources.append("TSA Passenger Throughput (Mobility)")
             # Get status from last_status attribute if needed
-            mobility_status = getattr(self.mobility_fetcher, 'last_status', None)
+            mobility_status = getattr(self.mobility_fetcher, "last_status", None)
 
             # Fetch GDELT events data (digital attention)
             gdelt_tone, gdelt_status = self.gdelt_fetcher.fetch_event_tone(

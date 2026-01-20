@@ -71,7 +71,9 @@ class TestPeerGroupAverage:
             },
         }
 
-        result = compute_peer_group_average(region, behavior_index_values, sub_index_values)
+        result = compute_peer_group_average(
+            region, behavior_index_values, sub_index_values
+        )
 
         assert result["peer_group"] == "US_STATES"
         if result["average_sub_indices"]:
@@ -186,7 +188,9 @@ class TestSubIndexBenchmarks:
             "economic_stress": 0.45,
         }
 
-        result = compute_sub_index_benchmarks(current_sub_indices, peer_averages=peer_averages)
+        result = compute_sub_index_benchmarks(
+            current_sub_indices, peer_averages=peer_averages
+        )
 
         assert result["economic_stress"]["peer_average"] == 0.45
         assert abs(result["economic_stress"]["peer_deviation"] - 0.05) < 1e-9
@@ -346,7 +350,9 @@ class TestBenchmarkInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-B05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-B05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_b05_zero_numerical_drift_violation(self):
@@ -362,7 +368,10 @@ class TestBenchmarkInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-B05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -384,7 +393,13 @@ class TestNoSemanticDrift:
         )
 
         # Behavior index should be unchanged
-        assert abs(result["metadata"].get("behavior_index", behavior_index_before) - behavior_index_before) < 1e-10
+        assert (
+            abs(
+                result["metadata"].get("behavior_index", behavior_index_before)
+                - behavior_index_before
+            )
+            < 1e-10
+        )
 
     def test_benchmarks_are_purely_derived(self):
         """Test that benchmarks are purely derived from existing outputs."""
@@ -406,7 +421,10 @@ class TestNoSemanticDrift:
         )
 
         # Results should be identical (deterministic)
-        assert result1["historical_baseline"]["baseline_value"] == result2["historical_baseline"]["baseline_value"]
+        assert (
+            result1["historical_baseline"]["baseline_value"]
+            == result2["historical_baseline"]["baseline_value"]
+        )
 
 
 class TestBackwardCompatibility:
@@ -446,7 +464,10 @@ class TestBackwardCompatibility:
         )
 
         assert isinstance(result, dict)
-        assert result["peer_group_analysis"] is None or result["peer_group_analysis"]["peer_count"] == 0
+        assert (
+            result["peer_group_analysis"] is None
+            or result["peer_group_analysis"]["peer_count"] == 0
+        )
 
     def test_benchmark_composition_without_history(self):
         """Test benchmark composition works without history."""

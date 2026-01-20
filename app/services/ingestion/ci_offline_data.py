@@ -32,23 +32,23 @@ def generate_synthetic_time_series(
 ) -> pd.DataFrame:
     """
     Generate a deterministic synthetic time series for CI testing.
-    
+
     Args:
         days: Number of days of data
         base_value: Base value (0.0-1.0)
         volatility: Random variation amplitude
         trend: Linear trend per day
         seed: Random seed for reproducibility
-        
+
     Returns:
         DataFrame with columns: timestamp, value
     """
     if seed is not None:
         np.random.seed(seed)
-    
+
     end_date = datetime.now()
     dates = [end_date - timedelta(days=i) for i in range(days, 0, -1)]
-    
+
     # Generate synthetic values with trend and noise
     values = []
     for i, date in enumerate(dates):
@@ -57,11 +57,13 @@ def generate_synthetic_time_series(
         # Clip to valid range
         value = max(0.0, min(1.0, value))
         values.append(value)
-    
-    return pd.DataFrame({
-        "timestamp": dates,
-        "value": values,
-    })
+
+    return pd.DataFrame(
+        {
+            "timestamp": dates,
+            "value": values,
+        }
+    )
 
 
 def get_ci_mobility_data(region_id: str) -> pd.DataFrame:
@@ -149,7 +151,7 @@ def get_ci_weather_data(region_id: str) -> pd.DataFrame:
 def get_ci_data_source_status() -> List[Dict[str, Any]]:
     """
     Get synthetic data source status for CI mode.
-    
+
     Returns a list of all expected data sources with 'healthy' status.
     This ensures data_source_status metrics are populated in CI.
     """
@@ -167,7 +169,7 @@ def get_ci_data_source_status() -> List[Dict[str, Any]]:
         "political",
         "crime_safety",
     ]
-    
+
     return [
         {
             "source": source,

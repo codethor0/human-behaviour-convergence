@@ -72,10 +72,22 @@ class TestContributionReconciliation:
         """Behavior index trace contributions must sum to behavior_index."""
         contributions = {
             "economic_stress": {"value": 0.6, "weight": 0.25, "contribution": 0.15},
-            "environmental_stress": {"value": 0.5, "weight": 0.25, "contribution": 0.125},
-            "mobility_activity": {"value": 0.4, "weight": 0.2, "contribution": 0.12},  # Inverted
+            "environmental_stress": {
+                "value": 0.5,
+                "weight": 0.25,
+                "contribution": 0.125,
+            },
+            "mobility_activity": {
+                "value": 0.4,
+                "weight": 0.2,
+                "contribution": 0.12,
+            },  # Inverted
             "digital_attention": {"value": 0.3, "weight": 0.15, "contribution": 0.045},
-            "public_health_stress": {"value": 0.5, "weight": 0.15, "contribution": 0.075},
+            "public_health_stress": {
+                "value": 0.5,
+                "weight": 0.15,
+                "contribution": 0.075,
+            },
         }
         weights = {k: contributions[k]["weight"] for k in contributions.keys()}
 
@@ -152,18 +164,26 @@ class TestOrderIndependence:
         )
 
         # Components should be in deterministic order
-        assert trace1["components"] == trace2["components"], (
-            "Risk trace components should be order-independent"
-        )
+        assert (
+            trace1["components"] == trace2["components"]
+        ), "Risk trace components should be order-independent"
 
     def test_behavior_index_trace_order_independence(self):
         """Behavior index trace must be identical regardless of contribution order."""
         contributions1 = {
             "economic_stress": {"value": 0.6, "weight": 0.25, "contribution": 0.15},
-            "environmental_stress": {"value": 0.5, "weight": 0.25, "contribution": 0.125},
+            "environmental_stress": {
+                "value": 0.5,
+                "weight": 0.25,
+                "contribution": 0.125,
+            },
         }
         contributions2 = {
-            "environmental_stress": {"value": 0.5, "weight": 0.25, "contribution": 0.125},
+            "environmental_stress": {
+                "value": 0.5,
+                "weight": 0.25,
+                "contribution": 0.125,
+            },
             "economic_stress": {"value": 0.6, "weight": 0.25, "contribution": 0.15},
         }
 
@@ -180,9 +200,9 @@ class TestOrderIndependence:
         )
 
         # Components should be in deterministic order (sorted by key)
-        assert trace1["components"] == trace2["components"], (
-            "Behavior index trace components should be order-independent"
-        )
+        assert (
+            trace1["components"] == trace2["components"]
+        ), "Behavior index trace components should be order-independent"
 
     def test_ensure_order_independence(self):
         """Test order independence utility function."""
@@ -226,13 +246,20 @@ class TestNoContradictions:
         )
 
         # Verify tier order matches risk score order
-        tier_order = {"stable": 0, "watchlist": 1, "elevated": 2, "high": 3, "critical": 4}
-        assert tier_order[trace_low["output"]["tier"]] < tier_order[trace_high["output"]["tier"]], (
-            "Risk trace tier order must match risk score order"
-        )
-        assert trace_low["output"]["risk_score"] < trace_high["output"]["risk_score"], (
-            "Risk trace risk scores must be ordered correctly"
-        )
+        tier_order = {
+            "stable": 0,
+            "watchlist": 1,
+            "elevated": 2,
+            "high": 3,
+            "critical": 4,
+        }
+        assert (
+            tier_order[trace_low["output"]["tier"]]
+            < tier_order[trace_high["output"]["tier"]]
+        ), "Risk trace tier order must match risk score order"
+        assert (
+            trace_low["output"]["risk_score"] < trace_high["output"]["risk_score"]
+        ), "Risk trace risk scores must be ordered correctly"
 
     def test_confidence_trace_no_contradiction(self):
         """Confidence trace must not contradict volatility relationship."""
@@ -256,9 +283,10 @@ class TestNoContradictions:
             data_points=30,
         )
 
-        assert trace_low_vol["output"]["confidence"] > trace_high_vol["output"]["confidence"], (
-            "Confidence trace must respect volatility relationship"
-        )
+        assert (
+            trace_low_vol["output"]["confidence"]
+            > trace_high_vol["output"]["confidence"]
+        ), "Confidence trace must respect volatility relationship"
 
 
 class TestNoLeaks:
@@ -323,9 +351,9 @@ class TestTraceCompleteness:
 
         assert "trace" in result, "Risk classification must include trace"
         assert "reconciliation" in result["trace"], "Trace must include reconciliation"
-        assert result["trace"]["reconciliation"]["valid"], (
-            "Risk trace reconciliation must be valid"
-        )
+        assert result["trace"]["reconciliation"][
+            "valid"
+        ], "Risk trace reconciliation must be valid"
 
     def test_confidence_calculation_has_trace(self):
         """Confidence calculation must create trace."""
@@ -442,9 +470,14 @@ class TestTraceIntegration:
         )
 
         # Verify components match result
-        assert abs(trace["components"]["base_risk"]["value"] - result["base_risk"]) < 0.01
         assert (
-            abs(trace["components"]["shock_adjustment"]["value"] - result["shock_adjustment"])
+            abs(trace["components"]["base_risk"]["value"] - result["base_risk"]) < 0.01
+        )
+        assert (
+            abs(
+                trace["components"]["shock_adjustment"]["value"]
+                - result["shock_adjustment"]
+            )
             < 0.01
         )
 

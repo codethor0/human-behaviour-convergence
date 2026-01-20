@@ -24,7 +24,7 @@ class TestGenerateExplanation:
 
         assert "summary" in explanation
         assert "subindices" in explanation
-        
+
         # Verify all 9 expected sub-indices are present
         expected_subindices = {
             "economic_stress",

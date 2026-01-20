@@ -89,9 +89,7 @@ class TestChangeSummary:
                 "delta_value": 0.15,
                 "direction": "increasing",
             },
-            "primary_drivers": [
-                {"factor_id": "market_volatility", "delta": 0.1}
-            ],
+            "primary_drivers": [{"factor_id": "market_volatility", "delta": 0.1}],
         }
 
         summary = compose_change_summary(temporal_attribution, 0.65)
@@ -274,7 +272,10 @@ class TestComposeExecutiveSummary:
         )
 
         assert summary1["current_status"] == summary2["current_status"]
-        assert summary1["action_recommendation"]["recommendation"] == summary2["action_recommendation"]["recommendation"]
+        assert (
+            summary1["action_recommendation"]["recommendation"]
+            == summary2["action_recommendation"]["recommendation"]
+        )
 
 
 class TestBriefExport:
@@ -406,7 +407,9 @@ class TestExecutiveUXInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-UX04", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-UX04", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_ux04_zero_numerical_drift_violation(self):
@@ -422,7 +425,10 @@ class TestExecutiveUXInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-UX04", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -459,7 +465,10 @@ class TestNoSemanticDrift:
         # Alerts should be unchanged
         assert alerts_dict["alert_count"] > 0
         # Summary should reference alerts
-        assert summary["action_recommendation"]["alert_count"] == alerts_dict["alert_count"]
+        assert (
+            summary["action_recommendation"]["alert_count"]
+            == alerts_dict["alert_count"]
+        )
 
     def test_executive_summary_deterministic(self):
         """Test that executive summary is deterministic."""
@@ -479,7 +488,10 @@ class TestNoSemanticDrift:
 
         # Key fields should be identical
         assert summary1["current_status"] == summary2["current_status"]
-        assert summary1["action_recommendation"]["recommendation"] == summary2["action_recommendation"]["recommendation"]
+        assert (
+            summary1["action_recommendation"]["recommendation"]
+            == summary2["action_recommendation"]["recommendation"]
+        )
 
 
 class TestBackwardCompatibility:

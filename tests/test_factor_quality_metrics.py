@@ -322,14 +322,16 @@ class TestHierarchicalQualityReconciliation:
         """Test that quality metrics don't break factor reconciliation."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=5),
-            "stress_index": [0.5, 0.6, 0.55, 0.65, 0.6],
-            "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5),
+                "stress_index": [0.5, 0.6, 0.55, 0.65, 0.6],
+                "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
 
@@ -357,14 +359,16 @@ class TestNoSemanticDriftQuality:
         """Test that global index is unchanged when quality metrics are computed."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=5),
-            "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
-            "discomfort_score": [0.7, 0.7, 0.7, 0.7, 0.7],
-            "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5),
+                "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
+                "discomfort_score": [0.7, 0.7, 0.7, 0.7, 0.7],
+                "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
 
         df = computer.compute_behavior_index(harmonized)
         global_index_before = float(df["behavior_index"].iloc[4])
@@ -382,14 +386,16 @@ class TestNoSemanticDriftQuality:
         """Test that sub-indices are unchanged when quality metrics are computed."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=5),
-            "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
-            "discomfort_score": [0.7, 0.7, 0.7, 0.7, 0.7],
-            "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5),
+                "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
+                "discomfort_score": [0.7, 0.7, 0.7, 0.7, 0.7],
+                "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         economic_before = float(df["economic_stress"].iloc[4])
@@ -400,7 +406,9 @@ class TestNoSemanticDriftQuality:
 
         # Verify sub-index values unchanged
         assert abs(details["economic_stress"]["value"] - economic_before) < 1e-10
-        assert abs(details["environmental_stress"]["value"] - environmental_before) < 1e-10
+        assert (
+            abs(details["environmental_stress"]["value"] - environmental_before) < 1e-10
+        )
 
 
 class TestBackwardCompatibilityQuality:
@@ -410,14 +418,16 @@ class TestBackwardCompatibilityQuality:
         """Test that quality metrics are optional and don't break old consumers."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=1),
-            "stress_index": [0.5],
-            "discomfort_score": [0.5],
-            "mobility_index": [0.5],
-            "search_interest_score": [0.5],
-            "health_risk_index": [0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=1),
+                "stress_index": [0.5],
+                "discomfort_score": [0.5],
+                "mobility_index": [0.5],
+                "search_interest_score": [0.5],
+                "health_risk_index": [0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
 
@@ -436,7 +446,9 @@ class TestBackwardCompatibilityQuality:
         economic_with_quality = details_with_quality["economic_stress"]
 
         assert economic_no_quality["value"] == economic_with_quality["value"]
-        assert len(economic_no_quality["components"]) == len(economic_with_quality["components"])
+        assert len(economic_no_quality["components"]) == len(
+            economic_with_quality["components"]
+        )
 
         # Old consumers can ignore quality fields
         factor_no_quality = economic_no_quality["components"][0]
@@ -454,14 +466,16 @@ class TestBackwardCompatibilityQuality:
         """Test that API schema remains backward compatible."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=5),
-            "stress_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5),
+                "stress_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
         details = computer.get_subindex_details(df, 4, include_quality_metrics=True)
@@ -491,15 +505,17 @@ class TestOrderIndependenceQuality:
         """Test that factor ranking by signal strength is order-independent."""
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            "timestamp": pd.date_range("2024-01-01", periods=5),
-            "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
-            "fred_consumer_sentiment": [0.4, 0.4, 0.4, 0.4, 0.4],
-            "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
-            "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5),
+                "stress_index": [0.6, 0.6, 0.6, 0.6, 0.6],
+                "fred_consumer_sentiment": [0.4, 0.4, 0.4, 0.4, 0.4],
+                "discomfort_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "mobility_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "search_interest_score": [0.5, 0.5, 0.5, 0.5, 0.5],
+                "health_risk_index": [0.5, 0.5, 0.5, 0.5, 0.5],
+            }
+        )
 
         df = computer.compute_sub_indices(harmonized)
 
@@ -515,6 +531,10 @@ class TestOrderIndependenceQuality:
 
         # Signal strengths should be identical
         if len(factors1) > 1:
-            signal1 = [f["signal_strength"] for f in details1["economic_stress"]["components"]]
-            signal2 = [f["signal_strength"] for f in details2["economic_stress"]["components"]]
+            signal1 = [
+                f["signal_strength"] for f in details1["economic_stress"]["components"]
+            ]
+            signal2 = [
+                f["signal_strength"] for f in details2["economic_stress"]["components"]
+            ]
             assert signal1 == signal2

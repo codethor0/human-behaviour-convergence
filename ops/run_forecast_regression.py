@@ -276,7 +276,7 @@ def main():
                 if integrity.get('shock_multiplier_applied'):
                     print(f"    shock_multiplier: {integrity.get('shock_multiplier_value', 'N/A')} (applied)")
                 if failures:
-                    print(f"    ⚠ FAILURES: {len(failures)}")
+                    print(f"    [WARN] FAILURES: {len(failures)}")
                 else:
                     print("    [OK] PASSED")
 

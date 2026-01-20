@@ -9,7 +9,10 @@ import pandas as pd
 import requests
 import structlog
 
-from app.services.ingestion.ci_offline_data import is_ci_offline_mode, get_ci_economic_data
+from app.services.ingestion.ci_offline_data import (
+    is_ci_offline_mode,
+    get_ci_economic_data,
+)
 
 logger = structlog.get_logger("ingestion.economic_fred")
 
@@ -77,7 +80,7 @@ class FREDEconomicFetcher:
         if is_ci_offline_mode():
             logger.info("Using CI offline mode for economic data")
             return get_ci_economic_data(series_id)
-        
+
         if not self.api_key:
             logger.warning("FRED_API_KEY not set, returning empty DataFrame")
             return pd.DataFrame(columns=["timestamp", "value"])
@@ -273,12 +276,14 @@ class FREDEconomicFetcher:
             dates = pd.date_range(end=today, periods=12, freq="W-THU")
             values = np.linspace(200_000, 260_000, len(dates))
             values_normalized = (values - values.min()) / (values.max() - values.min())
-            
-            return pd.DataFrame({
-                "timestamp": dates,
-                "jobless_claims": values_normalized,
-            })
-        
+
+            return pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "jobless_claims": values_normalized,
+                }
+            )
+
         df = self.fetch_series(FRED_SERIES["jobless_claims"], days_back, use_cache)
 
         if df.empty:

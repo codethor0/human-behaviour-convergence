@@ -355,7 +355,7 @@ All services operational.
 - 12 data sources initialized as ACTIVE
 - Metric query returns all 12 series
 
-### Forecast UI (End-to-End): YELLOW ⚠
+### Forecast UI (End-to-End): YELLOW [WARN]
 - Frontend service: UP
 - Region dropdown fix: DEPLOYED (awaiting browser confirmation)
 - Grafana embeds: CODE DEPLOYED (awaiting browser confirmation)
@@ -467,10 +467,10 @@ All services operational.
 [OK] Git hygiene (no emojis, no artifacts)  
 
 ### What REQUIRES Manual Browser Verification:
-⚠ Region dropdown behavior (fix deployed, needs visual confirmation)  
-⚠ Grafana iframe rendering in forecast page (code deployed, needs visual confirmation)  
-⚠ Quick Summary values match backend data (programmatic tests pass, needs visual confirmation)  
-⚠ Data Sources table displays correctly (programmatic tests pass, needs visual confirmation)  
+[WARN] Region dropdown behavior (fix deployed, needs visual confirmation)  
+[WARN] Grafana iframe rendering in forecast page (code deployed, needs visual confirmation)  
+[WARN] Quick Summary values match backend data (programmatic tests pass, needs visual confirmation)  
+[WARN] Data Sources table displays correctly (programmatic tests pass, needs visual confirmation)  
 
 ### Merge Recommendation:
 

@@ -79,7 +79,9 @@ class TestObservabilityManager:
         """Test tracing forecast → alert → notify flow."""
         manager = ObservabilityManager()
 
-        with manager.trace_forecast_to_alert_to_notify("test_region", "forecast1") as trace:
+        with manager.trace_forecast_to_alert_to_notify(
+            "test_region", "forecast1"
+        ) as trace:
             assert "trace_id" in trace
             assert trace["region_id"] == "test_region"
             assert trace["forecast_id"] == "forecast1"
@@ -183,7 +185,10 @@ class TestDeploymentInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-DEP02", secrets, exposed_fields)
 
-        assert "exposed" in str(exc_info.value).lower() or "secret" in str(exc_info.value).lower()
+        assert (
+            "exposed" in str(exc_info.value).lower()
+            or "secret" in str(exc_info.value).lower()
+        )
 
     def test_inv_dep03_observability_completeness(self):
         """Test INV-DEP03: Observability completeness."""
@@ -231,7 +236,9 @@ class TestDeploymentInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-DEP05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-DEP05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_dep05_zero_numerical_drift_violation(self):
@@ -247,7 +254,10 @@ class TestDeploymentInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-DEP05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
@@ -260,18 +270,20 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before observability
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # Record observability metrics
         manager = get_observability_manager()
@@ -279,7 +291,7 @@ class TestNoSemanticDrift:
 
         # Recompute after observability
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10
@@ -291,18 +303,20 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before secrets management
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # Use secrets manager
         secrets_manager = get_secrets_manager()
@@ -310,7 +324,7 @@ class TestNoSemanticDrift:
 
         # Recompute after secrets management
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10

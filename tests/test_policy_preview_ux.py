@@ -96,7 +96,9 @@ class TestPreviewUXInvariants:
         user_roles = ["policy_admin"]
         required_roles = ["policy_admin"]
 
-        is_valid, error = registry.check("INV-UXP04", ui_controls, user_roles, required_roles)
+        is_valid, error = registry.check(
+            "INV-UXP04", ui_controls, user_roles, required_roles
+        )
         assert is_valid is True
 
     def test_inv_uxp04_rbac_not_reflected_violation(self):
@@ -109,7 +111,9 @@ class TestPreviewUXInvariants:
         user_roles = ["viewer"]  # No required role
         required_roles = ["policy_admin"]
 
-        is_valid, error = registry.check("INV-UXP04", ui_controls, user_roles, required_roles)
+        is_valid, error = registry.check(
+            "INV-UXP04", ui_controls, user_roles, required_roles
+        )
         assert is_valid is False
         assert "role" in error.lower() or "rbac" in error.lower()
 
@@ -120,7 +124,9 @@ class TestPreviewUXInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-UXP05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-UXP05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_uxp05_zero_numerical_drift_violation(self):
@@ -148,25 +154,27 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before preview UX
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # UI components don't affect computation (they're just display)
         # But we verify anyway
 
         # Recompute after (no changes)
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10

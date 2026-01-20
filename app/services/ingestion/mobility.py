@@ -8,7 +8,10 @@ import pandas as pd
 import requests
 import structlog
 
-from app.services.ingestion.ci_offline_data import is_ci_offline_mode, get_ci_mobility_data
+from app.services.ingestion.ci_offline_data import (
+    is_ci_offline_mode,
+    get_ci_mobility_data,
+)
 from app.services.ingestion.gdelt_events import SourceStatus
 
 logger = structlog.get_logger("ingestion.mobility")
@@ -170,7 +173,7 @@ class MobilityFetcher:
                 query_window_days=days_back,
             )
             return df.tail(days_back).copy(), status
-        
+
         fetched_at = datetime.now().isoformat()
         cache_key = f"mobility_tsa_{days_back}"
 

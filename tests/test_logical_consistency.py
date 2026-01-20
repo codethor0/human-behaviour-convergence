@@ -25,7 +25,13 @@ class TestRiskTierMonotonicity:
             tiers.append(result["tier"])
 
         # Tiers must be non-decreasing
-        tier_order = {"stable": 0, "watchlist": 1, "elevated": 2, "high": 3, "critical": 4}
+        tier_order = {
+            "stable": 0,
+            "watchlist": 1,
+            "elevated": 2,
+            "high": 3,
+            "critical": 4,
+        }
         tier_values = [tier_order[t] for t in tiers]
 
         for i in range(len(tier_values) - 1):
@@ -76,9 +82,7 @@ class TestConfidenceVolatilityConsistency:
 
         # Create series with different volatilities
         low_volatility = pd.Series([0.5] * 20 + [0.51] * 20)  # Very stable
-        high_volatility = pd.Series(
-            np.random.uniform(0.0, 1.0, 40)
-        )  # High variance
+        high_volatility = pd.Series(np.random.uniform(0.0, 1.0, 40))  # High variance
 
         low_conf = monitor._calculate_stability(low_volatility)
         high_conf = monitor._calculate_stability(high_volatility)
@@ -98,7 +102,10 @@ class TestConfidenceVolatilityConsistency:
         incomplete = pd.Series([0.5] * 10 + [np.nan] * 10)
 
         df_complete = pd.DataFrame(
-            {"timestamp": pd.date_range("2024-01-01", periods=20), "economic_stress": complete}
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=20),
+                "economic_stress": complete,
+            }
         )
         df_incomplete = pd.DataFrame(
             {
@@ -107,7 +114,9 @@ class TestConfidenceVolatilityConsistency:
             }
         )
 
-        conf_complete = monitor.calculate_confidence(df_complete).get("economic_stress", 0.0)
+        conf_complete = monitor.calculate_confidence(df_complete).get(
+            "economic_stress", 0.0
+        )
         conf_incomplete = monitor.calculate_confidence(df_incomplete).get(
             "economic_stress", 0.0
         )
@@ -148,9 +157,9 @@ class TestShockTrendConsistency:
             )
 
             # Risk should be elevated due to shocks
-            assert result["risk_score"] > 0.7, (
-                f"Shock-trend inconsistency: severe shocks but risk_score={result['risk_score']}"
-            )
+            assert (
+                result["risk_score"] > 0.7
+            ), f"Shock-trend inconsistency: severe shocks but risk_score={result['risk_score']}"
 
 
 class TestConvergenceConsistency:
@@ -177,14 +186,14 @@ class TestConvergenceConsistency:
         result = engine.analyze_convergence(df_aligned)
 
         # High convergence should produce high score
-        assert result["score"] > 50.0, (
-            f"Convergence inconsistency: aligned indices but score={result['score']}"
-        )
+        assert (
+            result["score"] > 50.0
+        ), f"Convergence inconsistency: aligned indices but score={result['score']}"
 
         # Should have reinforcing signals
-        assert len(result["reinforcing_signals"]) > 0, (
-            "Convergence inconsistency: aligned indices but no reinforcing signals"
-        )
+        assert (
+            len(result["reinforcing_signals"]) > 0
+        ), "Convergence inconsistency: aligned indices but no reinforcing signals"
 
     def test_low_convergence_implies_divergence(self):
         """Low convergence score must imply indices are uncorrelated (not moving together)."""
@@ -210,9 +219,9 @@ class TestConvergenceConsistency:
         # Note: Convergence uses absolute correlation, so perfect negative correlation (-1.0)
         # still produces high score (indices moving together, just opposite directions)
         # But uncorrelated (near 0) should produce lower score
-        assert result["score"] < 80.0, (
-            f"Convergence inconsistency: uncorrelated indices but score={result['score']}"
-        )
+        assert (
+            result["score"] < 80.0
+        ), f"Convergence inconsistency: uncorrelated indices but score={result['score']}"
 
 
 class TestRiskScoreConsistency:
@@ -290,12 +299,14 @@ class TestConvergenceAdjustmentConsistency:
         classifier = RiskClassifier()
 
         for score in [0.0, 25.0, 50.0, 75.0, 100.0]:
-            result = classifier.classify_risk(behavior_index=0.5, convergence_score=score)
+            result = classifier.classify_risk(
+                behavior_index=0.5, convergence_score=score
+            )
             adjustment = result["convergence_adjustment"]
 
-            assert -0.1 <= adjustment <= 0.2, (
-                f"Convergence adjustment out of range: {adjustment} for score {score}"
-            )
+            assert (
+                -0.1 <= adjustment <= 0.2
+            ), f"Convergence adjustment out of range: {adjustment} for score {score}"
 
 
 class TestTrendAdjustmentConsistency:
@@ -360,6 +371,6 @@ class TestShockSeverityConsistency:
                 # Verify mild shock doesn't have severe severity
                 if shocks_mild:
                     mild_severities = [s.get("severity") for s in shocks_mild]
-                    assert "severe" not in mild_severities, (
-                        "Shock severity inconsistency: mild shock classified as severe"
-                    )
+                    assert (
+                        "severe" not in mild_severities
+                    ), "Shock severity inconsistency: mild shock classified as severe"

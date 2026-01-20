@@ -210,7 +210,9 @@ class TestPreviewInvariants:
             "alerts": [{"alert_id": "alert1"}] * 5,
         }
 
-        is_valid, error = registry.check("INV-PREV02", preview_result, current_analytics)
+        is_valid, error = registry.check(
+            "INV-PREV02", preview_result, current_analytics
+        )
         assert is_valid is True
 
     def test_inv_prev03_activation_only_after_preview(self):
@@ -221,7 +223,9 @@ class TestPreviewInvariants:
             "preview_valid": True,
         }
 
-        is_valid, error = registry.check("INV-PREV03", "test_policy", True, preview_result)
+        is_valid, error = registry.check(
+            "INV-PREV03", "test_policy", True, preview_result
+        )
         assert is_valid is True
 
     def test_inv_prev03_activation_without_preview_violation(self):
@@ -241,7 +245,9 @@ class TestPreviewInvariants:
         user_roles = ["policy_admin"]
         required_roles = ["policy_admin"]
 
-        is_valid, error = registry.check("INV-PREV04", action, user_id, user_roles, required_roles)
+        is_valid, error = registry.check(
+            "INV-PREV04", action, user_id, user_roles, required_roles
+        )
         assert is_valid is True
 
     def test_inv_prev04_rbac_enforced_violation(self):
@@ -258,7 +264,10 @@ class TestPreviewInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-PREV04", action, user_id, user_roles, required_roles)
 
-        assert "rbac" in str(exc_info.value).lower() or "role" in str(exc_info.value).lower()
+        assert (
+            "rbac" in str(exc_info.value).lower()
+            or "role" in str(exc_info.value).lower()
+        )
 
     def test_inv_prev05_zero_numerical_drift(self):
         """Test INV-PREV05: Zero numerical drift."""
@@ -267,7 +276,9 @@ class TestPreviewInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-PREV05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-PREV05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_prev05_zero_numerical_drift_violation(self):
@@ -295,18 +306,20 @@ class TestNoSemanticDrift:
 
         computer = BehaviorIndexComputer()
 
-        harmonized = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30),
-            'stress_index': [0.6] * 30,
-            'discomfort_score': [0.7] * 30,
-            'mobility_index': [0.5] * 30,
-            'search_interest_score': [0.5] * 30,
-            'health_risk_index': [0.5] * 30,
-        })
+        harmonized = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30),
+                "stress_index": [0.6] * 30,
+                "discomfort_score": [0.7] * 30,
+                "mobility_index": [0.5] * 30,
+                "search_interest_score": [0.5] * 30,
+                "health_risk_index": [0.5] * 30,
+            }
+        )
 
         # Compute before preview
         df_before = computer.compute_behavior_index(harmonized)
-        global_before = float(df_before['behavior_index'].iloc[29])
+        global_before = float(df_before["behavior_index"].iloc[29])
 
         # Use preview features
         policy = {
@@ -325,7 +338,7 @@ class TestNoSemanticDrift:
 
         # Recompute after preview
         df_after = computer.compute_behavior_index(harmonized)
-        global_after = float(df_after['behavior_index'].iloc[29])
+        global_after = float(df_after["behavior_index"].iloc[29])
 
         # Verify zero numerical drift
         assert abs(global_before - global_after) < 1e-10

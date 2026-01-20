@@ -313,7 +313,10 @@ class TestComposeAlerts:
         # So history should be [current, previous, ...] or [current] if no previous
         result = compose_alerts(
             behavior_index=0.7,
-            behavior_index_history=[0.7, 0.5],  # Current: 0.7, Previous: 0.5, Delta: 0.2 > 0.05
+            behavior_index_history=[
+                0.7,
+                0.5,
+            ],  # Current: 0.7, Previous: 0.5, Delta: 0.2 > 0.05
             alert_definitions=alert_definitions,
         )
 
@@ -324,13 +327,17 @@ class TestComposeAlerts:
         # So history should be [previous, older...] and current is passed separately
         result = compose_alerts(
             behavior_index=0.7,
-            behavior_index_history=[0.5],  # Previous value: 0.5, Current: 0.7, Delta: 0.2 > 0.05
+            behavior_index_history=[
+                0.5
+            ],  # Previous value: 0.5, Current: 0.7, Delta: 0.2 > 0.05
             alert_definitions=alert_definitions,
         )
 
         # Should trigger if delta is large enough
         # Current: 0.7, Previous: 0.5, Delta: 0.2 > 0.05
-        assert result["alert_count"] >= 0  # May or may not trigger depending on confidence
+        assert (
+            result["alert_count"] >= 0
+        )  # May or may not trigger depending on confidence
 
     def test_compose_alerts_sensitivity_aware(self):
         """Test composing sensitivity-aware alerts."""
@@ -506,7 +513,9 @@ class TestAlertInvariants:
             }
         ]
 
-        is_valid, error = registry.check("INV-A03", alerts, alert_definitions=alert_definitions, rate_limit_hours=24)
+        is_valid, error = registry.check(
+            "INV-A03", alerts, alert_definitions=alert_definitions, rate_limit_hours=24
+        )
         # Should pass: 3 days >= 2+1 required
         assert is_valid is True
 
@@ -536,7 +545,9 @@ class TestAlertInvariants:
         behavior_index_before = 0.548
         behavior_index_after = 0.548
 
-        is_valid, error = registry.check("INV-A05", behavior_index_before, behavior_index_after)
+        is_valid, error = registry.check(
+            "INV-A05", behavior_index_before, behavior_index_after
+        )
         assert is_valid is True
 
     def test_inv_a05_zero_numerical_drift_violation(self):
@@ -552,7 +563,10 @@ class TestAlertInvariants:
         with pytest.raises(InvariantViolation) as exc_info:
             registry.check("INV-A05", behavior_index_before, behavior_index_after)
 
-        assert "drift" in str(exc_info.value).lower() or "changed" in str(exc_info.value).lower()
+        assert (
+            "drift" in str(exc_info.value).lower()
+            or "changed" in str(exc_info.value).lower()
+        )
 
 
 class TestNoSemanticDrift:
