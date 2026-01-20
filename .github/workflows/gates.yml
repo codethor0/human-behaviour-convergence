@@ -127,14 +127,9 @@ jobs:
             sleep 2
           done
 
-      - name: Run GATE A
+      - name: Warm up backend (pre-generate forecasts)
         run: |
-          chmod +x ops/verify_gate_a.sh
-          ./ops/verify_gate_a.sh
-
-      - name: Warm up metrics (generate forecasts for key regions)
-        run: |
-          echo "Generating forecasts to populate metrics..."
+          echo "Generating forecasts to ensure data pipeline is ready..."
           for region in us_mn city_nyc us_ca; do
             echo "  Forecasting ${region}..."
             curl -sf -X POST "http://localhost:8100/api/forecast" \
@@ -146,7 +141,12 @@ jobs:
           echo "Waiting 30 seconds for Prometheus to scrape metrics..."
           sleep 30
           
-          echo "[OK] Metrics warm-up complete"
+          echo "[OK] Warm-up complete"
+
+      - name: Run GATE A
+        run: |
+          chmod +x ops/verify_gate_a.sh
+          ./ops/verify_gate_a.sh
 
       - name: Run GATE G
         run: |
