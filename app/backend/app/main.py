@@ -193,6 +193,10 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 _refresh_thread: Optional[threading.Thread] = None
 _refresh_stop_event = threading.Event()
 
+# Background metrics population thread
+_metrics_population_thread: Optional[threading.Thread] = None
+_metrics_population_stop_event = threading.Event()
+
 
 def _background_refresh_loop() -> None:
     """Background thread that periodically refreshes live monitoring data."""
@@ -211,15 +215,113 @@ def _background_refresh_loop() -> None:
             break  # Stop event was set
 
 
+def _populate_metrics_for_all_regions() -> None:
+    """
+    Background job to generate forecasts for key regions to populate Prometheus metrics.
+    
+    This ensures Grafana dashboards have data for commonly used regions, not just those
+    that have been explicitly forecasted via the API. Focuses on US states + key global cities
+    to keep startup time reasonable.
+    """
+    # Check if metrics population is enabled (default: enabled, can disable via env var)
+    populate_metrics = os.getenv("HBC_POPULATE_ALL_REGION_METRICS", "1") == "1"
+    if not populate_metrics:
+        logger.info("Metrics population for all regions is disabled via HBC_POPULATE_ALL_REGION_METRICS")
+        return
+
+    # Wait for server to fully initialize (30 seconds)
+    if _metrics_population_stop_event.wait(timeout=30):
+        return  # Stop event was set during wait
+
+    try:
+        from app.backend.app.routers.forecasting import get_regions
+
+        all_regions = get_regions()
+        
+        # Filter to US states + DC + key global cities (prioritize commonly used regions)
+        # This keeps the population time reasonable (~5-10 minutes instead of 20+)
+        priority_regions = [
+            r for r in all_regions
+            if r.region_group == "US_STATES"
+            or r.id in ["city_nyc", "city_london", "city_tokyo", "city_berlin", "city_paris", "city_sydney"]
+        ]
+        
+        # If no priority regions found, fall back to first 30 regions
+        regions_to_populate = priority_regions if priority_regions else all_regions[:30]
+        
+        logger.info(
+            "Starting background metrics population",
+            total_regions=len(regions_to_populate),
+            total_available=len(all_regions),
+        )
+
+        success_count = 0
+        failure_count = 0
+
+        for region in regions_to_populate:
+            if _metrics_population_stop_event.is_set():
+                break
+
+            try:
+                # Create forecast request for this region
+                forecast_payload = ForecastRequest(
+                    region_id=region.id,
+                    region_name=region.name,
+                    latitude=region.latitude,
+                    longitude=region.longitude,
+                    days_back=30,
+                    forecast_horizon=7,
+                )
+
+                # Generate forecast (this will emit Prometheus metrics)
+                create_forecast(forecast_payload)
+                success_count += 1
+
+                # Small delay between regions to avoid overwhelming the system
+                if _metrics_population_stop_event.wait(timeout=2):
+                    break
+
+            except Exception as e:
+                failure_count += 1
+                logger.warning(
+                    "Failed to generate forecast for region",
+                    region_id=region.id,
+                    error=str(e),
+                )
+                # Continue with next region even if one fails
+
+        logger.info(
+            "Completed background metrics population",
+            success=success_count,
+            failures=failure_count,
+            total=len(regions_to_populate),
+        )
+    except Exception as e:
+        logger.error(
+            "Error in background metrics population",
+            error=str(e),
+            exc_info=True,
+        )
+
+
 @app.on_event("startup")
 def startup_event() -> None:
     """Start background refresh thread on application startup."""
-    global _refresh_thread
+    global _refresh_thread, _metrics_population_thread
     if _refresh_thread is None or not _refresh_thread.is_alive():
         _refresh_stop_event.clear()
         _refresh_thread = threading.Thread(target=_background_refresh_loop, daemon=True)
         _refresh_thread.start()
         logger.info("Started background refresh thread for live monitoring")
+
+    # Start background metrics population thread (generates forecasts for all regions)
+    if _metrics_population_thread is None or not _metrics_population_thread.is_alive():
+        _metrics_population_stop_event.clear()
+        _metrics_population_thread = threading.Thread(
+            target=_populate_metrics_for_all_regions, daemon=True
+        )
+        _metrics_population_thread.start()
+        logger.info("Started background metrics population thread")
 
     # Initialize data source status metrics
     if PROMETHEUS_AVAILABLE and data_source_status_gauge is not None:
@@ -237,11 +339,15 @@ def startup_event() -> None:
 @app.on_event("shutdown")
 def shutdown_event() -> None:
     """Stop background refresh thread on application shutdown."""
-    global _refresh_thread
+    global _refresh_thread, _metrics_population_thread
     _refresh_stop_event.set()
+    _metrics_population_stop_event.set()
     if _refresh_thread and _refresh_thread.is_alive():
         _refresh_thread.join(timeout=5.0)
         logger.info("Stopped background refresh thread for live monitoring")
+    if _metrics_population_thread and _metrics_population_thread.is_alive():
+        _metrics_population_thread.join(timeout=5.0)
+        logger.info("Stopped background metrics population thread")
 
 
 @app.get("/health")
