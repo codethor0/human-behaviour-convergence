@@ -25,6 +25,7 @@ from app.services.ingestion import (
     MisinformationStressFetcher,
     MobilityFetcher,
     NWSAlertsFetcher,
+    OpenAQAirQualityFetcher,
     OpenFEMAEmergencyManagementFetcher,
     OpenStatesLegislativeFetcher,
     OWIDHealthFetcher,
@@ -107,6 +108,7 @@ class BehavioralForecaster:
         self.cisa_kev_fetcher = CISAKEVFetcher()
         self.owid_fetcher = owid_fetcher or OWIDHealthFetcher()
         self.usgs_fetcher = usgs_fetcher or USGSEarthquakeFetcher()
+        self.openaq_fetcher = OpenAQAirQualityFetcher()
         self.political_fetcher = political_fetcher or PoliticalStressFetcher()
         self.crime_fetcher = crime_fetcher or CrimeSafetyStressFetcher()
         self.misinformation_fetcher = (
@@ -430,6 +432,35 @@ class BehavioralForecaster:
             if not usgs_earthquakes.empty:
                 sources.append("USGS (Earthquakes)")
 
+            # Fetch OpenAQ air quality data
+            air_quality_data = pd.DataFrame()
+            air_quality_status = None
+            try:
+                air_quality_data, air_quality_status = (
+                    self.openaq_fetcher.fetch_air_quality(
+                        latitude=latitude,
+                        longitude=longitude,
+                        radius_km=50,
+                        days_back=days_back,
+                    )
+                )
+                if air_quality_status and air_quality_status.ok and not air_quality_data.empty:
+                    sources.append("OpenAQ (Air Quality)")
+            except Exception as e:
+                logger.warning("Failed to fetch air quality data", error=str(e))
+                # Create empty status for metadata
+                from app.services.ingestion.gdelt_events import SourceStatus
+
+                air_quality_status = SourceStatus(
+                    provider="OpenAQ",
+                    ok=False,
+                    error_type="exception",
+                    error_detail=str(e)[:100],
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
+                )
+
             # Fetch legislative activity signal from GDELT (no-key fallback)
             legislative_data = pd.DataFrame()
             legislative_status = None
@@ -600,6 +631,7 @@ class BehavioralForecaster:
                 gdelt_tone=gdelt_tone,
                 owid_health=owid_health,
                 usgs_earthquakes=usgs_earthquakes,
+                air_quality_data=air_quality_data if not air_quality_data.empty else None,
                 political_data=political_data,
                 crime_data=crime_data,
                 misinformation_data=misinformation_data,

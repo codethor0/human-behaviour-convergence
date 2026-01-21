@@ -1417,12 +1417,22 @@ class BehaviorIndexComputer:
         else:
             df["coldwave_stress"] = pd.Series([0.0] * len(df))
 
-        # Air Quality Stress (Batch 3): stub for OpenAQ connector
-        # For now, use environmental volatility as proxy (poor air quality often correlates with weather volatility)
-        # In future: connect to OpenAQ API for PM2.5, ozone, NO2 measurements
-        if has_weather:
-            # Air quality proxy: use environmental volatility as temporary proxy
-            # High volatility in environmental signals can correlate with air quality events
+        # Air Quality Stress: use OpenAQ data if available, otherwise use environmental volatility as proxy
+        if "air_quality_index" in df.columns and df["air_quality_index"].notna().any():
+            # Use real OpenAQ data (normalized AQI or PM2.5)
+            air_quality_raw = df["air_quality_index"].fillna(0.0)
+            # Convert normalized AQI (0-1) to stress index (higher AQI = higher stress)
+            # Apply smoothing to reduce noise
+            window = min(7, len(air_quality_raw))
+            if window > 1:
+                air_quality_smoothed = air_quality_raw.rolling(
+                    window=window, min_periods=1
+                ).mean()
+            else:
+                air_quality_smoothed = air_quality_raw
+            df["air_quality_stress"] = air_quality_smoothed.clip(0.0, 1.0)
+        elif has_weather:
+            # Fallback: use environmental volatility as proxy
             df["air_quality_stress"] = df.get(
                 "environmental_volatility", pd.Series([0.5] * len(df))
             )

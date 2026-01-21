@@ -148,6 +148,25 @@ def get_ci_weather_data(region_id: str) -> pd.DataFrame:
     )
 
 
+def get_ci_air_quality_data() -> pd.DataFrame:
+    """Generate synthetic OpenAQ air quality data for CI."""
+    dates = pd.date_range(end=datetime.now(), periods=30, freq="D")
+    np.random.seed(42)  # Deterministic for CI
+    pm25 = np.random.uniform(5.0, 35.0, len(dates))  # PM2.5 in µg/m³
+    pm10 = np.random.uniform(10.0, 50.0, len(dates))  # PM10 in µg/m³
+    # Simple AQI calculation (US EPA scale)
+    aqi = np.where(
+        pm25 <= 12, 50,
+        np.where(pm25 <= 35.4, 100, np.where(pm25 <= 55.4, 150, 200))
+    )
+    return pd.DataFrame({
+        "timestamp": dates,
+        "pm25": pm25,
+        "pm10": pm10,
+        "aqi": aqi,
+    })
+
+
 def get_ci_data_source_status() -> List[Dict[str, Any]]:
     """
     Get synthetic data source status for CI mode.

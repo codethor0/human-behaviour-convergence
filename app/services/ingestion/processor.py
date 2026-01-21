@@ -68,6 +68,7 @@ class DataHarmonizer:
         gdelt_tone: Optional[pd.DataFrame] = None,
         owid_health: Optional[pd.DataFrame] = None,
         usgs_earthquakes: Optional[pd.DataFrame] = None,
+        air_quality_data: Optional[pd.DataFrame] = None,
         political_data: Optional[pd.DataFrame] = None,
         crime_data: Optional[pd.DataFrame] = None,
         misinformation_data: Optional[pd.DataFrame] = None,
@@ -128,6 +129,8 @@ class DataHarmonizer:
             owid_health = pd.DataFrame()
         if usgs_earthquakes is None:
             usgs_earthquakes = pd.DataFrame()
+        if air_quality_data is None:
+            air_quality_data = pd.DataFrame()
         if political_data is None:
             political_data = pd.DataFrame()
         if crime_data is None:
@@ -151,6 +154,7 @@ class DataHarmonizer:
             and gdelt_tone.empty
             and owid_health.empty
             and usgs_earthquakes.empty
+            and air_quality_data.empty
             and political_data.empty
             and crime_data.empty
             and misinformation_data.empty
@@ -315,6 +319,26 @@ class DataHarmonizer:
             usgs_df = usgs_df.set_index("timestamp").sort_index()
             dataframes.append(usgs_df)
             names.append("usgs_earthquakes")
+
+        # Add air quality data if available
+        if not air_quality_data.empty:
+            aq_df = air_quality_data.copy()
+            # OpenAQ returns timestamp column
+            if "timestamp" in aq_df.columns:
+                aq_df["timestamp"] = pd.to_datetime(aq_df["timestamp"], utc=True)
+                if aq_df["timestamp"].dt.tz is not None:
+                    aq_df["timestamp"] = aq_df["timestamp"].dt.tz_localize(None)
+                aq_df = aq_df.set_index("timestamp").sort_index()
+                # Normalize AQI to 0-1 scale (AQI typically 0-500, we want 0-1)
+                if "aqi" in aq_df.columns:
+                    aq_df["aqi_normalized"] = aq_df["aqi"] / 500.0
+                # Normalize PM2.5 and PM10 (typical ranges: PM2.5 0-500 µg/m³, PM10 0-600 µg/m³)
+                if "pm25" in aq_df.columns:
+                    aq_df["pm25_normalized"] = aq_df["pm25"] / 500.0
+                if "pm10" in aq_df.columns:
+                    aq_df["pm10_normalized"] = aq_df["pm10"] / 600.0
+                dataframes.append(aq_df)
+                names.append("air_quality")
 
         if not political_data.empty:
             political_df = political_data.copy()
@@ -494,6 +518,13 @@ class DataHarmonizer:
         else:
             usgs_aligned = pd.DataFrame(index=date_range)
 
+        if "air_quality" in names:
+            aq_idx = names.index("air_quality")
+            aq_df = dataframes[aq_idx]
+            aq_aligned = aq_df.reindex(date_range)
+        else:
+            aq_aligned = pd.DataFrame(index=date_range)
+
         if "political" in names:
             political_idx = names.index("political")
             political_df = dataframes[political_idx]
@@ -562,6 +593,17 @@ class DataHarmonizer:
         usgs_earthquake_val = usgs_aligned.get(
             "earthquake_intensity", pd.Series(index=date_range, dtype=float)
         )
+        # Extract air quality values (use AQI normalized if available, else PM2.5 normalized)
+        air_quality_val = pd.Series(index=date_range, dtype=float)
+        if not aq_aligned.empty:
+            if "aqi_normalized" in aq_aligned.columns:
+                air_quality_val = aq_aligned.get(
+                    "aqi_normalized", pd.Series(index=date_range, dtype=float)
+                )
+            elif "pm25_normalized" in aq_aligned.columns:
+                air_quality_val = aq_aligned.get(
+                    "pm25_normalized", pd.Series(index=date_range, dtype=float)
+                )
         political_stress_val = political_aligned.get(
             "political_stress", pd.Series(index=date_range, dtype=float)
         )
@@ -639,8 +681,9 @@ class DataHarmonizer:
                 "fred_cpi_inflation_stress": fred_cpi_inflation_stress_val.values,
                 "gdelt_tone_score": gdelt_tone_val.values,
                 "owid_health_stress": owid_health_val.values,
-                "usgs_earthquake_intensity": usgs_earthquake_val.values,
-                "political_stress": political_stress_val.values,
+            "usgs_earthquake_intensity": usgs_earthquake_val.values,
+            "air_quality_index": air_quality_val.values,
+            "political_stress": political_stress_val.values,
                 "crime_stress": crime_stress_val.values,
                 "misinformation_stress": misinformation_stress_val.values,
                 "social_cohesion_stress": social_cohesion_stress_val.values,
@@ -689,6 +732,9 @@ class DataHarmonizer:
         merged["usgs_earthquake_intensity"] = merged[
             "usgs_earthquake_intensity"
         ].interpolate(method="linear", limit_direction="both")
+        merged["air_quality_index"] = merged["air_quality_index"].interpolate(
+            method="linear", limit_direction="both"
+        )
         merged["political_stress"] = merged["political_stress"].interpolate(
             method="linear", limit_direction="both"
         )

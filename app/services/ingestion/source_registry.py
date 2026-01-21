@@ -292,6 +292,19 @@ def initialize_registry() -> None:
         )
     )
 
+    # Air quality (OpenAQ - no key required)
+    register_source(
+        SourceDefinition(
+            id="openaq_air_quality",
+            display_name="OpenAQ Air Quality",
+            category="environmental",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="Air quality measurements (PM2.5, PM10, AQI) from OpenAQ global monitoring network. Public data, no API key required.",
+        )
+    )
+
     # Search trends (Wikipedia Pageviews - no key required)
     register_source(
         SourceDefinition(

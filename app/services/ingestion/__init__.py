@@ -26,6 +26,7 @@ from .gdelt_events import GDELTEventsFetcher
 from .health_owid import OWIDHealthFetcher
 from .misinformation import MisinformationStressFetcher
 from .mobility import MobilityFetcher
+from .openaq_air_quality import OpenAQAirQualityFetcher
 from .openfema_emergency_management import OpenFEMAEmergencyManagementFetcher
 from .political import PoliticalStressFetcher
 from .processor import DataHarmonizer
@@ -47,6 +48,7 @@ __all__ = [
     "OWIDHealthFetcher",
     "USGSEarthquakeFetcher",
     "OpenFEMAEmergencyManagementFetcher",
+    "OpenAQAirQualityFetcher",
     "PoliticalStressFetcher",
     "CrimeSafetyStressFetcher",
     "MisinformationStressFetcher",
