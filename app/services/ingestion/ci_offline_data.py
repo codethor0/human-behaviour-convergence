@@ -167,6 +167,19 @@ def get_ci_air_quality_data() -> pd.DataFrame:
     })
 
 
+def get_ci_energy_data(series_id: str) -> pd.DataFrame:
+    """Get synthetic EIA energy data for CI mode."""
+    # Use series_id hash as seed for deterministic but varied data per series
+    seed = abs(hash(series_id)) % 10000
+    return generate_synthetic_time_series(
+        days=90,
+        base_value=0.5,
+        volatility=0.1,
+        trend=0.0,
+        seed=seed,
+    )
+
+
 def get_ci_data_source_status() -> List[Dict[str, Any]]:
     """
     Get synthetic data source status for CI mode.

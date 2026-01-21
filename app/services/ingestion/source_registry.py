@@ -305,6 +305,19 @@ def initialize_registry() -> None:
         )
     )
 
+    # Energy Information Administration (EIA - no key required for public data)
+    register_source(
+        SourceDefinition(
+            id="eia_energy",
+            display_name="EIA Energy Data",
+            category="economic",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="Energy Information Administration (EIA): Energy prices (gasoline, natural gas, crude oil), electricity demand, grid stress indicators. Public data, no API key required.",
+        )
+    )
+
     # Search trends (Wikipedia Pageviews - no key required)
     register_source(
         SourceDefinition(
