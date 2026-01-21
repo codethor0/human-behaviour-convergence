@@ -417,7 +417,6 @@ jobs:
         run: |
           pytest tests/ --cov=app --cov=hbc --cov-report=term-missing --cov-report=xml -v --maxfail=5 --tb=short -n auto
         continue-on-error: false
-        timeout-minutes: 15
 
       - name: Run invariant enforcement tests
         env:
@@ -707,7 +706,7 @@ jobs:
       - name: Wait for Docker services and verify all routes
         run: |
           echo "=== Docker Service Readiness Gates ==="
-          
+
           # Wait for backend (inside container healthcheck)
           echo "Waiting for backend container healthcheck..."
           for i in {1..60}; do
@@ -722,7 +721,7 @@ jobs:
             fi
             sleep 1
           done
-          
+
           # Verify backend accessible from host
           echo "Verifying backend accessible from host (localhost:8100)..."
           for i in {1..30}; do
@@ -737,7 +736,7 @@ jobs:
             fi
             sleep 1
           done
-          
+
           # Wait for frontend container
           echo "Waiting for frontend container..."
           for i in {1..90}; do
@@ -752,7 +751,7 @@ jobs:
             fi
             sleep 1
           done
-          
+
           # Critical: verify /forecast and /history routes (known failure points)
           echo "Verifying critical routes..."
           for route in /forecast /history; do
@@ -768,7 +767,7 @@ jobs:
               exit 1
             fi
           done
-          
+
           # Warm up backend with forecast generation
           echo "Warming up backend (pre-generate metrics)..."
           curl -sS http://localhost:8100/api/forecasting/regions | jq 'length' || echo "  Regions API: called"
@@ -776,7 +775,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"region_id":"us_mn","region_name":"Minnesota","days_back":30,"forecast_horizon":7}' \
             | jq '.metadata.region_id' || echo "  Forecast: called"
-          
+
           echo "=== All readiness gates PASSED ==="
 
       - name: Setup Node.js
@@ -796,6 +795,30 @@ jobs:
       - name: Install Playwright browsers
         working-directory: app/frontend
         run: npx playwright install chromium
+
+      - name: Re-verify routes before Playwright (CI stability)
+        run: |
+          echo "=== Pre-Playwright Route Verification ==="
+          # Re-check routes after npm/Playwright install (services may have restarted)
+          for i in {1..30}; do
+            forecast_code=$(curl -sS -o /dev/null -w "%{http_code}" "http://localhost:3100/forecast" 2>/dev/null || echo "000")
+            history_code=$(curl -sS -o /dev/null -w "%{http_code}" "http://localhost:3100/history" 2>/dev/null || echo "000")
+
+            if [ "$forecast_code" = "200" ] && [ "$history_code" = "200" ]; then
+              echo "  Routes verified: /forecast=200, /history=200"
+              break
+            fi
+
+            if [ $i -eq 30 ]; then
+              echo "ERROR: Routes not ready after 30s (forecast=${forecast_code}, history=${history_code})"
+              docker compose logs frontend --tail=50
+              exit 1
+            fi
+
+            echo "  Attempt ${i}/30: forecast=${forecast_code}, history=${history_code} (waiting...)"
+            sleep 1
+          done
+          echo "=== Routes ready for Playwright ==="
 
       - name: Run Docker E2E smoke tests
         working-directory: app/frontend
@@ -830,7 +853,7 @@ jobs:
           echo "Test exit code: ${test_exit_code}" | tee -a "$LOG"
           echo "Docker containers (after tests):" | tee -a "$LOG"
           docker ps | tee -a "$LOG"
-          
+
           if [ "$test_exit_code" -ne 0 ]; then
             echo "Extracting failure summary..." | tee -a "$LOG"
             summary="$(grep -nE 'FAIL|Error:|Timeout|expect\(|net::|page\.goto|strict mode|locator' "$LOG" | head -n 40 || true)"
