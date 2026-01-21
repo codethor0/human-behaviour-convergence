@@ -218,7 +218,7 @@ def _background_refresh_loop() -> None:
 def _populate_metrics_for_all_regions() -> None:
     """
     Background job to generate forecasts for key regions to populate Prometheus metrics.
-    
+
     This ensures Grafana dashboards have data for commonly used regions, not just those
     that have been explicitly forecasted via the API. Focuses on US states + key global cities
     to keep startup time reasonable.
@@ -226,7 +226,9 @@ def _populate_metrics_for_all_regions() -> None:
     # Check if metrics population is enabled (default: enabled, can disable via env var)
     populate_metrics = os.getenv("HBC_POPULATE_ALL_REGION_METRICS", "1") == "1"
     if not populate_metrics:
-        logger.info("Metrics population for all regions is disabled via HBC_POPULATE_ALL_REGION_METRICS")
+        logger.info(
+            "Metrics population for all regions is disabled via HBC_POPULATE_ALL_REGION_METRICS"
+        )
         return
 
     # Wait for server to fully initialize (30 seconds)
@@ -237,26 +239,37 @@ def _populate_metrics_for_all_regions() -> None:
         from app.backend.app.routers.forecasting import get_regions
 
         all_regions = get_regions()
-        
+
         # Filter to US states + DC + key global cities (prioritize commonly used regions)
         # This keeps the population time reasonable (~5-10 minutes instead of 20+)
         priority_regions = [
-            r for r in all_regions
+            r
+            for r in all_regions
             if r.region_group == "US_STATES"
-            or r.id in ["city_nyc", "city_london", "city_tokyo", "city_berlin", "city_paris", "city_sydney"]
+            or r.id
+            in [
+                "city_nyc",
+                "city_london",
+                "city_tokyo",
+                "city_berlin",
+                "city_paris",
+                "city_sydney",
+            ]
         ]
-        
+
         # If no priority regions found, fall back to first 30 regions
         regions_to_populate = priority_regions if priority_regions else all_regions[:30]
-        
+
         logger.info(
             "Starting background metrics population",
             total_regions=len(regions_to_populate),
             total_available=len(all_regions),
+            priority_filter_applied=len(priority_regions) > 0,
         )
 
         success_count = 0
         failure_count = 0
+        processed_count = 0
 
         for region in regions_to_populate:
             if _metrics_population_stop_event.is_set():
@@ -276,6 +289,17 @@ def _populate_metrics_for_all_regions() -> None:
                 # Generate forecast (this will emit Prometheus metrics)
                 create_forecast(forecast_payload)
                 success_count += 1
+                processed_count += 1
+
+                # Log progress every 10 regions
+                if processed_count % 10 == 0:
+                    logger.info(
+                        "Metrics population progress",
+                        processed=processed_count,
+                        total=len(regions_to_populate),
+                        success=success_count,
+                        failures=failure_count,
+                    )
 
                 # Small delay between regions to avoid overwhelming the system
                 if _metrics_population_stop_event.wait(timeout=2):
