@@ -173,6 +173,11 @@ export default function LivePage() {
           <br />
           Live dashboards automatically refresh with the latest behavior index data from Prometheus.
           Select a region and refresh interval below to customize your monitoring view.
+          <br />
+          <small style={{ fontSize: '11px', opacity: 0.8 }}>
+            <strong>Note:</strong> Grafana region dropdown shows regions with metrics. 
+            If you see few regions, wait 5-10 minutes for background metrics population, or generate a forecast to populate that region immediately.
+          </small>
         </div>
 
         {/* Controls */}

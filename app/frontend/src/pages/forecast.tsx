@@ -323,6 +323,12 @@ export default function ForecastPage() {
           <br />
           Deep-dive analytics and time-series visualizations are now powered by Grafana dashboards below.
           Forecast data is fetched from the backend API and metrics are exposed to Prometheus for real-time monitoring.
+          <br />
+          <small style={{ fontSize: '11px', opacity: 0.8 }}>
+            <strong>Note:</strong> Some indices (economic_stress, mobility_activity) are global/national and appear identical across regions by design. 
+            Region-specific indices (environmental_stress, political_stress) will differ. 
+            Grafana region dropdown populates as metrics become available (warm-up: ~5-10 minutes after stack start).
+          </small>
         </div>
 
         {/* Forecast Configuration */}

@@ -170,6 +170,11 @@ export default function PlaygroundPage() {
           <br />
           Explore behavior indices and sub-indices across regions using live Grafana dashboards.
           Select a region below to update the visualizations in real-time.
+          <br />
+          <small style={{ fontSize: '11px', opacity: 0.8 }}>
+            <strong>Note:</strong> Some indices are global (economic_stress, mobility_activity) and appear identical across regions. 
+            Region-specific indices (environmental_stress, political_stress) will show differences.
+          </small>
         </div>
 
         {/* Region Selection */}
