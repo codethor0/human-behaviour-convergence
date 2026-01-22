@@ -1328,6 +1328,27 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 payload.region_id = region_info.id
                 break
 
+        # If still no region_id found, try to match by region_name
+        if not payload.region_id and payload.region_name:
+            for region_info in all_regions:
+                if region_info.name.lower() == payload.region_name.lower():
+                    payload.region_id = region_info.id
+                    break
+
+        # Final fallback: create a normalized region_id from region_name to avoid "None" in metrics
+        if not payload.region_id:
+            # Normalize region_name to a valid region_id format
+            # Replace spaces with underscores, lowercase, remove special chars
+            normalized_id = (
+                payload.region_name.lower()
+                .replace(" ", "_")
+                .replace(",", "")
+                .replace(".", "")
+                if payload.region_name
+                else f"unknown_{latitude:.2f}_{longitude:.2f}"
+            )
+            payload.region_id = normalized_id
+
     # Validate inputs
     try:
         latitude = float(latitude)
@@ -1364,9 +1385,19 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         forecaster = BehavioralForecaster()
 
         # Time the forecast computation for metrics
+        # Ensure region_id is set for metrics (normalize if needed)
+        region_id_for_metrics = payload.region_id or (
+            payload.region_name.lower()
+            .replace(" ", "_")
+            .replace(",", "")
+            .replace(".", "")
+            if payload.region_name
+            else f"unknown_{latitude:.2f}_{longitude:.2f}"
+        )
+
         if forecast_duration_histogram is not None:
             with forecast_duration_histogram.labels(
-                region=payload.region_id or "unknown"
+                region=region_id_for_metrics
             ).time():
                 result = forecaster.forecast(
                     latitude=latitude,
@@ -2111,8 +2142,18 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
     # Update Prometheus metrics (if available)
     if PROMETHEUS_AVAILABLE and behavior_index_gauge is not None:
         try:
+            # Ensure region_id is never None for metrics (use fallback if needed)
+            region_id_for_metrics = payload.region_id or (
+                payload.region_name.lower()
+                .replace(" ", "_")
+                .replace(",", "")
+                .replace(".", "")
+                if payload.region_name
+                else f"unknown_{latitude:.2f}_{longitude:.2f}"
+            )
+
             # Update behavior index gauge
-            behavior_index_gauge.labels(region=payload.region_id).set(
+            behavior_index_gauge.labels(region=region_id_for_metrics).set(
                 latest_behavior_index
             )
 
@@ -2132,7 +2173,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                     parent_value = getattr(latest_sub_indices, parent_key, None)
                     if parent_value is not None:
                         parent_subindex_gauge.labels(
-                            region=payload.region_id, parent=parent_key
+                            region=region_id_for_metrics, parent=parent_key
                         ).set(parent_value)
 
             # Update child sub-index gauges
@@ -2143,7 +2184,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                         child_value = child_data.get("value")
                         if child_value is not None:
                             child_subindex_gauge.labels(
-                                region=payload.region_id,
+                                region=region_id_for_metrics,
                                 parent=parent_key,
                                 child=child_key,
                             ).set(child_value)
@@ -2151,26 +2192,26 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             # Increment forecast generation counter
             if forecasts_generated_counter is not None:
                 forecasts_generated_counter.labels(
-                    region=payload.region_id, status="success"
+                    region=region_id_for_metrics, status="success"
                 ).inc()
 
             # Update Quick Summary metrics
             if forecast_last_updated_gauge is not None:
                 import time
 
-                forecast_last_updated_gauge.labels(region=payload.region_id).set(
+                forecast_last_updated_gauge.labels(region=region_id_for_metrics).set(
                     time.time()
                 )
 
             if forecast_history_points_gauge is not None:
-                forecast_history_points_gauge.labels(region=payload.region_id).set(
+                forecast_history_points_gauge.labels(region=region_id_for_metrics).set(
                     len(history_records)
                 )
 
             if forecast_points_generated_gauge is not None:
-                forecast_points_generated_gauge.labels(region=payload.region_id).set(
-                    len(forecast_records)
-                )
+                forecast_points_generated_gauge.labels(
+                    region=region_id_for_metrics
+                ).set(len(forecast_records))
         except Exception as e:
             logger.warning("Failed to update Prometheus metrics", error=str(e))
 
