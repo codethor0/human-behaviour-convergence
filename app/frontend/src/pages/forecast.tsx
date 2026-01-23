@@ -168,6 +168,10 @@ const dashboardHeights: Record<string, string> = {
   'behavior-index-global': '580px',
   'subindex-deep-dive': '1200px',
   'data-sources-health': '500px',
+  'regional-variance-explorer': '1000px',
+  'forecast-quality-drift': '800px',
+  'algorithm-model-comparison': '900px',
+  'source-health-freshness': '600px',
 };
 
 // Grafana Dashboard Embed Component
@@ -182,6 +186,8 @@ function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid
     ? { ...styles.iframe, height: customHeight }
     : styles.iframe;
 
+  const [embedError, setEmbedError] = useState<string | null>(null);
+
   return (
     <div style={{
       backgroundColor: '#fff',
@@ -191,11 +197,43 @@ function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid
       marginBottom: '4px',
     }}>
       <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>{title}</h2>
+      {embedError && (
+        <div style={{
+          padding: '12px',
+          backgroundColor: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px',
+          marginBottom: '8px',
+          fontSize: '12px',
+        }}>
+          <strong>Grafana embed error:</strong> {embedError}
+          <br />
+          <small>URL: {src.replace(/http:\/\/[^/]+/, 'http://localhost:3001')}</small>
+        </div>
+      )}
       <iframe
         src={src}
         style={iframeStyle}
         title={title}
         allow="fullscreen"
+        onLoad={(e) => {
+          // Check if iframe loaded successfully
+          try {
+            const iframe = e.target as HTMLIFrameElement;
+            // If iframe content is accessible, check for redirect to login
+            if (iframe.contentWindow?.location.href.includes('/login')) {
+              setEmbedError('Grafana requires authentication. Check GF_AUTH_ANONYMOUS_ENABLED setting.');
+            } else {
+              setEmbedError(null);
+            }
+          } catch (err) {
+            // Cross-origin restrictions prevent checking content, but iframe loaded
+            setEmbedError(null);
+          }
+        }}
+        onError={() => {
+          setEmbedError('Failed to load Grafana dashboard. Check GF_SECURITY_ALLOW_EMBEDDING and network connectivity.');
+        }}
       />
     </div>
   );
@@ -534,6 +572,30 @@ export default function ForecastPage() {
           regionId={selectedRegion?.id}
         />
 
+        {selectedRegion && (
+          <GrafanaDashboardEmbed
+            dashboardUid="regional-variance-explorer"
+            title="Regional Variance Explorer - Multi-Region Comparison"
+            regionId={selectedRegion.id}
+          />
+        )}
+
+        {selectedRegion && (
+          <GrafanaDashboardEmbed
+            dashboardUid="forecast-quality-drift"
+            title="Forecast Quality and Drift Analysis"
+            regionId={selectedRegion.id}
+          />
+        )}
+
+        {selectedRegion && (
+          <GrafanaDashboardEmbed
+            dashboardUid="algorithm-model-comparison"
+            title="Algorithm / Model Performance Comparison"
+            regionId={selectedRegion.id}
+          />
+        )}
+
         {/* Legacy Data Sources Info - Replaced by Grafana dashboard */}
         {/* 
         {dataSources.length > 0 && (
@@ -574,6 +636,11 @@ export default function ForecastPage() {
         <GrafanaDashboardEmbed
           dashboardUid="data-sources-health"
           title="Real-Time Data Source Status & API Health"
+        />
+
+        <GrafanaDashboardEmbed
+          dashboardUid="source-health-freshness"
+          title="Source Health and Freshness - Detailed Monitoring"
         />
       </div>
     </>
