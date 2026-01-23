@@ -90,6 +90,32 @@ test.describe('Forecast Smoke Tests', () => {
       const src = await firstIframe.getAttribute('src');
       expect(src).toBeTruthy();
       expect(src).toMatch(/grafana|\/d\//);
+      
+      // Verify iframe src contains expected dashboard UIDs
+      const allIframes = await dashboardIframes.all();
+      const iframeSrcs = await Promise.all(allIframes.map(iframe => iframe.getAttribute('src')));
+      const expectedDashboards = [
+        'behavior-index-global',
+        'subindex-deep-dive',
+        'data-sources-health',
+        'regional-variance-explorer',
+        'forecast-quality-drift',
+        'algorithm-model-comparison',
+        'source-health-freshness',
+      ];
+      const foundDashboards = expectedDashboards.filter(dash => 
+        iframeSrcs.some(src => src && src.includes(dash))
+      );
+      // Verify at least 3 dashboards are present (core + new ones)
+      expect(foundDashboards.length).toBeGreaterThanOrEqual(3);
+      
+      // Verify iframes are visible and have non-zero dimensions
+      for (const iframe of allIframes) {
+        const box = await iframe.boundingBox();
+        expect(box).toBeTruthy();
+        expect(box!.width).toBeGreaterThan(0);
+        expect(box!.height).toBeGreaterThan(0);
+      }
     } catch (error) {
       // Capture screenshot on failure for debugging
       await page.screenshot({ path: 'test-results/forecast-fail.png', fullPage: true });
