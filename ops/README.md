@@ -1,66 +1,65 @@
-# Operations & Stability Scripts
+# Ops Directory
 
-This directory contains operational scripts inspired by DevOps-Bash-tools patterns to keep the forecasting app stable and "all green."
+This directory contains operational scripts for deployment, health checks, and CI gates.
 
-## Scripts
+## Purpose
 
-### Health & Diagnostics
+Scripts in this directory focus on:
+- **Operational Health**: Runtime health checks and monitoring
+- **Deployment Verification**: Pre-deployment and post-deployment verification
+- **CI Gates**: Scripts used in CI/CD pipeline gates
+- **Runtime Monitoring**: Log analysis, gap detection, support bundle collection
 
-- **`collect_support_bundle.sh`** - Collects system stats, logs, forecast snapshots, and integrity metadata into a tarball for diagnostics.
-  ```bash
-  ./ops/collect_support_bundle.sh [output_dir]
-  ```
+## Script Categories
 
-- **`scan_log_gaps.sh`** - Scans logs for large time gaps (indicating hangs or stuck workers).
-  ```bash
-  ./ops/scan_log_gaps.sh [log_file] [max_gap_seconds]
-  ```
+### Health Checks
+- `check_integrity.sh` - Runtime integrity check
+- `check_logs.sh` - Log analysis
+- `k8s_health_check.sh` - Kubernetes health check
 
-### Testing & Validation
+### Deployment Verification
+- `verify_gate_a.sh` - Gate A verification (used in CI)
+- `verify_gate_grafana.sh` - Grafana gate verification (used in CI)
+- `verify_fred_*.sh` - FRED data source verification scripts
+- `verify_subindices_*.sh` - Sub-index verification scripts
 
-- **`run_forecast_regression.py`** - Runs forecast regression tests for key regions and validates integrity expectations.
-  ```bash
-  python3 ops/run_forecast_regression.py [--verbose] [--output-dir DIR]
-  ```
+### Operations
+- `dev_watch_docker.sh` - Development Docker watch script
+- `collect_support_bundle.sh` - Support bundle collection
+- `scan_log_gaps.sh` - Log gap scanning
+- `triage_main.sh` - Main triage script
 
-- **`check_integrity.sh`** - Master integrity check script for CI/CD. Runs config validation, unit tests, and regression tests.
-  ```bash
-  ./ops/check_integrity.sh [--skip-tests] [--skip-regression]
-  ```
+### Regression Testing
+- `run_forecast_regression.py` - Forecast regression testing
+- `test_scripts.sh` - Script testing harness
 
-### Kubernetes (if applicable)
+## Relationship to scripts/
 
-- **`k8s_health_check.sh`** - Checks Kubernetes deployment health (pods, restarts, logs).
-  ```bash
-  ./ops/k8s_health_check.sh [namespace] [deployment_name]
-  ```
+- **ops/**: Operational health, deployment verification, runtime monitoring, CI gates
+- **scripts/**: Data quality, integrity loops, E2E verification, discrepancy investigation
 
-- **`k8s_apply_safe.sh`** - Safe Kubernetes apply with diff preview and live field stripping.
-  ```bash
-  ./ops/k8s_apply_safe.sh <manifest_file> [namespace] [--dry-run]
-  ```
+## CI/CD Integration
 
-## CI Integration
+Several scripts are used in CI/CD workflows:
+- `verify_gate_a.sh` - Used in gates.yml
+- `verify_gate_grafana.sh` - Used in gates.yml
+- `check_integrity.sh` - Used in forecast-integrity.yml
 
-Add to your CI pipeline (GitHub Actions, GitLab CI, etc.):
+**Important**: Scripts referenced in CI must not be moved or renamed without updating workflows.
 
-```yaml
-# Example GitHub Actions job
-- name: Forecast Integrity Check
-  run: ./ops/check_integrity.sh
+See `.github/workflows/` for full CI/CD integration.
+
+## Usage
+
+Most scripts can be run from the repository root:
+
+```bash
+# Run gate verification
+./ops/verify_gate_a.sh
+
+# Check integrity
+./ops/check_integrity.sh
+
+# Health check
+./ops/k8s_health_check.sh
 ```
-
-Make this job **required** for merging to main/trunk.
-
-## Integration with Integrity Flags
-
-When integrity flags (e.g., `REALITY_MISMATCH`) are detected:
-
-1. Log instructions to run `collect_support_bundle.sh`
-2. Optionally auto-trigger bundle collection
-3. Include bundle in incident reports
-
-## Output Directories
-
-- `ops/support_bundles/` - Support bundle tarballs
-- `ops/regression_results/` - Regression test results (JSON)
