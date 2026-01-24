@@ -212,7 +212,7 @@
     },
     {
       "id": 3,
-      "title": "Fuel Stress by Region",
+      "title": "Energy Price Stress by Region",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -222,7 +222,7 @@
       },
       "targets": [
         {
-          "expr": "child_subindex_value{parent=\"economic_stress\", child=\"fuel_stress\", region=~\"$regions\"}",
+          "expr": "child_subindex_value{parent=\"economic_stress\", child=\"energy_price_stress\", region=~\"$regions\"}",
           "legendFormat": "{{region}}",
           "refId": "A"
         }

@@ -38,7 +38,7 @@
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "query": "label_values(hbc_model_mae, model)",
+        "query": "label_values(forecast_points_generated, region)",
         "multi": false,
         "includeAll": true,
         "allValue": ".*",
@@ -55,7 +55,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "Model Performance Comparison - MAE",
+      "title": "Forecast Points Generated",
       "type": "table",
       "gridPos": {
         "h": 6,
@@ -65,7 +65,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_model_mae{region=\"$region\", model=~\"$model\"}",
+          "expr": "forecast_points_generated{region=\"$region\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -137,7 +137,7 @@
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "MAE",
+              "Value": "Points",
               "model": "Model"
             }
           }
@@ -146,7 +146,7 @@
     },
     {
       "id": 2,
-      "title": "Model Performance Comparison - RMSE",
+      "title": "Forecast History Points",
       "type": "table",
       "gridPos": {
         "h": 6,
@@ -156,7 +156,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_model_rmse{region=\"$region\", model=~\"$model\"}",
+          "expr": "forecast_history_points{region=\"$region\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -228,7 +228,7 @@
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "RMSE",
+              "Value": "History Points",
               "model": "Model"
             }
           }
@@ -237,7 +237,7 @@
     },
     {
       "id": 3,
-      "title": "Model Performance Comparison - MAPE",
+      "title": "Forecast Last Updated (epoch seconds)",
       "type": "table",
       "gridPos": {
         "h": 6,
@@ -247,7 +247,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_model_mape{region=\"$region\", model=~\"$model\"}",
+          "expr": "forecast_last_updated_timestamp_seconds{region=\"$region\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -319,7 +319,7 @@
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "MAPE",
+              "Value": "Last Updated",
               "model": "Model"
             }
           }
@@ -328,7 +328,7 @@
     },
     {
       "id": 4,
-      "title": "Interval Coverage by Model",
+      "title": "Forecast Computation Duration (sum seconds)",
       "type": "table",
       "gridPos": {
         "h": 6,
@@ -338,7 +338,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_interval_coverage{region=\"$region\", model=~\"$model\"}",
+          "expr": "forecast_computation_duration_seconds_sum{region=\"$region\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -412,7 +412,7 @@
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "Coverage",
+              "Value": "Duration (s)",
               "model": "Model"
             }
           }

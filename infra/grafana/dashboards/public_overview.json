@@ -25,7 +25,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_regions_with_metrics_count",
+          "expr": "count(count by (region) (behavior_index))",
           "refId": "A",
           "instant": true
         }
@@ -81,7 +81,7 @@
       },
       "targets": [
         {
-          "expr": "hbc_warmup_progress_ratio",
+          "expr": "count(count by (region) (behavior_index)) / 62",
           "refId": "A",
           "instant": true
         }
@@ -195,7 +195,7 @@
       },
       "targets": [
         {
-          "expr": "sum(data_source_status == 0)",
+          "expr": "sum(data_source_status == bool 0)",
           "refId": "A",
           "instant": true
         }
@@ -341,7 +341,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, (behavior_index - behavior_index offset 24h))",
+          "expr": "topk(10, behavior_index)",
           "format": "table",
           "instant": true,
           "refId": "A"

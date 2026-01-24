@@ -359,7 +359,7 @@
       },
       "targets": [
         {
-          "expr": "sum(data_source_status == 0)",
+          "expr": "sum(data_source_status == bool 0)",
           "refId": "A",
           "instant": true
         }
