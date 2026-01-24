@@ -29,10 +29,21 @@ ALLOWED_TYPES = [
 def get_commit_message():
     """
     Robust commit message retrieval for CI:
+    0. If a commit message file path is provided as argv[1], read it
     1. Use git log on GITHUB_SHA
     2. Fallback to COMMIT_EDITMSG
     3. Fallback to stdin
     """
+    # Preferred for commit-msg hooks (worktrees): path is passed as argv[1]
+    if len(sys.argv) > 1 and sys.argv[1]:
+        try:
+            with open(sys.argv[1]) as f:
+                msg = f.read().strip()
+                if msg:
+                    return msg
+        except Exception:
+            pass
+
     sha = os.getenv("GITHUB_SHA")
     if sha:
         try:
