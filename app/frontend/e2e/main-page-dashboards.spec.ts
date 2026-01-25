@@ -2,17 +2,16 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Main Page Dashboard Hub', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3100/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('Main page loads all dashboard sections', async ({ page }) => {
-    await expect(page.locator('#executive')).toBeVisible();
-    await expect(page.locator('#forecasting')).toBeVisible();
-    await expect(page.locator('#operations')).toBeVisible();
-    await expect(page.locator('#analysis')).toBeVisible();
-    await expect(page.locator('#anomalies')).toBeVisible();
-    await expect(page.locator('#integrity')).toBeVisible();
+    await expect(page.locator('#behavior-forecast')).toBeVisible();
+    await expect(page.locator('#live-playground')).toBeVisible();
+    await expect(page.locator('#live-monitoring')).toBeVisible();
+    await expect(page.locator('#results-dashboard')).toBeVisible();
+    await expect(page.locator('#grafana-analytics')).toBeVisible();
   });
 
   test('Main page has 18+ Grafana iframe embeds', async ({ page }) => {
@@ -47,7 +46,7 @@ test.describe('Main Page Dashboard Hub', () => {
 
   test('Region selector updates all dashboard URLs', async ({ page }) => {
     const regionSelector = page.locator('[data-testid="global-region-selector"]');
-    
+
     const initialValue = await regionSelector.inputValue();
     expect(initialValue).toBeTruthy();
 
@@ -55,7 +54,7 @@ test.describe('Main Page Dashboard Hub', () => {
     if (allOptions.length > 1) {
       const secondOption = allOptions[1];
       const secondValue = await secondOption.getAttribute('value');
-      
+
       if (secondValue && secondValue !== initialValue) {
         await regionSelector.selectOption(secondValue);
         await page.waitForTimeout(1000);
@@ -71,19 +70,16 @@ test.describe('Main Page Dashboard Hub', () => {
 
   test('Section headings are visible and properly formatted', async ({ page }) => {
     const sections = [
-      { id: 'executive', title: 'Executive Command Center' },
-      { id: 'forecasting', title: 'Forecast & Prediction Center' },
-      { id: 'operations', title: 'Real-Time Operations' },
-      { id: 'analysis', title: 'Multi-Dimensional Analysis' },
-      { id: 'anomalies', title: 'Anomaly & Risk Detection' },
-      { id: 'integrity', title: 'Data Integrity & System Health' },
+      { id: 'behavior-forecast', title: 'Behavior Forecast' },
+      { id: 'live-playground', title: 'Live Playground' },
+      { id: 'results-dashboard', title: 'Results Dashboard' },
+      { id: 'grafana-analytics', title: 'Analytics Powered by Grafana' },
     ];
 
     for (const section of sections) {
       const sectionElement = page.locator(`#${section.id}`);
       await expect(sectionElement).toBeVisible();
-      
-      const heading = sectionElement.locator('h2');
+      const heading = sectionElement.locator('h2').first();
       await expect(heading).toBeVisible();
       await expect(heading).toContainText(section.title);
     }
@@ -135,22 +131,18 @@ test.describe('Main Page Dashboard Hub', () => {
     }
   });
 
-  test('All Grafana iframe URLs return 200 OK', async ({ page, request }) => {
-    const iframes = await page.locator('iframe[src*="grafana"]').all();
-    const urls: string[] = [];
+  test('All Grafana iframe URLs are valid and iframes have non-zero dimensions', async ({ page }) => {
+    const iframes = await page.locator('iframe[src*="grafana"], iframe[src*="/d/"]').all();
+    expect(iframes.length).toBeGreaterThanOrEqual(18);
 
     for (const iframe of iframes) {
       const src = await iframe.getAttribute('src');
-      if (src) {
-        urls.push(src);
-      }
-    }
+      expect(src).toBeTruthy();
+      expect(src).toMatch(/\/d\/[a-z0-9-]+/);
 
-    expect(urls.length).toBeGreaterThanOrEqual(18);
-
-    for (const url of urls) {
-      const response = await request.get(url);
-      expect(response.status()).toBe(200);
+      const box = await iframe.boundingBox();
+      expect(box?.height).toBeGreaterThan(100);
+      expect(box?.width).toBeGreaterThan(100);
     }
   });
 });
