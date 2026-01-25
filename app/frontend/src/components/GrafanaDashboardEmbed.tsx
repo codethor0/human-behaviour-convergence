@@ -45,9 +45,12 @@ export function GrafanaDashboardEmbed({
   panelId,
 }: GrafanaDashboardEmbedProps) {
   const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
-  // Grafana uses var-<variable_name> format for dashboard variables
-  // Most dashboards use 'region' as the variable name
-  const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
+  // Grafana uses var-<variable_name> format for dashboard variables.
+  // Most dashboards use 'region'; regional-comparison and regional-variance-explorer use 'regions' (multi).
+  // Pass both so both variable names are populated when the user selects a region.
+  const regionParam = regionId
+    ? `&var-region=${encodeURIComponent(regionId)}&var-regions=${encodeURIComponent(regionId)}`
+    : '';
   const panelParam = panelId ? `&panelId=${panelId}` : '';
   const refresh = refreshInterval || (dashboardUid.includes('live') || dashboardUid.includes('realtime') ? '30s' : '5m');
   
