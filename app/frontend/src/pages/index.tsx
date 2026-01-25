@@ -111,11 +111,64 @@ const styles = {
   gridCols4: {
     gridTemplateColumns: 'repeat(4, 1fr)',
   },
+  forecastConfig: {
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+  configRow: {
+    display: 'flex',
+    gap: '20px',
+    alignItems: 'center',
+    marginBottom: '12px',
+    flexWrap: 'wrap' as const,
+  },
+  configLabel: {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#333',
+    minWidth: '120px',
+  },
+  configInput: {
+    padding: '8px 12px',
+    fontSize: '14px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    width: '100px',
+  },
+  generateButton: {
+    padding: '10px 24px',
+    fontSize: '16px',
+    fontWeight: '600',
+    backgroundColor: '#0070f3',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+  },
+  infoBox: {
+    backgroundColor: '#f8f9fa',
+    padding: '16px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    fontSize: '14px',
+    lineHeight: '1.6',
+    color: '#333',
+  },
+  infoTitle: {
+    fontWeight: '600',
+    marginBottom: '8px',
+  },
 };
 
 export default function HomePage() {
   const { regions, loading: regionsLoading, error: regionsError } = useRegions();
   const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [historicalDays, setHistoricalDays] = useState<number>(30);
+  const [forecastHorizon, setForecastHorizon] = useState<number>(7);
 
   useEffect(() => {
     if (!regionsLoading && regions.length > 0 && !selectedRegion) {
@@ -125,6 +178,13 @@ export default function HomePage() {
       }
     }
   }, [regions, regionsLoading, selectedRegion]);
+
+  const handleGenerateForecast = async () => {
+    // Navigate to forecast page or trigger forecast generation
+    window.location.href = `/forecast?region=${selectedRegion}&historicalDays=${historicalDays}&horizon=${forecastHorizon}`;
+  };
+
+  const selectedRegionData = regions.find((r: Region) => r.id === selectedRegion);
 
   return (
     <>
@@ -197,242 +257,257 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Section 1: Executive Command Center */}
-        <section id="executive" className="dashboard-section" style={styles.dashboardSection} data-testid="section-executive">
-          <h2 style={styles.sectionTitle}>Executive Command Center</h2>
+        {/* Behavior Forecast Section */}
+        <section id="behavior-forecast" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Behavior Forecast</h2>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="forecast-summary"
+              title="Behavior Forecast"
+              regionId={selectedRegion}
+              height={500}
+            />
+          </div>
+        </section>
+
+        {/* Live Playground Section */}
+        <section id="live-playground" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Live Playground</h2>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="forecast-overview"
+              title="Live Playground"
+              regionId={selectedRegion}
+              height={500}
+              refreshInterval="30s"
+            />
+          </div>
+        </section>
+
+        {/* Live Monitoring Section */}
+        <section id="live-monitoring" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Live Monitoring</h2>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="forecast-overview"
+              title="Live Monitoring"
+              regionId={selectedRegion}
+              height={500}
+              refreshInterval="30s"
+            />
+          </div>
+        </section>
+
+        {/* Results Dashboard Section */}
+        <section id="results-dashboard" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Results Dashboard</h2>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="public-overview"
+              title="Results Dashboard"
+              regionId={selectedRegion}
+              height={500}
+            />
+          </div>
+        </section>
+
+        {/* Analytics Powered by Grafana Section */}
+        <section id="grafana-analytics" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Analytics Powered by Grafana</h2>
+          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}>
+            <p style={{ margin: '0 0 12px 0', fontWeight: '600' }}>
+              Deep-dive analytics and time-series visualizations are now powered by Grafana dashboards below.
+            </p>
+            <p style={{ margin: '0 0 12px 0' }}>
+              Forecast data is fetched from the backend API and metrics are exposed to Prometheus for real-time monitoring.
+            </p>
+            <p style={{ margin: '0', fontSize: '13px', color: '#666' }}>
+              <strong>Note:</strong> Some indices (economic_stress, mobility_activity) are global/national and appear identical across regions by design. Region-specific indices (environmental_stress, political_stress) will differ. Grafana region dropdown populates as metrics become available (warm-up: ~5-10 minutes after stack start).
+            </p>
+          </div>
+
+          {/* Regional Forecast Overview & Key Metrics */}
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="forecast-summary"
+              title="Regional Forecast Overview & Key Metrics"
+              regionId={selectedRegion}
+              height={500}
+            />
+          </div>
+
+          {/* Behavior Index Timeline & Historical Trends */}
           <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
               dashboardUid="behavior-index-global"
               title="Behavior Index Timeline & Historical Trends"
               regionId={selectedRegion}
-              height={400}
-            />
-          </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols4 }} className="dashboard-grid-cols-4">
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-summary"
-              title="Current Behavior Index"
-              regionId={selectedRegion}
-              panelId={1}
-              height={200}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-summary"
-              title="Risk Tier"
-              regionId={selectedRegion}
-              panelId={2}
-              height={200}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-summary"
-              title="Trend Direction"
-              regionId={selectedRegion}
-              panelId={3}
-              height={200}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="source-health-freshness"
-              title="Data Freshness"
-              height={200}
-            />
-          </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="public-overview"
-              title="Public Overview - Executive Summary"
-              regionId={selectedRegion}
-              height={400}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="historical-trends"
-              title="Historical Trends & Volatility Analysis"
-              regionId={selectedRegion}
-              height={400}
-            />
-          </div>
-        </section>
-
-        {/* Section 2: Forecast & Prediction Center */}
-        <section id="forecasting" className="dashboard-section" style={styles.dashboardSection} data-testid="section-forecasting">
-          <h2 style={styles.sectionTitle}>Forecast & Prediction Center</h2>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-summary"
-              title="Behavior Forecast - Regional Overview"
-              regionId={selectedRegion}
               height={500}
             />
           </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-quality-drift"
-              title="Forecast Quality & Drift Analysis"
-              regionId={selectedRegion}
-              height={500}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="algorithm-model-comparison"
-              title="Algorithm Performance Comparison"
-              regionId={selectedRegion}
-              height={500}
-            />
-          </div>
-        </section>
 
-        {/* Section 3: Real-Time Operations */}
-        <section id="operations" className="dashboard-section" style={styles.dashboardSection} data-testid="section-operations">
-          <h2 style={styles.sectionTitle}>Real-Time Operations</h2>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
-            <GrafanaDashboardEmbed
-              dashboardUid="forecast-overview"
-              title="Live Monitoring - Real-Time Operations Center"
-              regionId={selectedRegion}
-              height={400}
-              refreshInterval="30s"
-            />
-          </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="data-sources-health"
-              title="Real-Time Data Source Status & API Health"
-              height={400}
-              refreshInterval="30s"
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="data-sources-health-enhanced"
-              title="Source Health & Freshness - Detailed Monitoring"
-              height={400}
-              refreshInterval="30s"
-            />
-          </div>
-        </section>
-
-        {/* Section 4: Multi-Dimensional Analysis */}
-        <section id="analysis" className="dashboard-section" style={styles.dashboardSection} data-testid="section-analysis">
-          <h2 style={styles.sectionTitle}>Multi-Dimensional Analysis</h2>
+          {/* Sub-Index Components & Contributing Factors */}
           <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
               dashboardUid="subindex-deep-dive"
               title="Sub-Index Components & Contributing Factors"
               regionId={selectedRegion}
-              height={450}
+              height={500}
             />
           </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="cross-domain-correlation"
-              title="Economic Behavior Convergence"
-              regionId={selectedRegion}
-              height={400}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="regional-deep-dive"
-              title="Environmental Impact Analysis"
-              regionId={selectedRegion}
-              height={400}
-            />
-          </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="regional-comparison"
-              title="Social Sentiment Intelligence"
-              regionId={selectedRegion}
-              height={400}
-            />
+
+          {/* Regional Variance Explorer - Multi-Region Comparison */}
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
               dashboardUid="regional-variance-explorer"
-              title="Mobility & Movement Patterns"
+              title="Regional Variance Explorer - Multi-Region Comparison"
               regionId={selectedRegion}
-              height={400}
+              height={500}
             />
           </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="regional-signals"
-              title="Contribution Breakdown - How Sub-Indices Build Behavior Index"
-              regionId={selectedRegion}
-              height={400}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="geo-map"
-              title="Geo Map - Regional Stress Visualization"
-              regionId={selectedRegion}
-              height={400}
-            />
-          </div>
+
+          {/* Forecast Quality and Drift Analysis */}
           <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
-              dashboardUid="forecast-overview"
-              title="Forecast Overview - Comprehensive Regional Analysis"
+              dashboardUid="forecast-quality-drift"
+              title="Forecast Quality and Drift Analysis"
               regionId={selectedRegion}
               height={500}
             />
           </div>
-        </section>
 
-        {/* Section 5: Anomaly & Risk Detection */}
-        <section id="anomalies" className="dashboard-section" style={styles.dashboardSection} data-testid="section-anomalies">
-          <h2 style={styles.sectionTitle}>Anomaly & Risk Detection</h2>
+          {/* Algorithm / Model Performance Comparison */}
           <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
-              dashboardUid="anomaly-detection-center"
-              title="Anomaly Detection Center - Statistical Outlier Analysis"
+              dashboardUid="algorithm-model-comparison"
+              title="Algorithm / Model Performance Comparison"
               regionId={selectedRegion}
               height={500}
             />
           </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="risk-regimes"
-              title="Geopolitical Risk Monitor"
-              regionId={selectedRegion}
-              height={400}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="cross-domain-correlation"
-              title="Cross-Domain Correlation Analysis"
-              regionId={selectedRegion}
-              height={400}
-            />
-          </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="baselines"
-              title="Shock Intelligence Dashboard - Event Detection & Analysis"
-              regionId={selectedRegion}
-              height={500}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="classical-models"
-              title="Classical Forecasting Models - Baseline Comparisons"
-              regionId={selectedRegion}
-              height={500}
-            />
-          </div>
-        </section>
 
-        {/* Section 6: Data Integrity & System Health */}
-        <section id="integrity" className="dashboard-section" style={styles.dashboardSection} data-testid="section-integrity">
-          <h2 style={styles.sectionTitle}>Data Integrity & System Health</h2>
+          {/* Real-Time Data Source Status & API Health */}
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="data-sources-health"
+              title="Real-Time Data Source Status & API Health"
+              height={500}
+              refreshInterval="30s"
+            />
+          </div>
+
+          {/* Source Health and Freshness - Detailed Monitoring */}
           <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
             <GrafanaDashboardEmbed
               dashboardUid="source-health-freshness"
-              title="Data Quality & Lineage - Trust & Transparency"
-              height={400}
+              title="Source Health and Freshness - Detailed Monitoring"
+              height={500}
+              refreshInterval="30s"
             />
           </div>
-          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
-            <GrafanaDashboardEmbed
-              dashboardUid="data-sources-health"
-              title="Prometheus System Health - Internal Metrics"
-              height={400}
-            />
-            <GrafanaDashboardEmbed
-              dashboardUid="model-performance"
-              title="Model Performance Metrics - Forecast Accuracy Tracking"
-              regionId={selectedRegion}
-              height={400}
-            />
+
+          {/* Additional Dashboards - All Others */}
+          <div style={{ marginTop: '40px', paddingTop: '40px', borderTop: '2px solid #e0e0e0' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: '#000' }}>Additional Analytics Dashboards</h3>
+            
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="cross-domain-correlation"
+                title="Cross-Domain Correlation Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="regional-deep-dive"
+                title="Regional Deep Dive Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="regional-comparison"
+                title="Regional Comparison Matrix"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="regional-signals"
+                title="Regional Signals Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="geo-map"
+                title="Geographic Map Visualization"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="anomaly-detection-center"
+                title="Anomaly Detection Center"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="risk-regimes"
+                title="Risk Regimes Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="model-performance"
+                title="Model Performance Hub"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="historical-trends"
+                title="Historical Trends Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="contribution-breakdown"
+                title="Contribution Breakdown Analysis"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
+              <GrafanaDashboardEmbed
+                dashboardUid="baselines"
+                title="Baseline Models Comparison"
+                regionId={selectedRegion}
+                height={400}
+              />
+              <GrafanaDashboardEmbed
+                dashboardUid="classical-models"
+                title="Classical Forecasting Models"
+                regionId={selectedRegion}
+                height={400}
+              />
+            </div>
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+              <GrafanaDashboardEmbed
+                dashboardUid="data-sources-health-enhanced"
+                title="Data Sources Health Enhanced"
+                height={400}
+                refreshInterval="30s"
+              />
+            </div>
           </div>
         </section>
       </div>
