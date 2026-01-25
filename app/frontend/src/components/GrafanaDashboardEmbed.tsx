@@ -45,11 +45,21 @@ export function GrafanaDashboardEmbed({
   panelId,
 }: GrafanaDashboardEmbedProps) {
   const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
+  // Grafana uses var-<variable_name> format for dashboard variables
+  // Most dashboards use 'region' as the variable name
   const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
   const panelParam = panelId ? `&panelId=${panelId}` : '';
   const refresh = refreshInterval || (dashboardUid.includes('live') || dashboardUid.includes('realtime') ? '30s' : '5m');
   
   const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv&refresh=${refresh}${regionParam}${panelParam}`;
+  
+  // Debug logging (only in development)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log(`[GrafanaDashboardEmbed] Loading dashboard: ${dashboardUid}`, {
+      regionId,
+      src: src.replace(/http:\/\/[^/]+/, grafanaBase),
+    });
+  }
   
   const customHeight = height || DEFAULT_HEIGHTS[dashboardUid] || '500px';
   const iframeHeight = typeof customHeight === 'number' ? `${customHeight}px` : customHeight;
@@ -117,18 +127,31 @@ export function GrafanaDashboardEmbed({
           setIsLoading(false);
           try {
             const iframe = e.target as HTMLIFrameElement;
+            // Check if Grafana redirected to login page
             if (iframe.contentWindow?.location.href.includes('/login')) {
               setEmbedError('Grafana requires authentication. Check GF_AUTH_ANONYMOUS_ENABLED setting.');
             } else {
               setEmbedError(null);
+              // Debug log successful load
+              if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+                console.log(`[GrafanaDashboardEmbed] Successfully loaded: ${dashboardUid}`);
+              }
             }
           } catch (err) {
+            // Cross-origin restrictions may prevent checking href, but iframe loaded
             setEmbedError(null);
+            if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+              console.log(`[GrafanaDashboardEmbed] Loaded (cross-origin check blocked): ${dashboardUid}`);
+            }
           }
         }}
         onError={() => {
           setIsLoading(false);
-          setEmbedError('Failed to load Grafana dashboard. Check GF_SECURITY_ALLOW_EMBEDDING and network connectivity.');
+          const errorMsg = `Failed to load Grafana dashboard: ${dashboardUid}. Check: 1) Grafana is running at ${grafanaBase}, 2) GF_SECURITY_ALLOW_EMBEDDING=true, 3) Network connectivity.`;
+          setEmbedError(errorMsg);
+          if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+            console.error(`[GrafanaDashboardEmbed] Error loading ${dashboardUid}:`, errorMsg);
+          }
         }}
       />
     </div>
