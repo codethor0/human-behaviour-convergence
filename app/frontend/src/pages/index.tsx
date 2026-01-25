@@ -155,6 +155,9 @@ export default function HomePage() {
             <Link href="/command-center" style={styles.navLinkHighlight}>
               Command Center
             </Link>
+            <Link href="/advanced-visualizations" style={styles.navLink}>
+              Advanced Visualizations
+            </Link>
             <Link href="/forecast" style={styles.navLink}>
               Generate Forecast
             </Link>
