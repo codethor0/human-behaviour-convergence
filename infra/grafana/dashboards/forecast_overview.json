@@ -1,12 +1,12 @@
 {
-  "title": "Regional Deep Dive",
-  "uid": "regional-deep-dive",
+  "title": "Forecast Overview",
+  "uid": "forecast-overview",
   "timezone": "browser",
   "schemaVersion": 38,
   "version": 1,
   "refresh": "30s",
   "time": {
-    "from": "now-30d",
+    "from": "now-7d",
     "to": "now"
   },
   "templating": {
@@ -35,7 +35,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "Behavior Index - $region",
+      "title": "Behavior Index Timeline - $region",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -87,11 +87,11 @@
                 "color": "green"
               },
               {
-                "value": 0.6,
+                "value": 0.5,
                 "color": "yellow"
               },
               {
-                "value": 0.8,
+                "value": 0.7,
                 "color": "red"
               }
             ]
@@ -116,155 +116,17 @@
     },
     {
       "id": 2,
-      "title": "Parent Sub-Indices - $region",
-      "type": "timeseries",
+      "title": "Latest Value per Region",
+      "type": "table",
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 8
       },
       "targets": [
         {
-          "expr": "parent_subindex_value{region=\"$region\"}",
-          "legendFormat": "{{parent}}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "Sub-Index Value",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 0.5,
-                "color": "yellow"
-              },
-              {
-                "value": 0.7,
-                "color": "red"
-              }
-            ]
-          },
-          "unit": "short",
-          "min": 0,
-          "max": 1
-        }
-      },
-      "options": {
-        "legend": {
-          "calcs": ["last", "mean"],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      }
-    },
-    {
-      "id": 3,
-      "title": "Current Parent Sub-Index Values - $region",
-      "type": "bargauge",
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
-      "targets": [
-        {
-          "expr": "parent_subindex_value{region=\"$region\"}",
-          "legendFormat": "{{parent}}",
-          "refId": "A",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "value": null,
-                "color": "green"
-              },
-              {
-                "value": 0.5,
-                "color": "yellow"
-              },
-              {
-                "value": 0.7,
-                "color": "red"
-              }
-            ]
-          },
-          "unit": "short",
-          "min": 0,
-          "max": 1
-        }
-      },
-      "options": {
-        "displayMode": "gradient",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "values": false,
-          "calcs": ["lastNotNull"],
-          "fields": ""
-        },
-        "showUnfilled": true
-      }
-    },
-    {
-      "id": 4,
-      "title": "Top Child Sub-Index Contributors - $region",
-      "type": "table",
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      },
-      "targets": [
-        {
-          "expr": "topk(10, child_subindex_value{region=\"$region\"})",
+          "expr": "behavior_index",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -306,19 +168,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "parent"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 150
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "child"
+              "options": "region"
             },
             "properties": [
               {
@@ -343,42 +193,121 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true
             },
             "indexByName": {},
             "renameByName": {
-              "Value": "Value",
-              "parent": "Parent",
-              "child": "Child"
+              "Value": "Behavior Index",
+              "region": "Region"
             }
           }
         }
       ]
     },
     {
-      "id": 5,
-      "title": "Global vs Regional Index Classification - $region",
-      "type": "table",
+      "id": 3,
+      "title": "Sub-Index Breakdown - $region",
+      "type": "timeseries",
       "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 22
-      },
-      "datasource": {
-        "type": "grafana",
-        "uid": "-- Grafana --"
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
       },
       "targets": [
         {
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
+          "expr": "parent_subindex_value{region=\"$region\"}",
+          "legendFormat": "{{parent}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
-          "refId": "A",
-          "scenarioId": "csv_content",
-          "csvContent": "Index,Type,Description\neconomic_stress,Mixed,Global/national components + regional fuel_stress (varies by state)\nenvironmental_stress,Regional,State/city-specific weather and environmental conditions\nmobility_activity,Global,National TSA passenger data (same for all US regions)\ndigital_attention,Global,Global GDELT tone aggregate (same across regions)\npublic_health_stress,Mixed,May be global if using OWID fallback, or regional if configured\npolitical_stress,Regional,State/city-specific political activity\ncrime_stress,Regional,State/city-specific crime rates\nmisinformation_stress,Regional,State/city-specific information environment\nsocial_cohesion_stress,Regional,State/city-specific social dynamics\nfuel_stress,Regional,State-level EIA gasoline prices (MVP1)\ndrought_stress,Regional,State-level U.S. Drought Monitor (MVP2)\nstorm_severity_stress,Regional,State-level NOAA storm events (MVP3)\nheatwave_stress,Regional,State-level heatwave events (MVP3)\nflood_risk_stress,Regional,State-level flood risk (MVP3)",
-          "csvFileName": "global_vs_regional.csv"
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Sub-Index Value",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              },
+              {
+                "value": 0.5,
+                "color": "yellow"
+              },
+              {
+                "value": 0.7,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "options": {
+        "legend": {
+          "calcs": ["last", "mean"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Forecast Metrics Summary - $region",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "forecast_history_points{region=\"$region\"}",
+          "instant": true,
+          "legendFormat": "History Points",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
@@ -386,30 +315,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [
-            {
-              "options": {
-                "Global": {
-                  "color": "blue",
-                  "index": 0,
-                  "text": "GLOBAL"
-                },
-                "Regional": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "REGIONAL"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -418,39 +324,139 @@
                 "value": null
               }
             ]
-          }
+          },
+          "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Index"
-            },
-            "properties": [
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Forecast Points Generated - $region",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "forecast_points_generated{region=\"$region\"}",
+          "instant": true,
+          "legendFormat": "Forecast Points",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
               {
-                "id": "custom.width",
-                "value": 200
+                "color": "green",
+                "value": null
               }
             ]
           },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 120
-              }
-            ]
-          }
-        ]
+          "unit": "short"
+        },
+        "overrides": []
       },
       "options": {
-        "showHeader": true
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Forecast Last Updated - $region",
+      "type": "stat",
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "forecast_last_updated_timestamp_seconds{region=\"$region\"} * 1000",
+          "instant": true,
+          "legendFormat": "Last Updated",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Global vs Regional Metrics Explanation",
+      "type": "text",
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Note on Global vs Regional Metrics:**\n\n- **Global Metrics**: Some sub-indices (e.g., economic_stress, mobility_activity, digital_attention) are computed from national/global data sources and may show identical values across regions. This is expected behavior.\n- **Regional Metrics**: Other sub-indices (e.g., environmental_stress, political_stress) are computed from region-specific data and will differ between regions.\n- **Behavior Index**: The overall behavior index combines both global and regional components using weighted aggregation, so regional differences reflect regional-specific factors even when some components are identical."
       }
     }
   ],
-  "tags": ["regional", "deep-dive", "explainability"]
+  "tags": ["forecast", "overview", "public"]
 }

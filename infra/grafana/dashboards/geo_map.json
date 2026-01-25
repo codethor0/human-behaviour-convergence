@@ -268,6 +268,264 @@
           }
         }
       ]
+    },
+    {
+      "id": 3,
+      "title": "Drought Stress by Region (Environmental Signal)",
+      "type": "geomap",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "child_subindex_value{parent=\"environmental_stress\", child=\"drought_stress\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content",
+          "csvContent": "region,latitude,longitude\nus_al,32.806671,-86.791130\nus_ak,61.370716,-152.404419\nus_az,33.729759,-111.431221\nus_ar,34.969704,-92.373123\nus_ca,36.116203,-119.681564\nus_co,39.059811,-105.311104\nus_ct,41.597782,-72.755371\nus_de,39.318523,-75.507141\nus_dc,38.907192,-77.036873\nus_fl,27.766279,-81.686783\nus_ga,33.040619,-83.643074\nus_hi,21.094318,-157.498337\nus_id,44.240459,-114.478828\nus_il,40.349457,-88.986137\nus_in,39.849426,-86.258278\nus_ia,42.011539,-93.210526\nus_ks,38.526600,-96.726486\nus_ky,37.668140,-84.670067\nus_la,31.169546,-91.867805\nus_me,44.323535,-69.765261\nus_md,39.063946,-76.802101\nus_ma,42.230171,-71.530106\nus_mi,43.326618,-84.536095\nus_mn,46.729553,-94.685900\nus_ms,32.741646,-89.678696\nus_mo,38.456085,-92.288368\nus_mt,46.921925,-110.454353\nus_ne,41.125370,-98.268082\nus_nv,38.313515,-117.055374\nus_nh,43.452492,-71.563896\nus_nj,40.298904,-74.521011\nus_nm,34.840515,-106.248482\nus_ny,42.165726,-74.948051\nus_nc,35.630066,-79.806419\nus_nd,47.528912,-99.784012\nus_oh,40.388783,-82.764915\nus_ok,35.565342,-96.928917\nus_or,44.572021,-122.070938\nus_pa,40.590752,-77.209755\nus_ri,41.680893,-71.51178\nus_sc,33.856892,-80.945007\nus_sd,44.299782,-99.438828\nus_tn,35.747845,-86.692345\nus_tx,31.054487,-97.563461\nus_ut,40.150032,-111.862434\nus_vt,44.045876,-72.710686\nus_va,37.769337,-78.169968\nus_wa,47.400902,-121.490494\nus_wv,38.491226,-80.954453\nus_wi,44.268543,-89.616508\nus_wy,42.755966,-107.302490\ncity_nyc,40.7128,-74.0060\ncity_london,51.5074,-0.1278\ncity_tokyo,35.6762,139.6503\ncity_la,34.0522,-118.2437\ncity_paris,48.8566,2.3522\ncity_berlin,52.5200,13.4050\ncity_sydney,-33.8688,151.2093\ncity_singapore,1.3521,103.8198\ncity_mumbai,19.0760,72.8777\ncity_sao_paulo,-23.5505,-46.6333\ncity_johannesburg,-26.2041,28.0473",
+          "csvFileName": "regions_coords.csv"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        }
+      },
+      "options": {
+        "basemap": {
+          "type": "default",
+          "name": "Default base layer"
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showScale": false,
+          "showMeasure": false,
+          "showDebug": false
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "config": {
+              "style": {
+                "size": {
+                  "field": "Value",
+                  "fixed": 5,
+                  "min": 2,
+                  "max": 15
+                },
+                "color": {
+                  "field": "Value",
+                  "fixed": "dark-green",
+                  "mode": "continuous-GrYlRd"
+                },
+                "opacity": 0.7,
+                "symbol": {
+                  "fixed": "img/icons/marker.svg",
+                  "mode": "fixed"
+                }
+              },
+              "name": "Drought Stress",
+              "tooltip": true
+            },
+            "location": {
+              "mode": "coords",
+              "latitude": "latitude",
+              "longitude": "longitude"
+            }
+          }
+        ],
+        "view": {
+          "id": "zero",
+          "lat": 39.8283,
+          "lon": -98.5795,
+          "zoom": 4
+        }
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "region",
+            "mode": "outer",
+            "reducer": "lastNotNull"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "parent": true,
+              "child": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Value",
+              "region": "region"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Storm Severity Stress by Region (Environmental Signal)",
+      "type": "geomap",
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "child_subindex_value{parent=\"environmental_stress\", child=\"storm_severity_stress\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "refId": "B",
+          "scenarioId": "csv_content",
+          "csvContent": "region,latitude,longitude\nus_al,32.806671,-86.791130\nus_ak,61.370716,-152.404419\nus_az,33.729759,-111.431221\nus_ar,34.969704,-92.373123\nus_ca,36.116203,-119.681564\nus_co,39.059811,-105.311104\nus_ct,41.597782,-72.755371\nus_de,39.318523,-75.507141\nus_dc,38.907192,-77.036873\nus_fl,27.766279,-81.686783\nus_ga,33.040619,-83.643074\nus_hi,21.094318,-157.498337\nus_id,44.240459,-114.478828\nus_il,40.349457,-88.986137\nus_in,39.849426,-86.258278\nus_ia,42.011539,-93.210526\nus_ks,38.526600,-96.726486\nus_ky,37.668140,-84.670067\nus_la,31.169546,-91.867805\nus_me,44.323535,-69.765261\nus_md,39.063946,-76.802101\nus_ma,42.230171,-71.530106\nus_mi,43.326618,-84.536095\nus_mn,46.729553,-94.685900\nus_ms,32.741646,-89.678696\nus_mo,38.456085,-92.288368\nus_mt,46.921925,-110.454353\nus_ne,41.125370,-98.268082\nus_nv,38.313515,-117.055374\nus_nh,43.452492,-71.563896\nus_nj,40.298904,-74.521011\nus_nm,34.840515,-106.248482\nus_ny,42.165726,-74.948051\nus_nc,35.630066,-79.806419\nus_nd,47.528912,-99.784012\nus_oh,40.388783,-82.764915\nus_ok,35.565342,-96.928917\nus_or,44.572021,-122.070938\nus_pa,40.590752,-77.209755\nus_ri,41.680893,-71.51178\nus_sc,33.856892,-80.945007\nus_sd,44.299782,-99.438828\nus_tn,35.747845,-86.692345\nus_tx,31.054487,-97.563461\nus_ut,40.150032,-111.862434\nus_vt,44.045876,-72.710686\nus_va,37.769337,-78.169968\nus_wa,47.400902,-121.490494\nus_wv,38.491226,-80.954453\nus_wi,44.268543,-89.616508\nus_wy,42.755966,-107.302490\ncity_nyc,40.7128,-74.0060\ncity_london,51.5074,-0.1278\ncity_tokyo,35.6762,139.6503\ncity_la,34.0522,-118.2437\ncity_paris,48.8566,2.3522\ncity_berlin,52.5200,13.4050\ncity_sydney,-33.8688,151.2093\ncity_singapore,1.3521,103.8198\ncity_mumbai,19.0760,72.8777\ncity_sao_paulo,-23.5505,-46.6333\ncity_johannesburg,-26.2041,28.0473",
+          "csvFileName": "regions_coords.csv"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        }
+      },
+      "options": {
+        "basemap": {
+          "type": "default",
+          "name": "Default base layer"
+        },
+        "controls": {
+          "showZoom": true,
+          "mouseWheelZoom": true,
+          "showAttribution": true,
+          "showScale": false,
+          "showMeasure": false,
+          "showDebug": false
+        },
+        "layers": [
+          {
+            "type": "markers",
+            "config": {
+              "style": {
+                "size": {
+                  "field": "Value",
+                  "fixed": 5,
+                  "min": 2,
+                  "max": 15
+                },
+                "color": {
+                  "field": "Value",
+                  "fixed": "dark-green",
+                  "mode": "continuous-GrYlRd"
+                },
+                "opacity": 0.7,
+                "symbol": {
+                  "fixed": "img/icons/marker.svg",
+                  "mode": "fixed"
+                }
+              },
+              "name": "Storm Severity Stress",
+              "tooltip": true
+            },
+            "location": {
+              "mode": "coords",
+              "latitude": "latitude",
+              "longitude": "longitude"
+            }
+          }
+        ],
+        "view": {
+          "id": "zero",
+          "lat": 39.8283,
+          "lon": -98.5795,
+          "zoom": 4
+        }
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {
+            "reducers": []
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "region",
+            "mode": "outer",
+            "reducer": "lastNotNull"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "parent": true,
+              "child": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value": "Value",
+              "region": "region"
+            }
+          }
+        }
+      ]
     }
   ],
   "tags": ["geo", "map", "spatial", "regional"]

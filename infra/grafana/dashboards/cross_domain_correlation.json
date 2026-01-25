@@ -1,0 +1,617 @@
+{
+  "title": "Cross-Domain Correlation Matrix",
+  "uid": "cross-domain-correlation",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "region",
+        "type": "query",
+        "label": "Region",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "query": "label_values(behavior_index, region)",
+        "multi": false,
+        "includeAll": false,
+        "current": {
+          "selected": false,
+          "text": "city_nyc",
+          "value": "city_nyc"
+        },
+        "refresh": 1,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Correlation Analysis Overview",
+      "type": "text",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "# Cross-Domain Correlation Matrix\n\nThis dashboard analyzes relationships between different behavioral indices using correlation analysis over rolling 30-day windows.\n\n**Interpretation:**\n- **Positive correlation (>0.5)**: Indices move together (reinforcing signals)\n- **Negative correlation (<-0.5)**: Indices move oppositely (conflicting signals)\n- **Near zero**: Independent movements\n\n**Related Dashboards:** [Regional Deep Dive](http://localhost:3001/d/regional-deep-dive) | [Sub-Index Deep Dive](http://localhost:3001/d/subindex-deep-dive) | [Anomaly Detection](http://localhost:3001/d/anomaly-detection-center)"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Correlation Heatmap - Parent Indices",
+      "type": "heatmap",
+      "gridPos": {
+        "h": 12,
+        "w": 16,
+        "x": 0,
+        "y": 5
+      },
+      "targets": [
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"})",
+          "legendFormat": "Econ vs Env",
+          "refId": "A"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"})",
+          "legendFormat": "Econ vs Mobility",
+          "refId": "B"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"})",
+          "legendFormat": "Econ vs Health",
+          "refId": "C"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"political_stress\"})",
+          "legendFormat": "Econ vs Political",
+          "refId": "D"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}, parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"})",
+          "legendFormat": "Env vs Mobility",
+          "refId": "E"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}, parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"})",
+          "legendFormat": "Env vs Health",
+          "refId": "F"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"}, parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"})",
+          "legendFormat": "Mobility vs Health",
+          "refId": "G"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "spectrum"
+          },
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": -0.5,
+                "color": "blue"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              },
+              {
+                "value": 0.5,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": -1,
+          "max": 1,
+          "decimals": 2
+        }
+      },
+      "options": {
+        "calculate": false,
+        "cellGap": 2,
+        "cellValues": {
+          "unit": "short"
+        },
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "spectrum",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Spectral",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Top Correlations Table",
+      "type": "table",
+      "gridPos": {
+        "h": 12,
+        "w": 8,
+        "x": 16,
+        "y": 5
+      },
+      "targets": [
+        {
+          "expr": "abs(corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "abs(corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "abs(corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "abs(corr(parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}, parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
+        },
+        {
+          "expr": "abs(corr(parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"}, parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"}))",
+          "format": "table",
+          "instant": true,
+          "refId": "E"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "Value #A": 0,
+              "Value #B": 1,
+              "Value #C": 2,
+              "Value #D": 3,
+              "Value #E": 4
+            },
+            "renameByName": {
+              "Value #A": "Econ-Env",
+              "Value #B": "Econ-Mobility",
+              "Value #C": "Econ-Health",
+              "Value #D": "Env-Mobility",
+              "Value #E": "Mobility-Health"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Econ-Env",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": 0.3,
+                "color": "yellow"
+              },
+              {
+                "value": 0.5,
+                "color": "orange"
+              },
+              {
+                "value": 0.7,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Economic vs Behavior Index Correlation",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "targets": [
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"}, behavior_index{region=\"$region\"})",
+          "legendFormat": "Economic-Behavor Correlation (30d rolling)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "Correlation Coefficient",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": -0.5,
+                "color": "blue"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              },
+              {
+                "value": 0.5,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": -1,
+          "max": 1,
+          "decimals": 3
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Environmental vs Mobility Correlation",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "targets": [
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"}, parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"})",
+          "legendFormat": "Environmental-Mobility Correlation (30d rolling)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "Correlation Coefficient",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": -0.5,
+                "color": "blue"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              },
+              {
+                "value": 0.5,
+                "color": "red"
+              }
+            ]
+          },
+          "unit": "short",
+          "min": -1,
+          "max": 1,
+          "decimals": 3
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Leading Indicators Analysis",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "targets": [
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"economic_stress\"} offset 7d, behavior_index{region=\"$region\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"environmental_stress\"} offset 7d, behavior_index{region=\"$region\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"mobility_activity\"} offset 7d, behavior_index{region=\"$region\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "corr(parent_subindex_value{region=\"$region\", parent=\"public_health_stress\"} offset 7d, behavior_index{region=\"$region\"})",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true,
+              "instance": true
+            },
+            "indexByName": {
+              "Value #A": 0,
+              "Value #B": 1,
+              "Value #C": 2,
+              "Value #D": 3
+            },
+            "renameByName": {
+              "Value #A": "Economic Stress (7d lead)",
+              "Value #B": "Environmental Stress (7d lead)",
+              "Value #C": "Mobility Activity (7d lead)",
+              "Value #D": "Public Health Stress (7d lead)"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Economic Stress (7d lead)",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "blue"
+              },
+              {
+                "value": -0.3,
+                "color": "blue"
+              },
+              {
+                "value": 0,
+                "color": "white"
+              },
+              {
+                "value": 0.3,
+                "color": "yellow"
+              },
+              {
+                "value": 0.5,
+                "color": "orange"
+              },
+              {
+                "value": 0.7,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 3
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Economic Stress (7d lead)"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "footer": {
+          "show": false
+        }
+      }
+    }
+  ],
+  "tags": [
+    "correlation",
+    "analysis",
+    "cross-domain",
+    "relationships"
+  ]
+}
