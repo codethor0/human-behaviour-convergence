@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface GrafanaDashboardEmbedProps {
   dashboardUid: string;
@@ -67,6 +67,15 @@ export function GrafanaDashboardEmbed({
   const [embedError, setEmbedError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fallback timeout: show iframe after 3 seconds even if onLoad hasn't fired
+  // This ensures dashboards are visible even if load detection fails
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
     <div
       style={{
@@ -76,6 +85,7 @@ export function GrafanaDashboardEmbed({
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         marginBottom: '4px',
         minHeight: iframeHeight,
+        position: 'relative',
       }}
       data-testid={`dashboard-embed-${dashboardUid}`}
     >
@@ -105,6 +115,14 @@ export function GrafanaDashboardEmbed({
             textAlign: 'center',
             color: '#666',
             fontSize: '14px',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '4px',
+            zIndex: 10,
+            pointerEvents: 'none',
           }}
         >
           Loading dashboard...
@@ -118,7 +136,10 @@ export function GrafanaDashboardEmbed({
           height: iframeHeight,
           border: 'none',
           borderRadius: '8px',
-          display: isLoading ? 'none' : 'block',
+          display: 'block',
+          opacity: isLoading ? 0.3 : 1,
+          transition: 'opacity 0.3s ease-in-out',
+          minHeight: '200px',
         }}
         title={title}
         allow="fullscreen"

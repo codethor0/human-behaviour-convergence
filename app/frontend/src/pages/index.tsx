@@ -203,6 +203,20 @@ export default function HomePage() {
           }
           .dashboard-section {
             min-height: 300px;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+          }
+          [data-testid^="dashboard-embed-"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-height: 200px !important;
+          }
+          [data-testid^="dashboard-embed-"] iframe {
+            display: block !important;
+            visibility: visible !important;
+            min-height: 200px !important;
           }
         `}</style>
       </Head>
