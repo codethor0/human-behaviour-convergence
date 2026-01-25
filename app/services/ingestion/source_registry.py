@@ -526,6 +526,19 @@ def initialize_registry() -> None:
         )
     )
 
+    # Air Quality (PurpleAir + EPA AirNow - keys optional)
+    register_source(
+        SourceDefinition(
+            id="air_quality",
+            display_name="Air Quality",
+            category="environmental",
+            requires_key=False,
+            required_env_vars=["PURPLEAIR_API_KEY", "AIRNOW_API_KEY"],
+            can_run_without_key=True,
+            description="Air quality data from PurpleAir (community sensors) and EPA AirNow (official government data). Provides AQI (Air Quality Index) normalized to air quality stress index. Real-time updates. API keys optional (can use fallback data).",
+        )
+    )
+
 
 # Initialize on module import
 initialize_registry()

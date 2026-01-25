@@ -351,15 +351,27 @@ class DataHarmonizer:
         # Add air quality data if available
         if not air_quality_data.empty:
             aq_df = air_quality_data.copy()
-            # OpenAQ returns timestamp column
+            # Air quality data returns timestamp column
             if "timestamp" in aq_df.columns:
                 aq_df["timestamp"] = pd.to_datetime(aq_df["timestamp"], utc=True)
                 if aq_df["timestamp"].dt.tz is not None:
                     aq_df["timestamp"] = aq_df["timestamp"].dt.tz_localize(None)
                 aq_df = aq_df.set_index("timestamp").sort_index()
-                # Normalize AQI to 0-1 scale (AQI typically 0-500, we want 0-1)
-                if "aqi" in aq_df.columns:
-                    aq_df["aqi_normalized"] = aq_df["aqi"] / 500.0
+                # Use air_quality_stress_index if available (from new fetcher)
+                # Otherwise normalize AQI to 0-1 scale (AQI typically 0-500, we want 0-1)
+                if "air_quality_stress_index" not in aq_df.columns:
+                    if "aqi" in aq_df.columns:
+                        # Normalize AQI to stress index (0-1)
+                        # AQI > 100 is unhealthy, > 150 is unhealthy for sensitive groups
+                        aq_df["air_quality_stress_index"] = aq_df["aqi"].apply(
+                            lambda x: (x / 50) * 0.2 if x <= 50
+                            else (0.2 + ((x - 50) / 50) * 0.2) if x <= 100
+                            else (0.4 + ((x - 100) / 50) * 0.2) if x <= 150
+                            else min(1.0, 0.6 + ((x - 150) / 350) * 0.4)
+                        )
+                    else:
+                        # Fallback: create empty stress index
+                        aq_df["air_quality_stress_index"] = 0.0
                 # Normalize PM2.5 and PM10 (typical ranges: PM2.5 0-500 µg/m³, PM10 0-600 µg/m³)
                 if "pm25" in aq_df.columns:
                     aq_df["pm25_normalized"] = aq_df["pm25"] / 500.0
@@ -735,10 +747,14 @@ class DataHarmonizer:
         usgs_earthquake_val = usgs_aligned.get(
             "earthquake_intensity", pd.Series(index=date_range, dtype=float)
         )
-        # Extract air quality values (use AQI normalized if available, else PM2.5 normalized)
+        # Extract air quality values (use air_quality_stress_index if available, else fallback to normalized AQI/PM2.5)
         air_quality_val = pd.Series(index=date_range, dtype=float)
         if not aq_aligned.empty:
-            if "aqi_normalized" in aq_aligned.columns:
+            if "air_quality_stress_index" in aq_aligned.columns:
+                air_quality_val = aq_aligned.get(
+                    "air_quality_stress_index", pd.Series(index=date_range, dtype=float)
+                )
+            elif "aqi_normalized" in aq_aligned.columns:
                 air_quality_val = aq_aligned.get(
                     "aqi_normalized", pd.Series(index=date_range, dtype=float)
                 )
