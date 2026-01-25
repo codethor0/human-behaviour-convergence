@@ -257,6 +257,83 @@ export default function HomePage() {
           </div>
         </header>
 
+        {/* Forecast Configuration */}
+        <section style={styles.forecastConfig}>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '20px', color: '#000' }}>
+            Forecast Configuration
+          </h2>
+          <div style={styles.configRow}>
+            <span style={styles.configLabel}>Region</span>
+            <select
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              style={{ ...styles.regionSelect, minWidth: '250px' }}
+              disabled={regionsLoading || regions.length === 0}
+            >
+              {regionsLoading ? (
+                <option value="">Loading regions...</option>
+              ) : regionsError ? (
+                <option value="">Error loading regions</option>
+              ) : regions.length === 0 ? (
+                <option value="">No regions available</option>
+              ) : (
+                regions.map((r: Region) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.country})
+                  </option>
+                ))
+              )}
+            </select>
+            {selectedRegionData && (
+              <span style={{ fontSize: '13px', color: '#666' }}>
+                {selectedRegionData.latitude}, {selectedRegionData.longitude}
+              </span>
+            )}
+          </div>
+          <div style={styles.configRow}>
+            <span style={styles.configLabel}>Historical Days:</span>
+            <input
+              type="number"
+              value={historicalDays}
+              onChange={(e) => setHistoricalDays(parseInt(e.target.value) || 30)}
+              min="7"
+              max="365"
+              style={styles.configInput}
+            />
+          </div>
+          <div style={styles.configRow}>
+            <span style={styles.configLabel}>Forecast Horizon:</span>
+            <input
+              type="number"
+              value={forecastHorizon}
+              onChange={(e) => setForecastHorizon(parseInt(e.target.value) || 7)}
+              min="1"
+              max="30"
+              style={styles.configInput}
+            />
+            <span style={{ fontSize: '13px', color: '#666' }}>days</span>
+          </div>
+          <div style={styles.configRow}>
+            <button
+              onClick={handleGenerateForecast}
+              style={styles.generateButton}
+              disabled={!selectedRegion || regionsLoading}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#0051cc';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#0070f3';
+                }
+              }}
+            >
+              Generate Forecast
+            </button>
+          </div>
+        </section>
+
         {/* Behavior Forecast Section */}
         <section id="behavior-forecast" className="dashboard-section" style={styles.dashboardSection}>
           <h2 style={styles.sectionTitle}>Behavior Forecast</h2>
