@@ -100,7 +100,7 @@ NEXT_PUBLIC_GRAFANA_URL=http://localhost:3001
 
 **Prometheus:** Scrapes backend on Docker internal network
 ```yaml
-# infrastructure/prometheus/prometheus.yml
+# infra/prometheus/prometheus.yml
 targets: ['backend:8000']
 ```
 
@@ -641,7 +641,7 @@ curl https://grafana.yourdomain.com/api/health
 - Alert on downtime > 2 minutes
 
 **Grafana Alerts:**
-- Already configured in `infrastructure/grafana/provisioning/alerting/rules.yml`
+- Already configured in `infra/grafana/provisioning/alerting/rules.yml`
 - Configure notification channels in production:
   - Slack webhook
   - PagerDuty
@@ -801,7 +801,7 @@ docker compose up -d
 
 **Resolution:**
 - Verify backend is accessible from Prometheus (network connectivity)
-- Check `infrastructure/prometheus/prometheus.yml` target configuration
+- Check `infra/prometheus/prometheus.yml` target configuration
 - Restart Prometheus: `docker compose restart prometheus`
 
 ### Grafana Dashboards Not Loading
@@ -817,7 +817,7 @@ docker compose logs grafana | grep -i provision
 1. Check volume mounts in `docker-compose.yml`
 2. Verify dashboard files exist:
    ```bash
-   ls infrastructure/grafana/dashboards/*.json
+   ls infra/grafana/dashboards/*.json
    ```
 3. Restart Grafana:
    ```bash
@@ -912,7 +912,7 @@ After deploying to staging or production:
   - `INVARIANTS.md` - System invariants and gates
 - **Infrastructure:**
   - `docker-compose.yml` - Local/staging Docker configuration
-  - `infrastructure/` - Prometheus, Grafana, Terraform configs
+  - `infra/` - Prometheus, Grafana, Terraform configs
 
 ---
 

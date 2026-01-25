@@ -7,10 +7,11 @@ This document clarifies which behavior indices are global/national (expected to 
 These indices use global or national-level data sources and **are expected to be identical** across regions:
 
 ### economic_stress
-- **Source**: VIX/SPY (global market data via yfinance)
-- **Scope**: Global
-- **Expected Behavior**: Same value for all regions
-- **Reason**: Market volatility is a global phenomenon
+- **Source**: VIX/SPY (global market data via yfinance) + FRED indicators (national) + **EIA fuel prices (state-level)** ✅
+- **Scope**: Mixed (global/national components + regional fuel_stress)
+- **Expected Behavior**: **MUST vary** across regions (fuel_stress component is state-specific)
+- **Reason**: While market volatility is global, fuel prices vary by state (20-40% deviation from national average)
+- **Children**: `fuel_stress` (REGIONAL, MVP1) ✅
 
 ### mobility_activity
 - **Source**: TSA passenger throughput (national US data)
@@ -63,6 +64,20 @@ These indices use region-specific data sources and **MUST differ** across region
 - **Scope**: Region-specific
 - **Expected Behavior**: Should vary across regions
 - **Reason**: Social dynamics differ by region
+
+## Planned New Indices (Enterprise Expansion)
+
+The following are **planned** per `docs/ENTERPRISE_DATASET_EXPANSION_PLAN.md`. Once implemented, they will be **REGIONAL** and must vary:
+
+| Index | Source | Sub-Index Parent |
+|-------|--------|------------------|
+| `fuel_stress` | EIA gasoline by state | economic_stress | ✅ **Implemented (MVP1)** |
+| `drought_stress` | U.S. Drought Monitor (state) | environmental_stress |
+| `eviction_stress` / `housing_cost_burden` | Eviction Lab (state/city) | economic_stress |
+| `overdose_stress` / `substance_use_stress` | CDC WONDER (state) | public_health_stress |
+| `storm_event_*` (e.g. `heatwave_stress`, `flood_risk_stress`) | NOAA Storm Events (state) | environmental_stress |
+
+All must use geo in fetch and cache keys, emit region-labeled metrics, and pass variance_probe.
 
 ## Behavior Index
 

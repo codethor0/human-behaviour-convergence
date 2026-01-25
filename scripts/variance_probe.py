@@ -84,6 +84,11 @@ def classify_source(source_name: str) -> str:
         "crime_stress",  # Region-specific
         "misinformation_stress",  # Region-specific
         "social_cohesion_stress",  # Region-specific
+        "fuel_stress",  # EIA gasoline prices by state (MVP1)
+        "drought_stress",  # U.S. Drought Monitor by state (MVP2)
+        "heatwave_stress",  # NOAA Storm Events by state (MVP3)
+        "flood_risk_stress",  # NOAA Storm Events by state (MVP3)
+        "storm_severity_stress",  # NOAA Storm Events by state (MVP3)
     ]
     
     # Sources that may be global or regional depending on configuration
@@ -149,6 +154,11 @@ def main():
         "crime_stress",
         "misinformation_stress",
         "social_cohesion_stress",
+        "fuel_stress",  # MVP1: EIA fuel prices by state
+        "drought_stress",  # MVP2: U.S. Drought Monitor by state
+        "heatwave_stress",  # MVP3: NOAA Storm Events by state
+        "flood_risk_stress",  # MVP3: NOAA Storm Events by state
+        "storm_severity_stress",  # MVP3: NOAA Storm Events by state
     ]
 
     results = []

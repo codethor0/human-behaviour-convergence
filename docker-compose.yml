@@ -86,7 +86,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -108,12 +108,15 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://localhost:3001
       - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./infrastructure/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./infrastructure/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./infrastructure/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting
-      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./infra/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./infra/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infra/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
     networks:

@@ -24,6 +24,9 @@ EIA_SERIES = {
     "natural_gas_price": "NG.N3010US3.M",  # Natural Gas Price (Henry Hub)
     "electricity_demand": "EBA.US48-ALL.D.H",  # U.S. 48 States Electricity Demand
     "crude_oil_price": "PET.RWTC.D",  # Cushing, OK WTI Spot Price
+    "electricity_consumption": "ELEC.CONS_TOT.COW-US-99.M",  # Total Electricity Consumption
+    "renewable_energy": "RE.TOT.COWUS-99.M",  # Total Renewable Energy Generation
+    "total_energy_consumption": "TOTAL.ETCEUS.M",  # Total Energy Consumption
 }
 
 

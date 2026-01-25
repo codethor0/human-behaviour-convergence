@@ -397,11 +397,11 @@ Dashboards auto-refresh:
 ### Dashboard Not Listed
 
 **Causes:**
-1. Dashboard JSON not in `infrastructure/grafana/dashboards/`
+1. Dashboard JSON not in `infra/grafana/dashboards/`
 2. Grafana provisioning not loaded
 
 **Fixes:**
-1. Check file exists: `ls infrastructure/grafana/dashboards/*.json`
+1. Check file exists: `ls infra/grafana/dashboards/*.json`
 2. Restart Grafana: `docker compose restart grafana`
 3. Check Grafana logs: `docker compose logs grafana | grep provision`
 

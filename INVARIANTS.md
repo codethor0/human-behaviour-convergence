@@ -270,20 +270,20 @@ curl -sS -X POST http://localhost:8100/api/forecast ... | jq '.history | length,
 **Statement:** Grafana dashboards are auto-provisioned from the filesystem and must remain accessible and functional.
 
 **Formal:**
-- Datasource provisioning file exists: `infrastructure/grafana/provisioning/datasources/prometheus.yml`
+- Datasource provisioning file exists: `infra/grafana/provisioning/datasources/prometheus.yml`
   - Points to `http://prometheus:9090`
   - Set as default datasource
   - Type: `prometheus`, Access: `proxy`
-- Dashboard provisioning file exists: `infrastructure/grafana/provisioning/dashboards/dashboards.yml`
+- Dashboard provisioning file exists: `infra/grafana/provisioning/dashboards/dashboards.yml`
   - Provider name: "Behavior Forecast Dashboards"
   - Path: `/var/lib/grafana/dashboards`
 - Docker volume mounts in `docker-compose.yml`:
-  - `./infrastructure/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources`
-  - `./infrastructure/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards`
-  - `./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards`
+  - `./infra/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources`
+  - `./infra/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards`
+  - `./infra/grafana/dashboards:/var/lib/grafana/dashboards`
 - Dashboard JSON files exist:
-  - `infrastructure/grafana/dashboards/global_behavior_index.json` (UID: `behavior-index-global`)
-  - `infrastructure/grafana/dashboards/subindex_deep_dive.json` (UID: `subindex-deep-dive`)
+  - `infra/grafana/dashboards/global_behavior_index.json` (UID: `behavior-index-global`)
+  - `infra/grafana/dashboards/subindex_deep_dive.json` (UID: `subindex-deep-dive`)
 
 **Proof:** By construction in Docker Compose configuration and file presence
 
@@ -354,7 +354,7 @@ curl -sS http://localhost:3001/api/health | jq '.database'
 ```
 
 **Locked Configuration:**
-- Grafana Provisioning: `infrastructure/grafana/` directory structure (I14)
+- Grafana Provisioning: `infra/grafana/` directory structure (I14)
 - Frontend Embedding: Iframe pattern in all 3 pages (I15)
 - Metrics Export: Backend exposes Prometheus-format metrics at `/metrics`
 
@@ -383,7 +383,7 @@ curl -sS http://localhost:3001/api/health | jq '.database'
 **Implementation:**
 - Pure PromQL-based classification using existing metrics
 - No new backend metrics required
-- Dashboard: `infrastructure/grafana/dashboards/risk_regimes.json` (UID: `risk-regimes`)
+- Dashboard: `infra/grafana/dashboards/risk_regimes.json` (UID: `risk-regimes`)
 
 **PromQL Logic:**
 ```promql
@@ -441,7 +441,7 @@ behavior_index < 0.4 and stddev_over_time(behavior_index[7d]) < 0.05
      - Recommended action checklist
 
 **Alert Configuration:**
-- Location: `infrastructure/grafana/provisioning/alerting/rules.yml`
+- Location: `infra/grafana/provisioning/alerting/rules.yml`
 - Notification: Rules defined without specific notification channels (policy layer only)
 - Labels: Include `severity`, `component`, and `region` for filtering
 

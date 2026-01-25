@@ -29,14 +29,14 @@ All services run via `docker compose` and are managed through `ops/dev_watch_doc
 
 4. **Grafana** - `http://localhost:3001`
    - Status: [OK] Running and healthy
-   - Dashboards: Auto-provisioned from `infrastructure/grafana/dashboards/`
+   - Dashboards: Auto-provisioned from `infra/grafana/dashboards/`
      - Global Behavior Index (UID: `behavior-index-global`)
      - Sub-Index Deep Dive (UID: `subindex-deep-dive`)
      - Regional Comparison (UID: `regional-comparison`) - Multi-region analytics
      - Historical Trends & Volatility (UID: `historical-trends`) - Trend analysis & volatility tracking
      - Behavioral Risk Regimes (UID: `risk-regimes`) - Risk classification & regime monitoring
    - Datasource: Prometheus at `http://prometheus:9090`
-   - Alerts: Auto-provisioned from `infrastructure/grafana/provisioning/alerting/`
+   - Alerts: Auto-provisioned from `infra/grafana/provisioning/alerting/`
 
 ### Available Backend Endpoints
 
@@ -97,7 +97,7 @@ All frontend pages embed Grafana dashboards for analytics:
 - **2026-01-19:** **Phase 2 Complete (ChangeSets 10-12).** Verification scripts hardened (validate Grafana embedding), Grafana alert rules for behavioral thresholds, CI/CD pipeline via GitHub Actions. Both gates automated and GREEN.
 - **2026-01-19:** **Grafana-First Migration Complete (ChangeSets 7-8).** All three frontend pages (`/forecast`, `/playground`, `/live`) now embed Grafana dashboards. Heavy React charting logic removed. Analytics now powered by Prometheus metrics + Grafana visualizations. Both GATE A and GATE G verified GREEN.
 - **2026-01-19:** **Metrics Pipeline Operational (ChangeSet 6).** Backend exports `behavior_index`, `parent_subindex_value` (9 series), `child_subindex_value` (48 series) to Prometheus. Grafana dashboards show live data. `ops/verify_gate_grafana.sh` added.
-- **2026-01-19:** **Grafana Provisioning Added (ChangeSet 5).** Dashboards auto-provision from `infrastructure/grafana/dashboards/`. Datasource configured via `infrastructure/grafana/provisioning/`. Docker volumes mounted correctly.
+- **2026-01-19:** **Grafana Provisioning Added (ChangeSet 5).** Dashboards auto-provision from `infra/grafana/dashboards/`. Datasource configured via `infra/grafana/provisioning/`. Docker volumes mounted correctly.
 
 ## Current Capabilities
 
@@ -146,7 +146,7 @@ The system classifies regions into four operational risk categories:
 - **Behavior Index Spike Alert**: Triggers when behavior index changes by >0.3 over 7 days
   - Annotations include trend analysis dashboard link
   - Duration: 5 minutes sustained
-- **Configuration**: Alert rules provisioned via `infrastructure/grafana/provisioning/alerting/rules.yml`
+- **Configuration**: Alert rules provisioned via `infra/grafana/provisioning/alerting/rules.yml`
 - **Policy**: Thresholds defined as warning severity; no notification channels configured in version control
 - **Monitoring**: Alerts visible in Grafana UI at `http://localhost:3001/alerting/list`
 

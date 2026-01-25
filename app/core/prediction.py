@@ -118,6 +118,13 @@ class BehavioralForecaster:
             social_cohesion_fetcher or SocialCohesionStressFetcher()
         )
         self.harmonizer = harmonizer or DataHarmonizer()
+        # EIA Fuel Prices fetcher (state-level gasoline prices)
+        from app.services.ingestion.eia_fuel_prices import EIAFuelPricesFetcher
+        from app.services.ingestion.drought_monitor import DroughtMonitorFetcher
+        from app.services.ingestion.noaa_storm_events import NOAAStormEventsFetcher
+        self.eia_fuel_fetcher = EIAFuelPricesFetcher()
+        self.drought_fetcher = DroughtMonitorFetcher()
+        self.storm_fetcher = NOAAStormEventsFetcher()
         # Intelligence Layer components
         from app.services.analytics.correlation import CorrelationEngine
         from app.services.convergence.engine import ConvergenceEngine
@@ -219,6 +226,7 @@ class BehavioralForecaster:
         region_name: str,
         days_back: int = 30,
         forecast_horizon: int = 7,
+        region_id: Optional[str] = None,
     ) -> Dict:
         """
         Generate behavioral forecast for a given region.
@@ -229,6 +237,7 @@ class BehavioralForecaster:
             region_name: Human-readable region name
             days_back: Number of historical days to use (default: 30)
             forecast_horizon: Number of days to forecast ahead (default: 7)
+            region_id: Optional region identifier (e.g., "us_il", "city_nyc")
 
         Returns:
             Dictionary containing:
@@ -349,16 +358,33 @@ class BehavioralForecaster:
             # Always store search trends status in metadata (even if failed)
 
             # Fetch public health data
-            # Derive region code from coordinates if possible (placeholder)
+            # Use normalized region_name as region_code to ensure region-specific data
+            # This ensures different regions get different health data (especially in CI mode)
+            # Normalize region_name to a consistent format for region_code
+            region_code_for_health = (
+                region_name.lower().replace(" ", "_").replace(",", "").replace(".", "")
+                if region_name
+                else f"lat{latitude:.2f}_lon{longitude:.2f}"
+            )
             health_data = self.health_fetcher.fetch_health_risk_index(
-                region_code=None, days_back=days_back
+                region_code=region_code_for_health, days_back=days_back
             )
             if not health_data.empty:
                 sources.append("public health API")
 
             # Fetch mobility data (TSA passenger throughput - no key required)
+            # Pass region_name as region_code for cache key differentiation
+            # (TSA is national-level, but cache should be region-aware for future expansion)
+            region_code_for_mobility = (
+                region_name.lower().replace(" ", "_").replace(",", "").replace(".", "")
+                if region_name
+                else f"lat{latitude:.2f}_lon{longitude:.2f}"
+            )
             mobility_data = self.mobility_fetcher.fetch_mobility_index(
-                latitude=latitude, longitude=longitude, days_back=days_back
+                latitude=latitude,
+                longitude=longitude,
+                region_code=region_code_for_mobility,
+                days_back=days_back,
             )
             if not mobility_data.empty:
                 sources.append("TSA Passenger Throughput (Mobility)")
@@ -431,6 +457,101 @@ class BehavioralForecaster:
             )
             if not usgs_earthquakes.empty:
                 sources.append("USGS (Earthquakes)")
+
+            # Fetch EIA fuel prices by state (economic micro-signal)
+            # Extract state code from region_name or region_id for US states only
+            state_code = None
+            is_us_state = self._is_us_state(region_name)
+            
+            # Try to extract state from region_id first (e.g., "us_il" -> "IL")
+            if region_id and "_" in region_id:
+                parts = region_id.split("_")
+                if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
+                    state_code = parts[1].upper()
+                    is_us_state = True  # If region_id is us_XX, it's a US state
+            
+            # Fallback to extracting from region_name
+            if not state_code and is_us_state and region_name:
+                # Use the same state name mapping as _is_us_state
+                # Try to extract 2-letter code from region_name
+                # Handle formats: "Illinois", "IL", "us_il"
+                state_name_to_code = {
+                    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+                    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+                    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+                    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+                    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+                    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+                    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+                    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+                    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+                    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+                    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+                    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+                    "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
+                }
+                # Check if region_name is a full state name
+                if region_name in state_name_to_code:
+                    state_code = state_name_to_code[region_name]
+                # Check if it's already a 2-letter code
+                elif len(region_name) == 2 and region_name.upper() in state_name_to_code.values():
+                    state_code = region_name.upper()
+                # Try to extract from strings like "us_il"
+                elif "_" in region_name:
+                    parts = region_name.split("_")
+                    if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
+                        state_code = parts[1].upper()
+
+            fuel_data = pd.DataFrame()
+            fuel_status = None
+            if state_code:
+                try:
+                    fuel_data, fuel_status = self.eia_fuel_fetcher.fetch_fuel_stress_index(
+                        state=state_code,
+                        days_back=days_back,
+                    )
+                    if fuel_status and fuel_status.ok and not fuel_data.empty:
+                        sources.append("EIA (Fuel Prices by State)")
+                except Exception as e:
+                    logger.debug("Failed to fetch EIA fuel prices", state=state_code, error=str(e))
+                    fuel_data = pd.DataFrame()
+            else:
+                # Not a US state or couldn't extract state code - skip fuel prices
+                logger.debug("Skipping EIA fuel prices (not US state or state code not extractable)", region_name=region_name)
+
+            # Fetch drought monitor data (state-level)
+            drought_data = pd.DataFrame()
+            drought_status = None
+            if state_code:
+                try:
+                    drought_data, drought_status = self.drought_fetcher.fetch_drought_stress_index(
+                        state=state_code,
+                        days_back=days_back,
+                    )
+                    if drought_status and drought_status.ok and not drought_data.empty:
+                        sources.append("U.S. Drought Monitor")
+                except Exception as e:
+                    logger.debug("Failed to fetch drought monitor data", state=state_code, error=str(e))
+                    drought_data = pd.DataFrame()
+            else:
+                logger.debug("Skipping drought monitor (not US state or state code not extractable)", region_name=region_name)
+
+            # Fetch NOAA storm events data (state-level)
+            storm_data = pd.DataFrame()
+            storm_status = None
+            if state_code:
+                try:
+                    storm_data, storm_status = self.storm_fetcher.fetch_storm_stress_indices(
+                        state=state_code,
+                        days_back=days_back,
+                    )
+                    if storm_status and storm_status.ok and not storm_data.empty:
+                        sources.append("NOAA Storm Events")
+                except Exception as e:
+                    logger.debug("Failed to fetch NOAA storm events", state=state_code, error=str(e))
+                    storm_data = pd.DataFrame()
+            else:
+                logger.debug("Skipping NOAA storm events (not US state or state code not extractable)", region_name=region_name)
 
             # Fetch OpenAQ air quality data
             air_quality_data = pd.DataFrame()
@@ -597,6 +718,7 @@ class BehavioralForecaster:
                 and crime_data.empty
                 and misinformation_data.empty
                 and social_cohesion_data.empty
+                and fuel_data.empty
             ):
                 logger.warning("No data available for forecast")
                 return {
@@ -636,6 +758,9 @@ class BehavioralForecaster:
                 crime_data=crime_data,
                 misinformation_data=misinformation_data,
                 social_cohesion_data=social_cohesion_data,
+                fuel_data=fuel_data if not fuel_data.empty else None,
+                drought_data=drought_data if not drought_data.empty else None,
+                storm_data=storm_data if not storm_data.empty else None,
             )
 
             if harmonized.empty or "behavior_index" not in harmonized.columns:

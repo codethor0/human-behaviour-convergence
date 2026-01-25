@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const FRONTEND_BASE = 'http://localhost:3100';
+const FRONTEND_BASE = process.env.FRONTEND_BASE || 'http://localhost:3100';
 const EVIDENCE_DIR = process.env.EVIDENCE_DIR || 'test-results';
 
 // Expected section headings on forecast page
@@ -132,6 +132,9 @@ test.describe('Agent 1: Visual Presence Verification', () => {
     expect(results.sectionsFound).toBe(EXPECTED_SECTIONS.length);
     expect(iframeCount).toBeGreaterThanOrEqual(4);
     expect(results.allIframes200).toBe(true);
-    expect(consoleErrors.filter(e => e.includes('401') || e.includes('403') || e.includes('X-Frame-Options')).length).toBe(0);
+    const criticalErrors = consoleErrors.filter(
+      (e) => e.includes('401') || e.includes('403') || e.includes('X-Frame-Options')
+    );
+    expect(criticalErrors.length).toBe(0);
   });
 });

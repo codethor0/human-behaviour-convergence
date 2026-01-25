@@ -180,6 +180,125 @@ def get_ci_energy_data(series_id: str) -> pd.DataFrame:
     )
 
 
+def get_ci_fuel_prices_data(state_code: str) -> pd.DataFrame:
+    """Get synthetic EIA fuel prices data for CI mode (state-specific)."""
+    import numpy as np
+    # Use state_code hash as seed for deterministic but varied data per state
+    seed = abs(hash(f"eia_fuel_{state_code}")) % 10000
+    np.random.seed(seed)
+
+    end_date = datetime.now()
+    dates = [end_date - timedelta(days=i) for i in range(90, 0, -1)]
+
+    # Synthetic prices: base varies by state (simulating regional variance)
+    base_price = 3.0 + (hash(state_code) % 100) / 100.0  # $3.00-$4.00 range
+    prices = [base_price + np.random.normal(0, 0.1) for _ in dates]
+
+    # Compute national average (simulated)
+    national_avg = 3.50
+
+    # Compute stress index: deviation from national average, normalized
+    stress_indices = []
+    for price in prices:
+        deviation = (price - national_avg) / national_avg  # -0.2 to +0.2 range
+        # Normalize to 0-1: sigmoid-like transformation
+        stress = 0.5 + (deviation * 2.5)  # Scale deviation
+        stress = max(0.0, min(1.0, stress))  # Clip to [0, 1]
+        stress_indices.append(stress)
+
+    return pd.DataFrame({
+        "timestamp": dates,
+        "fuel_price": prices,
+        "fuel_stress_index": stress_indices,
+    })
+
+
+def get_ci_drought_monitor_data(state_code: str, days_back: int = 90) -> pd.DataFrame:
+    """Get synthetic drought monitor data for CI mode (state-specific)."""
+    import numpy as np
+    # Use state_code hash as seed for deterministic but varied data per state
+    seed = abs(hash(f"drought_{state_code}")) % 10000
+    np.random.seed(seed)
+
+    end_date = datetime.now()
+    dates = [end_date - timedelta(days=i) for i in range(days_back, 0, -1)]
+
+    # Synthetic DSCI: base varies by state (simulating regional variance)
+    # CA typically high (300-450), FL typically low (0-150), IL moderate (50-200)
+    state_dsci_baselines = {
+        "CA": 350, "TX": 150, "FL": 50, "AZ": 300, "NM": 250,
+        "NV": 280, "UT": 200, "CO": 180, "WY": 150, "MT": 120,
+        "IL": 80, "IA": 60, "NY": 40, "MA": 30, "WA": 100,
+    }
+    baseline_dsci = state_dsci_baselines.get(state_code, 100)
+
+    # Generate DSCI values with variation
+    dsci_values = []
+    for i, date in enumerate(dates):
+        # Add weekly variation (drought changes slowly)
+        week_num = i // 7
+        variation = np.random.normal(0, 30)  # Moderate variation
+        dsci = baseline_dsci + variation
+        dsci = max(0, min(500, dsci))  # Clip to valid DSCI range
+        dsci_values.append(dsci)
+
+    # Normalize DSCI (0-500) to drought_stress_index (0-1)
+    stress_indices = [dsci / 500.0 for dsci in dsci_values]
+
+    return pd.DataFrame({
+        "timestamp": dates,
+        "dsci": dsci_values,
+        "drought_stress_index": stress_indices,
+    })
+
+
+def get_ci_storm_events_data(state_code: str, days_back: int = 90) -> pd.DataFrame:
+    """Get synthetic NOAA storm events data for CI mode (state-specific)."""
+    import numpy as np
+    # Use state_code hash as seed for deterministic but varied data per state
+    seed = abs(hash(f"noaa_storms_{state_code}")) % 10000
+    np.random.seed(seed)
+
+    end_date = datetime.now()
+    dates = [end_date - timedelta(days=i) for i in range(days_back, 0, -1)]
+
+    # State-specific patterns (FL: hurricanes/floods, AZ: heat waves, TX: mixed)
+    state_patterns = {
+        "FL": {"storm_severity": 0.6, "heatwave": 0.4, "flood": 0.7},
+        "AZ": {"storm_severity": 0.2, "heatwave": 0.9, "flood": 0.1},
+        "TX": {"storm_severity": 0.5, "heatwave": 0.7, "flood": 0.3},
+        "CA": {"storm_severity": 0.3, "heatwave": 0.5, "flood": 0.4},
+        "IL": {"storm_severity": 0.4, "heatwave": 0.3, "flood": 0.5},
+        "NY": {"storm_severity": 0.3, "heatwave": 0.2, "flood": 0.4},
+    }
+    pattern = state_patterns.get(state_code, {"storm_severity": 0.3, "heatwave": 0.3, "flood": 0.3})
+
+    # Generate values with variation
+    storm_severity_values = []
+    heatwave_values = []
+    flood_values = []
+
+    for i, date in enumerate(dates):
+        # Monthly variation
+        month_variation = np.random.normal(0, 0.1)
+
+        base_severity = pattern["storm_severity"] + month_variation
+        storm_severity_values.append(max(0.0, min(1.0, base_severity)))
+
+        base_heatwave = pattern["heatwave"] + month_variation
+        heatwave_values.append(max(0.0, min(1.0, base_heatwave)))
+
+        base_flood = pattern["flood"] + month_variation
+        flood_values.append(max(0.0, min(1.0, base_flood)))
+
+    return pd.DataFrame({
+        "timestamp": dates,
+        "storm_severity_stress": storm_severity_values,
+        "heatwave_stress": heatwave_values,
+        "flood_risk_stress": flood_values,
+    })
+
+
 def get_ci_data_source_status() -> List[Dict[str, Any]]:
     """
     Get synthetic data source status for CI mode.

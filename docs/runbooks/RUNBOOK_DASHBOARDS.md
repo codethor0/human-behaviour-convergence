@@ -219,7 +219,7 @@ Look for:
 
 **If target shows "connection refused":**
 - Backend may be on wrong port
-- Check `infrastructure/prometheus/prometheus.yml`:
+- Check `infra/prometheus/prometheus.yml`:
   ```yaml
   scrape_configs:
     - job_name: 'behavior-forecasting'
@@ -365,7 +365,7 @@ Look for:
 **If system has been running > 7 days but panels still empty:**
 1. Check Prometheus retention:
    - Default is 15 days
-   - Check `infrastructure/prometheus/prometheus.yml` for `--storage.tsdb.retention.time`
+   - Check `infra/prometheus/prometheus.yml` for `--storage.tsdb.retention.time`
    - If retention is too short, increase it
 
 2. Check if metrics have been exported consistently:

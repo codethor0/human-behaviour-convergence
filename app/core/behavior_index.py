@@ -54,6 +54,8 @@ CHILD_INDEX_SPEC = {
         "energy_price_stress",  # [BATCH_6] from inflation volatility (energy price proxy)
         # New (Batch 7: from existing data)
         "household_debt_stress",  # [BATCH_7] from stress_index + financial_volatility_stress
+        # MVP1: EIA Fuel Prices by State (Enterprise Dataset Expansion)
+        "fuel_stress",  # [MVP1] EIA state-level gasoline prices (fuel_stress_index column)
     ],
     "environmental_stress": [
         # Existing
@@ -370,11 +372,15 @@ class BehaviorIndexComputer:
         fred_cpi_inflation_stress = df.get(
             "fred_cpi_inflation_stress", pd.Series([None] * len(df))
         )
+        # EIA fuel prices (state-level gasoline stress)
+        # Note: Column is named "fuel_stress" in harmonized DataFrame (child index name)
+        fuel_stress = df.get("fuel_stress", pd.Series([None] * len(df)))
 
         # Combine indicators with adaptive weights based on availability
         # Target weights: market (40%), consumer sentiment (30%),
         # unemployment (20%), jobless claims (10%)
         # If FRED data not available, use only market stress (weight = 1.0)
+        # Fuel stress (15% when available) - reduces other weights proportionally
         economic_components = [market_stress]
         weights = []
 
@@ -382,6 +388,7 @@ class BehaviorIndexComputer:
         has_consumer = fred_consumer_sentiment.notna().any()
         has_unemployment = fred_unemployment.notna().any()
         has_jobless = fred_jobless_claims.notna().any()
+        has_fuel = fuel_stress.notna().any()
 
         # Build component list and target weights
         if has_consumer:
@@ -390,35 +397,59 @@ class BehaviorIndexComputer:
             economic_components.append(fred_unemployment.fillna(0.5))
         if has_jobless:
             economic_components.append(fred_jobless_claims.fillna(0.5))
+        if has_fuel:
+            economic_components.append(fuel_stress.fillna(0.5))
 
         # Set weights based on available components
+        # Fuel stress gets 15% weight when available; other weights scale proportionally
+        fuel_weight = 0.15 if has_fuel else 0.0
+        base_weight_sum = 1.0 - fuel_weight  # Remaining weight for other components
+
         if len(economic_components) == 1:
             # Only market stress
             weights = [1.0]
         elif len(economic_components) == 2:
-            # Market + one FRED indicator
-            if has_consumer:
+            # Market + one other indicator
+            if has_fuel:
+                weights = [0.85, 0.15]  # Market 85%, Fuel 15%
+            elif has_consumer:
                 weights = [0.6, 0.4]  # Market 60%, Consumer 40%
             elif has_unemployment:
                 weights = [0.7, 0.3]  # Market 70%, Unemployment 30%
             else:  # jobless claims
                 weights = [0.8, 0.2]  # Market 80%, Jobless 20%
         elif len(economic_components) == 3:
-            # Market + two FRED indicators
-            if has_consumer and has_unemployment:
+            # Market + two other indicators
+            if has_fuel and has_consumer:
+                weights = [0.34, 0.51, 0.15]  # Market 34%, Consumer 51%, Fuel 15%
+            elif has_fuel and has_unemployment:
+                weights = [0.40, 0.45, 0.15]  # Market 40%, Unemployment 45%, Fuel 15%
+            elif has_fuel and has_jobless:
+                weights = [0.68, 0.17, 0.15]  # Market 68%, Jobless 17%, Fuel 15%
+            elif has_consumer and has_unemployment:
                 weights = [0.4, 0.4, 0.2]  # Market 40%, Consumer 40%, Unemployment 20%
             elif has_consumer and has_jobless:
                 weights = [0.5, 0.4, 0.1]  # Market 50%, Consumer 40%, Jobless 10%
             else:  # unemployment + jobless
                 weights = [0.6, 0.3, 0.1]  # Market 60%, Unemployment 30%, Jobless 10%
+        elif len(economic_components) == 4:
+            # Market + three other indicators
+            if has_fuel:
+                # Market, Consumer, Unemployment, Fuel
+                if has_consumer and has_unemployment:
+                    weights = [0.34, 0.26, 0.25, 0.15]  # Market 34%, Consumer 26%, Unemployment 25%, Fuel 15%
+                # Market, Consumer, Jobless, Fuel
+                elif has_consumer and has_jobless:
+                    weights = [0.43, 0.34, 0.08, 0.15]  # Market 43%, Consumer 34%, Jobless 8%, Fuel 15%
+                # Market, Unemployment, Jobless, Fuel
+                else:
+                    weights = [0.51, 0.26, 0.08, 0.15]  # Market 51%, Unemployment 26%, Jobless 8%, Fuel 15%
+            else:
+                # All four FRED indicators (no fuel)
+                weights = [0.4, 0.3, 0.2, 0.1]  # Market 40%, Consumer 30%, Unemployment 20%, Jobless 10%
         else:
-            # All four indicators available
-            weights = [
-                0.4,
-                0.3,
-                0.2,
-                0.1,
-            ]  # Market 40%, Consumer 30%, Unemployment 20%, Jobless 10%
+            # All five indicators available (Market, Consumer, Unemployment, Jobless, Fuel)
+            weights = [0.34, 0.26, 0.17, 0.08, 0.15]  # Market 34%, Consumer 26%, Unemployment 17%, Jobless 8%, Fuel 15%
 
         # Normalize weights to sum to 1.0
         total_weight = sum(weights)
@@ -464,6 +495,9 @@ class BehaviorIndexComputer:
         if has_jobless:
             component_names.append("jobless_claims")
             component_sources.append("FRED")
+        if has_fuel:
+            component_names.append("fuel_stress")
+            component_sources.append("EIA")
 
         # Store metadata as attributes on the DataFrame for later extraction
         df.attrs["_economic_component_names"] = component_names
@@ -471,6 +505,7 @@ class BehaviorIndexComputer:
         df.attrs["_economic_component_sources"] = component_sources
 
         # ENVIRONMENTAL_STRESS: Combine weather discomfort with earthquake intensity
+        # and new regional environmental signals (drought, storms, heatwaves, floods)
         # Weather discomfort_score is normalized 0.0-1.0 (higher = more discomfort)
         discomfort_score = df.get(
             "discomfort_score", pd.Series([0.5] * len(df))
@@ -478,26 +513,76 @@ class BehaviorIndexComputer:
         earthquake_intensity = df.get(
             "usgs_earthquake_intensity", pd.Series([None] * len(df))
         )
+        # New regional environmental signals (MVP2, MVP3)
+        drought_stress = df.get("drought_stress", pd.Series([None] * len(df)))
+        storm_severity_stress = df.get("storm_severity_stress", pd.Series([None] * len(df)))
+        heatwave_stress = df.get("heatwave_stress", pd.Series([None] * len(df)))
+        flood_risk_stress = df.get("flood_risk_stress", pd.Series([None] * len(df)))
 
-        # Combine environmental signals
+        # Combine environmental signals with adaptive weights
         has_earthquake = earthquake_intensity.notna().any()
+        has_drought = drought_stress.notna().any()
+        has_storm = storm_severity_stress.notna().any()
+        has_heatwave = heatwave_stress.notna().any()
+        has_flood = flood_risk_stress.notna().any()
+
+        # Build component list and weights
+        # Base: weather discomfort (always present)
+        # Optional: earthquakes, drought, storms, heatwaves, floods
+        components = [discomfort_score]
+        component_names = ["weather_discomfort"]
+        component_sources = ["Open-Meteo"]
+        weights = [0.4]  # Base weight for weather
+
         if has_earthquake:
-            # Weight: 70% weather, 30% earthquakes
-            earthquake_filled = earthquake_intensity.fillna(0.0)
-            df["environmental_stress"] = (
-                0.7 * discomfort_score + 0.3 * earthquake_filled
+            components.append(earthquake_intensity.fillna(0.0))
+            component_names.append("earthquake_intensity")
+            component_sources.append("USGS")
+            weights.append(0.15)
+
+        if has_drought:
+            components.append(drought_stress.fillna(0.0))
+            component_names.append("drought_stress")
+            component_sources.append("DroughtMonitor")
+            weights.append(0.20)
+
+        if has_storm:
+            components.append(storm_severity_stress.fillna(0.0))
+            component_names.append("storm_severity_stress")
+            component_sources.append("NOAA_Storms")
+            weights.append(0.15)
+
+        if has_heatwave:
+            components.append(heatwave_stress.fillna(0.0))
+            component_names.append("heatwave_stress")
+            component_sources.append("NOAA_Storms")
+            weights.append(0.10)
+
+        if has_flood:
+            components.append(flood_risk_stress.fillna(0.0))
+            component_names.append("flood_risk_stress")
+            component_sources.append("NOAA_Storms")
+            weights.append(0.10)
+
+        # Normalize weights to sum to 1.0
+        total_weight = sum(weights)
+        if total_weight > 0:
+            weights = [w / total_weight for w in weights]
+        else:
+            weights = [1.0 / len(components)] * len(components) if len(components) > 0 else [1.0]
+
+        # Compute weighted average
+        if len(components) == len(weights) and len(components) > 0:
+            df["environmental_stress"] = sum(
+                comp * weight for comp, weight in zip(components, weights)
             ).clip(0.0, 1.0)
-            df.attrs["_environmental_component_names"] = [
-                "weather_discomfort",
-                "earthquake_intensity",
-            ]
-            df.attrs["_environmental_component_weights"] = [0.7, 0.3]
-            df.attrs["_environmental_component_sources"] = ["Open-Meteo", "USGS"]
         else:
             df["environmental_stress"] = discomfort_score.clip(0.0, 1.0)
-            df.attrs["_environmental_component_names"] = ["weather_discomfort"]
-            df.attrs["_environmental_component_weights"] = [1.0]
-            df.attrs["_environmental_component_sources"] = ["Open-Meteo"]
+
+        # Store component metadata
+        df.attrs["_environmental_component_names"] = component_names
+        df.attrs["_environmental_component_weights"] = weights
+        df.attrs["_environmental_component_sources"] = component_sources
 
         # MOBILITY_ACTIVITY: Direct mapping from mobility_index
         # mobility_index is already normalized 0.0-1.0 (higher = more activity)
@@ -2004,6 +2089,8 @@ class BehaviorIndexComputer:
             result["inflation_cost_pressure"] = float(
                 row.get("inflation_cost_pressure", 0.5)
             )
+        if "fuel_stress" in row:
+            result["fuel_stress"] = float(row.get("fuel_stress", 0.5))
         if "financial_volatility_stress" in row:
             result["financial_volatility_stress"] = float(
                 row.get("financial_volatility_stress", 0.5)
@@ -2263,6 +2350,10 @@ class BehaviorIndexComputer:
                 component_values.append(val_float if math.isfinite(val_float) else 0.5)
             if "jobless_claims" in component_names:
                 val = row.get("fred_jobless_claims", 0.5)
+                val_float = float(val) if pd.notna(val) else 0.5
+                component_values.append(val_float if math.isfinite(val_float) else 0.5)
+            if "fuel_stress" in component_names:
+                val = row.get("fuel_stress", 0.5)  # Column name matches child index name
                 val_float = float(val) if pd.notna(val) else 0.5
                 component_values.append(val_float if math.isfinite(val_float) else 0.5)
 

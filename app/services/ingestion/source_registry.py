@@ -435,6 +435,97 @@ def initialize_registry() -> None:
         )
     )
 
+    # EIA Fuel Prices by State (no key required)
+    register_source(
+        SourceDefinition(
+            id="eia_fuel_prices",
+            display_name="EIA Fuel Prices by State",
+            category="economic",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="State-level gasoline prices from EIA (Energy Information Administration). Provides fuel stress index based on price deviation from national average. Public data, no API key required.",
+        )
+    )
+
+    # U.S. Drought Monitor (no key required)
+    register_source(
+        SourceDefinition(
+            id="drought_monitor",
+            display_name="U.S. Drought Monitor",
+            category="environmental",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="State-level drought severity from U.S. Drought Monitor (NDMC). Provides drought stress index based on DSCI (Drought Severity and Coverage Index, 0-500). Weekly updates. Public data, no API key required.",
+        )
+    )
+
+    # NOAA Storm Events (no key required)
+    register_source(
+        SourceDefinition(
+            id="noaa_storm_events",
+            display_name="NOAA Storm Events",
+            category="environmental",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="State-level storm events from NOAA Storm Events Database. Provides storm severity stress, heatwave stress, and flood risk stress indices. Monthly updates. Public data, no API key required.",
+        )
+    )
+
+    # Demographic Data (US Census Bureau - no key required)
+    register_source(
+        SourceDefinition(
+            id="demographic_data",
+            display_name="Demographic Data",
+            category="social",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="Demographic indicators from US Census Bureau API (population density, age distribution, gender distribution). Provides demographic stress index. Annual updates. Public data, no API key required.",
+        )
+    )
+
+    # Consumer Spending (FRED - expands existing economic data)
+    register_source(
+        SourceDefinition(
+            id="consumer_spending",
+            display_name="Consumer Spending",
+            category="economic",
+            requires_key=False,
+            required_env_vars=["FRED_API_KEY"],
+            can_run_without_key=True,
+            description="Consumer spending indicators from FRED API (retail sales, personal consumption, credit utilization). Provides spending stress index. Monthly/weekly updates. Free API key required (available at fred.stlouisfed.org).",
+        )
+    )
+
+    # Employment Sector Data (BLS - no key required)
+    register_source(
+        SourceDefinition(
+            id="employment_sector",
+            display_name="Employment Sector Data",
+            category="economic",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="Employment data by sector from Bureau of Labor Statistics (BLS) API. Provides sector-specific employment stress indices and job creation/destruction trends. Monthly updates. Public data, no API key required.",
+        )
+    )
+
+    # Energy Consumption (EIA - expands existing energy data)
+    register_source(
+        SourceDefinition(
+            id="energy_consumption",
+            display_name="Energy Consumption",
+            category="economic",
+            requires_key=False,
+            required_env_vars=[],
+            can_run_without_key=True,
+            description="Energy consumption patterns from EIA API (electricity usage, fuel consumption, renewable energy adoption). Expands existing EIA energy data. Provides consumption stress indicators. Monthly/weekly updates. Public data, no API key required.",
+        )
+    )
+
 
 # Initialize on module import
 initialize_registry()

@@ -25,7 +25,7 @@ Backend API (FastAPI)
 
 ### Grafana Dashboards
 
-Five operational dashboards provisioned from `infrastructure/grafana/dashboards/`:
+Five operational dashboards provisioned from `infra/grafana/dashboards/`:
 
 1. **Global Behavior Index** (behavior-index-global)
    - Primary behavior index visualization
@@ -67,15 +67,15 @@ Five operational dashboards provisioned from `infrastructure/grafana/dashboards/
 - No X-Frame-Options blocking
 
 **Dashboard Provisioning:**
-- Provisioning config: `infrastructure/grafana/provisioning/dashboards/dashboards.yml`
-- Dashboard files: `infrastructure/grafana/dashboards/*.json`
+- Provisioning config: `infra/grafana/provisioning/dashboards/dashboards.yml`
+- Dashboard files: `infra/grafana/dashboards/*.json`
 - Auto-loaded on Grafana startup
 - Editable in UI (changes not persisted to files)
 
 **Data Source:**
 - Type: Prometheus
 - URL: http://prometheus:9090 (internal Docker network)
-- Provisioning: `infrastructure/grafana/provisioning/datasources/prometheus.yml`
+- Provisioning: `infra/grafana/provisioning/datasources/prometheus.yml`
 
 ### Known Limitations
 
@@ -118,7 +118,7 @@ curl -u "admin:admin" "http://localhost:3001/api/datasources/proxy/1/api/v1/quer
 
 **Dashboards not appearing:**
 - Check Grafana logs: `docker logs human-behaviour-grafana | grep -i provision`
-- Verify dashboard JSON is valid: `jq empty infrastructure/grafana/dashboards/*.json`
+- Verify dashboard JSON is valid: `jq empty infra/grafana/dashboards/*.json`
 - Ensure title field at root level (not nested under "dashboard")
 
 **Iframes show "Refused to display":**
@@ -138,5 +138,5 @@ See `docs/FRONTEND_DEPRECATION_PLAN.md` for planned migration to Grafana-only UI
 
 - `APP_STATUS.md` - Overall application status
 - `docs/ENVIRONMENT_VARIABLES.md` - Configuration reference
-- `infrastructure/grafana/` - Grafana provisioning configs
+- `infra/grafana/` - Grafana provisioning configs
 - `ops/verify_gate_grafana.sh` - Automated Grafana health check

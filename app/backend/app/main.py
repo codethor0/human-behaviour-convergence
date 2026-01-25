@@ -161,11 +161,106 @@ if PROMETHEUS_AVAILABLE:
         ["region"],
     )
 
+    # Warm-up status metrics
+    regions_with_metrics_gauge = Gauge(
+        "hbc_regions_with_metrics_count",
+        "Number of distinct regions that have metrics in Prometheus",
+    )
+
+    priority_regions_target_gauge = Gauge(
+        "hbc_priority_regions_target_count",
+        "Target number of priority regions for warm-up",
+    )
+
+    warmup_progress_ratio_gauge = Gauge(
+        "hbc_warmup_progress_ratio",
+        "Warm-up progress ratio (regions_with_metrics / priority_regions_target)",
+    )
+
     # Data Sources status metric
     data_source_status_gauge = Gauge(
         "data_source_status",
         "Status of data sources (1=active, 0=inactive)",
         ["source"],
+    )
+
+    # Model performance metrics
+    model_mae_gauge = Gauge(
+        "hbc_model_mae",
+        "Mean Absolute Error for forecasting model",
+        ["region", "model"],
+    )
+
+    model_rmse_gauge = Gauge(
+        "hbc_model_rmse",
+        "Root Mean Squared Error for forecasting model",
+        ["region", "model"],
+    )
+
+    model_mape_gauge = Gauge(
+        "hbc_model_mape",
+        "Mean Absolute Percentage Error for forecasting model",
+        ["region", "model"],
+    )
+
+    interval_coverage_gauge = Gauge(
+        "hbc_interval_coverage",
+        "Prediction interval coverage percentage",
+        ["region", "model"],
+    )
+
+    backtest_last_run_gauge = Gauge(
+        "hbc_backtest_last_run_timestamp_seconds",
+        "Timestamp of last backtest run",
+        ["region", "model"],
+    )
+
+    # Sub-index contribution metrics
+    subindex_contribution_gauge = Gauge(
+        "hbc_subindex_contribution",
+        "Contribution of sub-index to behavior_index",
+        ["region", "parent"],
+    )
+
+    # Data source fetch and error metrics
+    data_source_fetch_counter = Counter(
+        "hbc_data_source_fetch_total",
+        "Total number of data source fetch attempts",
+        ["source", "outcome"],
+    )
+
+    data_source_error_counter = Counter(
+        "hbc_data_source_error_total",
+        "Total number of data source errors",
+        ["source", "error_type"],
+    )
+
+    data_source_last_success_gauge = Gauge(
+        "hbc_data_source_last_success_timestamp_seconds",
+        "Timestamp of last successful data source fetch",
+        ["source"],
+    )
+
+    # Forecast compute duration by model
+    forecast_compute_duration_by_model = Histogram(
+        "hbc_forecast_compute_duration_seconds",
+        "Forecast computation duration by model",
+        ["region", "model"],
+        buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0],
+    )
+
+    # Forecast outcome counter
+    forecast_outcome_counter = Counter(
+        "hbc_forecast_total",
+        "Total number of forecasts generated",
+        ["region", "model", "outcome"],
+    )
+
+    # Model selection gauge
+    model_selected_gauge = Gauge(
+        "hbc_model_selected",
+        "Currently selected model for region (1 if selected, 0 otherwise)",
+        ["region", "model"],
     )
 else:
     behavior_index_gauge = None
@@ -176,7 +271,22 @@ else:
     forecast_last_updated_gauge = None
     forecast_history_points_gauge = None
     forecast_points_generated_gauge = None
+    regions_with_metrics_gauge = None
+    priority_regions_target_gauge = None
+    warmup_progress_ratio_gauge = None
     data_source_status_gauge = None
+    model_mae_gauge = None
+    model_rmse_gauge = None
+    model_mape_gauge = None
+    interval_coverage_gauge = None
+    backtest_last_run_gauge = None
+    subindex_contribution_gauge = None
+    data_source_fetch_counter = None
+    data_source_error_counter = None
+    data_source_last_success_gauge = None
+    forecast_compute_duration_by_model = None
+    forecast_outcome_counter = None
+    model_selected_gauge = None
 
 # Register routers
 app.include_router(public.router)
@@ -320,6 +430,50 @@ def _populate_metrics_for_all_regions() -> None:
             failures=failure_count,
             total=len(regions_to_populate),
         )
+
+        # Update warm-up metrics
+        if PROMETHEUS_AVAILABLE:
+            try:
+                if priority_regions_target_gauge is not None:
+                    priority_regions_target_gauge.set(len(regions_to_populate))
+
+                if regions_with_metrics_gauge is not None:
+                    # Query Prometheus for current region count
+                    try:
+                        import requests
+                        prometheus_url = os.getenv(
+                            "PROMETHEUS_URL", "http://localhost:9090"
+                        )
+                        query = 'count(count by(region)(behavior_index))'
+                        response = requests.get(
+                            f"{prometheus_url}/api/v1/query",
+                            params={"query": query},
+                            timeout=5,
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get("data", {}).get("result"):
+                                region_count = int(
+                                    float(data["data"]["result"][0]["value"][1])
+                                )
+                                regions_with_metrics_gauge.set(region_count)
+
+                                # Calculate progress ratio
+                                if (
+                                    warmup_progress_ratio_gauge is not None
+                                    and len(regions_to_populate) > 0
+                                ):
+                                    progress = min(
+                                        1.0, region_count / len(regions_to_populate)
+                                    )
+                                    warmup_progress_ratio_gauge.set(progress)
+                    except Exception:
+                        # Prometheus query failed - skip metric update
+                        pass
+            except Exception as e:
+                logger.warning(
+                    "Failed to update warm-up metrics", error=str(e)
+                )
     except Exception as e:
         logger.error(
             "Error in background metrics population",
@@ -1405,6 +1559,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                     region_name=payload.region_name or "Unknown",
                     days_back=days_back,
                     forecast_horizon=forecast_horizon,
+                    region_id=payload.region_id,
                 )
         else:
             result = forecaster.forecast(
@@ -1413,6 +1568,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 region_name=payload.region_name or "Unknown",
                 days_back=days_back,
                 forecast_horizon=forecast_horizon,
+                region_id=payload.region_id,
             )
     except Exception as e:
         logger.error("Forecast generation failed", error=str(e), exc_info=True)

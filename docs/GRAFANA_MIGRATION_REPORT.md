@@ -20,12 +20,12 @@ Successfully migrated Quick Summary and Data Sources (12) panels from React-only
 2. `app/frontend/src/hooks/useRegions.ts` - Fixed useEffect dependency
 3. `app/frontend/src/pages/forecast.tsx` - Embedded Grafana dashboards
 4. `docker-compose.yml` - Changed Grafana to 11.4.0
-5. `infrastructure/grafana/dashboards/*.json` - Fixed datasource UIDs (5 files)
-6. `infrastructure/grafana/provisioning/datasources/prometheus.yml` - Added explicit UID
+5. `infra/grafana/dashboards/*.json` - Fixed datasource UIDs (5 files)
+6. `infra/grafana/provisioning/datasources/prometheus.yml` - Added explicit UID
 
 ### New Files:
-1. `infrastructure/grafana/dashboards/forecast_summary.json`
-2. `infrastructure/grafana/dashboards/data_sources_health.json`
+1. `infra/grafana/dashboards/forecast_summary.json`
+2. `infra/grafana/dashboards/data_sources_health.json`
 3. `app/frontend/.eslintignore`
 
 ---

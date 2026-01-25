@@ -73,6 +73,13 @@ class DataHarmonizer:
         crime_data: Optional[pd.DataFrame] = None,
         misinformation_data: Optional[pd.DataFrame] = None,
         social_cohesion_data: Optional[pd.DataFrame] = None,
+        fuel_data: Optional[pd.DataFrame] = None,
+        drought_data: Optional[pd.DataFrame] = None,
+        storm_data: Optional[pd.DataFrame] = None,
+        demographic_data: Optional[pd.DataFrame] = None,
+        consumer_spending_data: Optional[pd.DataFrame] = None,
+        employment_sector_data: Optional[pd.DataFrame] = None,
+        energy_consumption_data: Optional[pd.DataFrame] = None,
         forward_fill_days: int = 2,
     ) -> pd.DataFrame:
         """
@@ -139,6 +146,20 @@ class DataHarmonizer:
             misinformation_data = pd.DataFrame()
         if social_cohesion_data is None:
             social_cohesion_data = pd.DataFrame()
+        if fuel_data is None:
+            fuel_data = pd.DataFrame()
+        if drought_data is None:
+            drought_data = pd.DataFrame()
+        if storm_data is None:
+            storm_data = pd.DataFrame()
+        if demographic_data is None:
+            demographic_data = pd.DataFrame()
+        if consumer_spending_data is None:
+            consumer_spending_data = pd.DataFrame()
+        if employment_sector_data is None:
+            employment_sector_data = pd.DataFrame()
+        if energy_consumption_data is None:
+            energy_consumption_data = pd.DataFrame()
 
         if (
             market_data.empty
@@ -159,6 +180,13 @@ class DataHarmonizer:
             and crime_data.empty
             and misinformation_data.empty
             and social_cohesion_data.empty
+            and fuel_data.empty
+            and drought_data.empty
+            and storm_data.empty
+            and demographic_data.empty
+            and consumer_spending_data.empty
+            and employment_sector_data.empty
+            and energy_consumption_data.empty
         ):
             logger.warning("All data sources are empty")
             return pd.DataFrame(
@@ -388,6 +416,70 @@ class DataHarmonizer:
             dataframes.append(social_cohesion_df)
             names.append("social_cohesion")
 
+        if not fuel_data.empty:
+            fuel_df = fuel_data.copy()
+            fuel_df["timestamp"] = pd.to_datetime(fuel_df["timestamp"], utc=True)
+            if fuel_df["timestamp"].dt.tz is not None:
+                fuel_df["timestamp"] = fuel_df["timestamp"].dt.tz_localize(None)
+            fuel_df = fuel_df.set_index("timestamp").sort_index()
+            dataframes.append(fuel_df)
+            names.append("fuel")
+
+        if not drought_data.empty:
+            drought_df = drought_data.copy()
+            drought_df["timestamp"] = pd.to_datetime(drought_df["timestamp"], utc=True)
+            if drought_df["timestamp"].dt.tz is not None:
+                drought_df["timestamp"] = drought_df["timestamp"].dt.tz_localize(None)
+            drought_df = drought_df.set_index("timestamp").sort_index()
+            dataframes.append(drought_df)
+            names.append("drought")
+
+        if not storm_data.empty:
+            storm_df = storm_data.copy()
+            storm_df["timestamp"] = pd.to_datetime(storm_df["timestamp"], utc=True)
+            if storm_df["timestamp"].dt.tz is not None:
+                storm_df["timestamp"] = storm_df["timestamp"].dt.tz_localize(None)
+            storm_df = storm_df.set_index("timestamp").sort_index()
+            dataframes.append(storm_df)
+            names.append("storm")
+
+        # Add new data sources
+        if not demographic_data.empty:
+            demo_df = demographic_data.copy()
+            demo_df["timestamp"] = pd.to_datetime(demo_df["timestamp"], utc=True)
+            if demo_df["timestamp"].dt.tz is not None:
+                demo_df["timestamp"] = demo_df["timestamp"].dt.tz_localize(None)
+            demo_df = demo_df.set_index("timestamp").sort_index()
+            dataframes.append(demo_df)
+            names.append("demographic")
+
+        if not consumer_spending_data.empty:
+            spending_df = consumer_spending_data.copy()
+            spending_df["timestamp"] = pd.to_datetime(spending_df["timestamp"], utc=True)
+            if spending_df["timestamp"].dt.tz is not None:
+                spending_df["timestamp"] = spending_df["timestamp"].dt.tz_localize(None)
+            spending_df = spending_df.set_index("timestamp").sort_index()
+            dataframes.append(spending_df)
+            names.append("consumer_spending")
+
+        if not employment_sector_data.empty:
+            employment_df = employment_sector_data.copy()
+            employment_df["timestamp"] = pd.to_datetime(employment_df["timestamp"], utc=True)
+            if employment_df["timestamp"].dt.tz is not None:
+                employment_df["timestamp"] = employment_df["timestamp"].dt.tz_localize(None)
+            employment_df = employment_df.set_index("timestamp").sort_index()
+            dataframes.append(employment_df)
+            names.append("employment_sector")
+
+        if not energy_consumption_data.empty:
+            energy_df = energy_consumption_data.copy()
+            energy_df["timestamp"] = pd.to_datetime(energy_df["timestamp"], utc=True)
+            if energy_df["timestamp"].dt.tz is not None:
+                energy_df["timestamp"] = energy_df["timestamp"].dt.tz_localize(None)
+            energy_df = energy_df.set_index("timestamp").sort_index()
+            dataframes.append(energy_df)
+            names.append("energy_consumption")
+
         # Forward-fill market data for weekends (market is closed Sat/Sun)
         if not market_data.empty and forward_fill_days > 0:
             market_daily = market_data.resample("D").last()
@@ -553,6 +645,56 @@ class DataHarmonizer:
         else:
             social_cohesion_aligned = pd.DataFrame(index=date_range)
 
+        if "fuel" in names:
+            fuel_idx = names.index("fuel")
+            fuel_df = dataframes[fuel_idx]
+            fuel_aligned = fuel_df.reindex(date_range)
+        else:
+            fuel_aligned = pd.DataFrame(index=date_range)
+
+        if "drought" in names:
+            drought_idx = names.index("drought")
+            drought_df = dataframes[drought_idx]
+            drought_aligned = drought_df.reindex(date_range)
+        else:
+            drought_aligned = pd.DataFrame(index=date_range)
+
+        if "storm" in names:
+            storm_idx = names.index("storm")
+            storm_df = dataframes[storm_idx]
+            storm_aligned = storm_df.reindex(date_range)
+        else:
+            storm_aligned = pd.DataFrame(index=date_range)
+
+        # Reindex new data sources
+        if "demographic" in names:
+            demo_idx = names.index("demographic")
+            demo_df = dataframes[demo_idx]
+            demo_aligned = demo_df.reindex(date_range)
+        else:
+            demo_aligned = pd.DataFrame(index=date_range)
+
+        if "consumer_spending" in names:
+            spending_idx = names.index("consumer_spending")
+            spending_df = dataframes[spending_idx]
+            spending_aligned = spending_df.reindex(date_range)
+        else:
+            spending_aligned = pd.DataFrame(index=date_range)
+
+        if "employment_sector" in names:
+            employment_idx = names.index("employment_sector")
+            employment_df = dataframes[employment_idx]
+            employment_aligned = employment_df.reindex(date_range)
+        else:
+            employment_aligned = pd.DataFrame(index=date_range)
+
+        if "energy_consumption" in names:
+            energy_idx = names.index("energy_consumption")
+            energy_df = dataframes[energy_idx]
+            energy_aligned = energy_df.reindex(date_range)
+        else:
+            energy_aligned = pd.DataFrame(index=date_range)
+
         # Extract key columns
         market_stress = market_aligned.get(
             "stress_index", pd.Series(index=date_range, dtype=float)
@@ -615,6 +757,37 @@ class DataHarmonizer:
         )
         social_cohesion_stress_val = social_cohesion_aligned.get(
             "social_cohesion_stress", pd.Series(index=date_range, dtype=float)
+        )
+        # Extract fuel_stress_index and rename to fuel_stress for child index naming
+        fuel_stress_val = fuel_aligned.get(
+            "fuel_stress_index", pd.Series(index=date_range, dtype=float)
+        )
+        # Extract drought_stress_index
+        drought_stress_val = drought_aligned.get(
+            "drought_stress_index", pd.Series(index=date_range, dtype=float)
+        )
+        # Extract storm stress indices
+        storm_severity_stress_val = storm_aligned.get(
+            "storm_severity_stress", pd.Series(index=date_range, dtype=float)
+        )
+        heatwave_stress_val = storm_aligned.get(
+            "heatwave_stress", pd.Series(index=date_range, dtype=float)
+        )
+        flood_risk_stress_val = storm_aligned.get(
+            "flood_risk_stress", pd.Series(index=date_range, dtype=float)
+        )
+        # Extract new data source values
+        demographic_stress_val = demo_aligned.get(
+            "demographic_stress_index", pd.Series(index=date_range, dtype=float)
+        )
+        consumer_spending_stress_val = spending_aligned.get(
+            "retail_sales_stress", pd.Series(index=date_range, dtype=float)
+        )
+        employment_stress_val = employment_aligned.get(
+            "employment_stress", pd.Series(index=date_range, dtype=float)
+        )
+        energy_consumption_stress_val = energy_aligned.get(
+            "energy_stress_index", pd.Series(index=date_range, dtype=float)
         )
 
         # Check if new data is present to adjust BehaviorIndexComputer weights
@@ -687,6 +860,11 @@ class DataHarmonizer:
                 "crime_stress": crime_stress_val.values,
                 "misinformation_stress": misinformation_stress_val.values,
                 "social_cohesion_stress": social_cohesion_stress_val.values,
+                "fuel_stress": fuel_stress_val.values,  # Child index name (maps to fuel_stress_index from fetcher)
+                "drought_stress": drought_stress_val.values,  # Child index name (maps to drought_stress_index from fetcher)
+                "storm_severity_stress": storm_severity_stress_val.values,
+                "heatwave_stress": heatwave_stress_val.values,
+                "flood_risk_stress": flood_risk_stress_val.values,
             }
         )
 
@@ -745,6 +923,21 @@ class DataHarmonizer:
             method="linear", limit_direction="both"
         )
         merged["social_cohesion_stress"] = merged["social_cohesion_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["fuel_stress"] = merged["fuel_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["drought_stress"] = merged["drought_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["storm_severity_stress"] = merged["storm_severity_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["heatwave_stress"] = merged["heatwave_stress"].interpolate(
+            method="linear", limit_direction="both"
+        )
+        merged["flood_risk_stress"] = merged["flood_risk_stress"].interpolate(
             method="linear", limit_direction="both"
         )
 

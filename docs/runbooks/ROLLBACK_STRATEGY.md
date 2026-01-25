@@ -48,13 +48,13 @@ git checkout <commit-hash>
 
 **Procedure:**
 ```bash
-cd infrastructure/terraform
+cd infra/terraform
 
 # Review current state
 terraform show
 
 # Rollback to previous configuration
-git checkout <previous-tag> infrastructure/terraform/
+git checkout <previous-tag> infra/terraform/
 
 # Plan rollback
 terraform plan

@@ -5,7 +5,6 @@ import * as path from 'path';
 const FRONTEND_BASE = process.env.FRONTEND_BASE || 'http://localhost:3100';
 const EVIDENCE_DIR = process.env.EVIDENCE_DIR || 'test-results';
 
-// Expected section headings
 const EXPECTED_SECTIONS = [
   'Regional Forecast Overview & Key Metrics',
   'Behavior Index Timeline & Historical Trends',
@@ -13,131 +12,121 @@ const EXPECTED_SECTIONS = [
   'Real-Time Data Source Status & API Health',
 ];
 
-test.describe('Visual Dashboard Verification', () => {
-  test('Forecast page shows all expected dashboard sections and iframes', async ({ page, request }) => {
-    const iframes: Array<{ src: string; status: number; visible: boolean }> = [];
+test.describe('Visual Dashboards Verification', () => {
+  test('Forecast page: sections, iframes, HTTP 200, screenshots, DOM dump', async ({
+    page,
+    request,
+  }) => {
+    const iframeList: Array<{ src: string; status: number }> = [];
     const consoleErrors: string[] = [];
     const networkFailures: string[] = [];
 
-    // Collect console errors
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
       }
     });
 
-    // Collect network failures
-    page.on('response', (response) => {
-      const url = response.url();
-      if (url.includes('grafana') || url.includes('/d/')) {
-        if (response.status() >= 400) {
-          networkFailures.push(`${response.status()}: ${url}`);
-        }
+    page.on('response', (resp) => {
+      const u = resp.url();
+      if ((u.includes('grafana') || u.includes('/d/')) && resp.status() >= 400) {
+        networkFailures.push(`${resp.status()}: ${u}`);
       }
     });
 
-    // Navigate to forecast page
-    await page.goto(`${FRONTEND_BASE}/forecast`, { waitUntil: 'networkidle', timeout: 60000 });
-
-    // Wait for page to load
+    await page.goto(`${FRONTEND_BASE}/forecast`, {
+      waitUntil: 'networkidle',
+      timeout: 60000,
+    });
     await page.waitForLoadState('domcontentloaded');
 
-    // Verify expected section headings exist
-    const foundSections: string[] = [];
     for (const heading of EXPECTED_SECTIONS) {
-      const headingLocator = page.locator(`text=${heading}`);
-      const isVisible = await headingLocator.first().isVisible({ timeout: 10000 }).catch(() => false);
-      if (isVisible) {
-        foundSections.push(heading);
-      }
+      const loc = page.locator(`text=${heading}`).first();
+      await expect(loc).toBeVisible({ timeout: 10000 });
     }
 
-    // Assert all sections found
-    expect(foundSections.length).toBe(EXPECTED_SECTIONS.length);
-
-    // Wait for iframes to appear
     await page.waitForSelector('iframe', { timeout: 30000 });
-
-    // Collect all iframe elements
-    const iframeElements = page.locator('iframe');
-    const iframeCount = await iframeElements.count();
+    const iframes = page.locator('iframe');
+    const iframeCount = await iframes.count();
     expect(iframeCount).toBeGreaterThanOrEqual(4);
 
-    // Extract iframe src and verify each
+    const iframeSrcs: string[] = [];
     for (let i = 0; i < iframeCount; i++) {
-      const iframe = iframeElements.nth(i);
-      const src = await iframe.getAttribute('src');
-      const isVisible = await iframe.isVisible();
+      const src = await iframes.nth(i).getAttribute('src');
+      if (src && src.length > 0) {
+        iframeSrcs.push(src);
+      }
+    }
+    expect(iframeSrcs.length).toBeGreaterThanOrEqual(4);
 
-      if (src) {
-        // Verify HTTP 200
-        let status = 0;
-        try {
-          const response = await request.get(src, { timeout: 10000 });
-          status = response.status();
-        } catch (e) {
-          status = 0;
-        }
-
-        iframes.push({ src, status, visible: isVisible });
+    for (const src of iframeSrcs) {
+      try {
+        const resp = await request.get(src, { timeout: 10000 });
+        iframeList.push({ src, status: resp.status() });
+      } catch (e) {
+        iframeList.push({ src, status: 0 });
       }
     }
 
-    // Save iframe list as JSON
-    const iframesPath = path.join(EVIDENCE_DIR, 'iframes.json');
-    fs.writeFileSync(iframesPath, JSON.stringify(iframes, null, 2));
+    const screenshotsDir = path.join(EVIDENCE_DIR, 'screenshots');
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
 
-    // Verify all iframes return 200
-    const all200 = iframes.every(iframe => iframe.status === 200);
-    expect(all200).toBe(true);
-
-    // Take full page screenshot
     await page.screenshot({
-      path: path.join(EVIDENCE_DIR, 'screenshots', 'forecast_page_full.png'),
+      path: path.join(screenshotsDir, 'forecast_full_page.png'),
       fullPage: true,
     });
 
-    // Take section screenshots
     for (let i = 0; i < EXPECTED_SECTIONS.length; i++) {
       const heading = EXPECTED_SECTIONS[i];
-      const headingLocator = page.locator(`text=${heading}`).first();
-      if (await headingLocator.isVisible()) {
-        await headingLocator.scrollIntoViewIfNeeded();
-        await page.waitForTimeout(1000); // Wait for iframes to load
-
-        try {
-          await page.screenshot({
-            path: path.join(EVIDENCE_DIR, 'screenshots', `section_${i + 1}_${heading.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}.png`),
-            fullPage: false,
-          });
-        } catch (e) {
-          console.warn(`Screenshot failed for section ${i + 1}:`, e);
+      const loc = page.locator(`text=${heading}`).first();
+      if (await loc.isVisible()) {
+        await loc.scrollIntoViewIfNeeded();
+        const box = await loc.boundingBox();
+        if (box) {
+          try {
+            await page.screenshot({
+              path: path.join(
+                screenshotsDir,
+                `section_${i + 1}_${heading.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 30)}.png`
+              ),
+              clip: {
+                x: Math.max(0, box.x - 10),
+                y: Math.max(0, box.y - 10),
+                width: Math.min(box.width + 20, 1600),
+                height: Math.min(box.height + 500, 800),
+              },
+            });
+          } catch (_) {}
         }
       }
     }
 
-    // Dump DOM HTML
-    const htmlContent = await page.content();
-    const htmlPath = path.join(EVIDENCE_DIR, 'ui_dom_dump.html');
-    fs.writeFileSync(htmlPath, htmlContent);
+    const html = await page.content();
+    fs.writeFileSync(path.join(EVIDENCE_DIR, 'ui_dom_dump.html'), html, 'utf-8');
 
-    // Save verification results
-    const results = {
-      sectionsFound: foundSections,
-      iframeCount,
-      iframes,
-      consoleErrors,
-      networkFailures,
-      allIframes200: all200,
-    };
+    fs.writeFileSync(
+      path.join(EVIDENCE_DIR, 'iframes.json'),
+      JSON.stringify({ iframeList, iframeSrcs }, null, 2),
+      'utf-8'
+    );
 
-    const resultsPath = path.join(EVIDENCE_DIR, 'verification_results.json');
-    fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
+    const authFailures = networkFailures.filter(
+      (f) => f.includes('401') || f.includes('403')
+    );
+    expect(authFailures.length).toBe(0);
 
-    // Final assertions
-    expect(foundSections.length).toBe(EXPECTED_SECTIONS.length);
-    expect(iframeCount).toBeGreaterThanOrEqual(4);
+    const criticalConsole = consoleErrors.filter(
+      (e) =>
+        e.includes('401') ||
+        e.includes('403') ||
+        e.includes('X-Frame-Options') ||
+        e.includes('refused to display')
+    );
+    expect(criticalConsole.length).toBe(0);
+
+    const all200 = iframeList.every((x) => x.status === 200);
     expect(all200).toBe(true);
-    expect(consoleErrors.filter(e => e.includes('401') || e.includes('403') || e.includes('X-Frame-Options')).length).toBe(0);
   });
 });

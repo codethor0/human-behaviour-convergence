@@ -13,7 +13,7 @@ This runbook tells operators what to do when behavioral alerts fire in Grafana.
 **Assumptions:**
 - Docker stack is running (backend, frontend, prometheus, grafana)
 - GATE A and GATE G are normally GREEN
-- Alerts are defined in `infrastructure/grafana/provisioning/alerting/rules.yml`
+- Alerts are defined in `infra/grafana/provisioning/alerting/rules.yml`
 
 **Quick Access:**
 - Alerts List: http://localhost:3001/alerting/list (local dev)

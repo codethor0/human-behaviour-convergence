@@ -272,6 +272,25 @@ curl -sS http://localhost:3100/forecast | grep -o 'dashboardUid="[^"]*"' | sort 
 - [ ] Region variables populate correctly
 - [ ] No blank dashboards (all panels have data or show "no data" message)
 
+**New Metrics Verification** (Grafana Visual Expansion):
+```bash
+# Verify data source observability metrics are defined
+curl -sS http://localhost:8100/metrics | grep -E '^hbc_data_source_fetch_total|^hbc_data_source_error_total|^hbc_data_source_last_success_timestamp_seconds'
+# Expected: Metrics defined (may be empty if not yet instrumented in fetchers)
+
+# Verify forecast observability metrics
+curl -sS http://localhost:8100/metrics | grep -E '^hbc_forecast_compute_duration_seconds|^hbc_forecast_total|^hbc_model_selected'
+# Expected: Metrics defined
+
+# Verify model performance metrics
+curl -sS http://localhost:8100/metrics | grep -E '^hbc_model_mae|^hbc_model_rmse|^hbc_model_mape|^hbc_interval_coverage'
+# Expected: Metrics defined (may be empty if backtesting not run)
+
+# Verify source health dashboard enhanced panels
+curl -sS -u admin:admin "http://localhost:3001/api/dashboards/uid/source-health-freshness" | jq '.dashboard.panels | length'
+# Expected: 8 panels (enhanced from 5)
+```
+
 ## Evidence Bundles
 
 For reproducible proof, create an evidence bundle:

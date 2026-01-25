@@ -181,7 +181,7 @@ fi
 echo
 echo "[6] Dashboard JSON presence (filesystem)"
 for dashboard in global_behavior_index.json subindex_deep_dive.json regional_comparison.json historical_trends.json risk_regimes.json; do
-  if [ -f "infrastructure/grafana/dashboards/${dashboard}" ]; then
+  if [ -f "infra/grafana/dashboards/${dashboard}" ]; then
     echo "[OK] ${dashboard} present"
   else
     echo "[FAIL] ${dashboard} missing"
@@ -191,10 +191,10 @@ done
 
 echo
 echo "[7] Alert rules provisioning (filesystem)"
-if [ -f "infrastructure/grafana/provisioning/alerting/rules.yml" ]; then
+if [ -f "infra/grafana/provisioning/alerting/rules.yml" ]; then
   echo "[OK] rules.yml present (behavior index alerts)"
   # Validate YAML syntax
-  if python3 -c "import yaml; yaml.safe_load(open('infrastructure/grafana/provisioning/alerting/rules.yml'))" 2>/dev/null; then
+  if python3 -c "import yaml; yaml.safe_load(open('infra/grafana/provisioning/alerting/rules.yml'))" 2>/dev/null; then
     echo "[OK] rules.yml is valid YAML"
   else
     echo "[FAIL] rules.yml is not valid YAML"
