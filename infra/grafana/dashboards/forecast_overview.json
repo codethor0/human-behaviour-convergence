@@ -456,6 +456,306 @@
         "mode": "markdown",
         "content": "**Note on Global vs Regional Metrics:**\n\n- **Global Metrics**: Some sub-indices (e.g., economic_stress, mobility_activity, digital_attention) are computed from national/global data sources and may show identical values across regions. This is expected behavior.\n- **Regional Metrics**: Other sub-indices (e.g., environmental_stress, political_stress) are computed from region-specific data and will differ between regions.\n- **Behavior Index**: The overall behavior index combines both global and regional components using weighted aggregation, so regional differences reflect regional-specific factors even when some components are identical."
       }
+    },
+    {
+      "id": 8,
+      "title": "Behavior Index with Statistical Confidence Bands - $region",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Behavior Index",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "30-Day Average",
+          "refId": "B"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d]) + 1.96 * stddev_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "Upper 95% Confidence",
+          "refId": "C"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d]) - 1.96 * stddev_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "Lower 95% Confidence",
+          "refId": "D"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d]) + 1.28 * stddev_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "Upper 80% Confidence",
+          "refId": "E"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d]) - 1.28 * stddev_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "Lower 80% Confidence",
+          "refId": "F"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Behavior Index",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.3
+              },
+              {
+                "color": "orange",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 0.7
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "decimals": 3
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Behavior Index"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*95%.*"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 10
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [5, 5]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*80%.*"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 20
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [3, 3]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull", "mean"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Forecast Horizon Comparison - Multi-Timeframe View - $region",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Historical (Actual)",
+          "refId": "A"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[7d])",
+          "legendFormat": "7-Day Forecast Proxy",
+          "refId": "B"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[14d])",
+          "legendFormat": "14-Day Forecast Proxy",
+          "refId": "C"
+        },
+        {
+          "expr": "avg_over_time(behavior_index{region=\"$region\"}[30d])",
+          "legendFormat": "30-Day Forecast Proxy",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Behavior Index",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "decimals": 3
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Historical (Actual)"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
     }
   ],
   "tags": ["forecast", "overview", "public"]
