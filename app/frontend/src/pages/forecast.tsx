@@ -8,6 +8,7 @@ import {
   runForecast as apiRunForecast,
 } from '../lib/api';
 import { useRegions } from '../hooks/useRegions';
+import { GrafanaDashboardEmbed } from '../components/GrafanaDashboardEmbed';
 
 // Legacy interfaces - no longer used since Grafana migration
 // interface SubIndices {
@@ -161,83 +162,6 @@ const styles = {
     borderRadius: '8px',
   },
 };
-
-// Custom heights for specific dashboards
-const dashboardHeights: Record<string, string> = {
-  'forecast-summary': '380px',
-  'behavior-index-global': '580px',
-  'subindex-deep-dive': '1200px',
-  'data-sources-health': '500px',
-  'regional-variance-explorer': '1000px',
-  'forecast-quality-drift': '800px',
-  'algorithm-model-comparison': '900px',
-  'source-health-freshness': '600px',
-};
-
-// Grafana Dashboard Embed Component
-function GrafanaDashboardEmbed({ dashboardUid, title, regionId }: { dashboardUid: string; title: string; regionId?: string }) {
-  const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
-  const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
-  const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv${regionParam}`;
-  
-  // Use custom height if defined for this dashboard, otherwise use default from styles.iframe
-  const customHeight = dashboardHeights[dashboardUid];
-  const iframeStyle = customHeight 
-    ? { ...styles.iframe, height: customHeight }
-    : styles.iframe;
-
-  const [embedError, setEmbedError] = useState<string | null>(null);
-
-  return (
-    <div style={{
-      backgroundColor: '#fff',
-      borderRadius: '6px',
-      padding: '8px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      marginBottom: '4px',
-    }}>
-      <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>{title}</h2>
-      {embedError && (
-        <div style={{
-          padding: '12px',
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          borderRadius: '4px',
-          marginBottom: '8px',
-          fontSize: '12px',
-        }}>
-          <strong>Grafana embed error:</strong> {embedError}
-          <br />
-          <small>URL: {src.replace(/http:\/\/[^/]+/, 'http://localhost:3001')}</small>
-        </div>
-      )}
-      <iframe
-        src={src}
-        style={iframeStyle}
-        title={title}
-        allow="fullscreen"
-        onLoad={(e) => {
-          // Check if iframe loaded successfully
-          try {
-            const iframe = e.target as HTMLIFrameElement;
-            // If iframe content is accessible, check for redirect to login
-            if (iframe.contentWindow?.location.href.includes('/login')) {
-              setEmbedError('Grafana requires authentication. Check GF_AUTH_ANONYMOUS_ENABLED setting.');
-            } else {
-              setEmbedError(null);
-            }
-          } catch (err) {
-            // Cross-origin restrictions prevent checking content, but iframe loaded
-            setEmbedError(null);
-          }
-        }}
-        onError={() => {
-          setEmbedError('Failed to load Grafana dashboard. Check GF_SECURITY_ALLOW_EMBEDDING and network connectivity.');
-        }}
-      />
-    </div>
-  );
-}
 
 export default function ForecastPage() {
   const { regions, loading: regionsLoading, error: regionsError, reload: reloadRegions } = useRegions();
@@ -636,11 +560,13 @@ export default function ForecastPage() {
         <GrafanaDashboardEmbed
           dashboardUid="data-sources-health"
           title="Real-Time Data Source Status & API Health"
+          refreshInterval="30s"
         />
 
         <GrafanaDashboardEmbed
           dashboardUid="source-health-freshness"
           title="Source Health and Freshness - Detailed Monitoring"
+          refreshInterval="30s"
         />
       </div>
     </>

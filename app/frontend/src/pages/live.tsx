@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRegions } from '../hooks/useRegions';
+import { GrafanaDashboardEmbed } from '../components/GrafanaDashboardEmbed';
 
 interface Region {
   id: string;
@@ -93,37 +94,6 @@ const styles = {
     border: '1px solid #e9ecef',
   },
 };
-
-// Grafana Dashboard Embed Component with auto-refresh
-function GrafanaDashboardEmbed({ dashboardUid, title, regionId, refreshInterval }: {
-  dashboardUid: string;
-  title: string;
-  regionId?: string;
-  refreshInterval?: string;
-}) {
-  const grafanaBase = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
-  const regionParam = regionId ? `&var-region=${encodeURIComponent(regionId)}` : '';
-  const refreshParam = refreshInterval ? `&refresh=${refreshInterval}` : '&refresh=30s';
-  const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv${regionParam}${refreshParam}`;
-
-  return (
-    <div style={{
-      backgroundColor: '#fff',
-      borderRadius: '6px',
-      padding: '8px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      marginBottom: '4px',
-    }}>
-      <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: '#333' }}>{title}</h2>
-      <iframe
-        src={src}
-        style={styles.iframe}
-        title={title}
-        allow="fullscreen"
-      />
-    </div>
-  );
-}
 
 export default function LivePage() {
   const { regions, loading: regionsLoading, error: regionsError, reload: reloadRegions } = useRegions();
