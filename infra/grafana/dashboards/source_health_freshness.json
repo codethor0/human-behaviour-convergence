@@ -25,6 +25,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "data_source_status",
           "format": "table",
           "instant": true,
@@ -133,6 +134,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "data_source_status",
           "legendFormat": "{{source}}",
           "refId": "A"
@@ -214,6 +216,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "forecast_last_updated_timestamp_seconds",
           "format": "table",
           "instant": true,
@@ -303,6 +306,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "sum(data_source_status == 1)",
           "refId": "A",
           "instant": true
@@ -359,6 +363,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "sum(data_source_status == 0)",
           "refId": "A",
           "instant": true
@@ -415,6 +420,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "rate(hbc_data_source_fetch_total[5m])",
           "legendFormat": "{{source}} ({{outcome}})",
           "refId": "A"
@@ -486,6 +492,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "rate(hbc_data_source_error_total[5m])",
           "legendFormat": "{{source}} ({{error_type}})",
           "refId": "A"
@@ -565,6 +572,7 @@
       },
       "targets": [
         {
+          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
           "expr": "hbc_data_source_last_success_timestamp_seconds",
           "format": "table",
           "instant": true,
