@@ -364,7 +364,7 @@
       "targets": [
         {
           "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
-          "expr": "sum(data_source_status == 0)",
+          "expr": "sum(data_source_status == bool 0)",
           "refId": "A",
           "instant": true
         }

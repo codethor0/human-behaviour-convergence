@@ -10,36 +10,121 @@ interface Dashboard {
   url?: string;
 }
 
+// Curated index of Grafana dashboards for operators.
 const dashboards: Dashboard[] = [
+  {
+    title: 'Forecast Quick Summary',
+    uid: 'forecast-summary',
+    description: 'Forecast summary and key metrics for the selected region',
+    purpose: 'Quick view: What is the latest forecast and risk for this region?'
+  },
   {
     title: 'Global Behavior Index',
     uid: 'behavior-index-global',
-    description: 'Overview of behavioral stress metrics for Minnesota and parent sub-indices',
-    purpose: 'Quick health check: Is the system showing elevated stress? What are the primary drivers?'
+    description: 'Behavior index timeline and parent sub-index trends (region-aware)',
+    purpose: 'Trend tracking: Is stress rising or stabilizing for the selected region?'
   },
   {
     title: 'Sub-Index Deep Dive',
     uid: 'subindex-deep-dive',
-    description: 'Detailed breakdown of parent and child sub-indices for any region',
-    purpose: 'Investigation: Which specific stress factors are elevated? How do they correlate?'
+    description: 'Detailed breakdown of parent and child sub-indices for a region',
+    purpose: 'Root-cause: Which factors are driving the behavior index?'
+  },
+  {
+    title: 'Regional Variance Explorer',
+    uid: 'regional-variance-explorer',
+    description: 'Multi-region comparison and variance diagnostics',
+    purpose: 'Multi-region: Are signals diverging across regions?'
+  },
+  {
+    title: 'Forecast Quality and Drift',
+    uid: 'forecast-quality-drift',
+    description: 'Forecast performance and drift monitoring panels',
+    purpose: 'Reliability: Is the model degrading or drifting?'
+  },
+  {
+    title: 'Algorithm / Model Comparison',
+    uid: 'algorithm-model-comparison',
+    description: 'Cross-model comparison panels and scoreboards',
+    purpose: 'Model selection: Which approach performs best under current conditions?'
+  },
+  {
+    title: 'Data Sources and Pipeline Health',
+    uid: 'data-sources-health-enhanced',
+    description: 'Data source status, pipeline and scrape health, and series counts',
+    purpose: 'Operational: Are upstream sources and metrics pipelines healthy?'
+  },
+  {
+    title: 'Source Health and Freshness',
+    uid: 'source-health-freshness',
+    description: 'Freshness and error monitoring for ingestion sources',
+    purpose: 'Data timeliness: Are sources stale or failing?'
+  },
+  {
+    title: 'Forecast Overview',
+    uid: 'forecast-overview',
+    description: 'High-level forecast dashboard with multi-panel overview',
+    purpose: 'Executive view: One dashboard overview of forecast posture.'
+  },
+  {
+    title: 'Public Overview',
+    uid: 'public-overview',
+    description: 'Public-data snapshot overview panels',
+    purpose: 'Data intake: Are public datasets present and up to date?'
+  },
+  {
+    title: 'Regional Deep Dive',
+    uid: 'regional-deep-dive',
+    description: 'Regional drill-down panels for deeper investigation',
+    purpose: 'Incident response: Deep dive into a specific region.'
+  },
+  {
+    title: 'Regional Economic & Environmental Signals',
+    uid: 'regional-signals',
+    description: 'Signal panels across economic and environmental drivers',
+    purpose: 'Signals: What exogenous drivers are changing?'
   },
   {
     title: 'Regional Comparison',
     uid: 'regional-comparison',
-    description: 'Multi-region analytics with behavior index comparison and heatmap',
-    purpose: 'Pattern detection: Are multiple regions affected? Is stress localized or systemic?'
+    description: 'Multi-region comparison dashboard',
+    purpose: 'Multi-region: Compare regions side-by-side.'
   },
   {
     title: 'Historical Trends & Volatility',
     uid: 'historical-trends',
-    description: 'Rolling volatility, trend derivatives, and 7-day/30-day comparisons',
-    purpose: 'Trend analysis: Is this a spike or sustained shift? How volatile is the situation?'
+    description: 'Rolling volatility and trend derivatives',
+    purpose: 'Trend analysis: Spike vs sustained shift.'
   },
   {
     title: 'Behavioral Risk Regimes',
     uid: 'risk-regimes',
-    description: 'Risk classification (Stable/Elevated/Unstable/Critical) with 30-day history',
-    purpose: 'Prioritization: Which regions need immediate attention? Where are regime transitions?'
+    description: 'Risk regime classification panels',
+    purpose: 'Prioritization: Which regions need attention now?'
+  },
+  {
+    title: 'Geo Map - Regional Stress',
+    uid: 'geo-map',
+    description: 'Geo map visualization for regional stress metrics',
+    purpose: 'Geospatial view: Where is stress concentrated?'
+  },
+  {
+    title: 'Baselines Dashboard',
+    uid: 'baselines',
+    description: 'Baseline comparisons and reference distributions',
+    purpose: 'Calibration: Compare current values to historical baselines.'
+  },
+  {
+    title: 'Classical Models Dashboard',
+    uid: 'classical-models',
+    description: 'Classical model outputs and diagnostics',
+    purpose: 'Model diagnostics: Validate classical model behavior.'
+  },
+  {
+    title: 'Model Performance Hub',
+    uid: 'model-performance',
+    description: 'Model performance hub with metrics and comparisons',
+    purpose: 'Performance: Track model accuracy and stability.'
   }
 ];
 

@@ -142,7 +142,7 @@
     },
     {
       "id": 2,
-      "title": "Fuel Stress by Region (Regional Signal)",
+      "title": "Energy Price Stress by Region (Regional Signal)",
       "type": "geomap",
       "gridPos": {
         "h": 10,
@@ -156,7 +156,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "child_subindex_value{parent=\"economic_stress\", child=\"fuel_stress\"}",
+          "expr": "child_subindex_value{parent=\"economic_stress\", child=\"energy_price_stress\"}",
           "format": "table",
           "instant": true,
           "refId": "A"

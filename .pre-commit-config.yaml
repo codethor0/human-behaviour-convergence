@@ -34,25 +34,25 @@ repos:
     hooks:
       - id: no-emojis-in-markdown
         name: no-emojis-in-markdown
-        entry: python .github/scripts/check_no_emoji.py
+        entry: python3 .github/scripts/check_no_emoji.py
         language: system
         pass_filenames: false
         types: [markdown]
       - id: enforce-american-spelling
         name: enforce-american-spelling
-        entry: python .github/scripts/check_american_spelling.py
+        entry: python3 .github/scripts/check_american_spelling.py
         language: system
         pass_filenames: false
         types: [text]
       - id: validate-architecture
         name: validate-architecture
-        entry: python .github/scripts/validate_architecture.py
+        entry: python3 .github/scripts/validate_architecture.py
         language: system
         pass_filenames: false
         types: [python]
       - id: conventional-commits
         name: conventional-commits
-        entry: python .github/scripts/validate_conventional_commits.py
+        entry: python3 .github/scripts/validate_conventional_commits.py
         language: system
-        pass_filenames: false
+        pass_filenames: true
         stages: [commit-msg]
