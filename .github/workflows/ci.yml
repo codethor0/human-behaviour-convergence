@@ -159,7 +159,7 @@ jobs:
 
           for pattern in "${ARTIFACT_PATTERNS[@]}"; do
             # Exclude virtual environments, build artifacts, and legitimate directories
-            # scripts/hbc_verify_all.sh is the official verification entrypoint, not an agent artifact
+            # scripts/hbc_verify_all.sh and other legitimate verify scripts are not agent artifacts
             MATCHES=$(find . -type f -iname "$pattern" \
               -not -path "./.git/*" \
               -not -path "./node_modules/*" \
@@ -172,6 +172,9 @@ jobs:
               -not -path "*/site-packages/*" \
               -not -path "./ops/*" \
               -not -path "./scripts/hbc_verify_all.sh" \
+              -not -path "./scripts/verify_grafana_dashboards.sh" \
+              -not -path "./scripts/verify_post_work.sh" \
+              -not -path "./scripts/verify_e2e_integrity.sh" \
               2>/dev/null | grep -v "^\./\.github/" | grep -v "^\./docs/" || true)
 
             if [ -n "$MATCHES" ]; then
