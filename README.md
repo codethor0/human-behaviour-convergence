@@ -34,6 +34,26 @@ Main branch workflows (all must remain green):
 
 See badges above for current status on `main`.
 
+### Project verification (hbc_verify_all.sh)
+
+The main verification entrypoint is **`scripts/hbc_verify_all.sh`**. It runs backend/API tests, optional Ruff/mypy, and optional frontend lint/tests.
+
+- **Run locally:** From the repo root, run:
+  ```bash
+  ./scripts/hbc_verify_all.sh
+  ```
+  By default, local runs do **not** fail the script when only frontend lint/tests fail. In that case you will see:
+  `Frontend checks failed, but this is a local run; continuing (non-fatal).` and the script exits 0.
+
+- **CI behavior:** In GitHub Actions, `CI=true` (and `GITHUB_ACTIONS=true`) is set by the workflow. When either is set, frontend failures are **fatal**: the script exits 1 and the job fails.
+
+- **Environment variables:** `CI` and `GITHUB_ACTIONS` are set automatically in CI. The script derives `FRONTEND_FATAL` from them (1 when in CI, 0 locally). Do not set `FRONTEND_FATAL` manually unless you need to override.
+
+- **Troubleshooting:** If CI fails but local passes, CI treats frontend checks as fatal. Reproduce CI behavior locally with:
+  ```bash
+  CI=true ./scripts/hbc_verify_all.sh
+  ```
+
 ---
 
 ## What is this?
