@@ -19,3 +19,5 @@ Use this before merging to main or tagging a release.
 5. Push changes and ensure the GitHub Actions CI run is green.
 
 **CI:** The canonical verification job is `hbc-verify` in `.github/workflows/ci.yml`; it runs `./scripts/hbc_verify_all.sh` with `CI=true`. Frontend Lint workflow (`.github/workflows/frontend-lint.yml`) runs ESLint on frontend changes.
+
+**Branches:** Long-lived branch is `main`. Other remote branches (e.g. `fix/*`, `dependabot/*`) are short-lived; merge into main and delete when done, or keep one active working branch.
