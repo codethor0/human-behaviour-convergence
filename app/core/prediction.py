@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Behavioral forecasting engine using real-world public data."""
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
@@ -294,43 +295,150 @@ class BehavioralForecaster:
                 forecast_horizon=forecast_horizon,
             )
 
-            # Fetch market sentiment data
-            market_data = self.market_fetcher.fetch_stress_index(days_back=days_back)
+            # Prepare region codes for parallel fetching
+            region_code_for_health = (
+                region_name.lower().replace(" ", "_").replace(",", "").replace(".", "")
+                if region_name
+                else f"lat{latitude:.2f}_lon{longitude:.2f}"
+            )
+            region_code_for_mobility = region_code_for_health
+            country_name = (
+                region_name
+                if region_name in ["United States", "USA"]
+                else "United States"
+            )
+
+            # Parallel fetch independent data sources using ThreadPoolExecutor
+            # This reduces latency from sequential network calls
+            fetch_results = {}
+            
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                futures = {}
+                
+                # Submit all independent fetch tasks
+                futures[executor.submit(self.market_fetcher.fetch_stress_index, days_back=days_back)] = "market"
+                futures[executor.submit(self.fred_fetcher.fetch_consumer_sentiment, days_back=days_back)] = "fred_consumer_sentiment"
+                futures[executor.submit(self.fred_fetcher.fetch_unemployment_rate, days_back=days_back)] = "fred_unemployment"
+                futures[executor.submit(self.fred_fetcher.fetch_jobless_claims, days_back=days_back)] = "fred_jobless_claims"
+                futures[executor.submit(self.fred_fetcher.fetch_gdp_growth, days_back=365)] = "fred_gdp_growth"
+                futures[executor.submit(self.fred_fetcher.fetch_cpi_inflation, days_back=365)] = "fred_cpi_inflation"
+                futures[executor.submit(self.weather_fetcher.fetch_regional_comfort, latitude, longitude, days_back)] = "weather"
+                futures[executor.submit(self.search_fetcher.fetch_search_interest, "behavioral patterns", days_back, region_name)] = "search"
+                futures[executor.submit(self.health_fetcher.fetch_health_risk_index, region_code_for_health, days_back)] = "health"
+                futures[executor.submit(self.mobility_fetcher.fetch_mobility_index, latitude, longitude, region_code_for_mobility, days_back)] = "mobility"
+                futures[executor.submit(self.gdelt_fetcher.fetch_event_tone, days_back=days_back)] = "gdelt"
+                futures[executor.submit(self.openfema_fetcher.fetch_disaster_declarations, region_name, days_back)] = "openfema"
+                futures[executor.submit(self.openstates_fetcher.fetch_legislative_activity, region_name, days_back)] = "openstates"
+                futures[executor.submit(self.nws_alerts_fetcher.fetch_weather_alerts, latitude, longitude, days_back)] = "nws_alerts"
+                futures[executor.submit(self.cisa_kev_fetcher.fetch_kev_catalog, days_back=days_back)] = "cisa_kev"
+                futures[executor.submit(self.owid_fetcher.fetch_health_stress_index, country_name, days_back)] = "owid"
+                futures[executor.submit(self.usgs_fetcher.fetch_earthquake_intensity, days_back=days_back)] = "usgs"
+                
+                # Additional fetchers that were sequential - add to parallel pool
+                # Determine state code for conditional fetchers
+                state_code = None
+                is_us_state = self._is_us_state(region_name)
+                if region_id and "_" in region_id:
+                    parts = region_id.split("_")
+                    if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
+                        state_code = parts[1].upper()
+                        is_us_state = True
+                
+                # OpenAQ air quality
+                futures[executor.submit(
+                    self.openaq_fetcher.fetch_air_quality,
+                    latitude, longitude, 50, days_back
+                )] = "air_quality"
+                
+                # GDELT legislative and enforcement (additional calls)
+                futures[executor.submit(
+                    self.gdelt_fetcher.fetch_legislative_attention,
+                    region_name, days_back
+                )] = "legislative"
+                futures[executor.submit(
+                    self.gdelt_fetcher.fetch_enforcement_attention,
+                    region_name, days_back
+                )] = "enforcement"
+                
+                # State-specific fetchers (if US state)
+                if is_us_state and state_code:
+                    futures[executor.submit(
+                        self.eia_fuel_fetcher.fetch_fuel_stress_index,
+                        state_code, days_back
+                    )] = "eia_fuel"
+                    futures[executor.submit(
+                        self.drought_fetcher.fetch_drought_stress_index,
+                        state_code, days_back
+                    )] = "drought"
+                    futures[executor.submit(
+                        self.storm_fetcher.fetch_storm_stress_indices,
+                        region_name, days_back
+                    )] = "storm"
+                else:
+                    # Pre-set empty results for non-US states
+                    fetch_results["eia_fuel"] = (pd.DataFrame(), None)
+                    fetch_results["drought"] = pd.DataFrame()
+                    fetch_results["storm"] = pd.DataFrame()
+                
+                # Political, crime, misinformation, social cohesion (if US state)
+                if is_us_state:
+                    futures[executor.submit(
+                        self.political_fetcher.calculate_political_stress,
+                        region_name, days_back
+                    )] = "political"
+                    futures[executor.submit(
+                        self.crime_fetcher.calculate_crime_stress,
+                        region_name, days_back
+                    )] = "crime"
+                    futures[executor.submit(
+                        self.misinformation_fetcher.calculate_misinformation_stress,
+                        region_name, days_back
+                    )] = "misinformation"
+                    futures[executor.submit(
+                        self.social_cohesion_fetcher.calculate_social_cohesion_stress,
+                        region_name, days_back
+                    )] = "social_cohesion"
+                else:
+                    # Pre-set empty results for non-US states
+                    fetch_results["political"] = pd.DataFrame()
+                    fetch_results["crime"] = pd.DataFrame()
+                    fetch_results["misinformation"] = pd.DataFrame()
+                    fetch_results["social_cohesion"] = pd.DataFrame()
+                
+                # Collect results as they complete
+                for future in as_completed(futures):
+                    key = futures[future]
+                    try:
+                        result = future.result()
+                        fetch_results[key] = result
+                    except Exception as e:
+                        logger.warning("Failed to fetch data source", source=key, error=str(e)[:200])
+                        # Return appropriate empty value based on expected return type
+                        if key in ["search", "gdelt", "openfema", "openstates", "nws_alerts", "cisa_kev"]:
+                            from app.services.ingestion.gdelt_events import SourceStatus
+                            fetch_results[key] = (pd.DataFrame(), SourceStatus(
+                                provider=key, ok=False, error_type="exception",
+                                error_detail=str(e)[:100], fetched_at=datetime.now().isoformat(),
+                                rows=0, query_window_days=days_back
+                            ))
+                        else:
+                            fetch_results[key] = pd.DataFrame()
+
+            # Extract results
+            market_data = fetch_results.get("market", pd.DataFrame())
             if not market_data.empty:
                 sources.append("yfinance (VIX/SPY)")
 
-            # Fetch FRED economic indicators (if API key available)
-            fred_consumer_sentiment = self.fred_fetcher.fetch_consumer_sentiment(
-                days_back=days_back
-            )
-            fred_unemployment = self.fred_fetcher.fetch_unemployment_rate(
-                days_back=days_back
-            )
-            fred_jobless_claims = self.fred_fetcher.fetch_jobless_claims(
-                days_back=days_back
-            )
-            # Extended economic metrics (GDP growth, CPI inflation)
-            # Note: These use longer lookback (365 days) for YoY calculations
-            fred_gdp_growth = pd.DataFrame()
-            fred_cpi_inflation = pd.DataFrame()
-            try:
-                fred_gdp_growth = self.fred_fetcher.fetch_gdp_growth(
-                    days_back=365  # Quarterly data, need longer window
-                )
-                if not fred_gdp_growth.empty:
-                    sources.append("FRED (GDP Growth)")
-            except Exception as e:
-                logger.debug("Failed to fetch GDP growth", error=str(e))
-
-            try:
-                fred_cpi_inflation = self.fred_fetcher.fetch_cpi_inflation(
-                    days_back=365  # Need 12 months for YoY calculation
-                )
-                if not fred_cpi_inflation.empty:
-                    sources.append("FRED (CPI Inflation)")
-            except Exception as e:
-                logger.debug("Failed to fetch CPI inflation", error=str(e))
-
+            fred_consumer_sentiment = fetch_results.get("fred_consumer_sentiment", pd.DataFrame())
+            fred_unemployment = fetch_results.get("fred_unemployment", pd.DataFrame())
+            fred_jobless_claims = fetch_results.get("fred_jobless_claims", pd.DataFrame())
+            fred_gdp_growth = fetch_results.get("fred_gdp_growth", pd.DataFrame())
+            fred_cpi_inflation = fetch_results.get("fred_cpi_inflation", pd.DataFrame())
+            
+            if not fred_gdp_growth.empty:
+                sources.append("FRED (GDP Growth)")
+            if not fred_cpi_inflation.empty:
+                sources.append("FRED (CPI Inflation)")
             if (
                 not fred_consumer_sentiment.empty
                 or not fred_unemployment.empty
@@ -340,366 +448,176 @@ class BehavioralForecaster:
             ):
                 sources.append("FRED (Economic Indicators)")
 
-            # Fetch weather data
-            weather_data = self.weather_fetcher.fetch_regional_comfort(
-                latitude=latitude, longitude=longitude, days_back=days_back
-            )
+            weather_data = fetch_results.get("weather", pd.DataFrame())
             if not weather_data.empty:
                 sources.append("openmeteo.com (Weather)")
 
-            # Fetch search trends data (Wikipedia Pageviews - no key required)
-            search_data, search_status = self.search_fetcher.fetch_search_interest(
-                query="behavioral patterns",
-                days_back=days_back,
-                region_name=region_name,
-            )
-            if search_status.ok and not search_data.empty:
+            search_result = fetch_results.get("search", (pd.DataFrame(), None))
+            if isinstance(search_result, tuple):
+                search_data, search_status = search_result
+            else:
+                search_data, search_status = pd.DataFrame(), None
+            if search_status and search_status.ok and not search_data.empty:
                 sources.append("Wikimedia Pageviews (Search Trends)")
-            # Always store search trends status in metadata (even if failed)
 
-            # Fetch public health data
-            # Use normalized region_name as region_code to ensure region-specific data
-            # This ensures different regions get different health data (especially in CI mode)
-            # Normalize region_name to a consistent format for region_code
-            region_code_for_health = (
-                region_name.lower().replace(" ", "_").replace(",", "").replace(".", "")
-                if region_name
-                else f"lat{latitude:.2f}_lon{longitude:.2f}"
-            )
-            health_data = self.health_fetcher.fetch_health_risk_index(
-                region_code=region_code_for_health, days_back=days_back
-            )
+            health_data = fetch_results.get("health", pd.DataFrame())
             if not health_data.empty:
                 sources.append("public health API")
 
-            # Fetch mobility data (TSA passenger throughput - no key required)
-            # Pass region_name as region_code for cache key differentiation
-            # (TSA is national-level, but cache should be region-aware for future expansion)
-            region_code_for_mobility = (
-                region_name.lower().replace(" ", "_").replace(",", "").replace(".", "")
-                if region_name
-                else f"lat{latitude:.2f}_lon{longitude:.2f}"
-            )
-            mobility_data = self.mobility_fetcher.fetch_mobility_index(
-                latitude=latitude,
-                longitude=longitude,
-                region_code=region_code_for_mobility,
-                days_back=days_back,
-            )
+            mobility_data = fetch_results.get("mobility", pd.DataFrame())
             if not mobility_data.empty:
                 sources.append("TSA Passenger Throughput (Mobility)")
-            # Get status from last_status attribute if needed
             mobility_status = getattr(self.mobility_fetcher, "last_status", None)
 
-            # Fetch GDELT events data (digital attention)
-            gdelt_tone, gdelt_status = self.gdelt_fetcher.fetch_event_tone(
-                days_back=days_back
-            )
-            if gdelt_status.ok and not gdelt_tone.empty:
+            gdelt_result = fetch_results.get("gdelt", (pd.DataFrame(), None))
+            if isinstance(gdelt_result, tuple):
+                gdelt_tone, gdelt_status = gdelt_result
+            else:
+                gdelt_tone, gdelt_status = pd.DataFrame(), None
+            if gdelt_status and gdelt_status.ok and not gdelt_tone.empty:
                 sources.append("GDELT (Global Events)")
-            # Always store GDELT status in metadata (even if failed)
 
-            # Fetch OpenFEMA emergency management data
-            openfema_declarations, openfema_status = (
-                self.openfema_fetcher.fetch_disaster_declarations(
-                    region_name=region_name, days_back=days_back
-                )
-            )
-            if openfema_status.ok and not openfema_declarations.empty:
+            openfema_result = fetch_results.get("openfema", (pd.DataFrame(), None))
+            if isinstance(openfema_result, tuple):
+                openfema_declarations, openfema_status = openfema_result
+            else:
+                openfema_declarations, openfema_status = pd.DataFrame(), None
+            if openfema_status and openfema_status.ok and not openfema_declarations.empty:
                 sources.append("OpenFEMA (Emergency Management)")
-            # Always store OpenFEMA status in metadata (even if failed)
 
-            # Fetch OpenStates legislative activity data
-            openstates_activity, openstates_status = (
-                self.openstates_fetcher.fetch_legislative_activity(
-                    region_name=region_name, days_back=days_back
-                )
-            )
-            if openstates_status.ok and not openstates_activity.empty:
+            openstates_result = fetch_results.get("openstates", (pd.DataFrame(), None))
+            if isinstance(openstates_result, tuple):
+                openstates_activity, openstates_status = openstates_result
+            else:
+                openstates_activity, openstates_status = pd.DataFrame(), None
+            if openstates_status and openstates_status.ok and not openstates_activity.empty:
                 sources.append("OpenStates (Legislative Activity)")
-            # Always store OpenStates status in metadata (even if failed)
 
-            # Fetch NWS weather alerts data
-            nws_alerts, nws_alerts_status = (
-                self.nws_alerts_fetcher.fetch_weather_alerts(
-                    latitude=latitude, longitude=longitude, days_back=days_back
-                )
-            )
-            if nws_alerts_status.ok and not nws_alerts.empty:
+            nws_result = fetch_results.get("nws_alerts", (pd.DataFrame(), None))
+            if isinstance(nws_result, tuple):
+                nws_alerts, nws_alerts_status = nws_result
+            else:
+                nws_alerts, nws_alerts_status = pd.DataFrame(), None
+            if nws_alerts_status and nws_alerts_status.ok and not nws_alerts.empty:
                 sources.append("NWS (Weather Alerts)")
-            # Always store NWS alerts status in metadata (even if failed)
 
-            # Fetch CISA KEV cyber risk data
-            cisa_kev_data, cisa_kev_status = self.cisa_kev_fetcher.fetch_kev_catalog(
-                days_back=days_back
-            )
-            if cisa_kev_status.ok and not cisa_kev_data.empty:
+            cisa_result = fetch_results.get("cisa_kev", (pd.DataFrame(), None))
+            if isinstance(cisa_result, tuple):
+                cisa_kev_data, cisa_kev_status = cisa_result
+            else:
+                cisa_kev_data, cisa_kev_status = pd.DataFrame(), None
+            if cisa_kev_status and cisa_kev_status.ok and not cisa_kev_data.empty:
                 sources.append("CISA KEV (Cyber Risk)")
-            # Always store CISA KEV status in metadata (even if failed)
 
-            # Fetch OWID health data
-            # Try to map region to country (simplified: use region_name
-            # if it's a country)
-            country_name = (
-                region_name
-                if region_name in ["United States", "USA"]
-                else "United States"
-            )
-            owid_health = self.owid_fetcher.fetch_health_stress_index(
-                country=country_name, days_back=days_back
-            )
+            owid_health = fetch_results.get("owid", pd.DataFrame())
             if not owid_health.empty:
                 sources.append("OWID (Public Health)")
 
-            # Fetch USGS earthquake data (environmental hazard)
-            usgs_earthquakes = self.usgs_fetcher.fetch_earthquake_intensity(
-                days_back=days_back
-            )
+            usgs_earthquakes = fetch_results.get("usgs", pd.DataFrame())
             if not usgs_earthquakes.empty:
                 sources.append("USGS (Earthquakes)")
 
-            # Fetch EIA fuel prices by state (economic micro-signal)
-            # Extract state code from region_name or region_id for US states only
-            state_code = None
-            is_us_state = self._is_us_state(region_name)
-            
-            # Try to extract state from region_id first (e.g., "us_il" -> "IL")
-            if region_id and "_" in region_id:
-                parts = region_id.split("_")
-                if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
-                    state_code = parts[1].upper()
-                    is_us_state = True  # If region_id is us_XX, it's a US state
-            
-            # Fallback to extracting from region_name
-            if not state_code and is_us_state and region_name:
-                # Use the same state name mapping as _is_us_state
-                # Try to extract 2-letter code from region_name
-                # Handle formats: "Illinois", "IL", "us_il"
-                state_name_to_code = {
-                    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-                    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-                    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-                    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-                    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-                    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-                    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-                    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-                    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-                    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-                    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-                    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-                    "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
-                }
-                # Check if region_name is a full state name
-                if region_name in state_name_to_code:
-                    state_code = state_name_to_code[region_name]
-                # Check if it's already a 2-letter code
-                elif len(region_name) == 2 and region_name.upper() in state_name_to_code.values():
-                    state_code = region_name.upper()
-                # Try to extract from strings like "us_il"
-                elif "_" in region_name:
-                    parts = region_name.split("_")
-                    if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
-                        state_code = parts[1].upper()
-
-            fuel_data = pd.DataFrame()
-            fuel_status = None
-            if state_code:
-                try:
-                    fuel_data, fuel_status = self.eia_fuel_fetcher.fetch_fuel_stress_index(
-                        state=state_code,
-                        days_back=days_back,
-                    )
-                    if fuel_status and fuel_status.ok and not fuel_data.empty:
-                        sources.append("EIA (Fuel Prices by State)")
-                except Exception as e:
-                    logger.debug("Failed to fetch EIA fuel prices", state=state_code, error=str(e))
-                    fuel_data = pd.DataFrame()
+            # Extract additional results from parallel fetch
+            # EIA fuel prices
+            eia_fuel_result = fetch_results.get("eia_fuel", (pd.DataFrame(), None))
+            if isinstance(eia_fuel_result, tuple):
+                fuel_data, fuel_status = eia_fuel_result
             else:
-                # Not a US state or couldn't extract state code - skip fuel prices
-                logger.debug("Skipping EIA fuel prices (not US state or state code not extractable)", region_name=region_name)
+                fuel_data, fuel_status = pd.DataFrame(), None
+            if fuel_status and fuel_status.ok and not fuel_data.empty:
+                sources.append("EIA (Fuel Prices by State)")
 
-            # Fetch drought monitor data (state-level)
-            drought_data = pd.DataFrame()
-            drought_status = None
-            if state_code:
-                try:
-                    drought_data, drought_status = self.drought_fetcher.fetch_drought_stress_index(
-                        state=state_code,
-                        days_back=days_back,
-                    )
-                    if drought_status and drought_status.ok and not drought_data.empty:
-                        sources.append("U.S. Drought Monitor")
-                except Exception as e:
-                    logger.debug("Failed to fetch drought monitor data", state=state_code, error=str(e))
-                    drought_data = pd.DataFrame()
+            # Drought monitor
+            drought_result = fetch_results.get("drought", pd.DataFrame())
+            if isinstance(drought_result, tuple):
+                drought_data, drought_status = drought_result
             else:
-                logger.debug("Skipping drought monitor (not US state or state code not extractable)", region_name=region_name)
+                drought_data, drought_status = drought_result, None
+            if drought_status and drought_status.ok and not drought_data.empty:
+                sources.append("U.S. Drought Monitor")
 
-            # Fetch NOAA storm events data (state-level)
-            storm_data = pd.DataFrame()
-            storm_status = None
-            if state_code:
-                try:
-                    storm_data, storm_status = self.storm_fetcher.fetch_storm_stress_indices(
-                        state=state_code,
-                        days_back=days_back,
-                    )
-                    if storm_status and storm_status.ok and not storm_data.empty:
-                        sources.append("NOAA Storm Events")
-                except Exception as e:
-                    logger.debug("Failed to fetch NOAA storm events", state=state_code, error=str(e))
-                    storm_data = pd.DataFrame()
+            # Storm events
+            storm_result = fetch_results.get("storm", pd.DataFrame())
+            if isinstance(storm_result, tuple):
+                storm_data, storm_status = storm_result
             else:
-                logger.debug("Skipping NOAA storm events (not US state or state code not extractable)", region_name=region_name)
+                storm_data, storm_status = storm_result, None
+            if storm_status and storm_status.ok and not storm_data.empty:
+                sources.append("NOAA Storm Events")
 
-            # Fetch OpenAQ air quality data
-            air_quality_data = pd.DataFrame()
-            air_quality_status = None
-            try:
-                air_quality_data, air_quality_status = (
-                    self.openaq_fetcher.fetch_air_quality(
-                        latitude=latitude,
-                        longitude=longitude,
-                        radius_km=50,
-                        days_back=days_back,
-                    )
-                )
-                if air_quality_status and air_quality_status.ok and not air_quality_data.empty:
-                    sources.append("OpenAQ (Air Quality)")
-            except Exception as e:
-                logger.warning("Failed to fetch air quality data", error=str(e))
-                # Create empty status for metadata
+            # OpenAQ air quality
+            air_quality_result = fetch_results.get("air_quality", (pd.DataFrame(), None))
+            if isinstance(air_quality_result, tuple):
+                air_quality_data, air_quality_status = air_quality_result
+            else:
+                air_quality_data, air_quality_status = pd.DataFrame(), None
+            if air_quality_status and air_quality_status.ok and not air_quality_data.empty:
+                sources.append("OpenAQ (Air Quality)")
+            elif air_quality_status is None:
+                # Create empty status if not in results
                 from app.services.ingestion.gdelt_events import SourceStatus
-
                 air_quality_status = SourceStatus(
-                    provider="OpenAQ",
-                    ok=False,
-                    error_type="exception",
-                    error_detail=str(e)[:100],
-                    fetched_at=datetime.now().isoformat(),
-                    rows=0,
-                    query_window_days=days_back,
+                    provider="OpenAQ", ok=False, error_type="not_fetched",
+                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
+                    rows=0, query_window_days=days_back
                 )
 
-            # Fetch legislative activity signal from GDELT (no-key fallback)
-            legislative_data = pd.DataFrame()
-            legislative_status = None
-            try:
-                legislative_data, legislative_status = (
-                    self.gdelt_fetcher.fetch_legislative_attention(
-                        region_name=region_name, days_back=days_back
-                    )
-                )
-                if legislative_status.ok and not legislative_data.empty:
-                    sources.append("GDELT Legislative Events")
-            except Exception as e:
-                logger.warning("Failed to fetch legislative data", error=str(e))
-                # Create empty status for metadata
+            # GDELT legislative
+            legislative_result = fetch_results.get("legislative", (pd.DataFrame(), None))
+            if isinstance(legislative_result, tuple):
+                legislative_data, legislative_status = legislative_result
+            else:
+                legislative_data, legislative_status = pd.DataFrame(), None
+            if legislative_status and legislative_status.ok and not legislative_data.empty:
+                sources.append("GDELT Legislative Events")
+            elif legislative_status is None:
                 from app.services.ingestion.gdelt_events import SourceStatus
-
                 legislative_status = SourceStatus(
-                    provider="GDELT Legislative Events",
-                    ok=False,
-                    error_type="exception",
-                    error_detail=str(e)[:100],
-                    fetched_at=datetime.now().isoformat(),
-                    rows=0,
-                    query_window_days=days_back,
+                    provider="GDELT Legislative Events", ok=False, error_type="not_fetched",
+                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
+                    rows=0, query_window_days=days_back
                 )
 
-            # Fetch enforcement/ICE event signal from GDELT (for adjustment of political/social stress)
-            enforcement_data = pd.DataFrame()
-            enforcement_status = None
-            try:
-                enforcement_data, enforcement_status = (
-                    self.gdelt_fetcher.fetch_enforcement_attention(
-                        region_name=region_name, days_back=days_back
-                    )
-                )
-                if enforcement_status.ok and not enforcement_data.empty:
-                    sources.append("GDELT Enforcement Events")
-            except Exception as e:
-                logger.warning("Failed to fetch enforcement data", error=str(e))
-                # Create empty status for metadata
+            # GDELT enforcement
+            enforcement_result = fetch_results.get("enforcement", (pd.DataFrame(), None))
+            if isinstance(enforcement_result, tuple):
+                enforcement_data, enforcement_status = enforcement_result
+            else:
+                enforcement_data, enforcement_status = pd.DataFrame(), None
+            if enforcement_status and enforcement_status.ok and not enforcement_data.empty:
+                sources.append("GDELT Enforcement Events")
+            elif enforcement_status is None:
                 from app.services.ingestion.gdelt_events import SourceStatus
-
                 enforcement_status = SourceStatus(
-                    provider="GDELT Enforcement Events",
-                    ok=False,
-                    error_type="exception",
-                    error_detail=str(e)[:100],
-                    fetched_at=datetime.now().isoformat(),
-                    rows=0,
-                    query_window_days=days_back,
+                    provider="GDELT Enforcement Events", ok=False, error_type="not_fetched",
+                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
+                    rows=0, query_window_days=days_back
                 )
 
-            # Fetch political stress data (for US states only)
-            political_data = pd.DataFrame()
-            crime_data = pd.DataFrame()
-            misinformation_data = pd.DataFrame()
-            social_cohesion_data = pd.DataFrame()
+            # Political, crime, misinformation, social cohesion (from parallel fetch)
+            political_result = fetch_results.get("political", pd.DataFrame())
+            political_data = political_result if isinstance(political_result, pd.DataFrame) else pd.DataFrame()
+            if not political_data.empty and "political_stress" in political_data.columns:
+                political_data = political_data[["timestamp", "political_stress"]]
+                sources.append("political_ingestion")
 
-            is_us_state = self._is_us_state(region_name)
-            if is_us_state:
-                try:
-                    political_data = self.political_fetcher.calculate_political_stress(
-                        state_name=region_name, days_back=days_back
-                    )
-                    if (
-                        not political_data.empty
-                        and "political_stress" in political_data.columns
-                    ):
-                        political_data = political_data[
-                            ["timestamp", "political_stress"]
-                        ]
-                        sources.append("political_ingestion")
-                except Exception as e:
-                    logger.warning("Failed to fetch political data", error=str(e))
+            crime_result = fetch_results.get("crime", pd.DataFrame())
+            crime_data = crime_result if isinstance(crime_result, pd.DataFrame) else pd.DataFrame()
+            if not crime_data.empty and "crime_stress" in crime_data.columns:
+                crime_data = crime_data[["timestamp", "crime_stress"]]
+                sources.append("crime_ingestion")
 
-                try:
-                    crime_data = self.crime_fetcher.calculate_crime_stress(
-                        region_name=region_name, days_back=days_back
-                    )
-                    if not crime_data.empty and "crime_stress" in crime_data.columns:
-                        crime_data = crime_data[["timestamp", "crime_stress"]]
-                        sources.append("crime_ingestion")
-                except Exception as e:
-                    logger.warning("Failed to fetch crime data", error=str(e))
+            misinformation_result = fetch_results.get("misinformation", pd.DataFrame())
+            misinformation_data = misinformation_result if isinstance(misinformation_result, pd.DataFrame) else pd.DataFrame()
+            if not misinformation_data.empty and "misinformation_stress" in misinformation_data.columns:
+                misinformation_data = misinformation_data[["timestamp", "misinformation_stress"]]
+                sources.append("misinformation_ingestion")
 
-                try:
-                    misinformation_data = (
-                        self.misinformation_fetcher.calculate_misinformation_stress(
-                            region_name=region_name, days_back=days_back
-                        )
-                    )
-                    if (
-                        not misinformation_data.empty
-                        and "misinformation_stress" in misinformation_data.columns
-                    ):
-                        misinformation_data = misinformation_data[
-                            ["timestamp", "misinformation_stress"]
-                        ]
-                        sources.append("misinformation_ingestion")
-                except Exception as e:
-                    logger.warning("Failed to fetch misinformation data", error=str(e))
-
-                try:
-                    social_cohesion_data = (
-                        self.social_cohesion_fetcher.calculate_social_cohesion_stress(
-                            region_name=region_name, days_back=days_back
-                        )
-                    )
-                    if (
-                        not social_cohesion_data.empty
-                        and "social_cohesion_stress" in social_cohesion_data.columns
-                    ):
-                        social_cohesion_data = social_cohesion_data[
-                            ["timestamp", "social_cohesion_stress"]
-                        ]
-                        sources.append("social_cohesion_ingestion")
-                except Exception as e:
-                    logger.warning("Failed to fetch social cohesion data", error=str(e))
+            social_cohesion_result = fetch_results.get("social_cohesion", pd.DataFrame())
+            social_cohesion_data = social_cohesion_result if isinstance(social_cohesion_result, pd.DataFrame) else pd.DataFrame()
+            if not social_cohesion_data.empty and "social_cohesion_stress" in social_cohesion_data.columns:
+                social_cohesion_data = social_cohesion_data[["timestamp", "social_cohesion_stress"]]
+                sources.append("social_cohesion_ingestion")
 
             # Harmonize data
             if (

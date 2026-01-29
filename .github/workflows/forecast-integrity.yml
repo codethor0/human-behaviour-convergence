@@ -8,6 +8,10 @@ on:
 jobs:
   forecast-integrity:
     runs-on: ubuntu-latest
+    env:
+      HBC_CI_OFFLINE_DATA: "1"
+      CI_OFFLINE_MODE: "true"
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
 
