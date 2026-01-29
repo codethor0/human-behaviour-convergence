@@ -34,6 +34,7 @@ const DEFAULT_HEIGHTS: Record<string, string> = {
   'classical-models': '500px',
   'model-performance': '400px',
   'data-sources-health-enhanced': '400px',
+  'hbc-anomaly-atlas': '600px',
 };
 
 export function GrafanaDashboardEmbed({
@@ -53,9 +54,9 @@ export function GrafanaDashboardEmbed({
     : '';
   const panelParam = panelId ? `&panelId=${panelId}` : '';
   const refresh = refreshInterval || (dashboardUid.includes('live') || dashboardUid.includes('realtime') ? '30s' : '5m');
-  
+
   const src = `${grafanaBase}/d/${dashboardUid}?orgId=1&theme=light&kiosk=tv&refresh=${refresh}${regionParam}${panelParam}`;
-  
+
   // Debug logging (only in development)
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log(`[GrafanaDashboardEmbed] Loading dashboard: ${dashboardUid}`, {
@@ -63,7 +64,7 @@ export function GrafanaDashboardEmbed({
       src: src.replace(/http:\/\/[^/]+/, grafanaBase),
     });
   }
-  
+
   const customHeight = height || DEFAULT_HEIGHTS[dashboardUid] || '500px';
   const iframeHeight = typeof customHeight === 'number' ? `${customHeight}px` : customHeight;
 

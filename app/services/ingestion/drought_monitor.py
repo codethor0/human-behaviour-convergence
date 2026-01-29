@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: PROPRIETARY
 """U.S. Drought Monitor state-level drought severity connector."""
-import os
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Tuple
 
 import pandas as pd
-import requests
 import structlog
 
 from app.services.ingestion.ci_offline_data import (
@@ -21,19 +19,57 @@ DROUGHT_MONITOR_BASE = "https://droughtmonitor.unl.edu"
 
 # State name to abbreviation mapping
 STATE_NAME_TO_ABBR = {
-    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-    "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
+    "District of Columbia": "DC",
 }
 
 
@@ -145,7 +181,11 @@ class DroughtMonitorFetcher:
             df, cache_time = self._cache[cache_key]
             age_minutes = (datetime.now() - cache_time).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached drought monitor data", state=state_code, age_minutes=age_minutes)
+                logger.info(
+                    "Using cached drought monitor data",
+                    state=state_code,
+                    age_minutes=age_minutes,
+                )
                 status = SourceStatus(
                     provider="DroughtMonitor_Cached",
                     ok=True,
@@ -175,9 +215,21 @@ class DroughtMonitorFetcher:
             # TX varies (DSCI 50-300)
             # FL typically lower (DSCI 0-150)
             state_dsci_baselines = {
-                "CA": 350, "TX": 150, "FL": 50, "AZ": 300, "NM": 250,
-                "NV": 280, "UT": 200, "CO": 180, "WY": 150, "MT": 120,
-                "IL": 80, "IA": 60, "NY": 40, "MA": 30, "WA": 100,
+                "CA": 350,
+                "TX": 150,
+                "FL": 50,
+                "AZ": 300,
+                "NM": 250,
+                "NV": 280,
+                "UT": 200,
+                "CO": 180,
+                "WY": 150,
+                "MT": 120,
+                "IL": 80,
+                "IA": 60,
+                "NY": 40,
+                "MA": 30,
+                "WA": 100,
             }
             baseline_dsci = state_dsci_baselines.get(state_code, 100)
 
@@ -194,6 +246,7 @@ class DroughtMonitorFetcher:
 
                 # Add variation to baseline
                 import random
+
                 random.seed(hash(f"{state_code}_{thursday_date.strftime('%Y-%W')}"))
                 variation = random.uniform(-50, 50)
                 dsci = max(0, min(500, baseline_dsci + variation))
@@ -209,11 +262,17 @@ class DroughtMonitorFetcher:
                 dates = pd.date_range(start=start_date, end=end_date, freq="D")
                 dsci_values = [baseline_dsci] * len(dates)
 
-            df = pd.DataFrame({
-                "timestamp": dates,
-                "dsci": dsci_values,
-            })
-            df = df.drop_duplicates(subset=["timestamp"]).sort_values("timestamp").reset_index(drop=True)
+            df = pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "dsci": dsci_values,
+                }
+            )
+            df = (
+                df.drop_duplicates(subset=["timestamp"])
+                .sort_values("timestamp")
+                .reset_index(drop=True)
+            )
 
             # Forward-fill weekly values to daily resolution
             date_range = pd.date_range(start=start_date, end=end_date, freq="D")
@@ -223,7 +282,9 @@ class DroughtMonitorFetcher:
 
             # Normalize DSCI (0-500) to drought_stress_index (0-1)
             df_daily["drought_stress_index"] = df_daily["dsci"] / 500.0
-            df_daily["drought_stress_index"] = df_daily["drought_stress_index"].clip(0.0, 1.0)
+            df_daily["drought_stress_index"] = df_daily["drought_stress_index"].clip(
+                0.0, 1.0
+            )
 
             result_df = df_daily[["timestamp", "drought_stress_index", "dsci"]].copy()
 
@@ -249,7 +310,9 @@ class DroughtMonitorFetcher:
             return result_df, status
 
         except Exception as e:
-            logger.error("Drought monitor error", state=state_code, error=str(e), exc_info=True)
+            logger.error(
+                "Drought monitor error", state=state_code, error=str(e), exc_info=True
+            )
             return self._fallback_drought_data(state_code, days_back)
 
     def _fallback_drought_data(
@@ -271,7 +334,11 @@ class DroughtMonitorFetcher:
             if key.startswith(cache_key_pattern):
                 age_days = (datetime.now() - cache_time).total_seconds() / 86400
                 if age_days < 7:  # Use cached data if less than 7 days old
-                    logger.info("Using stale cached drought data", state=state_code, age_days=age_days)
+                    logger.info(
+                        "Using stale cached drought data",
+                        state=state_code,
+                        age_days=age_days,
+                    )
                     status = SourceStatus(
                         provider="DroughtMonitor_StaleCache",
                         ok=True,
@@ -285,11 +352,13 @@ class DroughtMonitorFetcher:
         # Ultimate fallback: return default neutral values
         end_date = datetime.now()
         dates = [end_date - timedelta(days=i) for i in range(days_back, 0, -1)]
-        df = pd.DataFrame({
-            "timestamp": dates,
-            "dsci": [100] * len(dates),  # Moderate drought baseline
-            "drought_stress_index": [0.2] * len(dates),  # Low-moderate stress
-        })
+        df = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "dsci": [100] * len(dates),  # Moderate drought baseline
+                "drought_stress_index": [0.2] * len(dates),  # Low-moderate stress
+            }
+        )
 
         status = SourceStatus(
             provider="DroughtMonitor_Fallback",

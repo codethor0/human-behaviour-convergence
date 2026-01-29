@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """OpenAQ API connector for air quality data."""
-import os
 import time
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
@@ -143,9 +142,7 @@ class OpenAQAirQualityFetcher:
         # Check cache
         if use_cache and cache_key in self._cache:
             cached_df, cached_time = self._cache[cache_key]
-            if (now - cached_time).total_seconds() < (
-                self.cache_duration_minutes * 60
-            ):
+            if (now - cached_time).total_seconds() < (self.cache_duration_minutes * 60):
                 logger.debug("Using cached OpenAQ data", cache_key=cache_key)
                 status = SourceStatus(
                     provider="OpenAQ_Cached",
@@ -285,12 +282,16 @@ class OpenAQAirQualityFetcher:
                 # Calculate AQI (simplified - using PM2.5 as primary)
                 # US EPA AQI formula for PM2.5
                 pm25 = df_pivot["pm25"].fillna(0.0)
-                df_pivot["aqi"] = pd.cut(
-                    pm25,
-                    bins=[0, 12, 35.4, 55.4, 150.4, 250.4, float("inf")],
-                    labels=[50, 100, 150, 200, 300, 400],
-                    include_lowest=True,
-                ).astype(float).fillna(50.0)  # Default to 50 (good) if out of range
+                df_pivot["aqi"] = (
+                    pd.cut(
+                        pm25,
+                        bins=[0, 12, 35.4, 55.4, 150.4, 250.4, float("inf")],
+                        labels=[50, 100, 150, 200, 300, 400],
+                        include_lowest=True,
+                    )
+                    .astype(float)
+                    .fillna(50.0)
+                )  # Default to 50 (good) if out of range
             else:
                 df_pivot = pd.DataFrame(columns=["timestamp", "pm25", "pm10", "aqi"])
 
@@ -299,7 +300,8 @@ class OpenAQAirQualityFetcher:
 
             # Filter to requested date range
             df_pivot = df_pivot[
-                (df_pivot["timestamp"] >= start_date) & (df_pivot["timestamp"] <= end_date)
+                (df_pivot["timestamp"] >= start_date)
+                & (df_pivot["timestamp"] <= end_date)
             ]
 
             # Cache result

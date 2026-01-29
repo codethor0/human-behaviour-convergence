@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Data quality validation framework - Great Expectations-style checkpoints."""
 import json
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -59,7 +58,10 @@ class DataQualityCheckpoint:
                 check_name=f"{source_name}_schema",
                 status="FAIL",
                 message=f"Missing required columns: {missing}",
-                evidence={"missing_columns": missing, "present_columns": list(df.columns)},
+                evidence={
+                    "missing_columns": missing,
+                    "present_columns": list(df.columns),
+                },
             )
         return ValidationResult(
             check_name=f"{source_name}_schema",
@@ -75,10 +77,10 @@ class DataQualityCheckpoint:
         for col, expected_type in column_types.items():
             if col not in df.columns:
                 continue
-            if expected_type == float:
+            if expected_type is float:
                 if not pd.api.types.is_numeric_dtype(df[col]):
                     issues.append(f"{col} should be numeric, got {df[col].dtype}")
-            elif expected_type == str:
+            elif expected_type is str:
                 if not pd.api.types.is_string_dtype(df[col]):
                     issues.append(f"{col} should be string, got {df[col].dtype}")
 
@@ -339,12 +341,16 @@ class DataQualityCheckpoint:
         for source, results in sorted(by_source.items()):
             report_lines.append(f"\n### {source}")
             for result in results:
-                status_emoji = {"PASS": "✅", "WARN": "⚠️", "FAIL": "❌"}.get(
-                    result.status, "❓"
+                status_emoji = {"PASS": "[OK]", "WARN": "[WARN]", "FAIL": "[FAIL]"}.get(
+                    result.status, ""
                 )
-                report_lines.append(f"{status_emoji} {result.check_name}: {result.message}")
+                report_lines.append(
+                    f"{status_emoji} {result.check_name}: {result.message}"
+                )
                 if result.evidence:
-                    report_lines.append(f"   Evidence: {json.dumps(result.evidence, indent=2)}")
+                    report_lines.append(
+                        f"   Evidence: {json.dumps(result.evidence, indent=2)}"
+                    )
 
         return "\n".join(report_lines)
 

@@ -14,7 +14,6 @@ These tests verify system properties that must hold across all inputs:
 import hashlib
 import json
 import os
-from typing import Dict, List
 
 import pandas as pd
 import pytest
@@ -130,7 +129,9 @@ class TestPropertyInvariants:
         """
         # Only run in CI offline mode
         if not os.getenv("HBC_CI_OFFLINE_DATA") == "1":
-            pytest.skip("P2 determinism test requires CI offline mode (HBC_CI_OFFLINE_DATA=1)")
+            pytest.skip(
+                "P2 determinism test requires CI offline mode (HBC_CI_OFFLINE_DATA=1)"
+            )
 
         region = {"name": "Illinois", "lat": 40.3495, "lon": -88.9861}
 
@@ -185,13 +186,21 @@ class TestPropertyInvariants:
         fetcher = EIAFuelPricesFetcher()
 
         # Fetch for two different states
-        df1, _ = fetcher.fetch_fuel_stress_index(state="IL", days_back=30, use_cache=False)
-        df2, _ = fetcher.fetch_fuel_stress_index(state="AZ", days_back=30, use_cache=False)
+        df1, _ = fetcher.fetch_fuel_stress_index(
+            state="IL", days_back=30, use_cache=False
+        )
+        df2, _ = fetcher.fetch_fuel_stress_index(
+            state="AZ", days_back=30, use_cache=False
+        )
 
         # Check that cache keys differ (internal check - cache keys should include state)
         # We verify by checking that fetching with cache returns different data
-        df1_cached, _ = fetcher.fetch_fuel_stress_index(state="IL", days_back=30, use_cache=True)
-        df2_cached, _ = fetcher.fetch_fuel_stress_index(state="AZ", days_back=30, use_cache=True)
+        df1_cached, _ = fetcher.fetch_fuel_stress_index(
+            state="IL", days_back=30, use_cache=True
+        )
+        df2_cached, _ = fetcher.fetch_fuel_stress_index(
+            state="AZ", days_back=30, use_cache=True
+        )
 
         # If cache keys were correct, cached data should match original
         assert not df1.empty and not df1_cached.empty, "IL data should be cached"
@@ -199,11 +208,21 @@ class TestPropertyInvariants:
 
         # Verify data differs between states (proves cache keys are different)
         if not df1.empty and not df2.empty:
-            il_avg = df1["fuel_stress_index"].mean() if "fuel_stress_index" in df1.columns else 0.0
-            az_avg = df2["fuel_stress_index"].mean() if "fuel_stress_index" in df2.columns else 0.0
+            il_avg = (
+                df1["fuel_stress_index"].mean()
+                if "fuel_stress_index" in df1.columns
+                else 0.0
+            )
+            az_avg = (
+                df2["fuel_stress_index"].mean()
+                if "fuel_stress_index" in df2.columns
+                else 0.0
+            )
             # In CI offline mode, states should differ due to state_code-based seeding
             # In live mode, they should differ due to actual state-specific data
-            assert abs(il_avg - az_avg) > 0.001 or os.getenv("HBC_CI_OFFLINE_DATA") == "1", (
+            assert (
+                abs(il_avg - az_avg) > 0.001 or os.getenv("HBC_CI_OFFLINE_DATA") == "1"
+            ), (
                 f"Property P3: Cache keys may not include geo identity. "
                 f"IL and AZ data are identical (IL avg: {il_avg}, AZ avg: {az_avg})."
             )
@@ -220,11 +239,14 @@ class TestPropertyInvariants:
         import os
 
         metrics_url = os.getenv("HBC_METRICS_URL", "http://localhost:8100/metrics")
-        
+
         try:
             response = requests.get(metrics_url, timeout=5)
             response.raise_for_status()
-        except (requests.exceptions.RequestException, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.RequestException,
+            requests.exceptions.ConnectionError,
+        ):
             pytest.skip("Metrics endpoint not accessible (backend may not be running)")
 
         # Generate forecasts for at least 2 regions
@@ -244,6 +266,7 @@ class TestPropertyInvariants:
 
         # Wait a moment for metrics to update
         import time
+
         time.sleep(2)
 
         # Fetch metrics
@@ -253,6 +276,7 @@ class TestPropertyInvariants:
 
         # Extract region labels from behavior_index metrics
         import re
+
         region_pattern = r'behavior_index\{[^}]*region="([^"]+)"[^}]*\}'
         regions_found = set(re.findall(region_pattern, metrics_text))
 
@@ -275,11 +299,14 @@ class TestPropertyInvariants:
         import re
 
         metrics_url = os.getenv("HBC_METRICS_URL", "http://localhost:8100/metrics")
-        
+
         try:
             response = requests.get(metrics_url, timeout=5)
             response.raise_for_status()
-        except (requests.exceptions.RequestException, requests.exceptions.ConnectionError):
+        except (
+            requests.exceptions.RequestException,
+            requests.exceptions.ConnectionError,
+        ):
             pytest.skip("Metrics endpoint not accessible (backend may not be running)")
 
         metrics_text = response.text
@@ -296,7 +323,7 @@ class TestPropertyInvariants:
         unknown_pattern = r'region="unknown_[^"]+"'
         unknown_matches = re.findall(unknown_pattern, metrics_text)
         total_region_labels = len(re.findall(r'region="[^"]+"', metrics_text))
-        
+
         if total_region_labels > 0:
             unknown_ratio = len(unknown_matches) / total_region_labels
             assert unknown_ratio < 0.05, (
@@ -308,8 +335,12 @@ class TestPropertyInvariants:
         # Check region ID format (should match known patterns: us_*, city_*, etc.)
         region_pattern = r'region="([^"]+)"'
         all_regions = set(re.findall(region_pattern, metrics_text))
-        valid_patterns = [r'^us_[a-z]{2}$', r'^city_[a-z]+$', r'^[A-Z][a-z]+$']  # us_il, city_london, Illinois
-        
+        valid_patterns = [
+            r"^us_[a-z]{2}$",
+            r"^city_[a-z]+$",
+            r"^[A-Z][a-z]+$",
+        ]  # us_il, city_london, Illinois
+
         invalid_regions = []
         for region in all_regions:
             if region == "None" or region.startswith("unknown_"):
@@ -423,7 +454,9 @@ class TestPropertyInvariants:
                 # Check behavior_index range
                 bi = item.get("behavior_index")
                 if bi is not None:
-                    assert not pd.isna(bi), f"Property P7: behavior_index contains NaN: {item}"
+                    assert not pd.isna(
+                        bi
+                    ), f"Property P7: behavior_index contains NaN: {item}"
                     assert (
                         0.0 <= float(bi) <= 1.0
                     ), f"Property P7: behavior_index out of range [0,1]: {bi}"
@@ -441,7 +474,9 @@ class TestPropertyInvariants:
                 ]:
                     val = item.get(idx_name)
                     if val is not None:
-                        assert not pd.isna(val), f"Property P7: {idx_name} contains NaN: {item}"
+                        assert not pd.isna(
+                            val
+                        ), f"Property P7: {idx_name} contains NaN: {item}"
                         assert (
                             0.0 <= float(val) <= 1.0
                         ), f"Property P7: {idx_name} out of range [0,1]: {val}"
@@ -451,7 +486,9 @@ class TestPropertyInvariants:
             if isinstance(item, dict):
                 pred = item.get("prediction")
                 if pred is not None:
-                    assert not pd.isna(pred), f"Property P7: forecast prediction contains NaN: {item}"
+                    assert not pd.isna(
+                        pred
+                    ), f"Property P7: forecast prediction contains NaN: {item}"
                     assert (
                         0.0 <= float(pred) <= 1.0
                     ), f"Property P7: forecast prediction out of range [0,1]: {pred}"

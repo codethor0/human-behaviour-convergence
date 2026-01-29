@@ -72,20 +72,20 @@ def find_artifact_files() -> List[str]:
         ".pytest_cache/**",
         "__pycache__/**",
     ]
-    
+
     artifacts = []
     for root, dirs, files in os.walk("."):
         # Skip git and common ignore dirs
         if ".git" in root or "node_modules" in root or ".venv" in root:
             continue
-        
+
         for file in files:
             filepath = os.path.join(root, file)
             for pattern in artifact_patterns:
                 if pattern.replace("*", "") in filepath.lower():
                     artifacts.append(filepath)
                     break
-    
+
     return artifacts[:100]  # Limit to first 100
 
 
@@ -93,9 +93,9 @@ def main():
     """Main execution."""
     output_dir = Path(os.getenv("EVIDENCE_DIR", "/tmp/hbc_repo_hygiene"))
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print("=== Repo Hygiene Audit ===\n")
-    
+
     # Largest files
     print("Top 50 largest tracked files:")
     largest = find_largest_files(50)
@@ -107,9 +107,9 @@ def main():
             f.write(line)
             if size_mb > 1.0:  # Only print files > 1MB
                 print(f"  {size_mb:.2f} MB\t{filepath}")
-    
+
     print(f"\nSaved to: {largest_file}")
-    
+
     # Untracked files
     print("\nUntracked files (first 50):")
     untracked = find_untracked_files()[:50]
@@ -118,9 +118,9 @@ def main():
         for filepath in untracked:
             f.write(f"{filepath}\n")
             print(f"  {filepath}")
-    
+
     print(f"\nSaved to: {untracked_file}")
-    
+
     # Artifacts
     print("\nLikely artifact files (first 50):")
     artifacts = find_artifact_files()[:50]
@@ -129,16 +129,16 @@ def main():
         for filepath in artifacts:
             f.write(f"{filepath}\n")
             print(f"  {filepath}")
-    
+
     print(f"\nSaved to: {artifacts_file}")
-    
+
     # Summary
     print("\n=== Summary ===")
     print(f"Tracked files: {len(get_tracked_files())}")
     print(f"Large files (>1MB): {len([f for f, s in largest if s > 1024 * 1024])}")
     print(f"Untracked files: {len(untracked)}")
     print(f"Artifact files: {len(artifacts)}")
-    
+
     # Check for secrets (basic patterns)
     print("\nChecking for potential secrets...")
     secret_patterns = [
@@ -146,7 +146,7 @@ def main():
         r"password\s*=\s*['\"][^'\"]{8,}",
         r"secret\s*=\s*['\"][^'\"]{10,}",
     ]
-    
+
     tracked = get_tracked_files()
     suspicious = []
     for filepath in tracked[:100]:  # Check first 100 files
@@ -157,19 +157,20 @@ def main():
                 content = f.read()
                 for pattern in secret_patterns:
                     import re
+
                     if re.search(pattern, content, re.IGNORECASE):
                         suspicious.append(filepath)
                         break
         except Exception:
             continue
-    
+
     if suspicious:
         print(f"  WARNING: {len(suspicious)} files may contain secrets")
         for f in suspicious[:10]:
             print(f"    - {f}")
     else:
-        print("  ✓ No obvious secrets found in tracked files")
-    
+        print("   No obvious secrets found in tracked files")
+
     print(f"\nAudit complete. Reports saved to: {output_dir}")
 
 

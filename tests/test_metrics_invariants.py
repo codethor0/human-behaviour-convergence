@@ -2,7 +2,6 @@
 """Metrics invariants - Prometheus + Grafana truth-to-UI verification."""
 import json
 import re
-from typing import List, Set
 
 import pytest
 
@@ -19,7 +18,9 @@ class TestMetricsRegionLabels:
         import urllib.request
 
         try:
-            response = urllib.request.urlopen("http://localhost:8100/metrics", timeout=5)
+            response = urllib.request.urlopen(
+                "http://localhost:8100/metrics", timeout=5
+            )
             metrics_text = response.read().decode()
         except Exception:
             pytest.skip("Backend not available for metrics test")
@@ -37,7 +38,9 @@ class TestMetricsRegionLabels:
             if line.startswith("behavior_index{")
         ]
         for line in behavior_index_lines:
-            assert 'region=' in line, f"behavior_index metric missing region label: {line}"
+            assert (
+                "region=" in line
+            ), f"behavior_index metric missing region label: {line}"
 
     def test_metrics_multi_region_series_exist(self):
         """
@@ -138,7 +141,9 @@ class TestGrafanaVariableTruth:
         import urllib.request
 
         try:
-            response = urllib.request.urlopen("http://localhost:8100/metrics", timeout=5)
+            response = urllib.request.urlopen(
+                "http://localhost:8100/metrics", timeout=5
+            )
             metrics_text = response.read().decode()
         except Exception:
             pytest.skip("Backend not available for metrics test")
@@ -190,10 +195,12 @@ class TestMetricsConsistency:
             query = "label_values(behavior_index, region)"
             encoded = urllib.parse.quote(query)
             response = urllib.request.urlopen(
-                f"http://localhost:9090/api/v1/label/region/values", timeout=5
+                "http://localhost:9090/api/v1/label/region/values", timeout=5
             )
             metrics_data = json.loads(response.read().decode())
-            metrics_regions = set(metrics_data) if isinstance(metrics_data, list) else set()
+            metrics_regions = (
+                set(metrics_data) if isinstance(metrics_data, list) else set()
+            )
         except Exception:
             pytest.skip("Prometheus not available for metrics test")
 

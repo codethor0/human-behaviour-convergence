@@ -123,6 +123,7 @@ class BehavioralForecaster:
         from app.services.ingestion.eia_fuel_prices import EIAFuelPricesFetcher
         from app.services.ingestion.drought_monitor import DroughtMonitorFetcher
         from app.services.ingestion.noaa_storm_events import NOAAStormEventsFetcher
+
         self.eia_fuel_fetcher = EIAFuelPricesFetcher()
         self.drought_fetcher = DroughtMonitorFetcher()
         self.storm_fetcher = NOAAStormEventsFetcher()
@@ -311,100 +312,224 @@ class BehavioralForecaster:
             # Parallel fetch independent data sources using ThreadPoolExecutor
             # This reduces latency from sequential network calls
             fetch_results = {}
-            
+
             with ThreadPoolExecutor(max_workers=10) as executor:
                 futures = {}
-                
+
                 # Submit all independent fetch tasks
-                futures[executor.submit(self.market_fetcher.fetch_stress_index, days_back=days_back)] = "market"
-                futures[executor.submit(self.fred_fetcher.fetch_consumer_sentiment, days_back=days_back)] = "fred_consumer_sentiment"
-                futures[executor.submit(self.fred_fetcher.fetch_unemployment_rate, days_back=days_back)] = "fred_unemployment"
-                futures[executor.submit(self.fred_fetcher.fetch_jobless_claims, days_back=days_back)] = "fred_jobless_claims"
-                futures[executor.submit(self.fred_fetcher.fetch_gdp_growth, days_back=365)] = "fred_gdp_growth"
-                futures[executor.submit(self.fred_fetcher.fetch_cpi_inflation, days_back=365)] = "fred_cpi_inflation"
-                futures[executor.submit(self.weather_fetcher.fetch_regional_comfort, latitude, longitude, days_back)] = "weather"
-                futures[executor.submit(self.search_fetcher.fetch_search_interest, "behavioral patterns", days_back, region_name)] = "search"
-                futures[executor.submit(self.health_fetcher.fetch_health_risk_index, region_code_for_health, days_back)] = "health"
-                futures[executor.submit(self.mobility_fetcher.fetch_mobility_index, latitude, longitude, region_code_for_mobility, days_back)] = "mobility"
-                futures[executor.submit(self.gdelt_fetcher.fetch_event_tone, days_back=days_back)] = "gdelt"
-                futures[executor.submit(self.openfema_fetcher.fetch_disaster_declarations, region_name, days_back)] = "openfema"
-                futures[executor.submit(self.openstates_fetcher.fetch_legislative_activity, region_name, days_back)] = "openstates"
-                futures[executor.submit(self.nws_alerts_fetcher.fetch_weather_alerts, latitude, longitude, days_back)] = "nws_alerts"
-                futures[executor.submit(self.cisa_kev_fetcher.fetch_kev_catalog, days_back=days_back)] = "cisa_kev"
-                futures[executor.submit(self.owid_fetcher.fetch_health_stress_index, country_name, days_back)] = "owid"
-                futures[executor.submit(self.usgs_fetcher.fetch_earthquake_intensity, days_back=days_back)] = "usgs"
-                
+                futures[
+                    executor.submit(
+                        self.market_fetcher.fetch_stress_index, days_back=days_back
+                    )
+                ] = "market"
+                futures[
+                    executor.submit(
+                        self.fred_fetcher.fetch_consumer_sentiment, days_back=days_back
+                    )
+                ] = "fred_consumer_sentiment"
+                futures[
+                    executor.submit(
+                        self.fred_fetcher.fetch_unemployment_rate, days_back=days_back
+                    )
+                ] = "fred_unemployment"
+                futures[
+                    executor.submit(
+                        self.fred_fetcher.fetch_jobless_claims, days_back=days_back
+                    )
+                ] = "fred_jobless_claims"
+                futures[
+                    executor.submit(self.fred_fetcher.fetch_gdp_growth, days_back=365)
+                ] = "fred_gdp_growth"
+                futures[
+                    executor.submit(
+                        self.fred_fetcher.fetch_cpi_inflation, days_back=365
+                    )
+                ] = "fred_cpi_inflation"
+                futures[
+                    executor.submit(
+                        self.weather_fetcher.fetch_regional_comfort,
+                        latitude,
+                        longitude,
+                        days_back,
+                    )
+                ] = "weather"
+                futures[
+                    executor.submit(
+                        self.search_fetcher.fetch_search_interest,
+                        "behavioral patterns",
+                        days_back,
+                        region_name,
+                    )
+                ] = "search"
+                futures[
+                    executor.submit(
+                        self.health_fetcher.fetch_health_risk_index,
+                        region_code_for_health,
+                        days_back,
+                    )
+                ] = "health"
+                futures[
+                    executor.submit(
+                        self.mobility_fetcher.fetch_mobility_index,
+                        latitude,
+                        longitude,
+                        region_code_for_mobility,
+                        days_back,
+                    )
+                ] = "mobility"
+                futures[
+                    executor.submit(
+                        self.gdelt_fetcher.fetch_event_tone, days_back=days_back
+                    )
+                ] = "gdelt"
+                futures[
+                    executor.submit(
+                        self.openfema_fetcher.fetch_disaster_declarations,
+                        region_name,
+                        days_back,
+                    )
+                ] = "openfema"
+                futures[
+                    executor.submit(
+                        self.openstates_fetcher.fetch_legislative_activity,
+                        region_name,
+                        days_back,
+                    )
+                ] = "openstates"
+                futures[
+                    executor.submit(
+                        self.nws_alerts_fetcher.fetch_weather_alerts,
+                        latitude,
+                        longitude,
+                        days_back,
+                    )
+                ] = "nws_alerts"
+                futures[
+                    executor.submit(
+                        self.cisa_kev_fetcher.fetch_kev_catalog, days_back=days_back
+                    )
+                ] = "cisa_kev"
+                futures[
+                    executor.submit(
+                        self.owid_fetcher.fetch_health_stress_index,
+                        country_name,
+                        days_back,
+                    )
+                ] = "owid"
+                futures[
+                    executor.submit(
+                        self.usgs_fetcher.fetch_earthquake_intensity,
+                        days_back=days_back,
+                    )
+                ] = "usgs"
+
                 # Additional fetchers that were sequential - add to parallel pool
                 # Determine state code for conditional fetchers
                 state_code = None
                 is_us_state = self._is_us_state(region_name)
                 if region_id and "_" in region_id:
                     parts = region_id.split("_")
-                    if len(parts) >= 2 and parts[0].lower() == "us" and len(parts[1]) == 2:
+                    if (
+                        len(parts) >= 2
+                        and parts[0].lower() == "us"
+                        and len(parts[1]) == 2
+                    ):
                         state_code = parts[1].upper()
                         is_us_state = True
-                
+
                 # OpenAQ air quality
-                futures[executor.submit(
-                    self.openaq_fetcher.fetch_air_quality,
-                    latitude, longitude, 50, days_back
-                )] = "air_quality"
-                
+                futures[
+                    executor.submit(
+                        self.openaq_fetcher.fetch_air_quality,
+                        latitude,
+                        longitude,
+                        50,
+                        days_back,
+                    )
+                ] = "air_quality"
+
                 # GDELT legislative and enforcement (additional calls)
-                futures[executor.submit(
-                    self.gdelt_fetcher.fetch_legislative_attention,
-                    region_name, days_back
-                )] = "legislative"
-                futures[executor.submit(
-                    self.gdelt_fetcher.fetch_enforcement_attention,
-                    region_name, days_back
-                )] = "enforcement"
-                
+                futures[
+                    executor.submit(
+                        self.gdelt_fetcher.fetch_legislative_attention,
+                        region_name,
+                        days_back,
+                    )
+                ] = "legislative"
+                futures[
+                    executor.submit(
+                        self.gdelt_fetcher.fetch_enforcement_attention,
+                        region_name,
+                        days_back,
+                    )
+                ] = "enforcement"
+
                 # State-specific fetchers (if US state)
                 if is_us_state and state_code:
-                    futures[executor.submit(
-                        self.eia_fuel_fetcher.fetch_fuel_stress_index,
-                        state_code, days_back
-                    )] = "eia_fuel"
-                    futures[executor.submit(
-                        self.drought_fetcher.fetch_drought_stress_index,
-                        state_code, days_back
-                    )] = "drought"
-                    futures[executor.submit(
-                        self.storm_fetcher.fetch_storm_stress_indices,
-                        region_name, days_back
-                    )] = "storm"
+                    futures[
+                        executor.submit(
+                            self.eia_fuel_fetcher.fetch_fuel_stress_index,
+                            state_code,
+                            days_back,
+                        )
+                    ] = "eia_fuel"
+                    futures[
+                        executor.submit(
+                            self.drought_fetcher.fetch_drought_stress_index,
+                            state_code,
+                            days_back,
+                        )
+                    ] = "drought"
+                    futures[
+                        executor.submit(
+                            self.storm_fetcher.fetch_storm_stress_indices,
+                            region_name,
+                            days_back,
+                        )
+                    ] = "storm"
                 else:
                     # Pre-set empty results for non-US states
                     fetch_results["eia_fuel"] = (pd.DataFrame(), None)
                     fetch_results["drought"] = pd.DataFrame()
                     fetch_results["storm"] = pd.DataFrame()
-                
+
                 # Political, crime, misinformation, social cohesion (if US state)
                 if is_us_state:
-                    futures[executor.submit(
-                        self.political_fetcher.calculate_political_stress,
-                        region_name, days_back
-                    )] = "political"
-                    futures[executor.submit(
-                        self.crime_fetcher.calculate_crime_stress,
-                        region_name, days_back
-                    )] = "crime"
-                    futures[executor.submit(
-                        self.misinformation_fetcher.calculate_misinformation_stress,
-                        region_name, days_back
-                    )] = "misinformation"
-                    futures[executor.submit(
-                        self.social_cohesion_fetcher.calculate_social_cohesion_stress,
-                        region_name, days_back
-                    )] = "social_cohesion"
+                    futures[
+                        executor.submit(
+                            self.political_fetcher.calculate_political_stress,
+                            region_name,
+                            days_back,
+                        )
+                    ] = "political"
+                    futures[
+                        executor.submit(
+                            self.crime_fetcher.calculate_crime_stress,
+                            region_name,
+                            days_back,
+                        )
+                    ] = "crime"
+                    futures[
+                        executor.submit(
+                            self.misinformation_fetcher.calculate_misinformation_stress,
+                            region_name,
+                            days_back,
+                        )
+                    ] = "misinformation"
+                    futures[
+                        executor.submit(
+                            self.social_cohesion_fetcher.calculate_social_cohesion_stress,
+                            region_name,
+                            days_back,
+                        )
+                    ] = "social_cohesion"
                 else:
                     # Pre-set empty results for non-US states
                     fetch_results["political"] = pd.DataFrame()
                     fetch_results["crime"] = pd.DataFrame()
                     fetch_results["misinformation"] = pd.DataFrame()
                     fetch_results["social_cohesion"] = pd.DataFrame()
-                
+
                 # Collect results as they complete
                 for future in as_completed(futures):
                     key = futures[future]
@@ -412,15 +537,34 @@ class BehavioralForecaster:
                         result = future.result()
                         fetch_results[key] = result
                     except Exception as e:
-                        logger.warning("Failed to fetch data source", source=key, error=str(e)[:200])
+                        logger.warning(
+                            "Failed to fetch data source",
+                            source=key,
+                            error=str(e)[:200],
+                        )
                         # Return appropriate empty value based on expected return type
-                        if key in ["search", "gdelt", "openfema", "openstates", "nws_alerts", "cisa_kev"]:
+                        if key in [
+                            "search",
+                            "gdelt",
+                            "openfema",
+                            "openstates",
+                            "nws_alerts",
+                            "cisa_kev",
+                        ]:
                             from app.services.ingestion.gdelt_events import SourceStatus
-                            fetch_results[key] = (pd.DataFrame(), SourceStatus(
-                                provider=key, ok=False, error_type="exception",
-                                error_detail=str(e)[:100], fetched_at=datetime.now().isoformat(),
-                                rows=0, query_window_days=days_back
-                            ))
+
+                            fetch_results[key] = (
+                                pd.DataFrame(),
+                                SourceStatus(
+                                    provider=key,
+                                    ok=False,
+                                    error_type="exception",
+                                    error_detail=str(e)[:100],
+                                    fetched_at=datetime.now().isoformat(),
+                                    rows=0,
+                                    query_window_days=days_back,
+                                ),
+                            )
                         else:
                             fetch_results[key] = pd.DataFrame()
 
@@ -429,12 +573,16 @@ class BehavioralForecaster:
             if not market_data.empty:
                 sources.append("yfinance (VIX/SPY)")
 
-            fred_consumer_sentiment = fetch_results.get("fred_consumer_sentiment", pd.DataFrame())
+            fred_consumer_sentiment = fetch_results.get(
+                "fred_consumer_sentiment", pd.DataFrame()
+            )
             fred_unemployment = fetch_results.get("fred_unemployment", pd.DataFrame())
-            fred_jobless_claims = fetch_results.get("fred_jobless_claims", pd.DataFrame())
+            fred_jobless_claims = fetch_results.get(
+                "fred_jobless_claims", pd.DataFrame()
+            )
             fred_gdp_growth = fetch_results.get("fred_gdp_growth", pd.DataFrame())
             fred_cpi_inflation = fetch_results.get("fred_cpi_inflation", pd.DataFrame())
-            
+
             if not fred_gdp_growth.empty:
                 sources.append("FRED (GDP Growth)")
             if not fred_cpi_inflation.empty:
@@ -482,7 +630,11 @@ class BehavioralForecaster:
                 openfema_declarations, openfema_status = openfema_result
             else:
                 openfema_declarations, openfema_status = pd.DataFrame(), None
-            if openfema_status and openfema_status.ok and not openfema_declarations.empty:
+            if (
+                openfema_status
+                and openfema_status.ok
+                and not openfema_declarations.empty
+            ):
                 sources.append("OpenFEMA (Emergency Management)")
 
             openstates_result = fetch_results.get("openstates", (pd.DataFrame(), None))
@@ -490,7 +642,11 @@ class BehavioralForecaster:
                 openstates_activity, openstates_status = openstates_result
             else:
                 openstates_activity, openstates_status = pd.DataFrame(), None
-            if openstates_status and openstates_status.ok and not openstates_activity.empty:
+            if (
+                openstates_status
+                and openstates_status.ok
+                and not openstates_activity.empty
+            ):
                 sources.append("OpenStates (Legislative Activity)")
 
             nws_result = fetch_results.get("nws_alerts", (pd.DataFrame(), None))
@@ -546,77 +702,141 @@ class BehavioralForecaster:
                 sources.append("NOAA Storm Events")
 
             # OpenAQ air quality
-            air_quality_result = fetch_results.get("air_quality", (pd.DataFrame(), None))
+            air_quality_result = fetch_results.get(
+                "air_quality", (pd.DataFrame(), None)
+            )
             if isinstance(air_quality_result, tuple):
                 air_quality_data, air_quality_status = air_quality_result
             else:
                 air_quality_data, air_quality_status = pd.DataFrame(), None
-            if air_quality_status and air_quality_status.ok and not air_quality_data.empty:
+            if (
+                air_quality_status
+                and air_quality_status.ok
+                and not air_quality_data.empty
+            ):
                 sources.append("OpenAQ (Air Quality)")
             elif air_quality_status is None:
                 # Create empty status if not in results
                 from app.services.ingestion.gdelt_events import SourceStatus
+
                 air_quality_status = SourceStatus(
-                    provider="OpenAQ", ok=False, error_type="not_fetched",
-                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
-                    rows=0, query_window_days=days_back
+                    provider="OpenAQ",
+                    ok=False,
+                    error_type="not_fetched",
+                    error_detail="Not included in parallel fetch",
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
                 )
 
             # GDELT legislative
-            legislative_result = fetch_results.get("legislative", (pd.DataFrame(), None))
+            legislative_result = fetch_results.get(
+                "legislative", (pd.DataFrame(), None)
+            )
             if isinstance(legislative_result, tuple):
                 legislative_data, legislative_status = legislative_result
             else:
                 legislative_data, legislative_status = pd.DataFrame(), None
-            if legislative_status and legislative_status.ok and not legislative_data.empty:
+            if (
+                legislative_status
+                and legislative_status.ok
+                and not legislative_data.empty
+            ):
                 sources.append("GDELT Legislative Events")
             elif legislative_status is None:
                 from app.services.ingestion.gdelt_events import SourceStatus
+
                 legislative_status = SourceStatus(
-                    provider="GDELT Legislative Events", ok=False, error_type="not_fetched",
-                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
-                    rows=0, query_window_days=days_back
+                    provider="GDELT Legislative Events",
+                    ok=False,
+                    error_type="not_fetched",
+                    error_detail="Not included in parallel fetch",
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
                 )
 
             # GDELT enforcement
-            enforcement_result = fetch_results.get("enforcement", (pd.DataFrame(), None))
+            enforcement_result = fetch_results.get(
+                "enforcement", (pd.DataFrame(), None)
+            )
             if isinstance(enforcement_result, tuple):
                 enforcement_data, enforcement_status = enforcement_result
             else:
                 enforcement_data, enforcement_status = pd.DataFrame(), None
-            if enforcement_status and enforcement_status.ok and not enforcement_data.empty:
+            if (
+                enforcement_status
+                and enforcement_status.ok
+                and not enforcement_data.empty
+            ):
                 sources.append("GDELT Enforcement Events")
             elif enforcement_status is None:
                 from app.services.ingestion.gdelt_events import SourceStatus
+
                 enforcement_status = SourceStatus(
-                    provider="GDELT Enforcement Events", ok=False, error_type="not_fetched",
-                    error_detail="Not included in parallel fetch", fetched_at=datetime.now().isoformat(),
-                    rows=0, query_window_days=days_back
+                    provider="GDELT Enforcement Events",
+                    ok=False,
+                    error_type="not_fetched",
+                    error_detail="Not included in parallel fetch",
+                    fetched_at=datetime.now().isoformat(),
+                    rows=0,
+                    query_window_days=days_back,
                 )
 
             # Political, crime, misinformation, social cohesion (from parallel fetch)
             political_result = fetch_results.get("political", pd.DataFrame())
-            political_data = political_result if isinstance(political_result, pd.DataFrame) else pd.DataFrame()
-            if not political_data.empty and "political_stress" in political_data.columns:
+            political_data = (
+                political_result
+                if isinstance(political_result, pd.DataFrame)
+                else pd.DataFrame()
+            )
+            if (
+                not political_data.empty
+                and "political_stress" in political_data.columns
+            ):
                 political_data = political_data[["timestamp", "political_stress"]]
                 sources.append("political_ingestion")
 
             crime_result = fetch_results.get("crime", pd.DataFrame())
-            crime_data = crime_result if isinstance(crime_result, pd.DataFrame) else pd.DataFrame()
+            crime_data = (
+                crime_result
+                if isinstance(crime_result, pd.DataFrame)
+                else pd.DataFrame()
+            )
             if not crime_data.empty and "crime_stress" in crime_data.columns:
                 crime_data = crime_data[["timestamp", "crime_stress"]]
                 sources.append("crime_ingestion")
 
             misinformation_result = fetch_results.get("misinformation", pd.DataFrame())
-            misinformation_data = misinformation_result if isinstance(misinformation_result, pd.DataFrame) else pd.DataFrame()
-            if not misinformation_data.empty and "misinformation_stress" in misinformation_data.columns:
-                misinformation_data = misinformation_data[["timestamp", "misinformation_stress"]]
+            misinformation_data = (
+                misinformation_result
+                if isinstance(misinformation_result, pd.DataFrame)
+                else pd.DataFrame()
+            )
+            if (
+                not misinformation_data.empty
+                and "misinformation_stress" in misinformation_data.columns
+            ):
+                misinformation_data = misinformation_data[
+                    ["timestamp", "misinformation_stress"]
+                ]
                 sources.append("misinformation_ingestion")
 
-            social_cohesion_result = fetch_results.get("social_cohesion", pd.DataFrame())
-            social_cohesion_data = social_cohesion_result if isinstance(social_cohesion_result, pd.DataFrame) else pd.DataFrame()
-            if not social_cohesion_data.empty and "social_cohesion_stress" in social_cohesion_data.columns:
-                social_cohesion_data = social_cohesion_data[["timestamp", "social_cohesion_stress"]]
+            social_cohesion_result = fetch_results.get(
+                "social_cohesion", pd.DataFrame()
+            )
+            social_cohesion_data = (
+                social_cohesion_result
+                if isinstance(social_cohesion_result, pd.DataFrame)
+                else pd.DataFrame()
+            )
+            if (
+                not social_cohesion_data.empty
+                and "social_cohesion_stress" in social_cohesion_data.columns
+            ):
+                social_cohesion_data = social_cohesion_data[
+                    ["timestamp", "social_cohesion_stress"]
+                ]
                 sources.append("social_cohesion_ingestion")
 
             # Harmonize data
@@ -671,7 +891,9 @@ class BehavioralForecaster:
                 gdelt_tone=gdelt_tone,
                 owid_health=owid_health,
                 usgs_earthquakes=usgs_earthquakes,
-                air_quality_data=air_quality_data if not air_quality_data.empty else None,
+                air_quality_data=(
+                    air_quality_data if not air_quality_data.empty else None
+                ),
                 political_data=political_data,
                 crime_data=crime_data,
                 misinformation_data=misinformation_data,

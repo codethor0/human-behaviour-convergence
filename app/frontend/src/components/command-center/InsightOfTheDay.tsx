@@ -47,8 +47,8 @@ export function InsightOfTheDay() {
           'Economic stress indicators are <span style="color: #00ff88">stabilizing</span> after last week\'s volatility, suggesting improved market confidence.',
           'Mobility patterns indicate <span style="color: #ffd700">gradual recovery</span> in urban centers, with weekend activity returning to pre-pandemic levels.',
         ];
-        
-        const randomInsight = insights[Math.floor(Math.random() * insights.length)];
+
+        const randomInsight = insights[Math.floor(Math.random() * insights.length)] ?? '';
         setInsight(randomInsight);
         setLoading(false);
       } catch (error) {
@@ -64,7 +64,7 @@ export function InsightOfTheDay() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     const msUntilMidnight = tomorrow.getTime() - now.getTime();
-    
+
     const timeout = setTimeout(generateInsight, msUntilMidnight);
     return () => clearTimeout(timeout);
   }, []);

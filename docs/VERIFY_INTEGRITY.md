@@ -79,7 +79,7 @@ Verify metrics are multi-region and have no `region=None` labels:
 
 ```bash
 # Check for region=None labels (should find none)
-curl -s http://localhost:8100/metrics | grep -E 'region="None"|region=None' || echo "✓ No region=None labels"
+curl -s http://localhost:8100/metrics | grep -E 'region="None"|region=None' || echo " No region=None labels"
 
 # Query Prometheus for distinct region counts
 python3 << 'PYEOF'
@@ -115,7 +115,7 @@ python3 scripts/run_data_quality_checkpoint.py
 cat /tmp/HBC_DATA_QUALITY_REPORT.md
 
 # Check for failures
-grep -E "FAIL|❌" /tmp/HBC_DATA_QUALITY_REPORT.md || echo "✓ No failures"
+grep -E "FAIL|[FAIL]" /tmp/HBC_DATA_QUALITY_REPORT.md || echo " No failures"
 
 # View evidence snapshots
 ls -la /tmp/hbc_data_snapshots/
@@ -133,7 +133,7 @@ python3 scripts/variance_probe.py
 cat /tmp/HBC_VARIANCE_PROBE_REPORT.md
 
 # Check alerts
-grep "⚠️" /tmp/HBC_VARIANCE_PROBE_REPORT.md || echo "✓ No alerts"
+grep "[WARN]" /tmp/HBC_VARIANCE_PROBE_REPORT.md || echo " No alerts"
 
 # View results
 cat /tmp/hbc_variance_probe_results.json | jq

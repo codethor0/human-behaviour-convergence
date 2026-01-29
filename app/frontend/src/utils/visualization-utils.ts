@@ -1,10 +1,11 @@
 /**
  * Visualization Utility Functions
- * 
+ *
  * Common utilities for data transformation, color mapping, and animation
  */
 
-import { colors, ConfidenceInterval } from '../visualizations/base/types';
+import { colors } from '../styles/design-system';
+import type { ConfidenceInterval } from '../visualizations/base/types';
 
 /**
  * Map a value to a color based on risk level

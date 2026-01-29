@@ -89,9 +89,9 @@
 
 ## MVP 1: EIA Gasoline Prices by State
 
-**File**: `app/services/ingestion/eia_fuel_prices.py`  
-**Class**: `EIAFuelPricesFetcher`  
-**Sub-Index**: `economic_stress` → `fuel_stress`  
+**File**: `app/services/ingestion/eia_fuel_prices.py`
+**Class**: `EIAFuelPricesFetcher`
+**Sub-Index**: `economic_stress` → `fuel_stress`
 **Expected Variance**: HIGH (state prices vary 20-40%)
 
 ### Implementation Steps
@@ -112,9 +112,9 @@
 
 ## MVP 2: U.S. Drought Monitor (State)
 
-**File**: `app/services/ingestion/drought_monitor.py`  
-**Class**: `DroughtMonitorFetcher`  
-**Sub-Index**: `environmental_stress` → `drought_stress`  
+**File**: `app/services/ingestion/drought_monitor.py`
+**Class**: `DroughtMonitorFetcher`
+**Sub-Index**: `environmental_stress` → `drought_stress`
 **Expected Variance**: VERY HIGH (DSCI ranges 0-500)
 
 ### Implementation Steps
@@ -135,9 +135,9 @@
 
 ## MVP 3: NOAA Storm Events (State)
 
-**File**: `app/services/ingestion/noaa_storm_events.py`  
-**Class**: `NOAAStormEventsFetcher`  
-**Sub-Indices**: `environmental_stress` → `heatwave_stress`, `flood_risk_stress`, `storm_severity_stress`  
+**File**: `app/services/ingestion/noaa_storm_events.py`
+**Class**: `NOAAStormEventsFetcher`
+**Sub-Indices**: `environmental_stress` → `heatwave_stress`, `flood_risk_stress`, `storm_severity_stress`
 **Expected Variance**: VERY HIGH (coastal vs plains vs desert)
 
 ### Implementation Steps
@@ -161,10 +161,10 @@
 
 ## MVP 4: Eviction Lab (State/City)
 
-**File**: `app/services/ingestion/eviction_lab.py`  
-**Class**: `EvictionLabFetcher`  
-**Sub-Index**: `economic_stress` → `housing_stress`  
-**Expected Variance**: VERY HIGH (rates vary 10x: 0.5% to 5%+)  
+**File**: `app/services/ingestion/eviction_lab.py`
+**Class**: `EvictionLabFetcher`
+**Sub-Index**: `economic_stress` → `housing_stress`
+**Expected Variance**: VERY HIGH (rates vary 10x: 0.5% to 5%+)
 **Note**: Limited geography (~30 states)
 
 ### Implementation Steps
@@ -185,10 +185,10 @@
 
 ## MVP 5: CDC WONDER Overdose (State)
 
-**File**: `app/services/ingestion/cdc_wonder_overdose.py`  
-**Class**: `CDCWonderOverdoseFetcher`  
-**Sub-Index**: `public_health_stress` → `substance_use_stress`  
-**Expected Variance**: HIGH (rates vary 3-5x: 10-50 per 100k)  
+**File**: `app/services/ingestion/cdc_wonder_overdose.py`
+**Class**: `CDCWonderOverdoseFetcher`
+**Sub-Index**: `public_health_stress` → `substance_use_stress`
+**Expected Variance**: HIGH (rates vary 3-5x: 10-50 per 100k)
 **Note**: Provisional data (2-3 month lag)
 
 ### Implementation Steps
@@ -239,12 +239,12 @@
 
 ## Success Criteria (Final Check)
 
-✅ Two distant regions (Illinois vs Arizona) show divergence in ≥3 independent sub-indices within 30 days  
-✅ Dashboards clearly distinguish global vs regional signals  
-✅ Forecasts are auditable back to source-level contributors  
-✅ Zero regressions in existing workflows  
-✅ All REGIONAL sources pass variance_probe  
-✅ All Prometheus invariants pass
+[OK] Two distant regions (Illinois vs Arizona) show divergence in ≥3 independent sub-indices within 30 days
+[OK] Dashboards clearly distinguish global vs regional signals
+[OK] Forecasts are auditable back to source-level contributors
+[OK] Zero regressions in existing workflows
+[OK] All REGIONAL sources pass variance_probe
+[OK] All Prometheus invariants pass
 
 ---
 

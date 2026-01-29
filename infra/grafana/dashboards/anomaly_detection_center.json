@@ -3,7 +3,7 @@
   "uid": "anomaly-detection-center",
   "timezone": "browser",
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "refresh": "30s",
   "time": {
     "from": "now-30d",
@@ -45,7 +45,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "# Anomaly Detection Center\n\nThis dashboard identifies statistical outliers and unusual behavioral patterns using:\n\n- **Z-Score Method**: Detects values >2 standard deviations from 90-day mean\n- **Volatility Analysis**: Identifies regions with abnormal volatility spikes\n- **Factor Breakdown**: Determines which sub-indices drive anomalies\n- **Historical Context**: Compares current patterns vs historical averages\n\n**Anomaly Thresholds:**\n- **Moderate Anomaly**: Z-score > 2.0 (95th percentile)\n- **Severe Anomaly**: Z-score > 2.5 (99th percentile)\n- **Critical Anomaly**: Z-score > 3.0 (99.7th percentile)\n\n**Related Dashboards:** [Behavior Index Global](http://localhost:3001/d/behavior-index-global) | [Regional Deep Dive](http://localhost:3001/d/regional-deep-dive) | [Risk Regimes](http://localhost:3001/d/risk-regimes)"
+        "content": "# Anomaly Detection Center\n\nStatistical outlier and behavioral anomaly detection in three layers:\n\n- **Layer 1 (Univariate)**: Static percentile bounds; z-score vs rolling mean/std. Metrics: `behavior_index_static_*`, `behavior_index_zscore*`.\n- **Layer 2 (Dynamic)**: EWMA baseline and k*std bands; residual z-score. Metrics: `behavior_index_baseline`, `*_band`, `*_residual*`, `*_seasonal_anomaly`, `*_residual_anomaly`.\n- **Layer 3 (Multivariate)**: Mahalanobis-style (diagonal) distance across behavior index + subindices. Metrics: `hbc_multivariate_md_score`, `hbc_multivariate_md_anomaly`.\n\n**Thresholds:** Z-score anomaly |z| > 2.5; residual anomaly |z| > 2.5; MD anomaly score > 15.\n\n**Related:** [Behavior Index Global](http://localhost:3001/d/behavior-index-global) | [Regional Deep Dive](http://localhost:3001/d/regional-deep-dive) | [Risk Regimes](http://localhost:3001/d/risk-regimes). See `docs/HBC_ANOMALY_ARCHITECTURE.md` for formulas."
       }
     },
     {
@@ -746,6 +746,311 @@
         },
         "textMode": "auto"
       }
+    },
+    {
+      "id": 10,
+      "title": "Behavior Index vs Emitted Static Bands (Backend)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Behavior Index",
+          "refId": "A"
+        },
+        {
+          "expr": "behavior_index_static_upper_bound{region=\"$region\"}",
+          "legendFormat": "Static Upper Bound",
+          "refId": "B"
+        },
+        {
+          "expr": "behavior_index_static_lower_bound{region=\"$region\"}",
+          "legendFormat": "Static Lower Bound",
+          "refId": "C"
+        },
+        {
+          "expr": "behavior_index_zscore{region=\"$region\"}",
+          "legendFormat": "Z-Score",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "description": "Uses backend-emitted static bounds and z-score. Bands from rolling percentile; z-score from rolling mean/std."
+    },
+    {
+      "id": 11,
+      "title": "Behavior Index vs Seasonal Band (Layer 2)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Behavior Index",
+          "refId": "A"
+        },
+        {
+          "expr": "behavior_index_baseline{region=\"$region\"}",
+          "legendFormat": "Baseline (EWMA)",
+          "refId": "B"
+        },
+        {
+          "expr": "behavior_index_upper_band{region=\"$region\"}",
+          "legendFormat": "Upper Band",
+          "refId": "C"
+        },
+        {
+          "expr": "behavior_index_lower_band{region=\"$region\"}",
+          "legendFormat": "Lower Band",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "description": "Layer 2: EWMA baseline and k*std bands. seasonal_anomaly=1 when value outside band."
+    },
+    {
+      "id": 12,
+      "title": "Residual Shock Radar (Layer 2)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "targets": [
+        {
+          "expr": "behavior_index_residual_zscore{region=\"$region\"}",
+          "legendFormat": "Residual Z-Score",
+          "refId": "A"
+        },
+        {
+          "expr": "2.5",
+          "legendFormat": "Upper Threshold",
+          "refId": "B"
+        },
+        {
+          "expr": "-2.5",
+          "legendFormat": "Lower Threshold",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": true,
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "description": "Residual z-score (value - baseline) / std(residuals). residual_anomaly=1 when |z| > 2.5."
+    },
+    {
+      "id": 13,
+      "title": "Multivariate Anomaly Score (Layer 3)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "targets": [
+        {
+          "expr": "hbc_multivariate_md_score{region=\"$region\"}",
+          "legendFormat": "MD Score (squared distance)",
+          "refId": "A"
+        },
+        {
+          "expr": "15",
+          "legendFormat": "Anomaly Threshold (15)",
+          "refId": "B"
+        },
+        {
+          "expr": "hbc_multivariate_md_anomaly{region=\"$region\"}",
+          "legendFormat": "MD Anomaly (0/1)",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Anomaly Threshold (15)" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } },
+              { "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "MD Anomaly (0/1)" },
+            "properties": [
+              { "id": "custom.axisPlacement", "value": "right" },
+              { "id": "unit", "value": "short" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom" }
+      },
+      "description": "Layer 3: Mahalanobis-style (diagonal) squared distance across behavior_index + subindices. md_anomaly=1 when score > 15."
+    },
+    {
+      "id": 14,
+      "title": "Static anomaly ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 66 },
+      "targets": [{ "expr": "behavior_index_static_anomaly{region=\"$region\"}", "refId": "A", "instant": true }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Layer 1: outside static percentile bounds."
+    },
+    {
+      "id": 15,
+      "title": "Z-Score anomaly ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 66 },
+      "targets": [{ "expr": "behavior_index_zscore_anomaly{region=\"$region\"}", "refId": "A", "instant": true }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Layer 1: |z-score| > 2.5."
+    },
+    {
+      "id": 16,
+      "title": "Seasonal anomaly ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 10, "y": 66 },
+      "targets": [{ "expr": "behavior_index_seasonal_anomaly{region=\"$region\"}", "refId": "A", "instant": true }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Layer 2: outside EWMA band."
+    },
+    {
+      "id": 17,
+      "title": "Residual anomaly ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 15, "y": 66 },
+      "targets": [{ "expr": "behavior_index_residual_anomaly{region=\"$region\"}", "refId": "A", "instant": true }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Layer 2: |residual z| > 2.5."
+    },
+    {
+      "id": 18,
+      "title": "Multivariate anomaly ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 66 },
+      "targets": [{ "expr": "hbc_multivariate_md_anomaly{region=\"$region\"}", "refId": "A", "instant": true }],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Layer 3: MD score > 15."
     }
   ],
   "tags": [

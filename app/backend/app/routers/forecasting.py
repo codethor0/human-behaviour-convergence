@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
+from app.core.model_registry import get_registry
 from app.core.regions import get_all_regions
 from app.services.ingestion.source_registry import get_all_sources, get_source_statuses
 
@@ -198,48 +199,140 @@ def get_regions() -> List[RegionInfo]:
 @router.get("/models", response_model=List[ModelInfo])
 def get_models() -> List[ModelInfo]:
     """
-    List all available forecasting models.
+    List all available forecasting models from the model registry.
 
     Returns:
         List of model information including name, description, type, and parameters
     """
-    models = [
-        ModelInfo(
-            name="exponential_smoothing",
-            description=(
+    try:
+        registry = get_registry()
+        models = []
+
+        # Map model names to descriptions
+        model_descriptions = {
+            "naive": "Naive model: returns last observed value for all forecast steps",
+            "seasonal_naive": "Seasonal naive model: returns value from same period in previous season",
+            "exponential_smoothing": (
                 "Exponential smoothing (Holt-Winters) for time series "
                 "forecasting with trend and seasonality"
             ),
-            type="time_series",
-            parameters={
-                "trend": "additive or multiplicative",
-                "seasonal": "additive or multiplicative",
-                "seasonal_periods": "integer",
-            },
-            default_parameters={
-                "trend": "add",
-                "seasonal": "add",
-                "seasonal_periods": 7,
-            },
-        ),
-        ModelInfo(
-            name="moving_average",
-            description=(
-                "Simple moving average with trend extension "
-                "(fallback when advanced models unavailable)"
-            ),
-            type="time_series",
-            parameters={
-                "window_size": "integer (default: 7)",
-                "trend": "linear extrapolation",
-            },
-            default_parameters={
-                "window_size": 7,
-            },
-        ),
-    ]
+            "arima": "ARIMA model for time series forecasting with autoregressive and moving average components",
+        }
 
-    return models
+        # Map model names to parameter info
+        model_parameters = {
+            "naive": {
+                "parameters": {},
+                "default_parameters": {},
+            },
+            "seasonal_naive": {
+                "parameters": {
+                    "seasonal_period": "integer (default: 7 for weekly)",
+                },
+                "default_parameters": {
+                    "seasonal_period": 7,
+                },
+            },
+            "exponential_smoothing": {
+                "parameters": {
+                    "trend": "additive or multiplicative",
+                    "seasonal": "additive or multiplicative",
+                    "seasonal_periods": "integer",
+                },
+                "default_parameters": {
+                    "trend": "add",
+                    "seasonal": "add",
+                    "seasonal_periods": 7,
+                },
+            },
+            "arima": {
+                "parameters": {
+                    "order": "tuple (p, d, q) for ARIMA order",
+                },
+                "default_parameters": {
+                    "order": (1, 1, 1),
+                },
+            },
+        }
+
+        for model_name in registry.list():
+            description = model_descriptions.get(
+                model_name, f"Forecasting model: {model_name}"
+            )
+            params_info = model_parameters.get(
+                model_name,
+                {
+                    "parameters": {},
+                    "default_parameters": {},
+                },
+            )
+
+            models.append(
+                ModelInfo(
+                    name=model_name,
+                    description=description,
+                    type="time_series",
+                    parameters=params_info["parameters"],
+                    default_parameters=params_info["default_parameters"],
+                )
+            )
+
+        # Fallback to legacy models if registry is empty
+        if not models:
+            models = [
+                ModelInfo(
+                    name="exponential_smoothing",
+                    description=(
+                        "Exponential smoothing (Holt-Winters) for time series "
+                        "forecasting with trend and seasonality"
+                    ),
+                    type="time_series",
+                    parameters={
+                        "trend": "additive or multiplicative",
+                        "seasonal": "additive or multiplicative",
+                        "seasonal_periods": "integer",
+                    },
+                    default_parameters={
+                        "trend": "add",
+                        "seasonal": "add",
+                        "seasonal_periods": 7,
+                    },
+                ),
+                ModelInfo(
+                    name="moving_average",
+                    description=(
+                        "Simple moving average with trend extension "
+                        "(fallback when advanced models unavailable)"
+                    ),
+                    type="time_series",
+                    parameters={
+                        "window_size": "integer (default: 7)",
+                        "trend": "linear extrapolation",
+                    },
+                    default_parameters={
+                        "window_size": 7,
+                    },
+                ),
+            ]
+
+        return models
+    except Exception as e:
+        import structlog
+
+        logger = structlog.get_logger("routers.forecasting")
+        logger.warning(
+            "Failed to get models from registry, using fallback", error=str(e)
+        )
+        # Return fallback models
+        return [
+            ModelInfo(
+                name="exponential_smoothing",
+                description="Exponential smoothing (Holt-Winters) for time series forecasting",
+                type="time_series",
+                parameters={"trend": "additive", "seasonal": "additive"},
+                default_parameters={"trend": "add", "seasonal": "add"},
+            ),
+        ]
 
 
 @router.get("/status")

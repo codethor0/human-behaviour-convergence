@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Tests for FRED economic indicators connector."""
 from unittest.mock import Mock, patch
+import os
 
 import pandas as pd
 
@@ -18,7 +19,7 @@ class TestFREDEconomicFetcher:
 
     def test_fetcher_instantiation_with_key(self):
         """Test that fetcher can be instantiated with API key."""
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         assert fetcher is not None
         assert fetcher.api_key == "test_key"
 
@@ -37,7 +38,7 @@ class TestFREDEconomicFetcher:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df = fetcher.fetch_series("UMCSENT", days_back=30)
 
         assert isinstance(df, pd.DataFrame)
@@ -63,7 +64,7 @@ class TestFREDEconomicFetcher:
 
         mock_get.side_effect = requests.exceptions.RequestException("Connection error")
 
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df = fetcher.fetch_series("UMCSENT", days_back=30)
 
         assert isinstance(df, pd.DataFrame)
@@ -83,7 +84,7 @@ class TestFREDEconomicFetcher:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df = fetcher.fetch_consumer_sentiment(days_back=30)
 
         assert isinstance(df, pd.DataFrame)
@@ -104,7 +105,7 @@ class TestFREDEconomicFetcher:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df = fetcher.fetch_unemployment_rate(days_back=30)
 
         assert isinstance(df, pd.DataFrame)
@@ -125,7 +126,7 @@ class TestFREDEconomicFetcher:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        fetcher = FREDEconomicFetcher(api_key="test_key")
+        fetcher = FREDEconomicFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df = fetcher.fetch_jobless_claims(days_back=30)
 
         assert isinstance(df, pd.DataFrame)

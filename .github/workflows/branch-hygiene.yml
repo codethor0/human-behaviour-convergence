@@ -104,41 +104,49 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: 'dependabot',
-              per_page: 100
-            });
+            let prs = [];
+            try {
+              const { data } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100
+              });
+              prs = data.filter(pr => pr.user && pr.user.login === 'dependabot');
+            } catch (e) {
+              console.warn('Could not list PRs:', e.message);
+            }
 
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             let closedCount = 0;
             for (const pr of prs) {
-              const prDate = new Date(pr.created_at);
-              const commitsBehind = await github.rest.repos.compareCommits({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                base: pr.head.ref,
-                head: 'main'
-              });
-
-              const shouldClose =
-                prDate < thirtyDaysAgo ||
-                commitsBehind.data.behind_by > 50 ||
-                pr.merged === true;
-
-              if (shouldClose) {
-                await github.rest.pulls.update({
+              if (!pr.head || !pr.head.ref) continue;
+              try {
+                const compare = await github.rest.repos.compareCommits({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  pull_number: pr.number,
-                  state: 'closed'
+                  base: pr.head.ref,
+                  head: 'main'
                 });
-                console.log(`Closed PR #${pr.number}: ${pr.title}`);
-                closedCount++;
+                const aheadBy = compare.data.ahead_by ?? 0;
+                const prDate = new Date(pr.created_at);
+                const shouldClose =
+                  prDate < thirtyDaysAgo || aheadBy > 50 || pr.merged === true;
+
+                if (shouldClose) {
+                  await github.rest.pulls.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: pr.number,
+                    state: 'closed'
+                  });
+                  console.log(`Closed PR #${pr.number}: ${pr.title}`);
+                  closedCount++;
+                }
+              } catch (e) {
+                console.warn(`Skipping PR #${pr.number}: ${e.message}`);
               }
             }
 

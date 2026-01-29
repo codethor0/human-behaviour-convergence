@@ -31,15 +31,15 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
         // Fetch data for all regions
         const regionIds = regions?.map(r => r.id) || ['city_nyc', 'us_il', 'us_az', 'us_fl'];
         const allData: HeatPoint[] = [];
-        
+
         for (const regionId of regionIds) {
           const response = await fetch(
             `http://localhost:8100/api/forecast?region_id=${regionId}&days_back=7&forecast_horizon=7`
           );
           const data = await response.json();
-          
+
           const region = regions?.find(r => r.id === regionId) || { latitude: 40.7128, longitude: -74.0060 };
-          
+
           (data.history || []).forEach((h: any) => {
             allData.push({
               lat: region.latitude,
@@ -49,7 +49,7 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
             });
           });
         }
-        
+
         setHeatData(allData);
         setLoading(false);
       } catch (error) {
@@ -68,7 +68,7 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
 
     // Initialize map
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
-    
+
     if (!mapRef.current) {
       const map = new mapboxgl.Map({
         container: mapContainerRef.current!,
@@ -82,7 +82,7 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
       map.on('load', () => {
         // Add heat source
         const uniqueTimestamps = Array.from(new Set(heatData.map(d => d.timestamp))).sort();
-        
+
         map.addSource('heat-source', {
           type: 'geojson',
           data: {
@@ -114,8 +114,9 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
               stops: [[0, 0], [1, 1]],
             },
             'heatmap-intensity': {
+              type: 'exponential',
               stops: [[0, 0.5], [20, 1.5]],
-            },
+            } as unknown as number,
             'heatmap-color': [
               'interpolate',
               ['linear'],
@@ -127,8 +128,9 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
               1, 'rgba(255, 68, 68, 0.9)',
             ],
             'heatmap-radius': {
+              type: 'exponential',
               stops: [[0, 20], [20, 80]],
-            },
+            } as unknown as number,
             'heatmap-opacity': 0.8,
           },
         });
@@ -183,14 +185,14 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
       // Update existing map
       const uniqueTimestamps = Array.from(new Set(heatData.map(d => d.timestamp))).sort();
       const currentTimestamp = uniqueTimestamps[timeIndex];
-      
+
       if (currentTimestamp) {
         const source = mapRef.current.getSource('heat-source') as mapboxgl.GeoJSONSource;
         const pointSource = mapRef.current.getSource('point-source') as mapboxgl.GeoJSONSource;
-        
+
         if (source && pointSource) {
           const filtered = heatData.filter(d => d.timestamp === currentTimestamp);
-          
+
           source.setData({
             type: 'FeatureCollection',
             features: filtered.map(d => ({
@@ -204,7 +206,7 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
               },
             })),
           });
-          
+
           pointSource.setData({
             type: 'FeatureCollection',
             features: filtered.map(d => ({
@@ -233,12 +235,12 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
   // Time-lapse animation
   useEffect(() => {
     if (!isPlaying || loading) return;
-    
+
     const uniqueTimestamps = Array.from(new Set(heatData.map(d => d.timestamp))).sort();
     const interval = setInterval(() => {
       setTimeIndex((prev) => (prev + 1) % uniqueTimestamps.length);
     }, 1000);
-    
+
     return () => clearInterval(interval);
   }, [isPlaying, heatData, loading]);
 
@@ -285,7 +287,7 @@ export function BehavioralHeatCartography({ regions, width: _width = 1000, heigh
               fontWeight: 'bold',
             }}
           >
-            {isPlaying ? '⏸ Pause' : '▶ Play'}
+            {isPlaying ? 'Pause' : 'Play'}
           </button>
         </div>
         <div style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between' }}>

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -57,14 +57,14 @@ jobs:
           python3 << 'PYEOF'
           import requests
           import time
-          
+
           base_url = "http://localhost:8100"
           test_regions = [
               {"region_id": "us_mn", "region_name": "Minnesota"},
               {"region_id": "us_ca", "region_name": "California"},
               {"region_id": "city_nyc", "region_name": "New York City"},
           ]
-          
+
           for region in test_regions:
               payload = {
                   "region_id": region["region_id"],
@@ -78,7 +78,7 @@ jobs:
                   timeout=120,
               )
               response.raise_for_status()
-              print(f"✓ Generated forecast for {region['region_id']}")
+              print(f"PASS: Generated forecast for {region['region_id']}")
               time.sleep(2)
           PYEOF
       - name: Wait for Prometheus scrape
@@ -88,26 +88,26 @@ jobs:
           python3 << 'PYEOF'
           import requests
           import sys
-          
+
           prometheus_url = "http://localhost:9090"
-          
+
           # Check for region=None labels
           metrics_response = requests.get("http://localhost:8100/metrics", timeout=10)
           metrics_text = metrics_response.text
-          
+
           if 'region="None"' in metrics_text or 'region=None' in metrics_text:
-              print("❌ FAIL: Found region=None labels in metrics")
+              print("FAIL: Found region=None labels in metrics")
               sys.exit(1)
           else:
-              print("✓ PASS: No region=None labels")
-          
+              print("PASS: No region=None labels")
+
           # Check multi-region metrics
           queries = {
               "behavior_index": 'count(count by(region)(behavior_index))',
               "parent_subindex_value": 'count(count by(region)(parent_subindex_value))',
               "child_subindex_value": 'count(count by(region)(child_subindex_value))',
           }
-          
+
           all_pass = True
           for metric, query in queries.items():
               response = requests.get(
@@ -117,18 +117,18 @@ jobs:
               )
               response.raise_for_status()
               data = response.json()
-              
+
               if data.get("data", {}).get("result"):
                   count = int(float(data["data"]["result"][0]["value"][1]))
                   if count >= 3:
-                      print(f"✓ PASS: {metric} has {count} distinct regions")
+                      print(f"PASS: {metric} has {count} distinct regions")
                   else:
-                      print(f"❌ FAIL: {metric} only has {count} distinct regions (expected >= 3)")
+                      print(f"FAIL: {metric} only has {count} distinct regions (expected >= 3)")
                       all_pass = False
               else:
-                  print(f"❌ FAIL: {metric} query returned no results")
+                  print(f"FAIL: {metric} query returned no results")
                   all_pass = False
-          
+
           if not all_pass:
               print("\nDiagnostics:")
               print("Docker status:")
@@ -139,8 +139,8 @@ jobs:
               print("\nMetrics excerpt:")
               print(metrics_text[:1000])
               sys.exit(1)
-          
-          print("\n✓ All metrics integrity checks passed")
+
+          print("\nPASS: All metrics integrity checks passed")
           PYEOF
       - name: Cleanup
         if: always()
@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install dependencies
@@ -164,9 +164,9 @@ jobs:
       - name: Check for failures
         run: |
           if grep -q "FAIL:" /tmp/HBC_DATA_QUALITY_REPORT.md 2>/dev/null; then
-            echo "❌ Data quality check found FAIL status"
+            echo "FAIL: Data quality check found FAIL status"
             cat /tmp/HBC_DATA_QUALITY_REPORT.md
             exit 1
           else
-            echo "✓ Data quality checks passed (or report not generated)"
+            echo "PASS: Data quality checks passed (or report not generated)"
           fi

@@ -29,13 +29,32 @@
         },
         "refresh": 1,
         "sort": 1
+      },
+      {
+        "name": "model",
+        "type": "query",
+        "label": "Model",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "query": "label_values(hbc_forecast_compute_duration_seconds, model)",
+        "multi": false,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 1,
+        "sort": 1
       }
     ]
   },
   "panels": [
     {
       "id": 1,
-      "title": "Computation Duration (P50) - $region",
+      "title": "Computation Duration by Model (P50) - $region",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
@@ -45,8 +64,8 @@
       },
       "targets": [
         {
-          "expr": "rate(forecast_computation_duration_seconds_sum{region=\"$region\"}[5m]) / rate(forecast_computation_duration_seconds_count{region=\"$region\"}[5m])",
-          "legendFormat": "P50 Duration",
+          "expr": "histogram_quantile(0.50, rate(hbc_forecast_compute_duration_seconds_bucket{region=\"$region\", model=~\"$model\"}[5m]))",
+          "legendFormat": "{{model}} (P50)",
           "refId": "A"
         }
       ],
@@ -114,7 +133,7 @@
     },
     {
       "id": 2,
-      "title": "Computation Duration (P95) - $region",
+      "title": "Computation Duration by Model (P95) - $region",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
@@ -124,8 +143,8 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, rate(forecast_computation_duration_seconds_bucket{region=\"$region\"}[5m]))",
-          "legendFormat": "P95 Duration",
+          "expr": "histogram_quantile(0.95, rate(hbc_forecast_compute_duration_seconds_bucket{region=\"$region\", model=~\"$model\"}[5m]))",
+          "legendFormat": "{{model}} (P95)",
           "refId": "A"
         }
       ],
@@ -468,7 +487,243 @@
           "sort": "none"
         }
       }
+    },
+    {
+      "id": 7,
+      "title": "Interval Coverage by Model - $region",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "targets": [
+        {
+          "expr": "hbc_interval_coverage{region=\"$region\", model=~\"$model\"}",
+          "legendFormat": "{{model}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Coverage (%)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "red"
+              },
+              {
+                "value": 80,
+                "color": "yellow"
+              },
+              {
+                "value": 90,
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "options": {
+        "legend": {
+          "calcs": ["mean", "last"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Last Backtest Run by Model - $region",
+      "type": "table",
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "targets": [
+        {
+          "expr": "hbc_backtest_last_run_timestamp_seconds{region=\"$region\", model=~\"$model\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow"
+        }
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Model"
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "title": "Forecast Outcomes by Model - $region",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(hbc_forecast_total{region=\"$region\", model=~\"$model\", outcome=\"success\"}[5m])) by (model)",
+          "legendFormat": "{{model}} - Success",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(hbc_forecast_total{region=\"$region\", model=~\"$model\", outcome=\"empty\"}[5m])) by (model)",
+          "legendFormat": "{{model}} - Empty",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Rate (forecasts/sec)",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": null,
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "ops"
+        }
+      },
+      "options": {
+        "legend": {
+          "calcs": ["mean", "last"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Anomaly status ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 34 },
+      "targets": [
+        { "expr": "behavior_index_static_anomaly{region=\"$region\"}", "refId": "A", "instant": true },
+        { "expr": "behavior_index_zscore_anomaly{region=\"$region\"}", "refId": "B", "instant": true },
+        { "expr": "behavior_index_seasonal_anomaly{region=\"$region\"}", "refId": "C", "instant": true },
+        { "expr": "behavior_index_residual_anomaly{region=\"$region\"}", "refId": "D", "instant": true },
+        { "expr": "hbc_multivariate_md_anomaly{region=\"$region\"}", "refId": "E", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 1, "color": "red" }] },
+          "unit": "short"
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["max"], "values": false, "fields": "" }, "colorMode": "value", "graphMode": "none", "textMode": "value" },
+      "description": "Anomaly (any layer). [Anomaly Center](http://localhost:3001/d/anomaly-detection-center)"
     }
   ],
-  "tags": ["forecast", "quality", "drift", "performance"]
+  "tags": ["forecast", "quality", "drift", "performance", "model"]
 }

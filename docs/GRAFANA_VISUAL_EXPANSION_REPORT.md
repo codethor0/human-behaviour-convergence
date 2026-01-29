@@ -36,12 +36,18 @@ This report documents the Grafana visual expansion program implementation, inclu
 
 ### D3: Forecast Quality and Drift
 - **UID**: `forecast-quality-drift`
-- **Status**: EXISTS (already implemented)
+- **Status**: ENHANCED (model-specific metrics added)
 - **Location**: `infra/grafana/dashboards/forecast_quality_drift.json`
 - **Panels**:
-  - Computation Duration (P50/P95)
+  - Computation Duration by Model (P50/P95) - **ENHANCED**: Now shows per-model breakdown
   - Forecast Success Rate
   - Output Stability (delta over time)
+  - History Points Trend
+  - Forecast Points Generated
+  - **NEW**: Interval Coverage by Model (timeseries)
+  - **NEW**: Last Backtest Run by Model (table)
+  - **NEW**: Forecast Outcomes by Model (timeseries)
+- **Variables**: Added `model` selector for filtering by model
 - **UI Embed**: Embedded in forecast page
 
 ### D4: Algorithm / Model Comparison

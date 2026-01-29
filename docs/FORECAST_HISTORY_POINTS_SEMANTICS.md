@@ -39,7 +39,7 @@ Result: ~78 daily data points for a 30-day window with interpolation.
 
 **Myth**: "If `forecast_history_points` is the same for all regions, the system isn't region-aware."
 
-**Reality**: 
+**Reality**:
 - `forecast_history_points` measures **window size**, not **data content**
 - The **values** within those points differ across regions (weather, political events, etc.)
 - Region-specific variation is visible in `behavior_index` and region-specific sub-indices
@@ -67,9 +67,9 @@ The Grafana dashboard panel for `forecast_history_points` should be labeled as:
 **"History Window Size (points)"** or **"Time-Series Window Length"**
 
 Not:
-- ❌ "Events in Region"
-- ❌ "Region-Specific Data Points"
-- ❌ "Historical Events Count"
+- [FAIL] "Events in Region"
+- [FAIL] "Region-Specific Data Points"
+- [FAIL] "Historical Events Count"
 
 ## Verification
 

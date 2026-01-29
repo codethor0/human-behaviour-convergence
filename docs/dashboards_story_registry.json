@@ -1,0 +1,560 @@
+{
+  "registry_version": "1.0",
+  "timestamp": "2026-01-28T17:37:56Z",
+  "certified_v1_dashboards": {
+    "read_only": true,
+    "dashboards": [
+      "forecast-summary",
+      "forecast-overview",
+      "behavior-index-global",
+      "subindex-deep-dive",
+      "regional-variance-explorer",
+      "forecast-quality-drift",
+      "algorithm-model-comparison",
+      "data-sources-health",
+      "source-health-freshness",
+      "cross-domain-correlation",
+      "regional-deep-dive",
+      "regional-comparison",
+      "regional-signals",
+      "geo-map",
+      "anomaly-detection-center",
+      "risk-regimes",
+      "model-performance",
+      "historical-trends",
+      "contribution-breakdown",
+      "baselines",
+      "classical-models",
+      "data-sources-health-enhanced",
+      "public-overview",
+      "realtime-operations-center",
+      "regional-heatmap",
+      "shock-intelligence",
+      "data-quality-lineage",
+      "economic-behavior-convergence"
+    ]
+  },
+  "new_story_dashboards": [
+    {
+      "dashboard_uid": "executive-storyboard",
+      "dashboard_name": "Executive Storyboard",
+      "story_type": "Current State",
+      "status": "designed",
+      "target_persona": "Executive, VP of Operations",
+      "purpose": "First screen a VP sees - high-level KPIs, global view, key callouts",
+      "panels": [
+        {
+          "panel_id": 1,
+          "title": "Global Behavior Index",
+          "type": "stat",
+          "metric": "behavior_index",
+          "query": "avg(behavior_index)",
+          "transformations": ["avg"],
+          "visualization_rationale": "Headline KPI with trend indicator"
+        },
+        {
+          "panel_id": 2,
+          "title": "Regional Stress Geomap",
+          "type": "geomap",
+          "metric": "behavior_index",
+          "query": "behavior_index{region=~\"$region\"}",
+          "transformations": [],
+          "visualization_rationale": "Spatial context for stress distribution"
+        },
+        {
+          "panel_id": 3,
+          "title": "Top 5 Stress Gainers",
+          "type": "bargauge",
+          "metric": "behavior_index",
+          "query": "topk(5, behavior_index)",
+          "transformations": ["topk"],
+          "visualization_rationale": "Quick identification of regions needing attention"
+        },
+        {
+          "panel_id": 4,
+          "title": "Top 5 Stress Losers",
+          "type": "bargauge",
+          "metric": "behavior_index",
+          "query": "bottomk(5, behavior_index)",
+          "transformations": ["bottomk"],
+          "visualization_rationale": "Positive trends and recovery identification"
+        },
+        {
+          "panel_id": 5,
+          "title": "Key Narrative",
+          "type": "text",
+          "metric": "behavior_index, parent_subindex_value",
+          "query": "Dynamic text generation from metrics",
+          "transformations": ["narrative_generation"],
+          "visualization_rationale": "Human-readable summary of current state"
+        }
+      ],
+      "variables": [
+        {
+          "name": "time_range",
+          "type": "interval",
+          "options": ["7d", "30d", "90d"],
+          "default": "7d"
+        },
+        {
+          "name": "region",
+          "type": "query",
+          "query": "label_values(behavior_index, region)",
+          "multi": true,
+          "default": "all"
+        }
+      ],
+      "data_sources": ["core"],
+      "narrative_flow": "Entry point → Overview → Drill-down to regional dashboards"
+    },
+    {
+      "dashboard_uid": "shock-recovery-timeline",
+      "dashboard_name": "Shock & Recovery Timeline",
+      "story_type": "Trends & Regimes",
+      "status": "designed",
+      "target_persona": "Analyst, Risk Manager",
+      "purpose": "Focused timeline around discrete events - what spiked, recovery speed, drivers",
+      "panels": [
+        {
+          "panel_id": 1,
+          "title": "Behavior Index Timeline with Annotations",
+          "type": "timeseries",
+          "metric": "behavior_index",
+          "query": "behavior_index{region=\"$region\"}",
+          "transformations": ["annotations"],
+          "visualization_rationale": "Shows shock event and recovery trajectory"
+        },
+        {
+          "panel_id": 2,
+          "title": "Recovery Speed Gauge",
+          "type": "stat",
+          "metric": "behavior_index",
+          "query": "rate(behavior_index{region=\"$region\"}[1h])",
+          "transformations": ["rate"],
+          "visualization_rationale": "Quantifies recovery rate"
+        },
+        {
+          "panel_id": 3,
+          "title": "Sub-Index Contribution During Shock",
+          "type": "bargraph",
+          "metric": "parent_subindex_value",
+          "query": "parent_subindex_value{region=\"$region\"}",
+          "transformations": ["stacked"],
+          "visualization_rationale": "Identifies which factors drove the shock"
+        },
+        {
+          "panel_id": 4,
+          "title": "External Factors Timeline",
+          "type": "timeseries",
+          "metric": "external_*",
+          "query": "Multiple external metrics",
+          "transformations": ["multi_series"],
+          "visualization_rationale": "Shows correlation with external events"
+        },
+        {
+          "panel_id": 5,
+          "title": "Recovery Narrative",
+          "type": "text",
+          "metric": "behavior_index, parent_subindex_value",
+          "query": "Dynamic narrative generation",
+          "transformations": ["narrative_generation"],
+          "visualization_rationale": "Human-readable recovery story"
+        }
+      ],
+      "variables": [
+        {
+          "name": "region",
+          "type": "query",
+          "query": "label_values(behavior_index, region)",
+          "multi": false
+        },
+        {
+          "name": "shock_date",
+          "type": "datetime",
+          "default": "now-30d"
+        },
+        {
+          "name": "shock_window",
+          "type": "interval",
+          "options": ["±7d", "±14d", "±30d"],
+          "default": "±7d"
+        }
+      ],
+      "data_sources": ["core", "external"],
+      "narrative_flow": "Shock event → Analysis → Recovery → Attribution"
+    },
+    {
+      "dashboard_uid": "regional-comparison-storyboard",
+      "dashboard_name": "Regional Comparison Storyboard",
+      "story_type": "Cross-Region",
+      "status": "designed",
+      "target_persona": "Executive, Analyst",
+      "purpose": "Side-by-side comparisons for up to 4 regions with shared axes",
+      "panels": [
+        {
+          "panel_id": 1,
+          "title": "Multi-Region Behavior Index",
+          "type": "timeseries",
+          "metric": "behavior_index",
+          "query": "behavior_index{region=~\"$regions\"}",
+          "transformations": ["multi_series"],
+          "visualization_rationale": "Synchronized comparison of trends"
+        },
+        {
+          "panel_id": 2,
+          "title": "Regional Stress Comparison",
+          "type": "bargraph",
+          "metric": "behavior_index",
+          "query": "behavior_index{region=~\"$regions\"}",
+          "transformations": ["grouped"],
+          "visualization_rationale": "Current state comparison"
+        },
+        {
+          "panel_id": 3,
+          "title": "Sub-Index Comparison Heatmap",
+          "type": "heatmap",
+          "metric": "parent_subindex_value",
+          "query": "parent_subindex_value{region=~\"$regions\"}",
+          "transformations": ["heatmap_matrix"],
+          "visualization_rationale": "Multi-dimensional comparison"
+        },
+        {
+          "panel_id": 4,
+          "title": "Divergence Trend",
+          "type": "timeseries",
+          "metric": "behavior_index",
+          "query": "stddev_over_time(behavior_index{region=~\"$regions\"}[30d])",
+          "transformations": ["stddev_over_time"],
+          "visualization_rationale": "Shows when regions converge/diverge"
+        },
+        {
+          "panel_id": 5,
+          "title": "Comparison Narrative",
+          "type": "text",
+          "metric": "behavior_index, parent_subindex_value",
+          "query": "Dynamic comparison narrative",
+          "transformations": ["narrative_generation"],
+          "visualization_rationale": "Human-readable comparison insights"
+        }
+      ],
+      "variables": [
+        {
+          "name": "regions",
+          "type": "query",
+          "query": "label_values(behavior_index, region)",
+          "multi": true,
+          "max": 4
+        },
+        {
+          "name": "time_range",
+          "type": "interval",
+          "options": ["7d", "30d", "90d", "365d"],
+          "default": "30d"
+        }
+      ],
+      "data_sources": ["core"],
+      "narrative_flow": "Select regions → Compare trends → Identify patterns → Generate insights"
+    },
+    {
+      "dashboard_uid": "forecast-performance-storybook",
+      "dashboard_name": "Forecast Performance & Drift Storybook",
+      "story_type": "Forecast vs Reality",
+      "status": "designed",
+      "target_persona": "Data Scientist, Model Developer",
+      "purpose": "Forecast vs actual + error distributions, drift heatmaps",
+      "panels": [
+        {
+          "panel_id": 1,
+          "title": "Forecast vs Actual",
+          "type": "timeseries",
+          "metric": "behavior_index, forecast_value",
+          "query": "behavior_index{region=\"$region\"} and forecast_value{region=\"$region\", model=\"$model\"}",
+          "transformations": ["banded_series"],
+          "visualization_rationale": "Visual comparison of forecast accuracy"
+        },
+        {
+          "panel_id": 2,
+          "title": "Error Distribution Heatmap",
+          "type": "heatmap",
+          "metric": "forecast_error_absolute",
+          "query": "abs(behavior_index{region=\"$region\"} - forecast_value{region=\"$region\", model=\"$model\"})",
+          "transformations": ["heatmap"],
+          "visualization_rationale": "Shows error patterns over time"
+        },
+        {
+          "panel_id": 3,
+          "title": "Model Performance Comparison",
+          "type": "bargraph",
+          "metric": "hbc_model_mae",
+          "query": "hbc_model_mae{region=\"$region\"}",
+          "transformations": ["grouped"],
+          "visualization_rationale": "Compare model accuracy"
+        },
+        {
+          "panel_id": 4,
+          "title": "Drift Detection Timeline",
+          "type": "timeseries",
+          "metric": "forecast_drift",
+          "query": "abs(rate(behavior_index{region=\"$region\"}[1d]) - rate(forecast_value{region=\"$region\", model=\"$model\"}[1d]))",
+          "transformations": ["rate", "abs"],
+          "visualization_rationale": "Identifies when forecasts drift from reality"
+        },
+        {
+          "panel_id": 5,
+          "title": "Performance Narrative",
+          "type": "text",
+          "metric": "hbc_model_mae, hbc_model_rmse",
+          "query": "Dynamic performance narrative",
+          "transformations": ["narrative_generation"],
+          "visualization_rationale": "Human-readable performance summary"
+        }
+      ],
+      "variables": [
+        {
+          "name": "region",
+          "type": "query",
+          "query": "label_values(behavior_index, region)",
+          "multi": false
+        },
+        {
+          "name": "model",
+          "type": "query",
+          "query": "label_values(hbc_model_mae, model)",
+          "multi": true
+        },
+        {
+          "name": "time_range",
+          "type": "interval",
+          "options": ["30d", "90d", "365d"],
+          "default": "30d"
+        }
+      ],
+      "data_sources": ["core"],
+      "narrative_flow": "Select model → View performance → Identify issues → Generate recommendations"
+    },
+    {
+      "dashboard_uid": "external-signals-fusion",
+      "dashboard_name": "External Signals Fusion",
+      "story_type": "Attributions",
+      "status": "designed",
+      "target_persona": "Analyst, Data Scientist",
+      "purpose": "Overlay Behavior Index with external indicators to show correlations",
+      "panels": [
+        {
+          "panel_id": 1,
+          "title": "Behavior Index vs External Signals",
+          "type": "timeseries",
+          "metric": "behavior_index, external_*",
+          "query": "behavior_index{region=\"$region\"} and external_weather_severity{region=\"$region\"} and external_crime_incidents_rate{region=\"$region\"}",
+          "transformations": ["multi_axis"],
+          "visualization_rationale": "Shows correlation between internal and external signals"
+        },
+        {
+          "panel_id": 2,
+          "title": "Correlation Heatmap",
+          "type": "heatmap",
+          "metric": "behavior_index, external_*",
+          "query": "Correlation matrix (computed)",
+          "transformations": ["correlation_matrix"],
+          "visualization_rationale": "Quantifies correlation strength"
+        },
+        {
+          "panel_id": 3,
+          "title": "External Signal Geomap",
+          "type": "geomap",
+          "metric": "external_*",
+          "query": "external_weather_severity{region=~\"$region\"}",
+          "transformations": ["layered_map"],
+          "visualization_rationale": "Spatial view of external signals"
+        },
+        {
+          "panel_id": 4,
+          "title": "Signal Contribution Bar",
+          "type": "bargraph",
+          "metric": "external_*",
+          "query": "Correlation × magnitude (computed)",
+          "transformations": ["contribution_calculation"],
+          "visualization_rationale": "Shows which external signals contribute most"
+        },
+        {
+          "panel_id": 5,
+          "title": "Fusion Narrative",
+          "type": "text",
+          "metric": "behavior_index, external_*",
+          "query": "Dynamic fusion narrative",
+          "transformations": ["narrative_generation"],
+          "visualization_rationale": "Human-readable correlation insights"
+        }
+      ],
+      "variables": [
+        {
+          "name": "region",
+          "type": "query",
+          "query": "label_values(behavior_index, region)",
+          "multi": false
+        },
+        {
+          "name": "external_signal",
+          "type": "query",
+          "query": "label_values(external_weather_severity, signal_type)",
+          "multi": true
+        },
+        {
+          "name": "time_range",
+          "type": "interval",
+          "options": ["30d", "90d", "365d"],
+          "default": "30d"
+        }
+      ],
+      "data_sources": ["core", "external"],
+      "narrative_flow": "Select region → View correlations → Identify drivers → Generate insights"
+    }
+  ],
+  "derived_metrics": [
+    {
+      "metric_name": "behavior_index_delta_7d",
+      "description": "7-day change in behavior index",
+      "formula": "behavior_index - behavior_index offset 7d",
+      "promql": "behavior_index{region=\"$region\"} - behavior_index{region=\"$region\"} offset 7d",
+      "status": "designed",
+      "use_cases": ["Trend analysis", "Short-term change detection"]
+    },
+    {
+      "metric_name": "behavior_index_delta_30d",
+      "description": "30-day change in behavior index",
+      "formula": "behavior_index - behavior_index offset 30d",
+      "promql": "behavior_index{region=\"$region\"} - behavior_index{region=\"$region\"} offset 30d",
+      "status": "designed",
+      "use_cases": ["Monthly trend analysis", "Regime shift detection"]
+    },
+    {
+      "metric_name": "behavior_index_volatility_30d",
+      "description": "30-day volatility (standard deviation)",
+      "formula": "stddev_over_time(behavior_index[30d])",
+      "promql": "stddev_over_time(behavior_index{region=\"$region\"}[30d])",
+      "status": "designed",
+      "use_cases": ["Stability assessment", "Risk quantification"]
+    },
+    {
+      "metric_name": "forecast_error_absolute",
+      "description": "Absolute forecast error",
+      "formula": "abs(behavior_index - forecast_value)",
+      "promql": "abs(behavior_index{region=\"$region\"} - forecast_value{region=\"$region\", model=\"$model\"})",
+      "status": "designed",
+      "use_cases": ["Forecast accuracy", "Error analysis"]
+    },
+    {
+      "metric_name": "subindex_share_of_change_30d",
+      "description": "Subindex contribution to 30-day change",
+      "formula": "(subindex_change_30d / behavior_index_change_30d) * 100",
+      "promql": "(parent_subindex_value{region=\"$region\", parent=\"$parent\"} - parent_subindex_value{region=\"$region\", parent=\"$parent\"} offset 30d) / (behavior_index{region=\"$region\"} - behavior_index{region=\"$region\"} offset 30d) * 100",
+      "status": "designed",
+      "use_cases": ["Attribution analysis", "Root cause identification"]
+    }
+  ],
+  "external_data_sources": [
+    {
+      "source_name": "Weather & Climate Risk",
+      "source_type": "external_api",
+      "apis": ["NOAA API", "OpenWeatherMap"],
+      "metrics": [
+        "external_weather_severity{region}",
+        "external_temperature_extreme{region}",
+        "external_precipitation_anomaly{region}"
+      ],
+      "integration_status": "designed",
+      "feature_flag": "ENABLE_WEATHER_DATA",
+      "update_frequency": "hourly",
+      "business_value": "Correlate weather events with stress patterns"
+    },
+    {
+      "source_name": "Crime & Safety",
+      "source_type": "external_api",
+      "apis": ["FBI UCR", "Local crime APIs"],
+      "metrics": [
+        "external_crime_incidents_rate{region}",
+        "external_safety_index{region}"
+      ],
+      "integration_status": "designed",
+      "feature_flag": "ENABLE_CRIME_DATA",
+      "update_frequency": "daily",
+      "business_value": "Identify safety-related stress drivers"
+    },
+    {
+      "source_name": "Economic Stress Expansion",
+      "source_type": "extension",
+      "apis": ["FRED API", "BLS"],
+      "metrics": [
+        "external_unemployment_rate{region}",
+        "external_consumer_confidence{region}"
+      ],
+      "integration_status": "designed",
+      "feature_flag": "ENABLE_ECONOMIC_EXPANSION",
+      "update_frequency": "daily",
+      "business_value": "Enhance economic subindex with additional indicators"
+    }
+  ],
+  "visualization_patterns": {
+    "time_series": {
+      "use_cases": ["Trends", "Forecast vs actual", "Multi-region comparison"],
+      "grafana_type": "timeseries",
+      "variations": ["multi-line", "banded", "annotated"]
+    },
+    "geomap": {
+      "use_cases": ["Regional stress distribution", "Hot spot identification"],
+      "grafana_type": "geomap",
+      "variations": ["choropleth", "bubble", "layered"]
+    },
+    "heatmap": {
+      "use_cases": ["Error distribution", "Correlation matrix", "Sub-index comparison"],
+      "grafana_type": "heatmap",
+      "variations": ["time-based", "matrix", "distribution"]
+    },
+    "stat_gauge": {
+      "use_cases": ["KPIs", "Risk indicators", "Trend arrows"],
+      "grafana_type": "stat",
+      "variations": ["large_number", "gauge", "traffic_light"]
+    },
+    "bar_chart": {
+      "use_cases": ["Rankings", "Comparisons", "Contributions"],
+      "grafana_type": "bargraph",
+      "variations": ["horizontal", "vertical", "stacked", "grouped"]
+    },
+    "text_narrative": {
+      "use_cases": ["Summaries", "Explanations", "Insights"],
+      "grafana_type": "text",
+      "variations": ["static", "dynamic", "template-based"]
+    }
+  },
+  "narrative_flows": [
+    {
+      "flow_name": "Alert → Overview → Drill-down",
+      "steps": [
+        "Alert triggers (anomaly detected)",
+        "Executive Storyboard shows high-level view",
+        "Click region → Regional Deep Dive",
+        "Click sub-index → Sub-Index Deep Dive",
+        "Click external signal → External Signals Fusion"
+      ]
+    },
+    {
+      "flow_name": "Trend Discovery",
+      "steps": [
+        "Historical Trends dashboard",
+        "Identify interesting pattern",
+        "Click time period → Shock & Recovery Timeline",
+        "Analyze attribution → Attributions dashboard"
+      ]
+    },
+    {
+      "flow_name": "Model Improvement",
+      "steps": [
+        "Forecast Performance Storybook",
+        "Identify poor-performing model",
+        "Drill into error patterns",
+        "Compare with other models",
+        "Generate recommendations"
+      ]
+    }
+  ]
+}

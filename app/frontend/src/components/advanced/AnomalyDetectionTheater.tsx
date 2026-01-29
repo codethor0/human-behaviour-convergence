@@ -31,37 +31,37 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
           `http://localhost:8100/api/forecast?region_id=${region || 'city_nyc'}&days_back=90&forecast_horizon=7`
         );
         const data = await response.json();
-        
+
         const hist = (data.history || []).map((h: any) => ({
           timestamp: h.timestamp,
           value: h.behavior_index || 0.5,
         }));
-        
+
         setHistory(hist);
-        
+
         // Detect anomalies using Z-score
         if (hist.length > 30) {
-          const values = hist.map(h => h.value);
-          const mean = values.reduce((a, b) => a + b, 0) / values.length;
+          const values = hist.map((h: { timestamp: string; value: number }) => h.value);
+          const mean = values.reduce((a: number, b: number) => a + b, 0) / values.length;
           const _std = Math.sqrt(
-            values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length
+            values.reduce((sum: number, v: number) => sum + Math.pow(v - mean, 2), 0) / values.length
           );
-          
+
           const detected: Anomaly[] = [];
-          hist.forEach((h, idx) => {
+          hist.forEach((h: { timestamp: string; value: number }, idx: number) => {
             if (idx < 30) return; // Need history for rolling average
-            
+
             const recent = values.slice(Math.max(0, idx - 30), idx);
-            const recentMean = recent.reduce((a, b) => a + b, 0) / recent.length;
+            const recentMean = recent.reduce((a: number, b: number) => a + b, 0) / recent.length;
             const recentStd = Math.sqrt(
-              recent.reduce((sum, v) => sum + Math.pow(v - recentMean, 2), 0) / recent.length
+              recent.reduce((sum: number, v: number) => sum + Math.pow(v - recentMean, 2), 0) / recent.length
             );
-            
+
             const zScore = recentStd > 0 ? Math.abs((h.value - recentMean) / recentStd) : 0;
-            
+
             if (zScore > 2.0) {
               const investigation: string[] = [];
-              
+
               // Generate investigation threads
               if (h.value > recentMean + 2 * recentStd) {
                 investigation.push('Spike detected: Check recent shock events');
@@ -72,7 +72,7 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
                 investigation.push('Verify sub-index contributions');
                 investigation.push('Review historical patterns');
               }
-              
+
               detected.push({
                 timestamp: h.timestamp,
                 value: h.value,
@@ -83,10 +83,10 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
               });
             }
           });
-          
+
           setAnomalies(detected);
         }
-        
+
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch anomaly data:', error);
@@ -105,12 +105,12 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
 
   const dates = history.map(h => h.timestamp);
   const values = history.map(h => h.value);
-  
+
   // Calculate rolling average and std for bands
   const rollingAvg: number[] = [];
   const rollingUpper: number[] = [];
   const rollingLower: number[] = [];
-  
+
   history.forEach((h, idx) => {
     if (idx < 30) {
       rollingAvg.push(h.value);
@@ -240,7 +240,7 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
       formatter: (params: any) => {
         const point = params[0];
         const anomaly = anomalies.find(a => a.timestamp === point.axisValue);
-        
+
         if (anomaly) {
           return `
             <div>
@@ -255,7 +255,7 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
             </div>
           `;
         }
-        
+
         return `
           <div>
             <strong>${point.axisValue}</strong><br/>
@@ -276,7 +276,7 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
       <div style={{ padding: '10px', color: '#ffffff', fontSize: '14px' }}>
         <strong>Anomaly Detection Theater</strong>
         <div style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>
-          Spotlight effects highlight statistical outliers | Click anomalies to see investigation threads | 
+          Spotlight effects highlight statistical outliers | Click anomalies to see investigation threads |
           Z-Score &gt; 2.0 = Moderate, &gt; 3.0 = Critical
         </div>
       </div>
@@ -335,8 +335,8 @@ export function AnomalyDetectionTheater({ region, width: _width = 1000, height: 
           color: '#ffffff',
           fontSize: '12px',
         }}>
-          <strong>Active Anomalies:</strong> {anomalies.length} detected | 
-          Critical: {anomalies.filter(a => a.zScore > 3).length} | 
+          <strong>Active Anomalies:</strong> {anomalies.length} detected |
+          Critical: {anomalies.filter(a => a.zScore > 3).length} |
           Moderate: {anomalies.filter(a => a.zScore > 2 && a.zScore <= 3).length}
         </div>
       )}

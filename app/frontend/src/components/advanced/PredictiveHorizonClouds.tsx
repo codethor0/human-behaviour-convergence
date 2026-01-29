@@ -30,7 +30,7 @@ export function PredictiveHorizonClouds({ region, width: _width = 1000, height: 
           `http://localhost:8100/api/forecast?region_id=${region || 'city_nyc'}&days_back=30&forecast_horizon=7`
         );
         const data = await response.json();
-        
+
         const hist = (data.history || []).map((h: any) => ({
           date: h.timestamp,
           value: h.behavior_index,
@@ -38,7 +38,7 @@ export function PredictiveHorizonClouds({ region, width: _width = 1000, height: 
           upper: h.behavior_index * 1.05,
           confidence: 0.9,
         }));
-        
+
         const fcst = (data.forecast || []).map((f: any, idx: number) => {
           const baseValue = f.behavior_index * assumptionMultiplier;
           const confidence = 0.9 - (idx / (data.forecast.length || 1)) * 0.3;
@@ -51,7 +51,7 @@ export function PredictiveHorizonClouds({ region, width: _width = 1000, height: 
             confidence,
           };
         });
-        
+
         setHistory(hist);
         setForecast(fcst);
         setLoading(false);
@@ -208,6 +208,9 @@ export function PredictiveHorizonClouds({ region, width: _width = 1000, height: 
         const point = params[0];
         const idx = dates.indexOf(point.axisValue);
         const dataPoint = allData[idx];
+        if (dataPoint == null) {
+          return `<div><strong>${point.axisValue}</strong><br/>No data</div>`;
+        }
         return `
           <div>
             <strong>${point.axisValue}</strong><br/>

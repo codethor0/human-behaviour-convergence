@@ -14,7 +14,7 @@ All new data sources must:
 
 ## Approved Data Sources
 
-### 1. WHO Disease Surveillance Data ✅
+### 1. WHO Disease Surveillance Data [OK]
 **Source**: World Health Organization (WHO) public APIs
 **Category**: Health
 **Availability**: Public, no API key required
@@ -22,7 +22,7 @@ All new data sources must:
 **Integration**: New connector in `connectors/who_disease.py`
 **Status**: Ready to implement
 
-### 2. NOAA Climate Data ✅
+### 2. NOAA Climate Data [OK]
 **Source**: National Oceanic and Atmospheric Administration (NOAA) Climate Data API
 **Category**: Environmental
 **Availability**: Public, no API key required
@@ -30,7 +30,7 @@ All new data sources must:
 **Integration**: Enhance existing `app/services/ingestion/weather.py`
 **Status**: Ready to implement
 
-### 3. Google Trends (Limited) ⚠️
+### 3. Google Trends (Limited) [WARN]
 **Source**: Google Trends (via pytrends library)
 **Category**: Digital Attention
 **Availability**: Public but rate-limited
@@ -38,7 +38,7 @@ All new data sources must:
 **Integration**: Enhance existing `app/services/ingestion/search_trends.py`
 **Status**: Requires careful rate limiting
 
-### 4. Public Transit Data (City-Specific) ⚠️
+### 4. Public Transit Data (City-Specific) [WARN]
 **Source**: City-specific transit APIs (e.g., NYC MTA, London TfL)
 **Category**: Mobility
 **Availability**: Varies by city, some require API keys
@@ -48,18 +48,18 @@ All new data sources must:
 
 ## Excluded Sources (Ethical/Privacy Concerns)
 
-### ❌ Social Media Data
+### [FAIL] Social Media Data
 - **Twitter/X**: Requires API keys, rate limits, privacy concerns
 - **Instagram**: Private data, requires authentication
 - **Facebook**: Private data, requires authentication
 - **Reason**: Not truly public, requires user authentication, privacy risks
 
-### ❌ Personal Health Data
+### [FAIL] Personal Health Data
 - **Fitbit**: Private health data, requires user authentication
 - **Apple HealthKit**: Private health data, requires device access
 - **Reason**: Personal health information (PHI), HIPAA concerns
 
-### ❌ Smartphone Sensor Data
+### [FAIL] Smartphone Sensor Data
 - **Location data**: Privacy concerns, requires device access
 - **Voice/Speech data**: Privacy concerns, requires device access
 - **Reason**: Personal data, requires device-level access
@@ -128,7 +128,7 @@ Each must: use geo in fetch + cache key, emit region-labeled metrics, pass `vari
 
 ## Next Steps
 
-1. ✅ Create this planning document
+1. [OK] Create this planning document
 2. Implement WHO Disease Surveillance connector
 3. Enhance NOAA climate data integration
 4. Update source registry

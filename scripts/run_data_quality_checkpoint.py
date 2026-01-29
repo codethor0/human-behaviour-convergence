@@ -11,7 +11,6 @@ import pandas as pd
 import structlog
 
 from app.core.data_quality import DataQualityCheckpoint
-from app.core.prediction import BehavioralForecaster
 from app.services.ingestion.economic_fred import FREDEconomicFetcher
 from app.services.ingestion.weather import EnvironmentalImpactFetcher
 from app.services.ingestion.public_health import PublicHealthFetcher
@@ -101,7 +100,7 @@ def main():
             mobility_data, _ = result
         else:
             mobility_data = result
-        
+
         if isinstance(mobility_data, pd.DataFrame) and not mobility_data.empty:
             checkpoint.run_checkpoint(
                 source_name="mobility",
@@ -125,7 +124,7 @@ def main():
     warned = sum(1 for r in checkpoint.results if r.status == "WARN")
     failed = sum(1 for r in checkpoint.results if r.status == "FAIL")
 
-    print(f"\nData Quality Checkpoint Summary:")
+    print("\nData Quality Checkpoint Summary:")
     print(f"  Total checks: {total}")
     print(f"  PASS: {passed}")
     print(f"  WARN: {warned}")

@@ -1,0 +1,175 @@
+{
+  "title": "Anomaly Atlas and Regime Shifts",
+  "uid": "hbc-anomaly-atlas",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "region",
+        "type": "query",
+        "label": "Region",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "query": "label_values(behavior_index, region)",
+        "multi": false,
+        "includeAll": false,
+        "current": {
+          "selected": false,
+          "text": "city_nyc",
+          "value": "city_nyc"
+        },
+        "refresh": 1,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Anomaly Atlas Purpose",
+      "type": "text",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "**Anomaly Atlas and Regime Shifts** – What is anomalous, where, and since when. Uses existing behavior index and layer 1/2/3 anomaly metrics. Region selector applies to time series; table shows all regions with current anomaly state."
+      }
+    },
+    {
+      "id": 2,
+      "title": "Behavior Index and Z-Score (Anomaly Proxy) – $region",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "expr": "behavior_index{region=\"$region\"}",
+          "legendFormat": "Behavior Index",
+          "refId": "A"
+        },
+        {
+          "expr": "behavior_index_zscore{region=\"$region\"}",
+          "legendFormat": "Z-Score",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 },
+          "unit": "short"
+        }
+      },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 3,
+      "title": "Anomaly State Over Time (0=normal, 1=anomaly) – $region",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "expr": "behavior_index_static_anomaly{region=\"$region\"}",
+          "legendFormat": "Static",
+          "refId": "A"
+        },
+        {
+          "expr": "behavior_index_zscore_anomaly{region=\"$region\"}",
+          "legendFormat": "Z-Score",
+          "refId": "B"
+        },
+        {
+          "expr": "behavior_index_seasonal_anomaly{region=\"$region\"}",
+          "legendFormat": "Seasonal",
+          "refId": "C"
+        },
+        {
+          "expr": "behavior_index_residual_anomaly{region=\"$region\"}",
+          "legendFormat": "Residual",
+          "refId": "D"
+        },
+        {
+          "expr": "hbc_multivariate_md_anomaly{region=\"$region\"}",
+          "legendFormat": "Multivariate",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 30 },
+          "min": 0,
+          "max": 1.2,
+          "unit": "short"
+        }
+      },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    },
+    {
+      "id": 4,
+      "title": "Top Current Anomalies (All Regions)",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 19 },
+      "targets": [
+        {
+          "expr": "last_over_time(behavior_index_static_anomaly[1h]) by (region)",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "expr": "last_over_time(behavior_index_zscore_anomaly[1h]) by (region)",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "expr": "last_over_time(hbc_multivariate_md_anomaly[1h]) by (region)",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "expr": "last_over_time(behavior_index[1h]) by (region)",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "__name__": true, "job": true, "instance": true },
+            "renameByName": {
+              "region": "Region",
+              "Value #A": "Static",
+              "Value #B": "Z-Score",
+              "Value #C": "Multivariate",
+              "Value #D": "Behavior Index"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [{ "field": "Behavior Index", "desc": true }]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "displayMode": "auto" },
+          "thresholds": { "mode": "absolute", "steps": [{ "value": null, "color": "green" }, { "value": 0.5, "color": "yellow" }, { "value": 1, "color": "red" }] }
+        }
+      },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }
+    }
+  ]
+}

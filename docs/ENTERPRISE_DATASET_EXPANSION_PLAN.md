@@ -1,8 +1,8 @@
 # Enterprise Dataset Expansion + Regional Signal Hardening Plan
 
-**Date**: 2026-01-22  
-**Status**: Planning Phase  
-**Goal**: Move the project toward **enterprise-grade open-source credibility**.  
+**Date**: 2026-01-22
+**Status**: Planning Phase
+**Goal**: Move the project toward **enterprise-grade open-source credibility**.
 **Objective**: Expand dataset portfolio to materially improve regional behavioral forecasting accuracy, variance, and explainability while maintaining zero-regression guarantees.
 
 ---
@@ -35,17 +35,17 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
 
 | Prompt section | Plan location | Status |
 |----------------|---------------|--------|
-| **Section 0** — Absolute Guardrails | § Section 0 | ✅ |
-| **Section 1** — Why we are adding datasets | Exec Summary, Success Criteria | ✅ |
-| **Section 2** — Dataset categories (2.1–2.7) | § Section 1 (1.1–1.7) | ✅ |
-| **Section 3** — Top 10–15 ranked + Top 5 MVP | § Section 2 | ✅ |
-| **Section 4** — MVP integration blueprints (Top 5) | § Section 3 | ✅ |
-| **Section 5** — Discrepancy & regionality safety net | § Section 4 | ✅ |
-| **Section 6** — Dashboard & UX (GLOBAL/REGIONAL, contribution, source health) | § Section 5 | ✅ |
-| **Section 7** — Documentation (DATA_SOURCES, etc.) | § Section 6 | ✅ |
-| **Section 8** — Final output (catalog, Top 5, checklist, risk, impact, order) | § 1–2, 7–10 | ✅ |
-| **Section 9** — Success criteria | Exec Summary, § Section 9 | ✅ |
-| **Next Steps** — Agents, Explainability dashboard, open-source positioning | § Section 10.2 | ✅ |
+| **Section 0** — Absolute Guardrails | § Section 0 | [OK] |
+| **Section 1** — Why we are adding datasets | Exec Summary, Success Criteria | [OK] |
+| **Section 2** — Dataset categories (2.1–2.7) | § Section 1 (1.1–1.7) | [OK] |
+| **Section 3** — Top 10–15 ranked + Top 5 MVP | § Section 2 | [OK] |
+| **Section 4** — MVP integration blueprints (Top 5) | § Section 3 | [OK] |
+| **Section 5** — Discrepancy & regionality safety net | § Section 4 | [OK] |
+| **Section 6** — Dashboard & UX (GLOBAL/REGIONAL, contribution, source health) | § Section 5 | [OK] |
+| **Section 7** — Documentation (DATA_SOURCES, etc.) | § Section 6 | [OK] |
+| **Section 8** — Final output (catalog, Top 5, checklist, risk, impact, order) | § 1–2, 7–10 | [OK] |
+| **Section 9** — Success criteria | Exec Summary, § Section 9 | [OK] |
+| **Next Steps** — Agents, Explainability dashboard, open-source positioning | § Section 10.2 | [OK] |
 
 ---
 
@@ -72,7 +72,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - API rate limits (1000 requests/day): Cache 24h, fallback to last known value
   - Missing state data: Use national average with `source_quality="fallback_national"`
   - API downtime: Return cached data with `source_quality="stale_cache"`
-- **Ethical Review Notes**: ✅ Public aggregate data, no PII, state-level only
+- **Ethical Review Notes**: [OK] Public aggregate data, no PII, state-level only
 
 #### Dataset 2: FDIC Bank Branch Closures
 - **Dataset Name**: FDIC Branch History & Closures
@@ -93,7 +93,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - FDIC API changes: Version detection, fallback to CSV bulk download
   - Missing county data: Aggregate to state level
   - Historical gaps: Forward-fill with last known value
-- **Ethical Review Notes**: ✅ Public institutional data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public institutional data, aggregated, no PII
 
 #### Dataset 3: Eviction Lab Filings (State/City)
 - **Dataset Name**: Eviction Lab Eviction Filings
@@ -114,7 +114,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Limited geography: Mark regions as "not_available", use state-level proxy
   - S3 access issues: Retry with exponential backoff, fallback to cached data
   - Data lag: Document expected 1-2 month delay, use most recent available
-- **Ethical Review Notes**: ✅ Aggregated public data, CC BY 4.0, no PII
+- **Ethical Review Notes**: [OK] Aggregated public data, CC BY 4.0, no PII
 
 ### 1.2 — ENVIRONMENTAL & CLIMATE SHOCKS (REGIONAL, HIGH VARIANCE)
 
@@ -137,7 +137,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - CSV format changes: Robust parsing with fallback regex
   - Missing state data: Use national average with `source_quality="fallback_national"`
   - Weekly lag: Document expected Thursday release, cache until next week
-- **Ethical Review Notes**: ✅ Public climate data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public climate data, aggregated, no PII
 
 #### Dataset 5: NOAA Storm Events (State/County)
 - **Dataset Name**: NOAA Storm Events Database
@@ -159,7 +159,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Large CSV files (100MB+): Stream parsing, chunk processing, cache intermediate results
   - Data lag: Use provisional data, document final data delay
   - Missing county: Aggregate to state level
-- **Ethical Review Notes**: ✅ Public weather/climate data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public weather/climate data, aggregated, no PII
 
 #### Dataset 6: NASA FIRMS Wildfire Data (State)
 - **Dataset Name**: NASA FIRMS Active Fire Data
@@ -180,7 +180,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - API rate limits: Cache 6h, batch requests
   - Missing state mapping: Use lat/lon → state lookup table
   - Seasonal gaps: Document fire seasonality, use 0 during off-season
-- **Ethical Review Notes**: ✅ Public satellite data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public satellite data, aggregated, no PII
 
 ### 1.3 — PUBLIC SAFETY & CIVIC STRESS (REGIONAL)
 
@@ -203,7 +203,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Data lag: Use most recent available, document expected delay
   - Missing states: Use national average with `source_quality="fallback_national"`
   - API changes: Version detection, fallback to CSV bulk download
-- **Ethical Review Notes**: ✅ Public aggregated crime statistics, no PII, state-level only
+- **Ethical Review Notes**: [OK] Public aggregated crime statistics, no PII, state-level only
 
 #### Dataset 8: OpenStates Legislative Churn (State)
 - **Dataset Name**: OpenStates Bill Introduction & Passage Rates
@@ -224,7 +224,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - API key required: Document free tier, fallback to cached data if key missing
   - Rate limits: Cache 1h, batch requests
   - Missing states: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ✅ Public legislative data, CC BY 4.0, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public legislative data, CC BY 4.0, aggregated, no PII
 
 ### 1.4 — HEALTH SYSTEM PRESSURE (REGIONAL / NATIONAL MIX)
 
@@ -247,7 +247,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - API changes: Version detection, fallback to CSV export
   - Missing states: Use national average with `source_quality="fallback_national"`
   - Data gaps: Forward-fill with last known value (max 7 days)
-- **Ethical Review Notes**: ✅ Public health system data, aggregated, no PII, facility-level aggregated to state
+- **Ethical Review Notes**: [OK] Public health system data, aggregated, no PII, facility-level aggregated to state
 
 #### Dataset 10: CDC WONDER Overdose Data (State)
 - **Dataset Name**: CDC WONDER Provisional Drug Overdose Deaths
@@ -268,7 +268,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - XML API complexity: Robust XML parsing, fallback to CSV export if available
   - Data lag: Document expected 2-3 month delay, use most recent available
   - Missing states: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ✅ Public health statistics, aggregated, no PII, state-level only
+- **Ethical Review Notes**: [OK] Public health statistics, aggregated, no PII, state-level only
 
 ### 1.5 — INFORMATION & MEDIA PRESSURE (REGIONALIZED WHERE POSSIBLE)
 
@@ -291,7 +291,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - GDELT API rate limits: Cache 1h, batch requests
   - State filtering accuracy: Use location name matching + lat/lon bounding boxes
   - Missing states: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ✅ Public event data, aggregated, no PII, state-level only
+- **Ethical Review Notes**: [OK] Public event data, aggregated, no PII, state-level only
 
 ### 1.6 — INFRASTRUCTURE & SYSTEM STRAIN
 
@@ -314,7 +314,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - ISO region → state mapping: Use lookup table, handle multi-state ISOs
   - API rate limits: Cache 6h, batch requests
   - Missing regions: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ✅ Public energy data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public energy data, aggregated, no PII
 
 #### Dataset 13: Power Outage Reports (State)
 - **Dataset Name**: DOE Power Outage Incident Reports
@@ -335,7 +335,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Scraping required: Robust HTML parsing, fallback to cached data
   - Missing states: Use national average with `source_quality="fallback_national"`
   - Data gaps: Forward-fill with 0 (assume no outages if missing)
-- **Ethical Review Notes**: ✅ Public infrastructure data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public infrastructure data, aggregated, no PII
 
 ### 1.7 — SOCIAL & COMMUNITY SIGNALS
 
@@ -358,7 +358,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Multiple sources: Aggregate with fallback priority
   - Annual data: Use last known value until next election
   - Missing states: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ✅ Public election data, aggregated, no PII
+- **Ethical Review Notes**: [OK] Public election data, aggregated, no PII
 
 #### Dataset 15: Community Survey Indices (State)
 - **Dataset Name**: State-Level Community Survey Aggregates (where available)
@@ -378,7 +378,7 @@ This plan identifies **15 high-value datasets** across 7 categories to strengthe
   - Limited availability: Mark as "optional", use only where available
   - Licensing issues: Verify CC/public domain, skip if unclear
   - Data gaps: Use national average with `source_quality="fallback_national"`
-- **Ethical Review Notes**: ⚠️ Verify licensing per source, ensure aggregated, no PII
+- **Ethical Review Notes**: [WARN] Verify licensing per source, ensure aggregated, no PII
 
 ---
 
@@ -906,14 +906,14 @@ Add to `scripts/discrepancy_harness.py` or create `scripts/prometheus_invariants
 def check_prometheus_invariants():
     """Check Prometheus metrics for regionality invariants."""
     metrics = fetch_prometheus_metrics()
-    
+
     # Check 1: No region="None"
     assert not any('region="None"' in m for m in metrics), "Found region=None labels"
-    
+
     # Check 2: Multi-region series exist
     behavior_index_regions = extract_regions(metrics, "behavior_index")
     assert len(behavior_index_regions) > 10, f"Only {len(behavior_index_regions)} regions for behavior_index"
-    
+
     # Check 3: New REGIONAL sources have region labels
     for source in ["eia_fuel", "drought_monitor", "noaa_storms", "eviction_lab", "cdc_wonder"]:
         source_regions = extract_regions(metrics, f"{source}_stress_index")
@@ -1121,13 +1121,13 @@ See Section 5 of the Enterprise Plan for the full safety net.
 ### Ethics Review
 
 All MVP datasets pass ethical standards:
-- ✅ Public or openly licensed
-- ✅ Aggregated (no PII)
-- ✅ State-level or higher (no individual-level data)
-- ✅ Clear data licensing
-- ✅ No scraping behind auth walls
-- ✅ No social media APIs
-- ✅ No private/paid APIs (except free-tier OpenStates, documented)
+- [OK] Public or openly licensed
+- [OK] Aggregated (no PII)
+- [OK] State-level or higher (no individual-level data)
+- [OK] Clear data licensing
+- [OK] No scraping behind auth walls
+- [OK] No social media APIs
+- [OK] No private/paid APIs (except free-tier OpenStates, documented)
 
 ### Failure Mode Handling
 
@@ -1157,9 +1157,9 @@ Each dataset has documented failure modes:
 - **Variance probe**: All REGIONAL sources must show variance (no alerts)
 
 ### Success Metrics
-- **Two distant regions** (Illinois vs Arizona) show divergence in ≥3 independent sub-indices within 30 days ✅
-- **Dashboards** clearly distinguish global vs regional signals ✅
-- **Forecasts** are auditable back to source-level contributors ✅
+- **Two distant regions** (Illinois vs Arizona) show divergence in ≥3 independent sub-indices within 30 days [OK]
+- **Dashboards** clearly distinguish global vs regional signals [OK]
+- **Forecasts** are auditable back to source-level contributors [OK]
 
 ---
 
@@ -1178,7 +1178,7 @@ Each dataset has documented failure modes:
 
 | Option | Description | Concrete next actions |
 |--------|-------------|------------------------|
-| **A. Real datasets + rankings** | Fill plan with researched datasets and scores | ✅ **Done** — 15 datasets, Top 5 MVP, ROI/regionality/complexity rankings in Section 2 |
+| **A. Real datasets + rankings** | Fill plan with researched datasets and scores | [OK] **Done** — 15 datasets, Top 5 MVP, ROI/regionality/complexity rankings in Section 2 |
 | **B. Cursor agents** | Split work into Research, Ingestion, Integrity agents | Define agent prompts: **Research** (dataset discovery, API verification), **Ingestion** (connector + pipeline per blueprint), **Integrity** (variance_probe, regression tests, Prometheus invariants). Use this plan as shared context. |
 | **C. Forecast Explainability dashboard** | Show exactly why a region’s score moved | Design Grafana dashboard: **contributor breakdown** (each sub-index → behavior_index delta), **source-level attribution** (which dataset drove the change), **time-range sensitivity** (as-of dates, lags). Wire to existing `explanations` / sub_indices APIs. |
 | **D. Open-source positioning** | Credible analytics platform (docs, README, governance) | Update **README**: “Enterprise-grade behavioral forecasting,” link to DATA_SOURCES, ENTERPRISE_DATASET_EXPANSION_PLAN, VERIFY_INTEGRITY. Add **CONTRIBUTING**: dataset proposal template, guardrails, variance proof. Consider **governance**: maintainers, dataset approval checklist. |
@@ -1191,10 +1191,10 @@ Each dataset has documented failure modes:
 
 This Enterprise Dataset Expansion Plan provides a comprehensive roadmap for adding 15 high-value datasets, with detailed blueprints for the Top 5 MVP datasets. Each dataset is designed to:
 
-- ✅ Increase regional variance
-- ✅ Maintain zero-regression guarantees
-- ✅ Integrate with existing regionality safety net
-- ✅ Provide clear observability and documentation
-- ✅ Pass ethical and privacy standards
+- [OK] Increase regional variance
+- [OK] Maintain zero-regression guarantees
+- [OK] Integrate with existing regionality safety net
+- [OK] Provide clear observability and documentation
+- [OK] Pass ethical and privacy standards
 
 **Ready for implementation. Begin with MVP 1 (EIA Gasoline Prices).**

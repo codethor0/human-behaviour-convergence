@@ -29,12 +29,12 @@ FRED_SPENDING_SERIES = {
 class ConsumerSpendingFetcher:
     """
     Fetch consumer spending indicators from FRED (Federal Reserve Economic Data) API.
-    
+
     Requires FRED_API_KEY environment variable.
     Free API key available at: https://fred.stlouisfed.org/docs/api/api_key.html
-    
+
     Rate limits: 120 requests per 120 seconds
-    
+
     Provides:
     - Retail sales stress index
     - Consumer spending trends
@@ -44,7 +44,7 @@ class ConsumerSpendingFetcher:
     def __init__(self, api_key: Optional[str] = None, cache_duration_minutes: int = 60):
         """
         Initialize consumer spending fetcher.
-        
+
         Args:
             api_key: FRED API key (defaults to FRED_API_KEY env var)
             cache_duration_minutes: Cache duration (default: 60 minutes)
@@ -65,15 +65,15 @@ class ConsumerSpendingFetcher:
     ) -> Tuple[pd.DataFrame, SourceStatus]:
         """
         Fetch retail sales data and compute spending stress index.
-        
+
         Retail sales stress: Lower sales growth = higher economic stress
-        
+
         Args:
             days_back: Number of days of historical data (default: 90)
             use_cache: Whether to use cached data (default: True)
-            
+
         Returns:
-            Tuple of (DataFrame with columns: ['timestamp', 'retail_sales_stress', 
+            Tuple of (DataFrame with columns: ['timestamp', 'retail_sales_stress',
             'retail_sales_value'], SourceStatus)
         """
         # CI offline mode: return synthetic deterministic data
@@ -83,17 +83,21 @@ class ConsumerSpendingFetcher:
             dates = pd.date_range(end=today, periods=min(days_back, 90), freq="D")
             # Simulate retail sales with some volatility
             base_sales = 500_000_000_000  # $500B baseline
-            values = base_sales + (pd.Series(range(len(dates))) % 30 - 15) * 10_000_000_000
+            values = (
+                base_sales + (pd.Series(range(len(dates))) % 30 - 15) * 10_000_000_000
+            )
             # Normalize to stress index: lower sales = higher stress
             min_sales = values.min()
             max_sales = values.max()
             stress = 1.0 - ((values - min_sales) / (max_sales - min_sales))
-            
-            df = pd.DataFrame({
-                "timestamp": dates,
-                "retail_sales_stress": stress.values,
-                "retail_sales_value": values.values,
-            })
+
+            df = pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "retail_sales_stress": stress.values,
+                    "retail_sales_value": values.values,
+                }
+            )
             status = SourceStatus(
                 provider="CI_Synthetic_FRED_Retail",
                 ok=True,
@@ -105,7 +109,9 @@ class ConsumerSpendingFetcher:
 
         if not self.api_key:
             logger.warning("FRED_API_KEY not set, returning empty DataFrame")
-            return pd.DataFrame(columns=["timestamp", "retail_sales_stress", "retail_sales_value"]), SourceStatus(
+            return pd.DataFrame(
+                columns=["timestamp", "retail_sales_stress", "retail_sales_value"]
+            ), SourceStatus(
                 provider="FRED_Retail",
                 ok=False,
                 http_status=None,
@@ -181,20 +187,24 @@ class ConsumerSpendingFetcher:
 
             # Compute YoY growth rate
             df["yoy_growth"] = df["retail_sales_value"].pct_change(periods=12) * 100.0
-            
-            # Normalize to stress index: negative growth = high stress (1.0), 
+
+            # Normalize to stress index: negative growth = high stress (1.0),
             # positive growth = low stress (0.0)
             # Typical range: -20% to +20%
             min_growth = max(df["yoy_growth"].min(), -20.0)
             max_growth = min(df["yoy_growth"].max(), 20.0)
-            
+
             if max_growth > min_growth:
-                df["retail_sales_stress"] = (max_growth - df["yoy_growth"]) / (max_growth - min_growth)
+                df["retail_sales_stress"] = (max_growth - df["yoy_growth"]) / (
+                    max_growth - min_growth
+                )
                 df["retail_sales_stress"] = df["retail_sales_stress"].clip(0.0, 1.0)
             else:
                 df["retail_sales_stress"] = 0.5
 
-            result_df = df[["timestamp", "retail_sales_stress", "retail_sales_value"]].copy()
+            result_df = df[
+                ["timestamp", "retail_sales_stress", "retail_sales_value"]
+            ].copy()
 
             # Cache result
             self._cache[cache_key] = (result_df.copy(), datetime.now())
@@ -216,10 +226,16 @@ class ConsumerSpendingFetcher:
             return result_df, status
 
         except requests.exceptions.RequestException as e:
-            logger.error("Error fetching FRED retail sales", error=str(e), exc_info=True)
+            logger.error(
+                "Error fetching FRED retail sales", error=str(e), exc_info=True
+            )
             return self._fallback_retail_data(days_back)
         except Exception as e:
-            logger.error("Unexpected error fetching FRED retail sales", error=str(e), exc_info=True)
+            logger.error(
+                "Unexpected error fetching FRED retail sales",
+                error=str(e),
+                exc_info=True,
+            )
             return self._fallback_retail_data(days_back)
 
     def _fallback_retail_data(
@@ -228,11 +244,13 @@ class ConsumerSpendingFetcher:
         """Fallback to default values when API fails."""
         today = pd.Timestamp.today().normalize()
         dates = pd.date_range(end=today, periods=min(days_back, 30), freq="D")
-        df = pd.DataFrame({
-            "timestamp": dates,
-            "retail_sales_stress": [0.5] * len(dates),
-            "retail_sales_value": [500_000_000_000] * len(dates),
-        })
+        df = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "retail_sales_stress": [0.5] * len(dates),
+                "retail_sales_value": [500_000_000_000] * len(dates),
+            }
+        )
 
         status = SourceStatus(
             provider="FRED_Retail_Fallback",

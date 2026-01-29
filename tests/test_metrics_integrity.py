@@ -13,6 +13,7 @@ class TestMetricsIntegrity:
     def metrics_endpoint(self):
         """Get metrics endpoint URL."""
         import os
+
         base_url = os.getenv("HBC_BACKEND_URL", "http://localhost:8100")
         return f"{base_url}/metrics"
 
@@ -58,6 +59,7 @@ class TestMetricsIntegrity:
         exist for all of them (not just the most recent).
         """
         import os
+
         base_url = os.getenv("HBC_BACKEND_URL", "http://localhost:8100")
         prometheus_url = os.getenv("HBC_PROMETHEUS_URL", "http://localhost:9090")
 
@@ -83,15 +85,18 @@ class TestMetricsIntegrity:
                 )
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                pytest.skip(f"Could not generate forecast for {region['region_id']}: {e}")
+                pytest.skip(
+                    f"Could not generate forecast for {region['region_id']}: {e}"
+                )
 
         # Wait a moment for metrics to be scraped
         import time
+
         time.sleep(2)
 
         # Query Prometheus for distinct regions
         try:
-            query = 'count(count by(region)(behavior_index))'
+            query = "count(count by(region)(behavior_index))"
             response = requests.get(
                 f"{prometheus_url}/api/v1/query",
                 params={"query": query},
@@ -117,7 +122,7 @@ class TestMetricsIntegrity:
         # Also check parent and child sub-index metrics
         for metric in ["parent_subindex_value", "child_subindex_value"]:
             try:
-                query = f'count(count by(region)({metric}))'
+                query = f"count(count by(region)({metric}))"
                 response = requests.get(
                     f"{prometheus_url}/api/v1/query",
                     params={"query": query},

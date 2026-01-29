@@ -171,7 +171,7 @@ For a standalone predictor project, create your own repository based on this pro
 
 ## Next Steps
 
-- Check [app-plan.md](./app-plan.md) for architecture details
+- Check [app-plan.md](../app-plan.md) for architecture details
 - Join discussions in GitHub Issues with the `community` label
 
 ---

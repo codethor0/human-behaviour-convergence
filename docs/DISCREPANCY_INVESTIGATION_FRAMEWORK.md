@@ -14,7 +14,7 @@ This document describes the comprehensive investigation framework created to sys
 - Generates forecasts for 20+ diverse regions (12 US states + DC + 6 global cities)
 - Computes SHA256 hashes of:
   - History series
-  - Forecast series  
+  - Forecast series
   - Subindices
 - Outputs variance matrix CSV
 - Flags P0 if >=80% regions share identical hashes
@@ -109,7 +109,7 @@ bash scripts/run_full_discrepancy_investigation.sh
 
 ## Cache Key Analysis Results
 
-### ✅ Correct Regional Sources (Include Geo Params)
+### [OK] Correct Regional Sources (Include Geo Params)
 - **Weather**: `{latitude:.4f},{longitude:.4f},{days_back}`
 - **OpenAQ**: `openaq_{latitude}_{longitude}_{radius_km}_{days_back}`
 - **NWS Alerts**: `nws_alerts_{latitude}_{longitude}_{days_back}`
@@ -124,14 +124,14 @@ bash scripts/run_full_discrepancy_investigation.sh
 - **OpenFEMA**: `openfema_{region_name or 'national'}_{days_back}`
 - **OpenStates**: `openstates_{region_name or 'default'}_{days_back}`
 
-### ✅ Correct Global/National Sources (Expected Constant)
+### [OK] Correct Global/National Sources (Expected Constant)
 - **FRED Economic**: `{series_id}_{days_back}` (national data)
 - **EIA Energy**: `{series_id}_{days_back}` (national data)
 - **CISA KEV**: `cisa_kev_{days_back}` (global vulnerability catalog)
 - **GDELT Tone**: `gdelt_tone_{days_back}` (global average tone - intentional)
 - **Mobility (TSA)**: `mobility_tsa_{region_key}_{days_back}` (national, but cache includes region_key for future expansion)
 
-### ⚠️ Potential Issues Found
+### [WARN] Potential Issues Found
 
 1. **USGS Earthquakes**: `usgs_earthquakes_{days_back}_{min_magnitude}`
    - **Issue**: No geo parameters in cache key
@@ -156,18 +156,18 @@ bash scripts/run_full_discrepancy_investigation.sh
 - `mobility_patterns` - TSA passenger throughput (national aggregate)
 
 ### REGIONAL (Must Vary)
-- `weather_patterns` - By lat/lon ✅
-- `openaq_air_quality` - By lat/lon ✅
-- `nws_alerts` - By lat/lon ✅
-- `search_trends` - By region_name ✅
-- `political_stress` - By state_name ✅
-- `crime_stress` - By region_name ✅
-- `misinformation_stress` - By region_name ✅
-- `social_cohesion_stress` - By region_name ✅
-- `gdelt_legislative` - By region_name ✅
-- `gdelt_enforcement` - By region_name ✅
-- `openfema` - By region_name ✅
-- `openstates_legislative` - By region_name ✅
+- `weather_patterns` - By lat/lon [OK]
+- `openaq_air_quality` - By lat/lon [OK]
+- `nws_alerts` - By lat/lon [OK]
+- `search_trends` - By region_name [OK]
+- `political_stress` - By state_name [OK]
+- `crime_stress` - By region_name [OK]
+- `misinformation_stress` - By region_name [OK]
+- `social_cohesion_stress` - By region_name [OK]
+- `gdelt_legislative` - By region_name [OK]
+- `gdelt_enforcement` - By region_name [OK]
+- `openfema` - By region_name [OK]
+- `openstates_legislative` - By region_name [OK]
 
 ### POTENTIALLY_GLOBAL (May Fallback)
 - `public_health` - OWID fallback if API not configured
@@ -246,26 +246,26 @@ If P0 is detected, investigate in this order:
 
 ```
 /tmp/hbc_discrepancy_proof_<TIMESTAMP>/
-├── commit.txt                          # Git commit SHA
-├── git_status.txt                      # Working tree status
-├── python_version.txt                  # Python version
-├── docker_version.txt                  # Docker version
-├── backend_health.json                 # Backend health check
-├── frontend_routes_http.txt            # Frontend route status
-├── regions.json                        # Regions catalog
-├── forecast_<region_id>.json           # Individual forecasts (20+ files)
-├── forecast_variance_matrix.csv        # Hash comparison matrix
-├── discrepancy_harness.log             # Variance analysis log
-├── metrics.txt                         # Backend /metrics dump
-├── metrics_region_counts.txt           # Region label distribution
-├── prom_region_values.json             # Prometheus label values
-├── source_regionality_manifest.json    # Source classification
-├── cache_key_audit.json                # Cache key analysis
-├── cache_key_issues.json               # Flagged cache key issues
-├── variance_probe_report.csv           # Per-source variance metrics
-├── variance_probe_report.txt          # Human-readable variance report
-├── p0_collapse_detected.txt            # P0 flag (if collapse detected)
-└── p0_region_none.txt                  # P0 flag (if region=None found)
++-- commit.txt                          # Git commit SHA
++-- git_status.txt                      # Working tree status
++-- python_version.txt                  # Python version
++-- docker_version.txt                  # Docker version
++-- backend_health.json                 # Backend health check
++-- frontend_routes_http.txt            # Frontend route status
++-- regions.json                        # Regions catalog
++-- forecast_<region_id>.json           # Individual forecasts (20+ files)
++-- forecast_variance_matrix.csv        # Hash comparison matrix
++-- discrepancy_harness.log             # Variance analysis log
++-- metrics.txt                         # Backend /metrics dump
++-- metrics_region_counts.txt           # Region label distribution
++-- prom_region_values.json             # Prometheus label values
++-- source_regionality_manifest.json    # Source classification
++-- cache_key_audit.json                # Cache key analysis
++-- cache_key_issues.json               # Flagged cache key issues
++-- variance_probe_report.csv           # Per-source variance metrics
++-- variance_probe_report.txt           # Human-readable variance report
++-- p0_collapse_detected.txt            # P0 flag (if collapse detected)
+\-- p0_region_none.txt                  # P0 flag (if region=None found)
 ```
 
 ## Next Steps

@@ -80,3 +80,58 @@ logs/
 *_MASTER_PROMPT*.md
 *MASTER_E2E*.md
 docs/grafana_prometheus_plan.md
+
+# Large dependency directories (should never be committed)
+.venv/
+.healthcheck-venv/
+app/frontend/node_modules/
+app/frontend/.next/
+.cache/
+
+# Additional cache directories
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor directories
+.idea/
+.vscode/
+*.code-workspace
+
+# Temporary and scratch files
+tmp/
+temp/
+scratch/
+notes.txt
+*.tmp
+*.bak
+*.backup
+*_backup.*
+*_old.*
+*_temp.*
+
+# Large binary files and databases
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.dump
+
+# Coverage and test artifacts
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+test-results/
+playwright-report/

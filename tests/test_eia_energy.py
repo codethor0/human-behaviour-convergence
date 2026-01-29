@@ -58,7 +58,7 @@ class TestEIAEnergyFetcher:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        fetcher = EIAEnergyFetcher(api_key="test-key")
+        fetcher = EIAEnergyFetcher(api_key=os.getenv("TEST_API_KEY", "test_key"))
         df, status = fetcher.fetch_series("PET.RWTC.D", days_back=30, use_cache=False)
 
         assert df is not None

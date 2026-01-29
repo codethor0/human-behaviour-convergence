@@ -1,7 +1,7 @@
 # Post-Work Verification Truth Report
 
-**Generated**: 2026-01-23  
-**Verification Script**: `scripts/post_work_verification.sh`  
+**Generated**: 2026-01-23
+**Verification Script**: `scripts/post_work_verification.sh`
 **Evidence Bundle**: `/tmp/hbc_post_verify_<timestamp>/`
 
 ---
@@ -10,14 +10,14 @@
 
 | Claimed Item | Status | Evidence | Gate Passed |
 |--------------|--------|----------|-------------|
-| **MVP1: EIA Fuel Prices** | ✅ **PROVED** | File exists (329 lines), registered, integrated, metrics present | A, B, C, D, E |
-| **MVP2: Drought Monitor** | ✅ **PROVED** | File exists (305 lines), metrics show `drought_stress` | A, B, C, D |
-| **MVP3: NOAA Storm Events** | ✅ **PROVED** | File exists (295 lines), metrics show `heatwave_stress`, `flood_risk_stress`, `storm_severity_stress` | A, B, C, D |
-| **Grafana Dashboards** | ✅ **PROVED** | 8 dashboard JSON files exist, provisioned, `regional_signals.json` includes new metrics | A, B, E |
-| **End-to-End Wiring** | ✅ **PROVED** | Forecast API returns `fuel_stress`, metrics show all child indices, Prometheus queries work | C, D, E |
-| **Metrics Integrity** | ✅ **PROVED** | No `region="None"`, 56 distinct regions, all child indices present | D |
-| **Prometheus Scrape** | ✅ **PROVED** | Prometheus ready, queries return data, targets healthy | D, E |
-| **Grafana Provisioning** | ✅ **PROVED** | Dashboards mounted at `/var/lib/grafana/dashboards`, provisioning YAML present | E |
+| **MVP1: EIA Fuel Prices** | [OK] **PROVED** | File exists (329 lines), registered, integrated, metrics present | A, B, C, D, E |
+| **MVP2: Drought Monitor** | [OK] **PROVED** | File exists (305 lines), metrics show `drought_stress` | A, B, C, D |
+| **MVP3: NOAA Storm Events** | [OK] **PROVED** | File exists (295 lines), metrics show `heatwave_stress`, `flood_risk_stress`, `storm_severity_stress` | A, B, C, D |
+| **Grafana Dashboards** | [OK] **PROVED** | 8 dashboard JSON files exist, provisioned, `regional_signals.json` includes new metrics | A, B, E |
+| **End-to-End Wiring** | [OK] **PROVED** | Forecast API returns `fuel_stress`, metrics show all child indices, Prometheus queries work | C, D, E |
+| **Metrics Integrity** | [OK] **PROVED** | No `region="None"`, 56 distinct regions, all child indices present | D |
+| **Prometheus Scrape** | [OK] **PROVED** | Prometheus ready, queries return data, targets healthy | D, E |
+| **Grafana Provisioning** | [OK] **PROVED** | Dashboards mounted at `/var/lib/grafana/dashboards`, provisioning YAML present | E |
 
 ---
 
@@ -26,48 +26,48 @@
 ### Gate A: File Exists Where Claimed
 
 **EIA Fuel Prices**:
-- ✅ `app/services/ingestion/eia_fuel_prices.py` (329 lines)
-- ✅ Cache key includes state: `f"eia_fuel_{state_code}_{days_back}"` (line 146)
+- [OK] `app/services/ingestion/eia_fuel_prices.py` (329 lines)
+- [OK] Cache key includes state: `f"eia_fuel_{state_code}_{days_back}"` (line 146)
 
 **Drought Monitor**:
-- ✅ `app/services/ingestion/drought_monitor.py` (305 lines)
+- [OK] `app/services/ingestion/drought_monitor.py` (305 lines)
 
 **NOAA Storm Events**:
-- ✅ `app/services/ingestion/noaa_storm_events.py` (295 lines)
+- [OK] `app/services/ingestion/noaa_storm_events.py` (295 lines)
 
 **Grafana Dashboards**:
-- ✅ `infra/grafana/dashboards/regional_signals.json` (includes fuel_stress, drought_stress, storm_severity_stress)
-- ✅ 8 total dashboard JSON files in repo
+- [OK] `infra/grafana/dashboards/regional_signals.json` (includes fuel_stress, drought_stress, storm_severity_stress)
+- [OK] 8 total dashboard JSON files in repo
 
 ### Gate B: Referenced/Registered
 
 **Source Registry**:
-- ✅ `eia_fuel_prices` registered in `source_registry.py` (line 441)
-- ✅ `drought_monitor` registered in `source_registry.py`
-- ✅ `noaa_storm_events` registered in `source_registry.py`
+- [OK] `eia_fuel_prices` registered in `source_registry.py` (line 441)
+- [OK] `drought_monitor` registered in `source_registry.py`
+- [OK] `noaa_storm_events` registered in `source_registry.py`
 
 **Behavior Index Integration**:
-- ✅ `fuel_stress` in `behavior_index.py` (line 58, 377, 401)
-- ✅ `drought_stress` integrated in `behavior_index.py`
-- ✅ `storm_severity_stress`, `heatwave_stress`, `flood_risk_stress` integrated
+- [OK] `fuel_stress` in `behavior_index.py` (line 58, 377, 401)
+- [OK] `drought_stress` integrated in `behavior_index.py`
+- [OK] `storm_severity_stress`, `heatwave_stress`, `flood_risk_stress` integrated
 
 **Prediction Pipeline**:
-- ✅ `EIAFuelPricesFetcher` imported and instantiated in `prediction.py` (line 122-125)
-- ✅ `DroughtMonitorFetcher` imported and instantiated
-- ✅ `NOAAStormEventsFetcher` imported and instantiated
+- [OK] `EIAFuelPricesFetcher` imported and instantiated in `prediction.py` (line 122-125)
+- [OK] `DroughtMonitorFetcher` imported and instantiated
+- [OK] `NOAAStormEventsFetcher` imported and instantiated
 
 ### Gate C: Executes in Running Stack
 
 **API Endpoints**:
-- ✅ `/api/forecast` returns 200
-- ✅ Forecast responses include `fuel_stress` in JSON
-- ✅ Forecasts generated for IL and AZ successfully
+- [OK] `/api/forecast` returns 200
+- [OK] Forecast responses include `fuel_stress` in JSON
+- [OK] Forecasts generated for IL and AZ successfully
 
 **Evidence**:
 ```bash
 # From verification output:
-✅ fuel_stress found in IL forecast
-✅ fuel_stress found in AZ forecast
+[OK] fuel_stress found in IL forecast
+[OK] fuel_stress found in AZ forecast
 ```
 
 ### Gate D: Metrics Show It
@@ -83,29 +83,29 @@ child_subindex_value{child="storm_severity_stress",parent="environmental_stress"
 ```
 
 **Metrics Integrity**:
-- ✅ No `region="None"` found
-- ✅ 56 distinct regions in `behavior_index` metrics
-- ✅ All child indices present with proper labels
+- [OK] No `region="None"` found
+- [OK] 56 distinct regions in `behavior_index` metrics
+- [OK] All child indices present with proper labels
 
 ### Gate E: Grafana Shows It
 
 **Dashboard Provisioning**:
-- ✅ `infra/grafana/provisioning/dashboards/dashboards.yml` exists
-- ✅ Dashboards mounted at `/var/lib/grafana/dashboards` in Docker Compose
-- ✅ `regional_signals.json` includes panels for:
+- [OK] `infra/grafana/provisioning/dashboards/dashboards.yml` exists
+- [OK] Dashboards mounted at `/var/lib/grafana/dashboards` in Docker Compose
+- [OK] `regional_signals.json` includes panels for:
   - `fuel_stress` (line 46, 221, 387)
   - `drought_stress` (line 131, 304, 393)
   - `storm_severity_stress` (line 136, 399)
 
 **Prometheus Queries**:
-- ✅ Prometheus ready at `http://localhost:9090`
-- ✅ Queries return data for child indices
+- [OK] Prometheus ready at `http://localhost:9090`
+- [OK] Queries return data for child indices
 
 ---
 
 ## What Is Actually Missing (If Anything)
 
-### ✅ Nothing Critical Missing
+### [OK] Nothing Critical Missing
 
 All claimed deliverables are **PROVED** to exist and be wired correctly.
 
@@ -159,13 +159,13 @@ Evidence bundle will be saved to `/tmp/hbc_post_verify_<timestamp>/`
 
 ## Conclusion
 
-**VERIFICATION STATUS**: ✅ **ALL CLAIMS PROVED**
+**VERIFICATION STATUS**: [OK] **ALL CLAIMS PROVED**
 
 All claimed dataset additions and integrations are:
-- ✅ Present in codebase
-- ✅ Registered and wired correctly
-- ✅ Emitting metrics with proper region labels
-- ✅ Queryable via Prometheus
-- ✅ Visualized in Grafana dashboards
+- [OK] Present in codebase
+- [OK] Registered and wired correctly
+- [OK] Emitting metrics with proper region labels
+- [OK] Queryable via Prometheus
+- [OK] Visualized in Grafana dashboards
 
 **No hallucinations detected. All deliverables are real and functional.**

@@ -655,7 +655,7 @@ updates:
 Add to README.md:
 
 ```markdown
-[![Coverage](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/master/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
+[![Coverage](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/main/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
 [![Code Quality](https://img.shields.io/badge/pylint-6.96%2F10-yellow)](https://pylint.org/)
 [![Security](https://img.shields.io/badge/security-A-brightgreen)](https://bandit.readthedocs.io/)
 [![Maintainability](https://img.shields.io/badge/maintainability-A-brightgreen)](https://radon.readthedocs.io/)

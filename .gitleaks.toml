@@ -1,0 +1,54 @@
+title = "HBC Secret Scanning Rules"
+
+[rules]
+  # AWS Keys
+  [[rules]]
+    id = "aws-access-key"
+    description = "AWS Access Key"
+    regex = '''AKIA[0-9A-Z]{16}'''
+
+  # Generic API Keys (with whitelist)
+  [[rules]]
+    id = "generic-api-key"
+    description = "Generic API Key"
+    regex = '''(?i)(api_key|apikey|api-key)\s*=\s*["'][^"'\s]{8,}["']'''
+    tags = ["api_key"]
+    [rules.allowlist]
+      paths = [
+        '''**/test/**''',
+        '''**/tests/**''',
+        '''**/*_test.py''',
+        '''**/*.spec.ts''',
+        '''**/*.spec.tsx''',
+        '''**/examples/**''',
+        '''**/fixtures/**''',
+        '''**/mocks/**''',
+        '''**/conftest.py''',
+        '''**/stubs/**''',
+        '''**/.venv/**''',
+        '''**/node_modules/**''',
+        '''**/venv/**''',
+        '''**/env/**''',
+        '''**/__pycache__/**'''
+      ]
+      regexes = [
+        '''test_key''',
+        '''mock_''',
+        '''example_''',
+        '''stub_''',
+        '''fake_''',
+        '''dummy_''',
+        '''test_'''
+      ]
+
+  # Database URLs
+  [[rules]]
+    id = "database-url"
+    description = "Database URL"
+    regex = '''(?i)postgresql://.*password.*|mysql://.*password.*|mongodb://.*password.*'''
+    [rules.allowlist]
+      paths = [
+        '''**/test/**''',
+        '''**/.venv/**''',
+        '''**/node_modules/**'''
+      ]

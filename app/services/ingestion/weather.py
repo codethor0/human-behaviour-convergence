@@ -65,6 +65,16 @@ class EnvironmentalImpactFetcher:
                 'windspeed', 'discomfort_score']
             discomfort_score is normalized to 0.0-1.0 where 1.0 = maximum discomfort
         """
+        # Validate coordinates before any logic (including CI offline)
+        if not (-90 <= latitude <= 90):
+            raise ValueError(
+                f"Invalid latitude: {latitude} (must be between -90 and 90)"
+            )
+        if not (-180 <= longitude <= 180):
+            raise ValueError(
+                f"Invalid longitude: {longitude} (must be between -180 and 180)"
+            )
+
         # CI offline mode: return synthetic deterministic data
         if is_ci_offline_mode():
             logger.info("Using CI offline mode for weather data")
@@ -76,16 +86,6 @@ class EnvironmentalImpactFetcher:
             df["precipitation"] = 0.0
             df["windspeed"] = 5.0
             return df.tail(days_back).copy()
-
-        # Validate coordinates
-        if not (-90 <= latitude <= 90):
-            raise ValueError(
-                f"Invalid latitude: {latitude} (must be between -90 and 90)"
-            )
-        if not (-180 <= longitude <= 180):
-            raise ValueError(
-                f"Invalid longitude: {longitude} (must be between -180 and 180)"
-            )
 
         cache_key = f"{latitude:.4f},{longitude:.4f},{days_back}"
 

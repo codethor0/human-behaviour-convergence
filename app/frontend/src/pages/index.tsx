@@ -271,6 +271,57 @@ export default function HomePage() {
           </div>
         </header>
 
+        {/* Executive Storyboard Section */}
+        <section id="executive-storyboard" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Executive Storyboard</h2>
+          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}>
+            <p style={{ margin: '0 0 12px 0', fontWeight: '600' }}>
+              High-level overview: Global KPIs, regional stress distribution, and key insights at a glance.
+            </p>
+            <p style={{ margin: '0', fontSize: '13px', color: '#666' }}>
+              <strong>New:</strong> Storytelling visualization with narrative panels and executive-grade insights.
+            </p>
+          </div>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="executive-storyboard"
+              title="Executive Storyboard"
+              regionId={selectedRegion}
+              height={600}
+            />
+          </div>
+        </section>
+
+        {/* Storytelling Dashboards Section */}
+        <section id="storytelling-dashboards" className="dashboard-section" style={styles.dashboardSection}>
+          <h2 style={styles.sectionTitle}>Storytelling Visualizations</h2>
+          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '14px', lineHeight: '1.6', color: '#333' }}>
+            <p style={{ margin: '0 0 12px 0', fontWeight: '600' }}>
+              Narrative-driven dashboards: Compare regions, analyze shocks, and evaluate forecast performance.
+            </p>
+          </div>
+          <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }}>
+            <GrafanaDashboardEmbed
+              dashboardUid="shock-recovery-timeline"
+              title="Shock & Recovery Timeline"
+              regionId={selectedRegion}
+              height={500}
+            />
+            <GrafanaDashboardEmbed
+              dashboardUid="regional-comparison-storyboard"
+              title="Regional Comparison"
+              regionId={selectedRegion}
+              height={500}
+            />
+            <GrafanaDashboardEmbed
+              dashboardUid="forecast-performance-storybook"
+              title="Forecast Performance"
+              regionId={selectedRegion}
+              height={500}
+            />
+          </div>
+        </section>
+
         {/* Behavior Forecast Section */}
         <section id="behavior-forecast" className="dashboard-section" style={styles.dashboardSection}>
           <h2 style={styles.sectionTitle}>Behavior Forecast</h2>
@@ -423,7 +474,16 @@ export default function HomePage() {
           {/* Additional Dashboards - All Others */}
           <div style={{ marginTop: '40px', paddingTop: '40px', borderTop: '2px solid #e0e0e0' }}>
             <h3 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '20px', color: '#000' }}>Additional Analytics Dashboards</h3>
-            
+
+            <div style={{ ...styles.dashboardGrid, ...styles.gridCols1 }}>
+              <GrafanaDashboardEmbed
+                dashboardUid="hbc-anomaly-atlas"
+                title="Anomaly Atlas and Regime Shifts"
+                regionId={selectedRegion}
+                height={600}
+              />
+            </div>
+
             <div style={{ ...styles.dashboardGrid, ...styles.gridCols2 }} className="dashboard-grid-cols-2">
               <GrafanaDashboardEmbed
                 dashboardUid="cross-domain-correlation"

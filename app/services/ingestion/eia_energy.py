@@ -2,7 +2,7 @@
 """EIA (Energy Information Administration) API connector for energy prices and demand."""
 import os
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TYPE_CHECKING
 
 import pandas as pd
 import requests
@@ -12,6 +12,9 @@ from app.services.ingestion.ci_offline_data import (
     is_ci_offline_mode,
     get_ci_energy_data,
 )
+
+if TYPE_CHECKING:
+    from app.services.ingestion.gdelt_events import SourceStatus
 
 logger = structlog.get_logger("ingestion.eia_energy")
 
@@ -62,7 +65,7 @@ class EIAEnergyFetcher:
         series_id: str,
         days_back: int = 30,
         use_cache: bool = True,
-    ) -> Tuple[pd.DataFrame, "SourceStatus"]:
+    ) -> Tuple[pd.DataFrame, "SourceStatus"]:  # noqa: F821
         """
         Fetch an EIA time series.
 
@@ -214,7 +217,11 @@ class EIAEnergyFetcher:
             return pd.DataFrame(columns=["timestamp", "value"]), status
 
         except requests.exceptions.HTTPError as e:
-            logger.error("EIA API HTTP error", series_id=series_id, status_code=e.response.status_code)
+            logger.error(
+                "EIA API HTTP error",
+                series_id=series_id,
+                status_code=e.response.status_code,
+            )
             status = SourceStatus(
                 provider="EIA",
                 ok=False,
@@ -228,7 +235,9 @@ class EIAEnergyFetcher:
             return pd.DataFrame(columns=["timestamp", "value"]), status
 
         except Exception as e:
-            logger.error("EIA API error", series_id=series_id, error=str(e), exc_info=True)
+            logger.error(
+                "EIA API error", series_id=series_id, error=str(e), exc_info=True
+            )
             status = SourceStatus(
                 provider="EIA",
                 ok=False,
@@ -243,7 +252,7 @@ class EIAEnergyFetcher:
 
     def fetch_energy_stress_index(
         self, days_back: int = 30
-    ) -> Tuple[pd.DataFrame, "SourceStatus"]:
+    ) -> Tuple[pd.DataFrame, "SourceStatus"]:  # noqa: F821
         """
         Compute a composite energy stress index from multiple EIA series.
 
@@ -286,7 +295,10 @@ class EIAEnergyFetcher:
                     rows=0,
                     query_window_days=days_back,
                 )
-                return pd.DataFrame(columns=["timestamp", "energy_stress_index"]), status
+                return (
+                    pd.DataFrame(columns=["timestamp", "energy_stress_index"]),
+                    status,
+                )
 
             # Merge series on timestamp
             merged = pd.DataFrame()
@@ -300,7 +312,9 @@ class EIAEnergyFetcher:
                         how="outer",
                     )
                 else:
-                    merged = natural_gas_df.rename(columns={"value": "natural_gas_price"})
+                    merged = natural_gas_df.rename(
+                        columns={"value": "natural_gas_price"}
+                    )
             if len(electricity_df) > 0:
                 if len(merged) > 0:
                     merged = merged.merge(
@@ -309,7 +323,9 @@ class EIAEnergyFetcher:
                         how="outer",
                     )
                 else:
-                    merged = electricity_df.rename(columns={"value": "electricity_demand"})
+                    merged = electricity_df.rename(
+                        columns={"value": "electricity_demand"}
+                    )
 
             # Normalize each series (0-1 scale) and compute composite
             for col in ["gasoline_price", "natural_gas_price", "electricity_demand"]:
@@ -325,9 +341,7 @@ class EIAEnergyFetcher:
 
             # Compute composite stress index (average of normalized values)
             normalized_cols = [
-                col
-                for col in merged.columns
-                if col.endswith("_normalized")
+                col for col in merged.columns if col.endswith("_normalized")
             ]
             if normalized_cols:
                 merged["energy_stress_index"] = merged[normalized_cols].mean(axis=1)
@@ -354,7 +368,9 @@ class EIAEnergyFetcher:
             return result_df, status
 
         except Exception as e:
-            logger.error("Error computing energy stress index", error=str(e), exc_info=True)
+            logger.error(
+                "Error computing energy stress index", error=str(e), exc_info=True
+            )
             from app.services.ingestion.gdelt_events import SourceStatus
 
             status = SourceStatus(

@@ -115,7 +115,7 @@ export default function AdvancedVisualizations() {
           {/* Predictive Horizon Clouds */}
           <div style={styles.visualizationPanel}>
             <div style={styles.panelTitle}>Predictive Horizon Clouds</div>
-            <PredictiveHorizonClouds region={selectedRegion || null} horizon={30} width={800} height={400} />
+            <PredictiveHorizonClouds region={selectedRegion || null} width={800} height={400} />
           </div>
         </div>
       </div>

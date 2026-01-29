@@ -2,12 +2,9 @@
 """Enterprise analytics contracts - fail-fast validation of correctness invariants."""
 import hashlib
 import json
-from typing import Dict, List, Set
 
-import pytest
 
 from app.core.prediction import BehavioralForecaster
-from app.core.regions import get_all_regions
 
 
 class TestRegionalityContract:
@@ -30,8 +27,7 @@ class TestRegionalityContract:
         for region in regions:
             # Generate cache key (internal method access for testing)
             cache_key = (
-                f"{region['lat']:.4f},{region['lon']:.4f},{region['name']},"
-                f"30,7"
+                f"{region['lat']:.4f},{region['lon']:.4f},{region['name']}," f"30,7"
             )
             cache_keys.append(cache_key)
 
@@ -112,7 +108,6 @@ class TestDeterminismContract:
         In CI offline mode, the same region + parameters must produce identical forecasts.
         """
         # Enable CI offline mode
-        import os
 
         monkeypatch.setenv("HBC_CI_OFFLINE_DATA", "1")
 
@@ -144,8 +139,7 @@ class TestDeterminismContract:
                 for h in history
             ]
             forecast_values = [
-                f.get("prediction", 0) if isinstance(f, dict) else 0
-                for f in forecast
+                f.get("prediction", 0) if isinstance(f, dict) else 0 for f in forecast
             ]
             combined = json.dumps(
                 {"history": history_values, "forecast": forecast_values},
@@ -259,9 +253,7 @@ class TestGlobalVsRegionalIndicesContract:
                 first = history[0] if isinstance(history, list) else None
                 if isinstance(first, dict):
                     sub_indices = first.get("sub_indices", {})
-                    economic_stress_values.append(
-                        sub_indices.get("economic_stress")
-                    )
+                    economic_stress_values.append(sub_indices.get("economic_stress"))
                     mobility_activity_values.append(
                         sub_indices.get("mobility_activity")
                     )
@@ -318,9 +310,7 @@ class TestGlobalVsRegionalIndicesContract:
                 environmental_stress_values
             )
 
-            assert (
-                unique_count > 1 or variance > 0.01
-            ), (
+            assert unique_count > 1 or variance > 0.01, (
                 f"environmental_stress must vary across regions "
                 f"(weather is region-specific), got {environmental_stress_values}"
             )

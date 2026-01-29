@@ -9,7 +9,6 @@ These tests verify:
 - Metrics are properly labeled
 """
 import re
-from typing import Dict, List, Set
 
 import pytest
 import requests
@@ -82,7 +81,9 @@ class TestMetricsContractsParanoid:
             )
         )
 
-    def test_multiple_distinct_regions_after_seeding(self, metrics_endpoint, forecaster):
+    def test_multiple_distinct_regions_after_seeding(
+        self, metrics_endpoint, forecaster
+    ):
         """
         Paranoid contract: After seeding forecasts for N regions, metrics must show >= N distinct regions.
 

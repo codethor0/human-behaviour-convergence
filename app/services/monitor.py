@@ -14,10 +14,10 @@ import structlog
 
 logger = structlog.get_logger("services.monitor")
 
-# Health check endpoints for external APIs
+# Health check endpoints for external APIs (no secrets in URLs; add api_key via env when needed)
 SOURCE_HEALTH_ENDPOINTS = {
     "gdelt": "https://api.gdeltproject.org/api/v2/doc/doc?mode=timelinetone&format=json&query=sourcelang:english&TIMESPAN=1days",
-    "fred": "https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&api_key=test&file_type=json&limit=1",
+    "fred": "https://api.stlouisfed.org/fred/series/observations?series_id=UNRATE&file_type=json&limit=1",
     "nws": "https://api.weather.gov/",
     "openfema": "https://www.fema.gov/api/open/v1/DisasterDeclarationsSummaries?$top=1",
     "tsa": "https://www.tsa.gov/covid-19/passenger-throughput",

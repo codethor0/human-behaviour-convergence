@@ -1,8 +1,8 @@
 # HBC State Discrepancy Investigation - Summary
 
-## Status: Framework Ready ✅
+## Status: Framework Ready [OK]
 
-**Date**: 2026-01-22  
+**Date**: 2026-01-22
 **Evidence Directory**: `/tmp/hbc_discrepancy_proof_20260122_122847/`
 
 ## Investigation Framework Deployed
@@ -31,7 +31,7 @@ bash scripts/run_full_discrepancy_investigation.sh
 
 ## Preliminary Findings (Code Analysis)
 
-### Cache Keys: ✅ CORRECT
+### Cache Keys: [OK] CORRECT
 - **13 REGIONAL sources** correctly include geo parameters in cache keys
 - **Forecast cache** correctly includes lat/lon/region_name
 - **1 potential issue**: USGS earthquakes (may be intentional - global data)

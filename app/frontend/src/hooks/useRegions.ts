@@ -59,21 +59,17 @@ export function useRegions(): UseRegionsResult {
     setLoading(true);
     fetchPromise = fetchRegions()
       .then((data) => {
-        // Validate response
+        // Validate response shape; treat [] as valid (show "No regions available" in UI)
         if (!Array.isArray(data)) {
           throw new Error(`Invalid response format: expected array, got ${typeof data}`);
         }
 
-        if (data.length === 0) {
-          throw new Error('Regions endpoint returned empty array');
-        }
-
-        // Update cache
+        // Update cache and state; empty list is valid, no error
         cachedRegions = data;
         setRegions(data);
         setError(null);
         setLoading(false);
-        
+
         return data;
       })
       .catch((e) => {

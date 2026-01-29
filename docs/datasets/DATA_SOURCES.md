@@ -5,12 +5,12 @@ This document describes all data sources integrated into the human-behaviour-con
 
 ## Ethical Standards
 All data sources must:
-- ✅ Be publicly available (no private/paid APIs)
-- ✅ Comply with privacy regulations (GDPR, CCPA)
-- ✅ Not collect or store PII
-- ✅ Follow k-anonymity (minimum 15 individuals per aggregation)
-- ✅ Use geo-precision ≤ H3-9 (≈ 0.1 km²)
-- ✅ Have clear data licensing
+- [OK] Be publicly available (no private/paid APIs)
+- [OK] Comply with privacy regulations (GDPR, CCPA)
+- [OK] Not collect or store PII
+- [OK] Follow k-anonymity (minimum 15 individuals per aggregation)
+- [OK] Use geo-precision ≤ H3-9 (≈ 0.1 km²)
+- [OK] Have clear data licensing
 
 ## Data Source Categories
 
@@ -24,7 +24,7 @@ All data sources must:
 - **Data Provided**: Global disease outbreak indicators, mortality data, epidemiological signals
 - **Update Frequency**: Daily
 - **Connector**: `connectors/who_disease.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 - **Notes**: GHO OData API will be deprecated end of 2025, replaced with new OData implementation
 
 #### OWID Health Data
@@ -33,7 +33,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Aggregated health statistics, vaccination rates, mortality data
 - **Connector**: `app/services/ingestion/health_owid.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ### Economic Data Sources
 
@@ -43,7 +43,7 @@ All data sources must:
 - **Requires Key**: No (public data)
 - **Data Provided**: GDP growth, unemployment rate, consumer sentiment, CPI inflation, jobless claims
 - **Connector**: `app/services/ingestion/economic_fred.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Market Sentiment
 - **Source**: Public financial market data
@@ -51,7 +51,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Volatility index (VIX), market indices (SPY), financial market signals
 - **Connector**: `app/services/ingestion/finance.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### EIA Energy Data
 - **Source**: Energy Information Administration (EIA)
@@ -59,7 +59,7 @@ All data sources must:
 - **Requires Key**: No (public data)
 - **Data Provided**: Energy prices (gasoline, natural gas, crude oil), electricity demand, grid stress indicators
 - **Connector**: `app/services/ingestion/eia_energy.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### EIA Fuel Prices by State
 - **Source**: Energy Information Administration (EIA) API v2
@@ -69,7 +69,7 @@ All data sources must:
 - **Update Frequency**: Weekly (Monday releases)
 - **Geo Resolution**: State-level (50 states + DC)
 - **Connector**: `app/services/ingestion/eia_fuel_prices.py`
-- **Status**: ✅ Active (MVP1)
+- **Status**: [OK] Active (MVP1)
 - **Sub-Index Impact**: `economic_stress` → child `fuel_stress` (weight: 15%)
 - **Failure Modes**:
   - API rate limits: Cache 24h, fallback to last known value
@@ -85,7 +85,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Temperature, precipitation, wind speed, environmental discomfort scores
 - **Connector**: `app/services/ingestion/weather.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Air Quality
 - **Source**: OpenAQ
@@ -93,7 +93,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: PM2.5, PM10, AQI measurements from global monitoring network
 - **Connector**: `app/services/ingestion/openaq_air_quality.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Weather Alerts
 - **Source**: National Weather Service (NWS)
@@ -101,7 +101,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Active weather alerts (warnings, watches, advisories)
 - **Connector**: `app/services/ingestion/nws_alerts.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### USGS Earthquakes
 - **Source**: US Geological Survey (USGS)
@@ -109,7 +109,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Earthquake data, seismic activity indicators
 - **Connector**: `app/services/ingestion/usgs_earthquakes.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ### Digital Attention Sources
 
@@ -119,7 +119,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Wikipedia pageview data as proxy for digital attention and search interest
 - **Connector**: `app/services/ingestion/search_trends.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### GDELT Events
 - **Source**: Global Database of Events, Language, and Tone (GDELT)
@@ -127,7 +127,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Global event and crisis signals, news event data
 - **Connector**: `app/services/ingestion/gdelt_events.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Cyber Risk
 - **Source**: CISA Known Exploited Vulnerabilities (KEV)
@@ -135,7 +135,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Known exploited vulnerabilities, cybersecurity threat indicators
 - **Connector**: `app/services/ingestion/cisa_kev.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ### Mobility Sources
 
@@ -145,7 +145,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Daily passenger throughput data as mobility indicator
 - **Connector**: `app/services/ingestion/mobility.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ### Government/Social Sources
 
@@ -155,7 +155,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Disaster declarations, emergency events, FEMA program activity
 - **Connector**: `app/services/ingestion/openfema_emergency_management.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Legislative Activity
 - **Source**: GDELT (no-key) + OpenStates (optional enhancement)
@@ -163,7 +163,7 @@ All data sources must:
 - **Requires Key**: No (OpenStates optional)
 - **Data Provided**: Legislative/governance events, political activity signals
 - **Connector**: `app/services/ingestion/openstates_legislative.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Political Stress
 - **Source**: GDELT + OpenStates
@@ -171,7 +171,7 @@ All data sources must:
 - **Requires Key**: No (OpenStates optional)
 - **Data Provided**: Political stress indicators, legislative volatility
 - **Connector**: `app/services/ingestion/political.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Crime & Public Safety
 - **Source**: Public crime data APIs
@@ -179,7 +179,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Crime statistics, public safety indicators
 - **Connector**: `app/services/ingestion/crime.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Misinformation Stress
 - **Source**: GDELT + news analysis
@@ -187,7 +187,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Misinformation intensity, narrative fragmentation signals
 - **Connector**: `app/services/ingestion/misinformation.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### Social Cohesion
 - **Source**: GDELT + aggregated social signals
@@ -195,7 +195,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Social cohesion indicators, community anxiety proxies
 - **Connector**: `app/services/ingestion/social_cohesion.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ### Public Data Connectors
 
@@ -205,7 +205,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: Hourly pageview data for Wikipedia articles
 - **Connector**: `connectors/wiki_pageviews.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### OSM Changesets
 - **Source**: OpenStreetMap Changesets API
@@ -213,7 +213,7 @@ All data sources must:
 - **Requires Key**: No
 - **Data Provided**: OpenStreetMap edit activity, geographic changes
 - **Connector**: `connectors/osm_changesets.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 #### FIRMS Fires
 - **Source**: NASA FIRMS (Fire Information for Resource Management System)
@@ -221,7 +221,7 @@ All data sources must:
 - **Requires Key**: Optional (MAP_KEY for enhanced access)
 - **Data Provided**: Active fire detection data, fire counts, brightness measurements
 - **Connector**: `connectors/firms_fires.py`
-- **Status**: ✅ Active
+- **Status**: [OK] Active
 
 ## Data Source Registry
 
@@ -235,7 +235,7 @@ All data sources are registered in `app/services/ingestion/source_registry.py`. 
 
 To add a new data source:
 
-1. **Create Connector/Fetcher**: 
+1. **Create Connector/Fetcher**:
    - For simple public data: Create in `connectors/` following `AbstractSync` pattern
    - For complex ingestion: Create in `app/services/ingestion/` following fetcher pattern
 
@@ -252,11 +252,11 @@ To add a new data source:
 ## Privacy and Ethics Compliance
 
 All data sources are validated for:
-- ✅ No PII collection
-- ✅ K-anonymity (minimum 15 individuals)
-- ✅ Geo-precision limits (H3-9 or coarser)
-- ✅ Public data only
-- ✅ Ethical data practices
+- [OK] No PII collection
+- [OK] K-anonymity (minimum 15 individuals)
+- [OK] Geo-precision limits (H3-9 or coarser)
+- [OK] Public data only
+- [OK] Ethical data practices
 
 See `connectors/base.py` for the `ethical_check` decorator that enforces these standards.
 

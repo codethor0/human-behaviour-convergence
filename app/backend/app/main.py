@@ -5,6 +5,7 @@ import asyncio
 import os
 import sys
 import threading
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Lock
@@ -35,6 +36,7 @@ except ImportError:
 from app.core.behavior_index import BehaviorIndexComputer
 from app.core.explanations import generate_explanation
 from app.core.live_monitor import get_live_monitor
+from app.core.model_metrics import emit_model_metrics
 from app.core.prediction import BehavioralForecaster
 from app.core.regions import get_region_by_id
 from app.storage import ForecastDB
@@ -100,15 +102,36 @@ def _find_results_dir(start: Path) -> Optional[Path]:
 
 RESULTS_DIR = _find_results_dir(Path(__file__))
 
-app = FastAPI(title="Behavior Convergence API", version="0.1.0")
 
-# Dev-friendly CORS for local + Docker; can tighten later via env
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan: startup then yield then shutdown (replaces deprecated on_event)."""
+    startup_event()
+    yield
+    shutdown_event()
+
+
+def _cors_origins() -> List[str]:
+    """
+    Read allowed origins from ALLOWED_ORIGINS env var (comma-separated).
+    Fallback to ['*'] if not set or empty/whitespace, preserving existing default behavior.
+    """
+    raw = os.getenv("ALLOWED_ORIGINS")
+    if not raw:
+        return ["*"]
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins if origins else ["*"]
+
+
+app = FastAPI(title="Behavior Convergence API", version="0.1.0", lifespan=lifespan)
+
+# CORS: use ALLOWED_ORIGINS when set; otherwise allow all for dev
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # allow all origins in dev
+    allow_origins=_cors_origins(),
     allow_credentials=False,  # must be False when using "*" for origins
-    allow_methods=["*"],  # allow OPTIONS, POST, GET, etc.
-    allow_headers=["*"],  # allow Content-Type and others for JSON POST
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ============================================================================
@@ -262,6 +285,82 @@ if PROMETHEUS_AVAILABLE:
         "Currently selected model for region (1 if selected, 0 otherwise)",
         ["region", "model"],
     )
+
+    # Layer 1 anomaly metrics (univariate: static bounds + z-score)
+    behavior_index_static_upper_bound_gauge = Gauge(
+        "behavior_index_static_upper_bound",
+        "Upper bound for static anomaly (percentile-based)",
+        ["region"],
+    )
+    behavior_index_static_lower_bound_gauge = Gauge(
+        "behavior_index_static_lower_bound",
+        "Lower bound for static anomaly (percentile-based)",
+        ["region"],
+    )
+    behavior_index_static_anomaly_gauge = Gauge(
+        "behavior_index_static_anomaly",
+        "1 if behavior_index outside static bounds else 0",
+        ["region"],
+    )
+    behavior_index_zscore_gauge = Gauge(
+        "behavior_index_zscore",
+        "Rolling z-score of behavior_index",
+        ["region"],
+    )
+    behavior_index_zscore_anomaly_gauge = Gauge(
+        "behavior_index_zscore_anomaly",
+        "1 if |zscore| > threshold else 0",
+        ["region"],
+    )
+
+    # Layer 2 anomaly metrics (seasonal bands + residual)
+    behavior_index_baseline_gauge = Gauge(
+        "behavior_index_baseline",
+        "EWMA baseline (trend proxy) for behavior_index",
+        ["region"],
+    )
+    behavior_index_upper_band_gauge = Gauge(
+        "behavior_index_upper_band",
+        "Upper band for seasonal anomaly (baseline + k*std)",
+        ["region"],
+    )
+    behavior_index_lower_band_gauge = Gauge(
+        "behavior_index_lower_band",
+        "Lower band for seasonal anomaly (baseline - k*std)",
+        ["region"],
+    )
+    behavior_index_residual_gauge = Gauge(
+        "behavior_index_residual",
+        "Residual (value - baseline)",
+        ["region"],
+    )
+    behavior_index_residual_zscore_gauge = Gauge(
+        "behavior_index_residual_zscore",
+        "Z-score of residual",
+        ["region"],
+    )
+    behavior_index_seasonal_anomaly_gauge = Gauge(
+        "behavior_index_seasonal_anomaly",
+        "1 if value outside seasonal band else 0",
+        ["region"],
+    )
+    behavior_index_residual_anomaly_gauge = Gauge(
+        "behavior_index_residual_anomaly",
+        "1 if |residual_zscore| > threshold else 0",
+        ["region"],
+    )
+
+    # Layer 3 anomaly metrics (multivariate Mahalanobis-style)
+    hbc_multivariate_md_score_gauge = Gauge(
+        "hbc_multivariate_md_score",
+        "Squared Mahalanobis-style distance (diagonal covariance)",
+        ["region"],
+    )
+    hbc_multivariate_md_anomaly_gauge = Gauge(
+        "hbc_multivariate_md_anomaly",
+        "1 if md_score > threshold else 0",
+        ["region"],
+    )
 else:
     behavior_index_gauge = None
     parent_subindex_gauge = None
@@ -287,6 +386,79 @@ else:
     forecast_compute_duration_by_model = None
     forecast_outcome_counter = None
     model_selected_gauge = None
+    behavior_index_static_upper_bound_gauge = None
+    behavior_index_static_lower_bound_gauge = None
+    behavior_index_static_anomaly_gauge = None
+    behavior_index_zscore_gauge = None
+    behavior_index_zscore_anomaly_gauge = None
+    behavior_index_baseline_gauge = None
+    behavior_index_upper_band_gauge = None
+    behavior_index_lower_band_gauge = None
+    behavior_index_residual_gauge = None
+    behavior_index_residual_zscore_gauge = None
+    behavior_index_seasonal_anomaly_gauge = None
+    behavior_index_residual_anomaly_gauge = None
+    hbc_multivariate_md_score_gauge = None
+    hbc_multivariate_md_anomaly_gauge = None
+
+# Univariate anomaly tracker (rolling window per region)
+_anomaly_tracker = None
+
+
+def _get_anomaly_tracker():
+    global _anomaly_tracker
+    if _anomaly_tracker is None:
+        try:
+            from app.services.anomaly.univariate import UnivariateAnomalyTracker
+
+            _anomaly_tracker = UnivariateAnomalyTracker(
+                window_size=500,
+                percentile_low=5.0,
+                percentile_high=95.0,
+                zscore_k=2.5,
+            )
+        except ImportError:
+            pass
+    return _anomaly_tracker
+
+
+_seasonal_tracker = None
+
+
+def _get_seasonal_tracker():
+    global _seasonal_tracker
+    if _seasonal_tracker is None:
+        try:
+            from app.services.anomaly.seasonal import SeasonalResidualTracker
+
+            _seasonal_tracker = SeasonalResidualTracker(
+                window_size=500,
+                ewma_alpha=0.1,
+                band_k=2.0,
+                residual_k=2.5,
+            )
+        except ImportError:
+            pass
+    return _seasonal_tracker
+
+
+_multivariate_tracker = None
+
+
+def _get_multivariate_tracker():
+    global _multivariate_tracker
+    if _multivariate_tracker is None:
+        try:
+            from app.services.anomaly.multivariate import MultivariateTracker
+
+            _multivariate_tracker = MultivariateTracker(
+                window_size=500,
+                md_threshold=15.0,
+            )
+        except ImportError:
+            pass
+    return _multivariate_tracker
+
 
 # Register routers
 app.include_router(public.router)
@@ -441,10 +613,11 @@ def _populate_metrics_for_all_regions() -> None:
                     # Query Prometheus for current region count
                     try:
                         import requests
+
                         prometheus_url = os.getenv(
                             "PROMETHEUS_URL", "http://localhost:9090"
                         )
-                        query = 'count(count by(region)(behavior_index))'
+                        query = "count(count by(region)(behavior_index))"
                         response = requests.get(
                             f"{prometheus_url}/api/v1/query",
                             params={"query": query},
@@ -471,9 +644,7 @@ def _populate_metrics_for_all_regions() -> None:
                         # Prometheus query failed - skip metric update
                         pass
             except Exception as e:
-                logger.warning(
-                    "Failed to update warm-up metrics", error=str(e)
-                )
+                logger.warning("Failed to update warm-up metrics", error=str(e))
     except Exception as e:
         logger.error(
             "Error in background metrics population",
@@ -482,9 +653,8 @@ def _populate_metrics_for_all_regions() -> None:
         )
 
 
-@app.on_event("startup")
 def startup_event() -> None:
-    """Start background refresh thread on application startup."""
+    """Start background refresh thread on application startup (called from lifespan)."""
     global _refresh_thread, _metrics_population_thread
     if _refresh_thread is None or not _refresh_thread.is_alive():
         _refresh_stop_event.clear()
@@ -514,9 +684,8 @@ def startup_event() -> None:
             logger.warning("Failed to initialize data source metrics", error=str(e))
 
 
-@app.on_event("shutdown")
 def shutdown_event() -> None:
-    """Stop background refresh thread on application shutdown."""
+    """Stop background refresh thread on application shutdown (called from lifespan)."""
     global _refresh_thread, _metrics_population_thread
     _refresh_stop_event.set()
     _metrics_population_stop_event.set()
@@ -1549,9 +1718,12 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             else f"unknown_{latitude:.2f}_{longitude:.2f}"
         )
 
+        # Use canonical region name for metrics label (for Grafana compatibility)
+        region_name_for_metrics = payload.region_name or "Unknown"
+
         if forecast_duration_histogram is not None:
             with forecast_duration_histogram.labels(
-                region=region_id_for_metrics
+                region=region_name_for_metrics
             ).time():
                 result = forecaster.forecast(
                     latitude=latitude,
@@ -1592,6 +1764,62 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
         result["sources"] = []
     if "metadata" not in result:
         result["metadata"] = {}
+
+    # Emit model metrics for observability
+    try:
+        import pandas as pd
+
+        # Extract model name from metadata
+        model_name = result.get("metadata", {}).get(
+            "model_type", "exponential_smoothing"
+        )
+        # Normalize model name (remove spaces, lowercase)
+        model_name = (
+            model_name.lower().replace(" ", "_").replace("(", "").replace(")", "")
+        )
+        if "exponential" in model_name or "holt" in model_name:
+            model_name = "exponential_smoothing"
+        elif "moving" in model_name or "average" in model_name:
+            model_name = "moving_average"
+
+        # Convert history and forecast to DataFrames for metrics
+        if result.get("history") and result.get("forecast"):
+            try:
+                history_df = pd.DataFrame(result["history"])
+                forecast_df = pd.DataFrame(result["forecast"])
+
+                # Ensure required columns exist
+                if (
+                    "timestamp" in history_df.columns
+                    and "behavior_index" in history_df.columns
+                ):
+                    history_df["timestamp"] = pd.to_datetime(history_df["timestamp"])
+
+                if (
+                    "timestamp" in forecast_df.columns
+                    and "prediction" in forecast_df.columns
+                ):
+                    forecast_df["timestamp"] = pd.to_datetime(forecast_df["timestamp"])
+
+                    # Ensure lower_bound and upper_bound exist
+                    if "lower_bound" not in forecast_df.columns:
+                        forecast_df["lower_bound"] = forecast_df["prediction"] - 0.1
+                    if "upper_bound" not in forecast_df.columns:
+                        forecast_df["upper_bound"] = forecast_df["prediction"] + 0.1
+
+                    # Emit metrics
+                    emit_model_metrics(
+                        history=history_df,
+                        forecast=forecast_df,
+                        model_name=model_name,
+                        region_id=region_id_for_metrics,
+                        region_name=region_name_for_metrics,
+                        metadata=result.get("metadata"),
+                    )
+            except Exception as e:
+                logger.debug("Failed to emit model metrics", error=str(e))
+    except Exception as e:
+        logger.debug("Model metrics emission skipped", error=str(e))
 
     # Get behavior index computer for contribution analysis and component details
     # Check if new indices data is present in the result to determine weights
@@ -2308,10 +2536,127 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                 else f"unknown_{latitude:.2f}_{longitude:.2f}"
             )
 
+            # Use canonical region name for metrics label (for Grafana compatibility)
+            region_name_for_metrics = payload.region_name or "Unknown"
+
             # Update behavior index gauge
-            behavior_index_gauge.labels(region=region_id_for_metrics).set(
+            behavior_index_gauge.labels(region=region_name_for_metrics).set(
                 latest_behavior_index
             )
+
+            # Compute and emit derived metrics for storytelling (additive, non-breaking)
+            try:
+                from app.services.storytelling.derived_metrics import (
+                    compute_derived_metrics,
+                )
+
+                # Note: Historical values would come from Prometheus queries in a background job
+                # For now, we compute what we can from current values
+                # Volatility would be computed separately via PromQL: stddev_over_time(behavior_index[30d])
+                compute_derived_metrics(
+                    current_behavior_index=latest_behavior_index,
+                    region=region_name_for_metrics,
+                    historical_values=None,  # Would be populated by background job
+                )
+            except ImportError:
+                # Derived metrics module not available, skip silently
+                pass
+            except Exception as e:
+                # Log but don't fail the main request
+                logger.warning("Failed to compute derived metrics", error=str(e))
+
+            # Layer 1 anomaly: univariate static bounds + z-score (additive, non-breaking)
+            try:
+                tracker = _get_anomaly_tracker()
+                if (
+                    tracker is not None
+                    and behavior_index_static_anomaly_gauge is not None
+                ):
+                    out = tracker.update(region_name_for_metrics, latest_behavior_index)
+                    behavior_index_static_upper_bound_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(out["static_upper_bound"])
+                    behavior_index_static_lower_bound_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(out["static_lower_bound"])
+                    behavior_index_static_anomaly_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(out["static_anomaly"])
+                    behavior_index_zscore_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(out["zscore"])
+                    behavior_index_zscore_anomaly_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(out["zscore_anomaly"])
+            except Exception as e:
+                logger.warning(
+                    "Failed to compute univariate anomaly metrics", error=str(e)
+                )
+
+            # Layer 2 anomaly: seasonal bands + residual (additive, non-breaking)
+            try:
+                st = _get_seasonal_tracker()
+                if st is not None and behavior_index_baseline_gauge is not None:
+                    sout = st.update(region_name_for_metrics, latest_behavior_index)
+                    behavior_index_baseline_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["baseline"])
+                    behavior_index_upper_band_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["upper_band"])
+                    behavior_index_lower_band_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["lower_band"])
+                    behavior_index_residual_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["residual"])
+                    behavior_index_residual_zscore_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["residual_zscore"])
+                    behavior_index_seasonal_anomaly_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["seasonal_anomaly"])
+                    behavior_index_residual_anomaly_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(sout["residual_anomaly"])
+            except Exception as e:
+                logger.warning(
+                    "Failed to compute seasonal/residual anomaly metrics", error=str(e)
+                )
+
+            # Layer 3 anomaly: multivariate (feature vector = behavior_index + parent subindices)
+            try:
+                mt = _get_multivariate_tracker()
+                if mt is not None and hbc_multivariate_md_score_gauge is not None:
+                    parent_keys = [
+                        "economic_stress",
+                        "environmental_stress",
+                        "mobility_activity",
+                        "digital_attention",
+                        "public_health_stress",
+                        "political_stress",
+                        "crime_stress",
+                        "misinformation_stress",
+                        "social_cohesion_stress",
+                    ]
+                    feature_vec = [latest_behavior_index]
+                    if latest_sub_indices:
+                        for k in parent_keys:
+                            v = getattr(latest_sub_indices, k, None)
+                            feature_vec.append(float(v) if v is not None else 0.5)
+                    else:
+                        feature_vec.extend([0.5] * len(parent_keys))
+                    mout = mt.update(region_name_for_metrics, feature_vec)
+                    hbc_multivariate_md_score_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(mout["md_score"])
+                    hbc_multivariate_md_anomaly_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(mout["md_anomaly"])
+            except Exception as e:
+                logger.warning(
+                    "Failed to compute multivariate anomaly metrics", error=str(e)
+                )
 
             # Update parent sub-index gauges
             if latest_sub_indices and parent_subindex_gauge is not None:
@@ -2329,7 +2674,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                     parent_value = getattr(latest_sub_indices, parent_key, None)
                     if parent_value is not None:
                         parent_subindex_gauge.labels(
-                            region=region_id_for_metrics, parent=parent_key
+                            region=region_name_for_metrics, parent=parent_key
                         ).set(parent_value)
 
             # Update child sub-index gauges
@@ -2340,7 +2685,7 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
                         child_value = child_data.get("value")
                         if child_value is not None:
                             child_subindex_gauge.labels(
-                                region=region_id_for_metrics,
+                                region=region_name_for_metrics,
                                 parent=parent_key,
                                 child=child_key,
                             ).set(child_value)
@@ -2348,26 +2693,26 @@ def create_forecast(payload: ForecastRequest) -> ForecastResult:
             # Increment forecast generation counter
             if forecasts_generated_counter is not None:
                 forecasts_generated_counter.labels(
-                    region=region_id_for_metrics, status="success"
+                    region=region_name_for_metrics, status="success"
                 ).inc()
 
             # Update Quick Summary metrics
             if forecast_last_updated_gauge is not None:
                 import time
 
-                forecast_last_updated_gauge.labels(region=region_id_for_metrics).set(
+                forecast_last_updated_gauge.labels(region=region_name_for_metrics).set(
                     time.time()
                 )
 
-            if forecast_history_points_gauge is not None:
-                forecast_history_points_gauge.labels(region=region_id_for_metrics).set(
-                    len(history_records)
-                )
+                if forecast_history_points_gauge is not None:
+                    forecast_history_points_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(len(history_records))
 
-            if forecast_points_generated_gauge is not None:
-                forecast_points_generated_gauge.labels(
-                    region=region_id_for_metrics
-                ).set(len(forecast_records))
+                if forecast_points_generated_gauge is not None:
+                    forecast_points_generated_gauge.labels(
+                        region=region_name_for_metrics
+                    ).set(len(forecast_records))
         except Exception as e:
             logger.warning("Failed to update Prometheus metrics", error=str(e))
 

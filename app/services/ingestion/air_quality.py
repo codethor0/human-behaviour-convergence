@@ -7,11 +7,10 @@ This module fetches air quality data from multiple sources:
 Both sources provide AQI (Air Quality Index) which is normalized to a stress index.
 """
 
-import logging
 import os
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, Optional
 
 import pandas as pd
 import requests
@@ -86,22 +85,30 @@ class AirQualityFetcher:
                 pm10 = sensor.get("pm10.0", 0)
                 aqi = self._calculate_aqi_from_pm25(pm25)
 
-                records.append({
-                    "timestamp": datetime.now(),
-                    "source": "purpleair",
-                    "aqi": aqi,
-                    "pm25": pm25,
-                    "pm10": pm10,
-                    "sensor_id": sensor.get("sensor_index"),
-                })
+                records.append(
+                    {
+                        "timestamp": datetime.now(),
+                        "source": "purpleair",
+                        "aqi": aqi,
+                        "pm25": pm25,
+                        "pm10": pm10,
+                        "sensor_id": sensor.get("sensor_index"),
+                    }
+                )
 
             df = pd.DataFrame(records)
             if not df.empty:
-                df = df.groupby("timestamp").agg({
-                    "aqi": "mean",
-                    "pm25": "mean",
-                    "pm10": "mean",
-                }).reset_index()
+                df = (
+                    df.groupby("timestamp")
+                    .agg(
+                        {
+                            "aqi": "mean",
+                            "pm25": "mean",
+                            "pm10": "mean",
+                        }
+                    )
+                    .reset_index()
+                )
 
             self._set_cached_data(cache_key, df)
             return df
@@ -143,20 +150,30 @@ class AirQualityFetcher:
                 parameter = observation.get("ParameterName", "")
                 category = observation.get("Category", {}).get("Name", "")
 
-                records.append({
-                    "timestamp": datetime.fromisoformat(observation.get("DateObserved", datetime.now().isoformat())),
-                    "source": "airnow",
-                    "aqi": aqi,
-                    "parameter": parameter,
-                    "category": category,
-                })
+                records.append(
+                    {
+                        "timestamp": datetime.fromisoformat(
+                            observation.get("DateObserved", datetime.now().isoformat())
+                        ),
+                        "source": "airnow",
+                        "aqi": aqi,
+                        "parameter": parameter,
+                        "category": category,
+                    }
+                )
 
             df = pd.DataFrame(records)
             if not df.empty:
                 # Aggregate by timestamp
-                df = df.groupby("timestamp").agg({
-                    "aqi": "mean",
-                }).reset_index()
+                df = (
+                    df.groupby("timestamp")
+                    .agg(
+                        {
+                            "aqi": "mean",
+                        }
+                    )
+                    .reset_index()
+                )
 
             self._set_cached_data(cache_key, df)
             return df
@@ -216,7 +233,8 @@ class AirQualityFetcher:
             "timestamp": dates,
             "aqi": [base_aqi + (i % 10) * 2 for i in range(30)],
             "air_quality_stress_index": [
-                self._normalize_to_stress_index(base_aqi + (i % 10) * 2) for i in range(30)
+                self._normalize_to_stress_index(base_aqi + (i % 10) * 2)
+                for i in range(30)
             ],
         }
         return pd.DataFrame(data)
@@ -253,7 +271,9 @@ class AirQualityFetcher:
                 return self._get_fallback_data(region, "combined")
 
             # Calculate stress index
-            combined["air_quality_stress_index"] = combined["aqi"].apply(self._normalize_to_stress_index)
+            combined["air_quality_stress_index"] = combined["aqi"].apply(
+                self._normalize_to_stress_index
+            )
 
             # Ensure timestamp is datetime
             combined["timestamp"] = pd.to_datetime(combined["timestamp"])
@@ -261,7 +281,9 @@ class AirQualityFetcher:
             return combined.sort_values("timestamp").reset_index(drop=True)
 
         except Exception as e:
-            logger.error("Failed to fetch air quality data", error=str(e), exc_info=True)
+            logger.error(
+                "Failed to fetch air quality data", error=str(e), exc_info=True
+            )
             return self._get_fallback_data(region, "combined")
 
 

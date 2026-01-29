@@ -364,10 +364,19 @@ class DataHarmonizer:
                         # Normalize AQI to stress index (0-1)
                         # AQI > 100 is unhealthy, > 150 is unhealthy for sensitive groups
                         aq_df["air_quality_stress_index"] = aq_df["aqi"].apply(
-                            lambda x: (x / 50) * 0.2 if x <= 50
-                            else (0.2 + ((x - 50) / 50) * 0.2) if x <= 100
-                            else (0.4 + ((x - 100) / 50) * 0.2) if x <= 150
-                            else min(1.0, 0.6 + ((x - 150) / 350) * 0.4)
+                            lambda x: (
+                                (x / 50) * 0.2
+                                if x <= 50
+                                else (
+                                    (0.2 + ((x - 50) / 50) * 0.2)
+                                    if x <= 100
+                                    else (
+                                        (0.4 + ((x - 100) / 50) * 0.2)
+                                        if x <= 150
+                                        else min(1.0, 0.6 + ((x - 150) / 350) * 0.4)
+                                    )
+                                )
+                            )
                         )
                     else:
                         # Fallback: create empty stress index
@@ -467,7 +476,9 @@ class DataHarmonizer:
 
         if not consumer_spending_data.empty:
             spending_df = consumer_spending_data.copy()
-            spending_df["timestamp"] = pd.to_datetime(spending_df["timestamp"], utc=True)
+            spending_df["timestamp"] = pd.to_datetime(
+                spending_df["timestamp"], utc=True
+            )
             if spending_df["timestamp"].dt.tz is not None:
                 spending_df["timestamp"] = spending_df["timestamp"].dt.tz_localize(None)
             spending_df = spending_df.set_index("timestamp").sort_index()
@@ -476,9 +487,13 @@ class DataHarmonizer:
 
         if not employment_sector_data.empty:
             employment_df = employment_sector_data.copy()
-            employment_df["timestamp"] = pd.to_datetime(employment_df["timestamp"], utc=True)
+            employment_df["timestamp"] = pd.to_datetime(
+                employment_df["timestamp"], utc=True
+            )
             if employment_df["timestamp"].dt.tz is not None:
-                employment_df["timestamp"] = employment_df["timestamp"].dt.tz_localize(None)
+                employment_df["timestamp"] = employment_df["timestamp"].dt.tz_localize(
+                    None
+                )
             employment_df = employment_df.set_index("timestamp").sort_index()
             dataframes.append(employment_df)
             names.append("employment_sector")
@@ -870,9 +885,9 @@ class DataHarmonizer:
                 "fred_cpi_inflation_stress": fred_cpi_inflation_stress_val.values,
                 "gdelt_tone_score": gdelt_tone_val.values,
                 "owid_health_stress": owid_health_val.values,
-            "usgs_earthquake_intensity": usgs_earthquake_val.values,
-            "air_quality_index": air_quality_val.values,
-            "political_stress": political_stress_val.values,
+                "usgs_earthquake_intensity": usgs_earthquake_val.values,
+                "air_quality_index": air_quality_val.values,
+                "political_stress": political_stress_val.values,
                 "crime_stress": crime_stress_val.values,
                 "misinformation_stress": misinformation_stress_val.values,
                 "social_cohesion_stress": social_cohesion_stress_val.values,

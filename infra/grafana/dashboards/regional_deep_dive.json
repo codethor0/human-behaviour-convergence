@@ -450,6 +450,43 @@
       "options": {
         "showHeader": true
       }
+    },
+    {
+      "id": 6,
+      "title": "Anomaly status ($region)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "behavior_index_static_anomaly{region=\"$region\"}", "refId": "A", "instant": true },
+        { "expr": "behavior_index_zscore_anomaly{region=\"$region\"}", "refId": "B", "instant": true },
+        { "expr": "behavior_index_seasonal_anomaly{region=\"$region\"}", "refId": "C", "instant": true },
+        { "expr": "behavior_index_residual_anomaly{region=\"$region\"}", "refId": "D", "instant": true },
+        { "expr": "hbc_multivariate_md_anomaly{region=\"$region\"}", "refId": "E", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Normal", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "Anomaly", "color": "red" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "red" }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["max"], "values": false, "fields": "" },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "description": "Anomaly if any layer is 1 (static, z-score, seasonal, residual, multivariate). [Anomaly Center](http://localhost:3001/d/anomaly-detection-center)"
     }
   ],
   "tags": ["regional", "deep-dive", "explainability"]

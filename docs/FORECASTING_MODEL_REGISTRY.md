@@ -31,10 +31,11 @@ Technical documentation of forecasting models implemented in HBC.
 - **Status**: IMPLEMENTED
 
 #### ARIMA/SARIMA
-- **Implementation**: Not yet implemented
-- **Parameters**: (p, d, q) for ARIMA, (p, d, q)(P, D, Q, s) for SARIMA
+- **Implementation**: `app/core/model_registry.py` - `ARIMAModel` class
+- **Parameters**: `order` (p, d, q) for ARIMA (default: (1, 1, 1))
 - **Use Case**: Alternative to exponential smoothing for non-seasonal or complex patterns
-- **Status**: NOT IMPLEMENTED (stub with TODO)
+- **Status**: IMPLEMENTED (requires statsmodels with ARIMA support)
+- **Note**: Falls back to naive model if statsmodels not available or insufficient history
 
 ### C) ML Tabular Time-Series (Optional)
 

@@ -38,8 +38,12 @@ def test_drought_regional_variance(fetcher):
     """Test that two distant regions produce different drought_stress_index values."""
     os.environ["HBC_CI_OFFLINE_DATA"] = "1"
     try:
-        il_data, il_status = fetcher.fetch_drought_stress_index(state="IL", days_back=30)
-        az_data, az_status = fetcher.fetch_drought_stress_index(state="AZ", days_back=30)
+        il_data, il_status = fetcher.fetch_drought_stress_index(
+            state="IL", days_back=30
+        )
+        az_data, az_status = fetcher.fetch_drought_stress_index(
+            state="AZ", days_back=30
+        )
 
         assert il_status.ok
         assert az_status.ok
@@ -51,13 +55,19 @@ def test_drought_regional_variance(fetcher):
         az_mean = az_data["drought_stress_index"].mean()
 
         # AZ should have higher drought stress than IL (AZ is more arid)
-        assert az_mean > il_mean, f"AZ mean ({az_mean:.6f}) should be > IL mean ({il_mean:.6f})"
+        assert (
+            az_mean > il_mean
+        ), f"AZ mean ({az_mean:.6f}) should be > IL mean ({il_mean:.6f})"
 
         # Both should have some variance
         il_std = il_data["drought_stress_index"].std()
         az_std = az_data["drought_stress_index"].std()
-        assert il_std > 0.01, f"IL drought_stress_index should have variance (std={il_std:.6f})"
-        assert az_std > 0.01, f"AZ drought_stress_index should have variance (std={az_std:.6f})"
+        assert (
+            il_std > 0.01
+        ), f"IL drought_stress_index should have variance (std={il_std:.6f})"
+        assert (
+            az_std > 0.01
+        ), f"AZ drought_stress_index should have variance (std={az_std:.6f})"
     finally:
         os.environ.pop("HBC_CI_OFFLINE_DATA", None)
 

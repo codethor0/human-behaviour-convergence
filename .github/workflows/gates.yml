@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -40,7 +40,7 @@ jobs:
           echo "[PASS] Core tests pass"
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: 'npm'
@@ -130,25 +130,25 @@ jobs:
       - name: Warm up backend (pre-generate forecasts)
         run: |
           echo "Generating forecasts to ensure data pipeline is ready..."
-          
+
           curl -sS -X POST "http://localhost:8100/api/forecast" \
             -H "Content-Type: application/json" \
             -d '{"region_id":"us_mn","region_name":"Minnesota","days_back":30,"forecast_horizon":7}' \
             | jq -r '.metadata.region_id' || echo "[WARN] us_mn forecast failed"
-          
+
           curl -sS -X POST "http://localhost:8100/api/forecast" \
             -H "Content-Type: application/json" \
             -d '{"region_id":"city_nyc","region_name":"New York City","days_back":30,"forecast_horizon":7}' \
             | jq -r '.metadata.region_id' || echo "[WARN] city_nyc forecast failed"
-          
+
           curl -sS -X POST "http://localhost:8100/api/forecast" \
             -H "Content-Type: application/json" \
             -d '{"region_id":"us_ca","region_name":"California","days_back":30,"forecast_horizon":7}' \
             | jq -r '.metadata.region_id' || echo "[WARN] us_ca forecast failed"
-          
+
           echo "Waiting 60 seconds for Prometheus to scrape metrics..."
           sleep 60
-          
+
           echo "[OK] Warm-up complete"
 
       - name: Run GATE A

@@ -9,9 +9,8 @@ import json
 import statistics
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import pandas as pd
 
 
 def load_forecasts(forecasts_dir: str) -> Dict[str, Dict]:
@@ -90,7 +89,7 @@ def classify_source(source_name: str) -> str:
         "flood_risk_stress",  # NOAA Storm Events by state (MVP3)
         "storm_severity_stress",  # NOAA Storm Events by state (MVP3)
     ]
-    
+
     # Sources that may be global or regional depending on configuration
     potentially_global_sources = [
         "public_health_stress",  # May be global (OWID fallback) or regional (if API configured)
@@ -260,12 +259,12 @@ def main():
     print(f"CSV written to: {args.output_csv}")
 
     if alerts:
-        print(f"\n⚠️  {len(alerts)} alert(s) found:")
+        print(f"\n[WARN]  {len(alerts)} alert(s) found:")
         for alert in alerts:
             print(f"  [{alert['severity']}] {alert['source']}: {alert['message']}")
         sys.exit(1)
     else:
-        print("\n✅ No alerts - variance patterns are correct")
+        print("\n[OK] No alerts - variance patterns are correct")
         sys.exit(0)
 
 

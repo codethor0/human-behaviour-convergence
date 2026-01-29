@@ -38,8 +38,12 @@ def test_storm_regional_variance(fetcher):
     """Test that two distant regions produce different storm stress values."""
     os.environ["HBC_CI_OFFLINE_DATA"] = "1"
     try:
-        fl_data, fl_status = fetcher.fetch_storm_stress_indices(state="FL", days_back=30)
-        az_data, az_status = fetcher.fetch_storm_stress_indices(state="AZ", days_back=30)
+        fl_data, fl_status = fetcher.fetch_storm_stress_indices(
+            state="FL", days_back=30
+        )
+        az_data, az_status = fetcher.fetch_storm_stress_indices(
+            state="AZ", days_back=30
+        )
 
         assert fl_status.ok
         assert az_status.ok
@@ -49,11 +53,15 @@ def test_storm_regional_variance(fetcher):
         # FL should have higher flood_risk, AZ should have higher heatwave_stress
         fl_flood_mean = fl_data["flood_risk_stress"].mean()
         az_flood_mean = az_data["flood_risk_stress"].mean()
-        assert fl_flood_mean > az_flood_mean, f"FL flood ({fl_flood_mean:.6f}) should be > AZ flood ({az_flood_mean:.6f})"
+        assert (
+            fl_flood_mean > az_flood_mean
+        ), f"FL flood ({fl_flood_mean:.6f}) should be > AZ flood ({az_flood_mean:.6f})"
 
         az_heatwave_mean = az_data["heatwave_stress"].mean()
         fl_heatwave_mean = fl_data["heatwave_stress"].mean()
-        assert az_heatwave_mean > fl_heatwave_mean, f"AZ heatwave ({az_heatwave_mean:.6f}) should be > FL heatwave ({fl_heatwave_mean:.6f})"
+        assert (
+            az_heatwave_mean > fl_heatwave_mean
+        ), f"AZ heatwave ({az_heatwave_mean:.6f}) should be > FL heatwave ({fl_heatwave_mean:.6f})"
     finally:
         os.environ.pop("HBC_CI_OFFLINE_DATA", None)
 

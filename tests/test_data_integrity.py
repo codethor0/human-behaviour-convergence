@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: PROPRIETARY
 """Data integrity checks - Great-Expectations-style validation."""
-import os
-from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import pytest
@@ -15,9 +13,9 @@ class TestIngestionSourceIntegrity:
 
     def test_weather_source_schema_validation(self):
         """Schema validation: Weather data must have required fields."""
-        from app.services.ingestion.weather import WeatherFetcher
+        from app.services.ingestion.weather import EnvironmentalImpactFetcher
 
-        fetcher = WeatherFetcher()
+        fetcher = EnvironmentalImpactFetcher()
         data = fetcher.fetch_regional_comfort(
             latitude=40.7128, longitude=-74.0060, days_back=7
         )
@@ -80,9 +78,9 @@ class TestIngestionSourceIntegrity:
 
     def test_all_sources_handle_errors_gracefully(self):
         """Error handling: Sources must not crash on malformed inputs."""
-        from app.services.ingestion.weather import WeatherFetcher
+        from app.services.ingestion.weather import EnvironmentalImpactFetcher
 
-        fetcher = WeatherFetcher()
+        fetcher = EnvironmentalImpactFetcher()
 
         # Invalid coordinates should raise ValueError, not crash
         with pytest.raises(ValueError):
@@ -209,12 +207,8 @@ class TestSourceRegistryIntegrity:
 
         for source_id, source_def in sources.items():
             assert source_id, f"Source {source_id} must have id"
-            assert (
-                source_def.display_name
-            ), f"Source {source_id} must have display_name"
-            assert (
-                source_def.category
-            ), f"Source {source_id} must have category"
+            assert source_def.display_name, f"Source {source_id} must have display_name"
+            assert source_def.category, f"Source {source_id} must have category"
             assert isinstance(
                 source_def.requires_key, bool
             ), f"Source {source_id} requires_key must be bool"

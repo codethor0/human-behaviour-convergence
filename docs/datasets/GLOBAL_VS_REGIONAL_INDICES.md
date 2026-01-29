@@ -7,11 +7,11 @@ This document clarifies which behavior indices are global/national (expected to 
 These indices use global or national-level data sources and **are expected to be identical** across regions:
 
 ### economic_stress
-- **Source**: VIX/SPY (global market data via yfinance) + FRED indicators (national) + **EIA fuel prices (state-level)** ✅
+- **Source**: VIX/SPY (global market data via yfinance) + FRED indicators (national) + **EIA fuel prices (state-level)** [OK]
 - **Scope**: Mixed (global/national components + regional fuel_stress)
 - **Expected Behavior**: **MUST vary** across regions (fuel_stress component is state-specific)
 - **Reason**: While market volatility is global, fuel prices vary by state (20-40% deviation from national average)
-- **Children**: `fuel_stress` (REGIONAL, MVP1) ✅
+- **Children**: `fuel_stress` (REGIONAL, MVP1) [OK]
 
 ### mobility_activity
 - **Source**: TSA passenger throughput (national US data)
@@ -71,7 +71,7 @@ The following are **planned** per `docs/ENTERPRISE_DATASET_EXPANSION_PLAN.md`. O
 
 | Index | Source | Sub-Index Parent |
 |-------|--------|------------------|
-| `fuel_stress` | EIA gasoline by state | economic_stress | ✅ **Implemented (MVP1)** |
+| `fuel_stress` | EIA gasoline by state | economic_stress | [OK] **Implemented (MVP1)** |
 | `drought_stress` | U.S. Drought Monitor (state) | environmental_stress |
 | `eviction_stress` / `housing_cost_burden` | Eviction Lab (state/city) | economic_stress |
 | `overdose_stress` / `substance_use_stress` | CDC WONDER (state) | public_health_stress |

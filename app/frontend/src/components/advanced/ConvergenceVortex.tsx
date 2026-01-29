@@ -12,6 +12,8 @@ interface SubIndex {
   y?: number;
   vx?: number;
   vy?: number;
+  fx?: number;
+  fy?: number;
 }
 
 interface Correlation {
@@ -39,7 +41,7 @@ export function ConvergenceVortex({ region, width = 800, height = 600 }: Converg
         // Fetch parent sub-indices
         const metricsResponse = await fetch(`http://localhost:8100/api/metrics${region ? `?region=${region}` : ''}`);
         const _metrics = await metricsResponse.json();
-        
+
         // Mock sub-indices structure - would come from Prometheus
         const mockSubIndices: SubIndex[] = [
           { id: 'economic_stress', name: 'Economic', parent: 'economic_stress', value: 0.52 },
@@ -202,10 +204,10 @@ export function ConvergenceVortex({ region, width = 800, height = 600 }: Converg
     // Update positions on simulation tick
     simulation.on('tick', () => {
       link
-        .attr('x1', (d) => (d.source as SubIndex).x!)
-        .attr('y1', (d) => (d.source as SubIndex).y!)
-        .attr('x2', (d) => (d.target as SubIndex).x!)
-        .attr('y2', (d) => (d.target as SubIndex).y!);
+        .attr('x1', (d) => (d.source as unknown as SubIndex).x!)
+        .attr('y1', (d) => (d.source as unknown as SubIndex).y!)
+        .attr('x2', (d) => (d.target as unknown as SubIndex).x!)
+        .attr('y2', (d) => (d.target as unknown as SubIndex).y!);
 
       linkLabels
         .attr('x', (d) => {

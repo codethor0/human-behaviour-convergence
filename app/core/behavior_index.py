@@ -366,12 +366,9 @@ class BehaviorIndexComputer:
         fred_jobless_claims = df.get("fred_jobless_claims", pd.Series([None] * len(df)))
         # Extended economic metrics (GDP growth, CPI inflation) - gated for v2.5 compatibility
         # These are available in harmonized data but only used if explicitly enabled
-        fred_gdp_growth_stress = df.get(
-            "fred_gdp_growth_stress", pd.Series([None] * len(df))
-        )
-        fred_cpi_inflation_stress = df.get(
-            "fred_cpi_inflation_stress", pd.Series([None] * len(df))
-        )
+        # Note: Variables are reserved for future use in v2.5+ behavior index calculations
+        _ = df.get("fred_gdp_growth_stress", pd.Series([None] * len(df)))
+        _ = df.get("fred_cpi_inflation_stress", pd.Series([None] * len(df)))
         # EIA fuel prices (state-level gasoline stress)
         # Note: Column is named "fuel_stress" in harmonized DataFrame (child index name)
         fuel_stress = df.get("fuel_stress", pd.Series([None] * len(df)))
@@ -403,7 +400,7 @@ class BehaviorIndexComputer:
         # Set weights based on available components
         # Fuel stress gets 15% weight when available; other weights scale proportionally
         fuel_weight = 0.15 if has_fuel else 0.0
-        base_weight_sum = 1.0 - fuel_weight  # Remaining weight for other components
+        # base_weight_sum = 1.0 - fuel_weight  # Remaining weight for other components (reserved for future use)
 
         if len(economic_components) == 1:
             # Only market stress
@@ -437,19 +434,45 @@ class BehaviorIndexComputer:
             if has_fuel:
                 # Market, Consumer, Unemployment, Fuel
                 if has_consumer and has_unemployment:
-                    weights = [0.34, 0.26, 0.25, 0.15]  # Market 34%, Consumer 26%, Unemployment 25%, Fuel 15%
+                    weights = [
+                        0.34,
+                        0.26,
+                        0.25,
+                        0.15,
+                    ]  # Market 34%, Consumer 26%, Unemployment 25%, Fuel 15%
                 # Market, Consumer, Jobless, Fuel
                 elif has_consumer and has_jobless:
-                    weights = [0.43, 0.34, 0.08, 0.15]  # Market 43%, Consumer 34%, Jobless 8%, Fuel 15%
+                    weights = [
+                        0.43,
+                        0.34,
+                        0.08,
+                        0.15,
+                    ]  # Market 43%, Consumer 34%, Jobless 8%, Fuel 15%
                 # Market, Unemployment, Jobless, Fuel
                 else:
-                    weights = [0.51, 0.26, 0.08, 0.15]  # Market 51%, Unemployment 26%, Jobless 8%, Fuel 15%
+                    weights = [
+                        0.51,
+                        0.26,
+                        0.08,
+                        0.15,
+                    ]  # Market 51%, Unemployment 26%, Jobless 8%, Fuel 15%
             else:
                 # All four FRED indicators (no fuel)
-                weights = [0.4, 0.3, 0.2, 0.1]  # Market 40%, Consumer 30%, Unemployment 20%, Jobless 10%
+                weights = [
+                    0.4,
+                    0.3,
+                    0.2,
+                    0.1,
+                ]  # Market 40%, Consumer 30%, Unemployment 20%, Jobless 10%
         else:
             # All five indicators available (Market, Consumer, Unemployment, Jobless, Fuel)
-            weights = [0.34, 0.26, 0.17, 0.08, 0.15]  # Market 34%, Consumer 26%, Unemployment 17%, Jobless 8%, Fuel 15%
+            weights = [
+                0.34,
+                0.26,
+                0.17,
+                0.08,
+                0.15,
+            ]  # Market 34%, Consumer 26%, Unemployment 17%, Jobless 8%, Fuel 15%
 
         # Normalize weights to sum to 1.0
         total_weight = sum(weights)
@@ -515,7 +538,9 @@ class BehaviorIndexComputer:
         )
         # New regional environmental signals (MVP2, MVP3)
         drought_stress = df.get("drought_stress", pd.Series([None] * len(df)))
-        storm_severity_stress = df.get("storm_severity_stress", pd.Series([None] * len(df)))
+        storm_severity_stress = df.get(
+            "storm_severity_stress", pd.Series([None] * len(df))
+        )
         heatwave_stress = df.get("heatwave_stress", pd.Series([None] * len(df)))
         flood_risk_stress = df.get("flood_risk_stress", pd.Series([None] * len(df)))
 
@@ -569,7 +594,11 @@ class BehaviorIndexComputer:
         if total_weight > 0:
             weights = [w / total_weight for w in weights]
         else:
-            weights = [1.0 / len(components)] * len(components) if len(components) > 0 else [1.0]
+            weights = (
+                [1.0 / len(components)] * len(components)
+                if len(components) > 0
+                else [1.0]
+            )
 
         # Compute weighted average
         if len(components) == len(weights) and len(components) > 0:
@@ -2353,7 +2382,9 @@ class BehaviorIndexComputer:
                 val_float = float(val) if pd.notna(val) else 0.5
                 component_values.append(val_float if math.isfinite(val_float) else 0.5)
             if "fuel_stress" in component_names:
-                val = row.get("fuel_stress", 0.5)  # Column name matches child index name
+                val = row.get(
+                    "fuel_stress", 0.5
+                )  # Column name matches child index name
                 val_float = float(val) if pd.notna(val) else 0.5
                 component_values.append(val_float if math.isfinite(val_float) else 0.5)
 

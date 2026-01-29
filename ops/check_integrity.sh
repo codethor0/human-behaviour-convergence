@@ -64,7 +64,11 @@ if [ "${SKIP_TESTS}" = "false" ]; then
     echo ""
     echo "2. Running unit tests (fast integrity: excluding network and slow tests)..."
     if [ -d "tests" ]; then
-        if python3 -m pytest tests/ -m "not network and not slow" -v --tb=short 2>&1 | tee /tmp/integrity_tests.log; then
+        PYTEST_CMD="python3 -m pytest"
+        if [ -x ".venv/bin/pytest" ]; then
+            PYTEST_CMD=".venv/bin/pytest"
+        fi
+        if $PYTEST_CMD tests/ -m "not network and not slow" -v --tb=short 2>&1 | tee /tmp/integrity_tests.log; then
             echo "  ✓ Unit tests passed"
         else
             echo "  ✗ Unit tests failed"

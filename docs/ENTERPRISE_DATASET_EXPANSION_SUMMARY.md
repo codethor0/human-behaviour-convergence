@@ -1,7 +1,7 @@
 # Enterprise Dataset Expansion - Executive Summary
 
-**Date**: 2026-01-22  
-**Status**: Planning Complete, Ready for Implementation  
+**Date**: 2026-01-22
+**Status**: Planning Complete, Ready for Implementation
 **Full Plan**: See `docs/ENTERPRISE_DATASET_EXPANSION_PLAN.md`
 
 ---
@@ -84,12 +84,12 @@ This expansion adds **15 high-value datasets** across 7 categories to strengthen
 ## Regionality Safety Net
 
 Every REGIONAL dataset must:
-- ✅ Use geo inputs in fetch logic
-- ✅ Include geo in cache keys
-- ✅ Emit metrics with region labels
-- ✅ Pass `variance_probe.py` (no alerts)
-- ✅ Have regression tests (two distant regions produce different values)
-- ✅ Be classified in `source_regionality_manifest.json`
+- [OK] Use geo inputs in fetch logic
+- [OK] Include geo in cache keys
+- [OK] Emit metrics with region labels
+- [OK] Pass `variance_probe.py` (no alerts)
+- [OK] Have regression tests (two distant regions produce different values)
+- [OK] Be classified in `source_regionality_manifest.json`
 
 ---
 
@@ -101,7 +101,7 @@ Every REGIONAL dataset must:
 - All are state-level or higher
 - All have documented failure modes
 
-**Ethics Review**: **PASSED** ✅
+**Ethics Review**: **PASSED** [OK]
 - No private/paid APIs (except free-tier OpenStates, documented)
 - No scraping behind auth walls
 - No social media APIs
@@ -111,11 +111,11 @@ Every REGIONAL dataset must:
 
 ## Success Criteria
 
-✅ Two distant regions show divergence in ≥3 independent sub-indices within 30 days  
-✅ Dashboards clearly distinguish global vs regional signals  
-✅ Forecasts are auditable back to source-level contributors  
-✅ Zero regressions in existing workflows  
-✅ All REGIONAL sources pass variance_probe
+[OK] Two distant regions show divergence in ≥3 independent sub-indices within 30 days
+[OK] Dashboards clearly distinguish global vs regional signals
+[OK] Forecasts are auditable back to source-level contributors
+[OK] Zero regressions in existing workflows
+[OK] All REGIONAL sources pass variance_probe
 
 ---
 

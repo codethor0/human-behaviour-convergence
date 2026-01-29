@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: PROPRIETARY
 """NOAA Storm Events Database connector for state-level storm severity."""
-import os
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from typing import Tuple
 
 import pandas as pd
-import requests
 import structlog
 
 from app.services.ingestion.ci_offline_data import (
@@ -21,19 +19,57 @@ NOAA_STORM_EVENTS_BASE = "https://www.ncei.noaa.gov/stormevents"
 
 # State name to abbreviation mapping (reuse from drought_monitor)
 STATE_NAME_TO_ABBR = {
-    "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
-    "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
-    "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
-    "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
-    "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
-    "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
-    "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-    "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-    "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
-    "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
-    "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
-    "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
-    "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
+    "District of Columbia": "DC",
 }
 
 
@@ -148,7 +184,11 @@ class NOAAStormEventsFetcher:
             df, cache_time = self._cache[cache_key]
             age_minutes = (datetime.now() - cache_time).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached NOAA storm events", state=state_code, age_minutes=age_minutes)
+                logger.info(
+                    "Using cached NOAA storm events",
+                    state=state_code,
+                    age_minutes=age_minutes,
+                )
                 status = SourceStatus(
                     provider="NOAA_Storms_Cached",
                     ok=True,
@@ -180,12 +220,13 @@ class NOAAStormEventsFetcher:
                 "IL": {"storm_severity": 0.4, "heatwave": 0.3, "flood": 0.5},
                 "NY": {"storm_severity": 0.3, "heatwave": 0.2, "flood": 0.4},
             }
-            pattern = state_patterns.get(state_code, {"storm_severity": 0.3, "heatwave": 0.3, "flood": 0.3})
+            pattern = state_patterns.get(
+                state_code, {"storm_severity": 0.3, "heatwave": 0.3, "flood": 0.3}
+            )
 
             # Generate daily time series with monthly aggregation
             dates = pd.date_range(start=start_date, end=end_date, freq="D")
             import random
-            import math
 
             storm_severity_values = []
             heatwave_values = []
@@ -209,12 +250,14 @@ class NOAAStormEventsFetcher:
                 base_flood = pattern["flood"] + month_variation
                 flood_values.append(max(0.0, min(1.0, base_flood)))
 
-            df = pd.DataFrame({
-                "timestamp": dates,
-                "storm_severity_stress": storm_severity_values,
-                "heatwave_stress": heatwave_values,
-                "flood_risk_stress": flood_values,
-            })
+            df = pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "storm_severity_stress": storm_severity_values,
+                    "heatwave_stress": heatwave_values,
+                    "flood_risk_stress": flood_values,
+                }
+            )
 
             # Cache the result
             self._cache[cache_key] = (df.copy(), datetime.now())
@@ -238,7 +281,9 @@ class NOAAStormEventsFetcher:
             return df, status
 
         except Exception as e:
-            logger.error("NOAA storm events error", state=state_code, error=str(e), exc_info=True)
+            logger.error(
+                "NOAA storm events error", state=state_code, error=str(e), exc_info=True
+            )
             return self._fallback_storm_data(state_code, days_back)
 
     def _fallback_storm_data(
@@ -260,7 +305,11 @@ class NOAAStormEventsFetcher:
             if key.startswith(cache_key_pattern):
                 age_days = (datetime.now() - cache_time).total_seconds() / 86400
                 if age_days < 30:  # Use cached data if less than 30 days old
-                    logger.info("Using stale cached storm data", state=state_code, age_days=age_days)
+                    logger.info(
+                        "Using stale cached storm data",
+                        state=state_code,
+                        age_days=age_days,
+                    )
                     status = SourceStatus(
                         provider="NOAA_Storms_StaleCache",
                         ok=True,
@@ -274,12 +323,14 @@ class NOAAStormEventsFetcher:
         # Ultimate fallback: return default neutral values
         end_date = datetime.now()
         dates = [end_date - timedelta(days=i) for i in range(days_back, 0, -1)]
-        df = pd.DataFrame({
-            "timestamp": dates,
-            "storm_severity_stress": [0.3] * len(dates),  # Moderate
-            "heatwave_stress": [0.3] * len(dates),  # Moderate
-            "flood_risk_stress": [0.3] * len(dates),  # Moderate
-        })
+        df = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "storm_severity_stress": [0.3] * len(dates),  # Moderate
+                "heatwave_stress": [0.3] * len(dates),  # Moderate
+                "flood_risk_stress": [0.3] * len(dates),  # Moderate
+            }
+        )
 
         status = SourceStatus(
             provider="NOAA_Storms_Fallback",

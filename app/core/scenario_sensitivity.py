@@ -55,6 +55,8 @@ def calculate_factor_elasticity(
 
     # Calculate elasticity: Δoutput / Δinput
     # Normalize by factor weight to get true sensitivity
+    if input_delta == 0:
+        raise ValueError("input_delta cannot be zero for elasticity calculation")
     elasticity = (output_delta / input_delta) * factor_weight
 
     # Classify sensitivity

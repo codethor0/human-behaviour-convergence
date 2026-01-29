@@ -558,6 +558,41 @@
         "rowHeight": 0.7,
         "showValue": "never"
       }
+    },
+    {
+      "id": 8,
+      "title": "Regions in Anomaly (Backend Layer 1)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 32 },
+      "targets": [
+        {
+          "expr": "count(behavior_index_static_anomaly == 1)",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "value": null, "color": "green" },
+              { "value": 1, "color": "yellow" },
+              { "value": 3, "color": "red" }
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "description": "Count of regions with static anomaly (outside percentile bounds). See [Anomaly Detection Center](http://localhost:3001/d/anomaly-detection-center) for all layers."
     }
   ]
 }

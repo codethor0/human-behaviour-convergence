@@ -1,12 +1,12 @@
 # CI Docker E2E Status Report
 
-**Date**: 2026-01-21  
-**HEAD**: bd9f186  
+**Date**: 2026-01-21
+**HEAD**: bd9f186
 **Status**: 7/8 workflows GREEN, 1 environment-specific failure
 
 ## Current State
 
-### ✅ GREEN Workflows (7/8)
+### [OK] GREEN Workflows (7/8)
 1. E2E Playwright Tests - 100% passing (4/4 tests)
 2. Gates (A + G) - All checks pass
 3. Forecast Integrity - All tests pass (775+ tests)
@@ -15,7 +15,7 @@
 6. Security Harden - All checks pass
 7. Release - Working
 
-### ❌ RED Workflows (1/8)
+### [FAIL] RED Workflows (1/8)
 - CI (.github/workflows/ci.yml) - Docker E2E subset failing
 
 ## Critical Evidence: Local Reproduction **PASSES**
@@ -30,7 +30,7 @@ GET /history -> 200
 GET /api/forecasting/regions (proxy) -> 200
 
 # Playwright tests:
-✅ 4/4 tests PASSED (6.5s)
+[OK] 4/4 tests PASSED (6.5s)
 ```
 
 **Conclusion**: Docker setup, routes, and tests are **fundamentally correct**. CI failure is **environment-specific**.
@@ -59,7 +59,7 @@ GET /api/forecasting/regions (proxy) -> 200
 
 1. **Consolidated Readiness Gates**:
    - Backend container health (internal :8000)
-   - Backend host access (localhost:8100)  
+   - Backend host access (localhost:8100)
    - Frontend root (localhost:3100)
    - Critical routes /forecast and /history with HTTP code checks
    - Fail-fast with container logs
@@ -97,9 +97,9 @@ Since standalone E2E already passes and provides coverage, Docker E2E could be m
 ## Test Coverage Status
 
 **E2E Coverage**: 100% (7/7 tests passing)
-- ✅ `/forecast` page: Region select → Generate → Grafana dashboards
-- ✅ `/history` page: UI/table with filters
-- ✅ All UI contracts validated
+- [OK] `/forecast` page: Region select → Generate → Grafana dashboards
+- [OK] `/history` page: UI/table with filters
+- [OK] All UI contracts validated
 
 **Docker E2E Coverage**: 100% locally, 0% in CI (environment issue)
 - Tests identical to standalone E2E

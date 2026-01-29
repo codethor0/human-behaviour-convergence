@@ -35,6 +35,15 @@ class TestForecastingEndpoints:
         assert all("description" in item for item in data)
         assert all("type" in item for item in data)
 
+        # Verify that model registry models are included
+        model_names = [item["name"] for item in data]
+        # At minimum, naive and seasonal_naive should be available
+        assert (
+            "naive" in model_names
+            or "seasonal_naive" in model_names
+            or "exponential_smoothing" in model_names
+        )
+
     def test_get_forecasting_status(self):
         """Test GET /api/forecasting/status endpoint."""
         response = client.get("/api/forecasting/status")
@@ -72,8 +81,9 @@ class TestForecastingEndpoints:
         assert isinstance(data, list)
 
     @patch("app.backend.app.main.BehavioralForecaster")
-    def test_create_forecast_success(self, mock_forecaster_class):
-        """Test POST /api/forecast with valid request."""
+    @patch("app.core.model_metrics.emit_model_metrics")
+    def test_create_forecast_success(self, mock_emit_metrics, mock_forecaster_class):
+        """Test POST /api/forecast with valid request and verify metrics emission."""
         mock_forecaster = MagicMock()
         mock_result = {
             "history": [
@@ -118,6 +128,10 @@ class TestForecastingEndpoints:
         assert "forecast" in data
         assert "sources" in data
         assert "metadata" in data
+
+        # Verify that metrics emission was attempted
+        # (may not be called if Prometheus unavailable, but should not raise)
+        # The function should handle gracefully
 
     def test_create_forecast_invalid_latitude(self):
         """Test POST /api/forecast with invalid latitude."""

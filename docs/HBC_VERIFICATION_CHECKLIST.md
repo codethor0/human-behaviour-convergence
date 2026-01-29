@@ -20,4 +20,4 @@ Use this before merging to main or tagging a release.
 
 **CI:** The canonical verification job is `hbc-verify` in `.github/workflows/ci.yml`; it runs `./scripts/hbc_verify_all.sh` with `CI=true`. Frontend Lint workflow (`.github/workflows/frontend-lint.yml`) runs ESLint on frontend changes.
 
-**Branches:** Long-lived branch is `main`. Other remote branches (e.g. `fix/*`, `dependabot/*`) are short-lived; merge into main and delete when done, or keep one active working branch.
+**Branches:** Long-lived branch is `main`. Other remote branches (e.g. `fix/*`, `dependabot/*`) are short-lived. After merging a fix branch into main, delete the remote branch to keep the repo at two or fewer active branches: `git push origin --delete <branch-name>`. The Branch Hygiene workflow (`.github/workflows/branch-hygiene.yml`) runs on a schedule to clean merged and stale Dependabot branches.

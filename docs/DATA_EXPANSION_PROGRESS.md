@@ -6,10 +6,10 @@ Tracking progress on comprehensive data expansion initiative to integrate 15+ ne
 
 ## Completed Sources
 
-### ✅ Air Quality (TICKET-011)
-**Status**: Complete  
-**File**: `app/services/ingestion/air_quality.py`  
-**Sources**: PurpleAir API + EPA AirNow API  
+### [OK] Air Quality (TICKET-011)
+**Status**: Complete
+**File**: `app/services/ingestion/air_quality.py`
+**Sources**: PurpleAir API + EPA AirNow API
 **Features**:
 - Combines data from both PurpleAir (community sensors) and EPA AirNow (official)
 - Calculates AQI from PM2.5 concentrations
@@ -20,10 +20,10 @@ Tracking progress on comprehensive data expansion initiative to integrate 15+ ne
 - API keys optional (can run without keys)
 
 **Integration**:
-- ✅ Registered in `source_registry.py`
-- ✅ Integrated into `processor.py`
-- ⏳ Prometheus metrics (to be added)
-- ⏳ Dashboard visualization (to be added)
+- [OK] Registered in `source_registry.py`
+- [OK] Integrated into `processor.py`
+- [PENDING] Prometheus metrics (to be added)
+- [PENDING] Dashboard visualization (to be added)
 
 ## In Progress
 
@@ -32,41 +32,41 @@ None currently.
 ## Pending High-Priority Sources
 
 ### TICKET-012: Water Quality Monitoring (EPA)
-**Priority**: HIGH  
-**Status**: Pending  
-**Source**: EPA Water Quality Portal API  
+**Priority**: HIGH
+**Status**: Pending
+**Source**: EPA Water Quality Portal API
 **Estimated Effort**: 1 week
 
 ### TICKET-013: Traffic Sensor Data (DOT)
-**Priority**: HIGH  
-**Status**: Pending  
-**Source**: DOT open data portals (varies by state)  
+**Priority**: HIGH
+**Status**: Pending
+**Source**: DOT open data portals (varies by state)
 **Estimated Effort**: 1 week
 
 ### TICKET-014: River Gauge Levels (USGS)
-**Priority**: HIGH  
-**Status**: Pending  
-**Source**: USGS Water Services API  
+**Priority**: HIGH
+**Status**: Pending
+**Source**: USGS Water Services API
 **Estimated Effort**: 1 week
 
 ## Pending Medium-Priority Sources
 
 ### TICKET-018: Reddit Sentiment Integration
-**Priority**: MEDIUM  
-**Status**: Pending  
-**Source**: Reddit API  
+**Priority**: MEDIUM
+**Status**: Pending
+**Source**: Reddit API
 **Estimated Effort**: 1 week
 
 ### TICKET-019: Job Posting Velocity
-**Priority**: MEDIUM  
-**Status**: Pending  
-**Source**: Indeed/LinkedIn APIs  
+**Priority**: MEDIUM
+**Status**: Pending
+**Source**: Indeed/LinkedIn APIs
 **Estimated Effort**: 1 week
 
 ### TICKET-020: 311 Call Volumes
-**Priority**: MEDIUM  
-**Status**: Pending  
-**Source**: City open data portals  
+**Priority**: MEDIUM
+**Status**: Pending
+**Source**: City open data portals
 **Estimated Effort**: 1 week
 
 ## Implementation Pattern

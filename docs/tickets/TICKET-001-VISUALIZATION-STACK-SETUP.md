@@ -27,23 +27,23 @@ Set up the complete visualization technology stack required for next-generation 
 ### 2. Create Visualization Component Library Structure
 ```
 app/frontend/src/visualizations/
-├── base/
-│   ├── BaseVisualization.tsx
-│   ├── VisualizationContainer.tsx
-│   └── types.ts
-├── d3/
-│   ├── D3Base.tsx
-│   └── utils.ts
-├── three/
-│   ├── ThreeBase.tsx
-│   ├── SceneManager.ts
-│   └── CameraController.ts
-├── echarts/
-│   ├── EChartsBase.tsx
-│   └── configs.ts
-└── mapbox/
-    ├── MapboxBase.tsx
-    └── layers.ts
++-- base/
+|   +-- BaseVisualization.tsx
+|   +-- VisualizationContainer.tsx
+|   \-- types.ts
++-- d3/
+|   +-- D3Base.tsx
+|   \-- utils.ts
++-- three/
+|   +-- ThreeBase.tsx
+|   +-- SceneManager.ts
+|   \-- CameraController.ts
++-- echarts/
+|   +-- EChartsBase.tsx
+|   \-- configs.ts
+\-- mapbox/
+    +-- MapboxBase.tsx
+    \-- layers.ts
 ```
 
 ### 3. Create Design System

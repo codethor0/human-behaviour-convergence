@@ -21,15 +21,57 @@ EIA_API_BASE = "https://api.eia.gov/v2"
 
 # State FIPS code mapping (2-letter to numeric for EIA API)
 STATE_FIPS = {
-    "AL": "01", "AK": "02", "AZ": "04", "AR": "05", "CA": "06", "CO": "08",
-    "CT": "09", "DE": "10", "FL": "12", "GA": "13", "HI": "15", "ID": "16",
-    "IL": "17", "IN": "18", "IA": "19", "KS": "20", "KY": "21", "LA": "22",
-    "ME": "23", "MD": "24", "MA": "25", "MI": "26", "MN": "27", "MS": "28",
-    "MO": "29", "MT": "30", "NE": "31", "NV": "32", "NH": "33", "NJ": "34",
-    "NM": "35", "NY": "36", "NC": "37", "ND": "38", "OH": "39", "OK": "40",
-    "OR": "41", "PA": "42", "RI": "43", "SC": "44", "SD": "45", "TN": "47",
-    "TX": "48", "UT": "49", "VT": "50", "VA": "51", "WA": "53", "WV": "54",
-    "WI": "55", "WY": "56", "DC": "11",
+    "AL": "01",
+    "AK": "02",
+    "AZ": "04",
+    "AR": "05",
+    "CA": "06",
+    "CO": "08",
+    "CT": "09",
+    "DE": "10",
+    "FL": "12",
+    "GA": "13",
+    "HI": "15",
+    "ID": "16",
+    "IL": "17",
+    "IN": "18",
+    "IA": "19",
+    "KS": "20",
+    "KY": "21",
+    "LA": "22",
+    "ME": "23",
+    "MD": "24",
+    "MA": "25",
+    "MI": "26",
+    "MN": "27",
+    "MS": "28",
+    "MO": "29",
+    "MT": "30",
+    "NE": "31",
+    "NV": "32",
+    "NH": "33",
+    "NJ": "34",
+    "NM": "35",
+    "NY": "36",
+    "NC": "37",
+    "ND": "38",
+    "OH": "39",
+    "OK": "40",
+    "OR": "41",
+    "PA": "42",
+    "RI": "43",
+    "SC": "44",
+    "SD": "45",
+    "TN": "47",
+    "TX": "48",
+    "UT": "49",
+    "VT": "50",
+    "VA": "51",
+    "WA": "53",
+    "WV": "54",
+    "WI": "55",
+    "WY": "56",
+    "DC": "11",
 }
 
 
@@ -87,9 +129,18 @@ class EIAFuelPricesFetcher:
 
         # Try to map from full name (simplified mapping)
         state_name_map = {
-            "ILLINOIS": "IL", "CALIFORNIA": "CA", "TEXAS": "TX", "FLORIDA": "FL",
-            "NEW YORK": "NY", "ARIZONA": "AZ", "GEORGIA": "GA", "MASSACHUSETTS": "MA",
-            "LOUISIANA": "LA", "MINNESOTA": "MN", "COLORADO": "CO", "WASHINGTON": "WA",
+            "ILLINOIS": "IL",
+            "CALIFORNIA": "CA",
+            "TEXAS": "TX",
+            "FLORIDA": "FL",
+            "NEW YORK": "NY",
+            "ARIZONA": "AZ",
+            "GEORGIA": "GA",
+            "MASSACHUSETTS": "MA",
+            "LOUISIANA": "LA",
+            "MINNESOTA": "MN",
+            "COLORADO": "CO",
+            "WASHINGTON": "WA",
         }
         if state_upper in state_name_map:
             return state_name_map[state_upper]
@@ -150,7 +201,11 @@ class EIAFuelPricesFetcher:
             df, cache_time = self._cache[cache_key]
             age_minutes = (datetime.now() - cache_time).total_seconds() / 60
             if age_minutes < self.cache_duration_minutes:
-                logger.info("Using cached EIA fuel prices", state=state_code, age_minutes=age_minutes)
+                logger.info(
+                    "Using cached EIA fuel prices",
+                    state=state_code,
+                    age_minutes=age_minutes,
+                )
                 status = SourceStatus(
                     provider="EIA_Fuel_Cached",
                     ok=True,
@@ -207,7 +262,12 @@ class EIAFuelPricesFetcher:
                     rows=0,
                     query_window_days=days_back,
                 )
-                return pd.DataFrame(columns=["timestamp", "fuel_stress_index", "fuel_price"]), status
+                return (
+                    pd.DataFrame(
+                        columns=["timestamp", "fuel_stress_index", "fuel_price"]
+                    ),
+                    status,
+                )
 
             records = data["response"]["data"]
 
@@ -227,8 +287,16 @@ class EIAFuelPricesFetcher:
             # In production, this would fetch actual state-level series
             # For MVP: use state-specific multiplier based on known regional patterns
             state_multipliers = {
-                "CA": 1.15, "NY": 1.10, "IL": 1.05, "TX": 0.95, "FL": 1.00,
-                "AZ": 0.98, "CO": 1.02, "GA": 0.97, "MA": 1.08, "LA": 0.96,
+                "CA": 1.15,
+                "NY": 1.10,
+                "IL": 1.05,
+                "TX": 0.95,
+                "FL": 1.00,
+                "AZ": 0.98,
+                "CO": 1.02,
+                "GA": 0.97,
+                "MA": 1.08,
+                "LA": 0.96,
             }
             multiplier = state_multipliers.get(state_code, 1.0)
 
@@ -269,7 +337,11 @@ class EIAFuelPricesFetcher:
             return self._fallback_fuel_data(state_code, days_back)
 
         except requests.exceptions.HTTPError as e:
-            logger.error("EIA API HTTP error", state=state_code, status_code=e.response.status_code)
+            logger.error(
+                "EIA API HTTP error",
+                state=state_code,
+                status_code=e.response.status_code,
+            )
             return self._fallback_fuel_data(state_code, days_back)
 
         except Exception as e:
@@ -295,7 +367,11 @@ class EIAFuelPricesFetcher:
             if key.startswith(cache_key_pattern):
                 age_days = (datetime.now() - cache_time).total_seconds() / 86400
                 if age_days < 7:  # Use cached data if less than 7 days old
-                    logger.info("Using stale cached EIA fuel data", state=state_code, age_days=age_days)
+                    logger.info(
+                        "Using stale cached EIA fuel data",
+                        state=state_code,
+                        age_days=age_days,
+                    )
                     status = SourceStatus(
                         provider="EIA_Fuel_StaleCache",
                         ok=True,
@@ -309,11 +385,13 @@ class EIAFuelPricesFetcher:
         # Ultimate fallback: return default neutral values
         end_date = datetime.now()
         dates = [end_date - timedelta(days=i) for i in range(days_back, 0, -1)]
-        df = pd.DataFrame({
-            "timestamp": dates,
-            "fuel_price": [3.50] * len(dates),  # Default national average
-            "fuel_stress_index": [0.5] * len(dates),  # Neutral stress
-        })
+        df = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "fuel_price": [3.50] * len(dates),  # Default national average
+                "fuel_stress_index": [0.5] * len(dates),  # Neutral stress
+            }
+        )
 
         status = SourceStatus(
             provider="EIA_Fuel_Fallback",

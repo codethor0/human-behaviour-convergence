@@ -177,7 +177,11 @@ class MobilityFetcher:
         fetched_at = datetime.now().isoformat()
         # Include region_code in cache key to support future region-specific mobility data
         # For now, TSA is national-level, but cache key should still be region-aware
-        region_key = region_code or (f"lat{latitude:.2f}_lon{longitude:.2f}" if latitude and longitude else "default")
+        region_key = region_code or (
+            f"lat{latitude:.2f}_lon{longitude:.2f}"
+            if latitude and longitude
+            else "default"
+        )
         cache_key = f"mobility_tsa_{region_key}_{days_back}"
 
         # Check cache

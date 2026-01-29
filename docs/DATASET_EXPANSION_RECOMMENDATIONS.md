@@ -128,9 +128,9 @@ This document lists research-backed public datasets that will increase regional 
 ## Selection Criteria Summary
 
 All recommended datasets meet:
-- ✅ Public/aggregated (no PII)
-- ✅ Meaningful regional variance
-- ✅ Stable update cadence
-- ✅ Explainable to users
-- ✅ Fits existing ingestion pattern
-- ✅ Ethical use (aggregated, documented)
+- [OK] Public/aggregated (no PII)
+- [OK] Meaningful regional variance
+- [OK] Stable update cadence
+- [OK] Explainable to users
+- [OK] Fits existing ingestion pattern
+- [OK] Ethical use (aggregated, documented)

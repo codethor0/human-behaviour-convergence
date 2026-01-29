@@ -4,10 +4,11 @@
 [![CI](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/ci.yml)
 [![E2E](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/e2e-playwright.yml)
 [![Gates](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/gates.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/gates.yml)
+[![Integrity Gates](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/integrity_gates.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/integrity_gates.yml)
 [![Forecast Integrity](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/forecast-integrity.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/forecast-integrity.yml)
 [![Frontend Lint](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/frontend-lint.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/frontend-lint.yml)
-[![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
-[![Security](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml/badge.svg)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml)
+[![CodeQL](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/codeql.yml)
+[![Security](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml/badge.svg?branch=main)](https://github.com/codethor0/human-behaviour-convergence/actions/workflows/security-harden.yml)
 [![codecov](https://codecov.io/gh/codethor0/human-behaviour-convergence/branch/main/graph/badge.svg)](https://codecov.io/gh/codethor0/human-behaviour-convergence)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
@@ -27,6 +28,7 @@ Main branch workflows (all must remain green):
 - **CI** (`ci.yml`): Core tests, lint, format, and Docker E2E smoke tests
 - **E2E Playwright Tests** (`e2e-playwright.yml`): Full end-to-end UI testing
 - **Gates (A + G)** (`gates.yml`): Architectural gates and governance checks
+- **Integrity Gates** (`integrity_gates.yml`): Contract tests, embed contract, metrics integrity, data quality
 - **Forecast Integrity** (`forecast-integrity.yml`): Forecast model validation and integrity tests
 - **Frontend Lint** (`frontend-lint.yml`): TypeScript/React code quality checks
 - **CodeQL** (`codeql.yml`): Security vulnerability scanning
@@ -66,7 +68,7 @@ This project is a **public-data-driven behavioral forecasting application** that
 **Ethics:** Strict privacy-first approach. See [ETHICS.md](./ETHICS.md) for details.
 **Governance:** Automated enforcement of rules and invariants. See [GOVERNANCE_RULES.md](./GOVERNANCE_RULES.md) for details.
 **Roadmap:** [GitHub Milestones](https://github.com/codethor0/human-behaviour-convergence/milestones)
-**Interpretability:** Forecast explanations available. See [BEHAVIOR_INDEX.md](./docs/BEHAVIOR_INDEX.md) for details.
+**Interpretability:** Forecast explanations available. See [BEHAVIOR_INDEX.md](./docs/architecture/BEHAVIOR_INDEX.md) for details.
 **Playground:** Interactive multi-region comparison and scenario exploration. See `/playground` route in the web UI.
 **Live Monitoring:** Near real-time behavior index tracking with automatic event detection. See `/live` route in the web UI.
 
@@ -367,8 +369,8 @@ If you discover a security or privacy issue (including ethical concerns about th
 We are building **Behaviour Convergence Explorer**, an interactive web application that provides access to public-data-driven behavioral forecasting through a clean API and web dashboard.
 
 - Architecture & feature plan: [docs/app-plan.md](./docs/app-plan.md)
-- System status: [docs/SYSTEM_STATUS.md](./docs/SYSTEM_STATUS.md)
-- Data sources: [docs/DATA_SOURCES.md](./docs/DATA_SOURCES.md)
+- System status: [docs/SYSTEM_STATUS.md](./docs/architecture/SYSTEM_STATUS.md)
+- Data sources: [docs/DATA_SOURCES.md](./docs/datasets/DATA_SOURCES.md)
 - Roadmap milestones: [docs/ROADMAP.md](./docs/ROADMAP.md)
 - Current milestone: `app-v0.1`. Public-data ingestion, forecasting engine, API endpoints, and dashboard.
 - Tech stack: Next.js (TypeScript), FastAPI (Python), Pandas, Statsmodels
