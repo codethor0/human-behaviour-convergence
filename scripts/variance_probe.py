@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Dict, List
 
 
-
 def load_forecasts(forecasts_dir: str) -> Dict[str, Dict]:
     """Load forecast JSONs from directory."""
     forecasts = {}
