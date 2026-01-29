@@ -25,9 +25,9 @@ export interface BaseVisualizationProps {
   /** Error message if visualization fails */
   error?: string | Error;
   /** Callback when visualization is clicked */
-  onClick?: (event: VisualizationClickEvent) => void;
+  onClick?: (_event: VisualizationClickEvent) => void;
   /** Callback when data is updated */
-  onUpdate?: (data: unknown) => void;
+  onUpdate?: (_data: unknown) => void;
   /** Additional CSS classes */
   className?: string;
   /** Whether visualization is in focus mode (highlighted) */

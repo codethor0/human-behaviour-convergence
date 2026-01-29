@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
 import { BehaviorIndexFuelGauge } from '../components/command-center/BehaviorIndexFuelGauge';
 import { CriticalAlertsTicker } from '../components/command-center/CriticalAlertsTicker';

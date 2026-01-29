@@ -28,7 +28,7 @@ export function verifyDashboardsInDOM(): DashboardInfo[] {
     const testId = element.getAttribute('data-testid');
     const uid = testId?.replace('dashboard-embed-', '') || '';
     
-    const iframe = element.querySelector('iframe');
+    const _iframe = element.querySelector('iframe');
     const errorDiv = element.querySelector('[style*="f8d7da"]'); // Error div background color
     
     const isVisible = 

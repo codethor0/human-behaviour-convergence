@@ -38,7 +38,7 @@ export function ConvergenceVortex({ region, width = 800, height = 600 }: Converg
       try {
         // Fetch parent sub-indices
         const metricsResponse = await fetch(`http://localhost:8100/api/metrics${region ? `?region=${region}` : ''}`);
-        const metrics = await metricsResponse.json();
+        const _metrics = await metricsResponse.json();
         
         // Mock sub-indices structure - would come from Prometheus
         const mockSubIndices: SubIndex[] = [
@@ -182,7 +182,7 @@ export function ConvergenceVortex({ region, width = 800, height = 600 }: Converg
       .attr('repeatCount', 'indefinite');
 
     // Add labels
-    const labels = node
+    const _labels = node
       .append('text')
       .text((d) => d.name)
       .attr('font-size', '12px')

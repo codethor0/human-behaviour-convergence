@@ -98,7 +98,7 @@ test.describe('Visual Dashboards Verification', () => {
                 height: Math.min(box.height + 500, 800),
               },
             });
-          } catch (_) {}
+          } catch (_) { /* intentional: ignore screenshot errors */ }
         }
       }
     }

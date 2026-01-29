@@ -124,28 +124,28 @@ export const easing = {
 /**
  * Debounce function calls
  */
-export function debounce<T extends (...args: unknown[]) => void>(
+export function debounce<T extends (..._args: unknown[]) => void>(
   func: T,
   wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  return (...args: Parameters<T>) => {
+): (..._args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return (..._args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func(..._args), wait);
   };
 }
 
 /**
  * Throttle function calls
  */
-export function throttle<T extends (...args: unknown[]) => void>(
+export function throttle<T extends (..._args: unknown[]) => void>(
   func: T,
   limit: number
-): (...args: Parameters<T>) => void {
+): (..._args: Parameters<T>) => void {
   let inThrottle: boolean;
-  return (...args: Parameters<T>) => {
+  return (..._args: Parameters<T>) => {
     if (!inThrottle) {
-      func(...args);
+      func(..._args);
       inThrottle = true;
       setTimeout(() => (inThrottle = false), limit);
     }

@@ -18,9 +18,9 @@ interface WebSocketContextValue {
   /** Last error, if any */
   error: Error | null;
   /** Subscribe to a data stream */
-  subscribe: (channel: string, callback: (data: unknown) => void) => () => void;
+  subscribe: (_channel: string, _callback: (_data: unknown) => void) => () => void;
   /** Send a message to the server */
-  send: (channel: string, data: unknown) => void;
+  send: (_channel: string, _data: unknown) => void;
   /** Get current connection status */
   getStatus: () => 'connected' | 'connecting' | 'disconnected' | 'error';
 }
@@ -47,8 +47,8 @@ export function WebSocketProvider({
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const subscribersRef = useRef<Map<string, Set<(data: unknown) => void>>>(new Map());
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const subscribersRef = useRef<Map<string, Set<(_data: unknown) => void>>>(new Map());
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const connect = useCallback(() => {
     if (socketRef.current?.connected) {
@@ -93,12 +93,12 @@ export function WebSocketProvider({
       });
 
       // Handle incoming data for all subscribed channels
-      socket.onAny((event, data) => {
+      socket.onAny((event, _data) => {
         const callbacks = subscribersRef.current.get(event);
         if (callbacks) {
           callbacks.forEach((callback) => {
             try {
-              callback(data);
+              callback(_data);
             } catch (err) {
               console.error(`[WebSocket] Error in subscriber callback for ${event}:`, err);
             }
@@ -128,7 +128,7 @@ export function WebSocketProvider({
     };
   }, [connect]);
 
-  const subscribe = useCallback((channel: string, callback: (data: unknown) => void) => {
+  const subscribe = useCallback((channel: string, callback: (_data: unknown) => void) => {
     if (!subscribersRef.current.has(channel)) {
       subscribersRef.current.set(channel, new Set());
     }

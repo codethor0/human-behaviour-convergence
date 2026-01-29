@@ -84,7 +84,7 @@ export function CriticalAlertsTicker() {
         // Query Prometheus for anomalies (z-score > 2.0)
         // For now, use mock data structure
         const response = await fetch('http://localhost:8100/api/metrics');
-        const metrics = await response.json();
+        const _metrics = await response.json();
         
         // Generate alerts from anomaly detection metrics
         // This would integrate with actual anomaly detection service

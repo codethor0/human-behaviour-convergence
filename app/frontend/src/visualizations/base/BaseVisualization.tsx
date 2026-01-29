@@ -27,7 +27,7 @@ export function BaseVisualization({
   focusMode = false,
   children,
 }: BaseVisualizationProps & { children?: React.ReactNode }) {
-  const [dataFreshness, setDataFreshness] = useState<DataFreshness | null>(null);
+  const [dataFreshness, _setDataFreshness] = useState<DataFreshness | null>(null);
 
   useEffect(() => {
     if (data && onUpdate) {

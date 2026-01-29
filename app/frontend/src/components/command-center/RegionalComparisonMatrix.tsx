@@ -54,7 +54,7 @@ const styles = {
   },
 };
 
-export function RegionalComparisonMatrix({ onRegionSelect }: { onRegionSelect: (region: string | null) => void }) {
+export function RegionalComparisonMatrix({ onRegionSelect }: { onRegionSelect: (_region: string | null) => void }) {
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function RegionalComparisonMatrix({ onRegionSelect }: { onRegionSelect: (
       try {
         // Query Prometheus for all regions with behavior_index
         const response = await fetch('http://localhost:8100/api/metrics');
-        const metrics = await response.json();
+        const _metrics = await response.json();
         
         // Extract regions from metrics
         // This would come from actual Prometheus query: label_values(behavior_index, region)
